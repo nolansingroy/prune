@@ -7,7 +7,6 @@ export default function Home() {
     <div className="bg-custom-purple min-h-screen text-gray-800">
       <div className="flex flex-col items-center justify-center min-h-screen bg-custom-purple text-gray-800">
         {/* Section 1: Image */}
-
         <div className="w-full">
           <Image
             src="/prune.svg"
@@ -21,29 +20,27 @@ export default function Home() {
             }}
           />
         </div>
-        {/* Section 2: Image with Text */}
-        <div className="w-full">
+        <div className="w-full bg-gray-800 py-4">
           <div className="flex items-center justify-center">
-            <p className="text-4xl text-white font-bold p-8 ">
+            <p className="text-xl md:text-2xl lg:text-3xl text-white font-bold">
               Maximize your coaching impact
             </p>
           </div>
         </div>
-
-        <section className="container mx-auto flex p-6">
+        <section className="container mx-auto flex flex-col md:flex-row p-6">
           {/* Image container */}
-          <div className="flex-1">
+          <div className="md:w-2/3">
             <Image
               src="/coachlooking.png"
               alt="Coaching"
               width={640}
               height={360}
-              layout="responsive"
+              className="w-full h-auto"
             />
           </div>
 
-          <div className="flex-1 max-w-md p-7 pt-300 text-center">
-            <h2 className="text-2xl  text-white font-bold mb-4">
+          <div className="md:w-1/2 max-w-md p-7 pt-3 md:pt-0 text-center">
+            <h2 className="text-xl md:text-2xl text-white font-bold mb-4 pt-3">
               Streamline your scheduling challenges with a tool designed just
               for your solo coaching and training business.
             </h2>
@@ -51,42 +48,16 @@ export default function Home() {
           </div>
         </section>
 
-        {/* Section 2: Text */}
-        <div className="my-12 p-6 text-center">
-          <h3 className="text-5xl text-white font-bold mb-4">
+        <div className="text-center space-y-3 pb-8 m-4">
+          <h3 className="text-xl md:text-xl lg:text-2xl text-white font-bold mt-2 pt-2">
             Transform your coaching business without paying the high cost of a
             solution that wasn&apos;t built for you.
           </h3>
-          <p className="text-xl  text-white mb-4">
+          <p className="text-lg md:text-xl text-white pb-5">
             Getting started takes only minutes -- your clients will thank you
             for using Prune
           </p>
-          {/* <button className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded">
-            Browse Events
-          </button> */}
         </div>
-
-        {/* Section 3: Image */}
-        {/* <div className="my-12 p-6 text-center  text-white">
-          <h1 className="text-5xl font-bold mb-4">
-            Scheduling, rescheduling, and billing all in one low cost app.
-          </h1>
-          <p className="text-xl mb-4">
-            <a href="" className="underline">
-              Try a free trial today!
-            </a>
-          </p>
-        </div>
-
-        <div className="w-full">
-          <Image
-            src="/skating2.png"
-            alt="Another Event Image"
-            width={1920}
-            height={1080}
-            layout="responsive"
-          />
-        </div> */}
 
         <div className="relative w-full">
           {/* Image */}
@@ -99,7 +70,7 @@ export default function Home() {
           />
           {/* Text overlay */}
           <div className="absolute top-1/4 left-0 transform -translate-y-1/2 p-6 text-left text-white">
-            <h1 className="text-4xl font-bold mb-4 text-center">
+            <h1 className="text-xl md:text-4xl font-bold mt-6 text-center">
               Scheduling, rescheduling, and billing all in one low cost app.
             </h1>
             <p className="text-2xl mb-4">

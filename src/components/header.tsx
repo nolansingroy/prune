@@ -28,18 +28,6 @@ const Header = () => {
       </NavigationMenuItem> */}
 
       <nav>
-        {/* <Image
-          src="/logo.svg"
-          alt="Event Image"
-          width={50}
-          height={50}
-          // sizes="100vw"
-          style={{
-            width: "50px",
-            height: "50px",
-          }}
-        /> */}
-
         <ul className="flex justify-between items-center p-4">
           <Image
             src="/logo.svg"
@@ -53,7 +41,7 @@ const Header = () => {
             }}
           />
           <li>
-            <Link href="/" className="text-xl hover:text-gray-300 align-left">
+            <Link href="/" className="text-3xl hover:text-gray-300 align-left">
               Prune
             </Link>
           </li>
