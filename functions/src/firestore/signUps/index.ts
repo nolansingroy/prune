@@ -14,7 +14,7 @@ export const onCreateFunction = functions.firestore
     try {
       // Ping Slack webhook
       const webhookUrl =
-        "https://hooks.slack.com/services/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";
+        "https://hooks.slack.com/services/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";
       const message = "New signup document created: " + JSON.stringify(data);
       await axios.post(webhookUrl, {text: message});
     } catch (error) {
