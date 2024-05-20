@@ -37,6 +37,13 @@ Check out our [Next.js deployment documentation](https://nextjs.org/docs/deploym
 
 # prune
 
+# commands
+
+npm run dev
+npm run build
+vercel --prod
+firebase deploy --only functions
+
 # shadcn commponents
 
 https://ui.shadcn.com/docs/components/navigation-menu
