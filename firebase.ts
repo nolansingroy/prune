@@ -18,9 +18,16 @@ const firebaseConfig = {
   measurementId: "G-Z5B6KECB5W",
 };
 
-// Initialize Firebase
+// Initialize Firebase app without analytics first (for SSR)
 const app = initializeApp(firebaseConfig);
-const analytics = getAnalytics(app);
+
+let analytics; // Declare analytics variable
+
+// Check if we are running on the client side
+if (typeof window !== "undefined") {
+  // Import analytics only on the client side
+  analytics = getAnalytics(app);
+}
 
 // Export Firebase services for use in other parts of your application
 export { app, analytics };

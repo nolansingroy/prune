@@ -5,7 +5,6 @@ import "./globals.css";
 
 import Header from "@/components/header";
 import Footer from "@/components/footer";
-import Head from "next/head"; //
 
 const inter = Inter({ subsets: ["latin"] });
 const montserrat = Montserrat({ subsets: ["latin"] });
@@ -21,28 +20,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <>
-      <Head>
-        {/* Microsoft Clarity tracking code */}
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
-              (function(c,l,a,r,i,t,y){
-                  c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
-                  t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
-                  y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
-              })(window, document, "clarity", "script", "meqhsfhmni");
-            `,
-          }}
-        />
-      </Head>
-      <html lang="en">
-        <body className={montserrat.className}>
-          <Header /> {/* Include the Header at the top */}
-          <main>{children}</main> {/* Main content will be rendered here */}
-          <Footer /> {/* Include the Footer at the bottom */}
-        </body>
-      </html>
-    </>
+    <html lang="en">
+      <body className={montserrat.className}>
+        <Header /> {/* Include the Header at the top */}
+        <main>{children}</main> {/* Main content will be rendered here */}
+        <Footer /> {/* Include the Footer at the bottom */}
+      </body>
+    </html>
   );
 }
