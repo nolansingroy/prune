@@ -27,7 +27,7 @@ export default function Home() {
             </p>
           </div>
         </div>
-        <section className="container mx-auto flex flex-col md:flex-row p-6">
+        <section className="container mx-auto flex flex-col md:flex-row py-4 justify-center">
           {/* Image container */}
           <div className="md:w-2/3">
             <Image
@@ -38,27 +38,25 @@ export default function Home() {
               className="w-full h-auto"
             />
           </div>
-
-          <div className="md:w-1/2 max-w-md p-7 pt-3 md:pt-0 text-center">
-            <h2 className="text-xl md:text-2xl text-white font-bold mb-4 pt-3">
+          <div className="md:w-1/2 max-w-md p-3 pt-3 md:pt-0 text-center">
+            <h2 className="text-xl md:text-2xl text-white align-middle font-bold mb-4 pt-3">
               Streamline your scheduling challenges with a tool designed just
               for your solo coaching and training business.
             </h2>
             <Signup />
           </div>
         </section>
-
         <div className="text-center space-y-3 pb-8 m-4">
-          <h3 className="text-xl md:text-xl lg:text-2xl text-white font-bold mt-2 pt-2">
+          <h3 className="text-xl md:text-xl lg:text-2xl text-white font-bold">
             Transform your coaching business without paying the high cost of a
             solution that wasn&apos;t built for you.
           </h3>
-          <p className="text-lg md:text-xl text-white pb-5">
+          <hr></hr>
+          <h3 className="text-xl md:text-xl lg:text-2xl font-bold text-white pb-5">
             Getting started takes only minutes -- your clients will thank you
             for using Prune
-          </p>
+          </h3>
         </div>
-
         <div className="relative w-full">
           {/* Image */}
           <Image

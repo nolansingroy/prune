@@ -1,6 +1,5 @@
 import React from "react";
 import Link from "next/link";
-import { Button } from "../components/ui/button";
 import Image from "next/image"; // Import the Image component from the correct package
 
 import {
@@ -46,8 +45,7 @@ const Header = () => {
             </Link>
           </li>
           <li>
-            <Button>Sign Up</Button>
-            {/* <Link href="/about">About</Link> */}
+            <Link href="/signUp">Login</Link>
           </li>
         </ul>
       </nav>
