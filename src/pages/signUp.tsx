@@ -1,6 +1,14 @@
 import { useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { auth, firestore } from "../../firebase";
+import {
+  createUserWithEmailAndPassword,
+  GoogleAuthProvider,
+  signInWithPopup,
+  updateProfile,
+} from "firebase/auth";
+import { collection, addDoc } from "firebase/firestore";
 
 import {
   Card,
@@ -15,19 +23,58 @@ import { Label } from "@/components/ui/label";
 const SignUpPage = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
 
-  const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setEmail(e.target.value);
+  // Handle the singUp logic Here
+  const handleSignUp = async () => {
+    try {
+      const userCredential = await createUserWithEmailAndPassword(
+        auth,
+        email,
+        password
+      );
+
+      const user = userCredential.user;
+      // Update the user profile with first and last name
+      await updateProfile(user, {
+        displayName: `${firstName} ${lastName}`,
+      });
+
+      // Add new user data to the Firestore collection "signUps"
+      const d = await addDoc(collection(firestore, "signups"), {
+        uid: user.uid,
+        firstName,
+        lastName,
+        email,
+        createdAt: new Date(),
+      });
+      console.log("Document written with ID: ", d.id);
+
+      // Handle successful sign-up (e.g., redirect to home page)
+      console.log(
+        "User created successfully with name:",
+        `${firstName} ${lastName}`
+      );
+    } catch (error: any) {
+      // Add type annotation to catch clause variable
+      // Handle sign-up error (display error message, etc.)
+      console.error("Error creating user:", error.message);
+    }
   };
 
-  const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setPassword(e.target.value);
+  //Google Sign Up
+  const handleGoogleSignUp = async () => {
+    const provider = new GoogleAuthProvider();
+    try {
+      await signInWithPopup(auth, provider);
+      // Handle successful sign-up (e.g., redirect to home page)
+    } catch (error: any) {
+      // Handle sign-up error (display error message, etc.)
+      console.error("Error signing in with Google:", error.message);
+    }
   };
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    // Add your login logic here
-  };
   return (
     <div className=" min-h-screen flex items-center justify-center text-gray-800">
       <Card className="mx-auto max-w-sm ">
@@ -42,11 +89,23 @@ const SignUpPage = () => {
             <div className="grid grid-cols-2 gap-4">
               <div className="grid gap-2">
                 <Label htmlFor="first-name">First name</Label>
-                <Input id="first-name" placeholder="Max" required />
+                <Input
+                  id="first-name"
+                  placeholder="Max"
+                  required
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
+                />
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="last-name">Last name</Label>
-                <Input id="last-name" placeholder="Robinson" required />
+                <Input
+                  id="last-name"
+                  placeholder="Robinson"
+                  required
+                  value={lastName}
+                  onChange={(e) => setLastName(e.target.value)}
+                />
               </div>
             </div>
             <div className="grid gap-2">
@@ -56,16 +115,27 @@ const SignUpPage = () => {
                 type="email"
                 placeholder="m@example.com"
                 required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
               />
             </div>
             <div className="grid gap-2">
               <Label htmlFor="password">Password</Label>
-              <Input id="password" type="password" />
+              <Input
+                id="password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
             </div>
-            <Button type="submit" className="w-full">
+            <Button type="submit" className="w-full" onClick={handleSignUp}>
               Create an account
             </Button>
-            <Button variant="outline" className="w-full">
+            <Button
+              variant="outline"
+              className="w-full"
+              onClick={handleGoogleSignUp}
+            >
               Sign up with Google
             </Button>
           </div>

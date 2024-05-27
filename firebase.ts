@@ -1,13 +1,11 @@
-import firebase from "firebase/app";
-import "firebase/firestore";
-import "firebase/firestore"; // Add this line
-
-// Import the functions you need from the SDKs you need
+// firebase.ts
 import { initializeApp } from "firebase/app";
+import { getAuth } from "firebase/auth";
+import { getFirestore } from "firebase/firestore";
 import { getAnalytics } from "firebase/analytics";
+import { getStorage } from "firebase/storage";
 
 // Your web app's Firebase configuration
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
   apiKey: "AIzaSyBceYtkM6I4i1LLtbstidQ4-i8CAfsve28",
   authDomain: "prune-94ad9.firebaseapp.com",
@@ -18,16 +16,15 @@ const firebaseConfig = {
   measurementId: "G-Z5B6KECB5W",
 };
 
-// Initialize Firebase app without analytics first (for SSR)
+// Initialize Firebase
 const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const firestore = getFirestore(app);
+const storage = getStorage(app);
+let analytics;
 
-let analytics; // Declare analytics variable
-
-// Check if we are running on the client side
 if (typeof window !== "undefined") {
-  // Import analytics only on the client side
   analytics = getAnalytics(app);
 }
 
-// Export Firebase services for use in other parts of your application
-export { app, analytics };
+export { app, auth, firestore, storage, analytics };
