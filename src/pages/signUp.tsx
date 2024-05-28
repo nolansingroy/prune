@@ -131,13 +131,13 @@ const SignUpPage = () => {
             <Button type="submit" className="w-full" onClick={handleSignUp}>
               Create an account
             </Button>
-            <Button
+            {/* <Button
               variant="outline"
               className="w-full"
               onClick={handleGoogleSignUp}
             >
               Sign up with Google
-            </Button>
+            </Button> */}
           </div>
           <div className="mt-4 text-center text-sm">
             Already have an account?{" "}

@@ -1,3 +1,5 @@
+"use client";
+
 import React from "react";
 import Link from "next/link";
 import Image from "next/image"; // Import the Image component from the correct package
@@ -15,37 +17,41 @@ import {
 
 import { navigationMenuTriggerStyle } from "@/components/ui/navigation-menu";
 
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+
+import useFirebaseAuth from "../services/authService";
+
 const Header = () => {
+  const { authUser } = useFirebaseAuth();
+
   return (
     <header className="bg-custom-purple text-white">
-      {/* <NavigationMenuItem>
-        <Link href="/docs" legacyBehavior passHref>
-          <NavigationMenuLink className={navigationMenuTriggerStyle()}>
-            Documentation
-          </NavigationMenuLink>
-        </Link>
-      </NavigationMenuItem> */}
-
       <nav>
-        <ul className="flex justify-between items-center p-4">
-          <Image
-            src="/logo.svg"
-            alt="Event Image"
-            width={50}
-            height={50}
-            // sizes="100vw"
-            style={{
-              width: "50px",
-              height: "50px",
-            }}
-          />
+        <ul className="flex items-center justify-between p-4">
+          {authUser && <li className="hamburger-menu text-2xl">☰</li>}
           <li>
-            <Link href="/" className="text-3xl hover:text-gray-300 align-left">
-              Prune
+            <Link href="/" className="text-3xl hover:text-gray-300">
+              <Image
+                src="/logo.svg"
+                alt="Prune Logo"
+                width={50}
+                height={50}
+                className="inline-block"
+              />
             </Link>
           </li>
           <li>
-            <Link href="/signUp">Login</Link>
+            {authUser ? (
+              <Avatar>
+                <AvatarImage
+                  src="https://github.com/shadcn.png"
+                  alt="@shadcn"
+                />
+                <AvatarFallback>CN</AvatarFallback>
+              </Avatar>
+            ) : (
+              <Link href="/signUp">Login</Link>
+            )}
           </li>
         </ul>
       </nav>
