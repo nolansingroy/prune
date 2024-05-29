@@ -15,7 +15,7 @@ import {
 
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { PasswordResetDialog } from "./PasswordResetDialog";
+
 import {
   Dialog,
   DialogContent,
@@ -35,6 +35,8 @@ import {
 } from "firebase/auth";
 import { collection, addDoc } from "firebase/firestore";
 import router from "next/router";
+import { ToastAction } from "@/components/ui/toast";
+import { useToast } from "@/components/ui/use-toast";
 
 // SignIn component
 const SignIn = () => {
@@ -42,6 +44,7 @@ const SignIn = () => {
   const [password, setPassword] = useState("");
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [resetDialogOpen, setResetDialogOpen] = useState(false);
+  const { toast } = useToast();
 
   // figure out auth state of the user
   useEffect(() => {
@@ -74,11 +77,21 @@ const SignIn = () => {
       console.error(`Error logging in: ${email} +  ${password}`);
     }
   };
+  const timestamp = new Date().toLocaleDateString();
 
   const resetPasswordFirebase = async () => {
     try {
       console.log("Initiating password reset for email:", email);
       await resetPassword(email, auth);
+      setResetDialogOpen(false);
+
+      toast({
+        title: "Reset successful, please check your email",
+        description: `${timestamp}`,
+        action: (
+          <ToastAction altText="Go to schedule to undo">Undo</ToastAction>
+        ),
+      });
     } catch (error: any) {}
   };
 
@@ -108,10 +121,18 @@ const SignIn = () => {
               <div className="flex items-center gap-24">
                 <Label htmlFor="password">Password</Label>
                 <div>
-                  <Dialog>
+                  <Dialog
+                    open={resetDialogOpen}
+                    onOpenChange={setResetDialogOpen}
+                  >
                     <DialogTrigger asChild>
-                      <Button variant="outline">Forgot Password</Button>
-                      {/* <Link href="/login">Forgot Password</Link> */}
+                      <a
+                        href="#"
+                        className="underline ps-12 sm:text-xs"
+                        onClick={() => setResetDialogOpen(true)}
+                      >
+                        Forgot Password
+                      </a>
                     </DialogTrigger>
                     <DialogContent className="sm:max-w-[425px]">
                       <DialogHeader>
