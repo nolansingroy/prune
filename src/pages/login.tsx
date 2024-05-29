@@ -1,5 +1,8 @@
 import { useState, useEffect } from "react";
-import { listenForAuthStateChanges } from "@/services/authService";
+import {
+  listenForAuthStateChanges,
+  resetPassword,
+} from "@/services/authService";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import {
@@ -9,9 +12,19 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-
+import { PasswordResetDialog } from "./PasswordResetDialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogDescription,
+} from "@/components/ui/dialog";
 import { auth, firestore } from "../../firebase";
 import {
   createUserWithEmailAndPassword,
@@ -28,6 +41,7 @@ const SignIn = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [resetDialogOpen, setResetDialogOpen] = useState(false);
 
   // figure out auth state of the user
   useEffect(() => {
@@ -61,6 +75,13 @@ const SignIn = () => {
     }
   };
 
+  const resetPasswordFirebase = async () => {
+    try {
+      console.log("Initiating password reset for email:", email);
+      await resetPassword(email, auth);
+    } catch (error: any) {}
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center text-gray-800">
       <Card className="mx-auto max-w-sm">
@@ -84,14 +105,37 @@ const SignIn = () => {
               />
             </div>
             <div className="grid gap-2">
-              <div className="flex items-center">
+              <div className="flex items-center gap-24">
                 <Label htmlFor="password">Password</Label>
-                <Link
-                  href="#"
-                  className="ml-auto inline-block text-sm underline"
-                >
-                  Forgot your password?
-                </Link>
+                <div>
+                  <Dialog>
+                    <DialogTrigger asChild>
+                      <Button variant="outline">Forgot Password</Button>
+                      {/* <Link href="/login">Forgot Password</Link> */}
+                    </DialogTrigger>
+                    <DialogContent className="sm:max-w-[425px]">
+                      <DialogHeader>
+                        <DialogTitle>Forgot Password</DialogTitle>
+                        <DialogDescription>
+                          Enter your email below to reset your password
+                        </DialogDescription>
+                      </DialogHeader>
+                      <div className="grid gap-4 py-4">
+                        <Input
+                          type="email"
+                          placeholder="Enter your email"
+                          value={email}
+                          onChange={(e) => setEmail(e.target.value)}
+                        />
+                      </div>
+                      <DialogFooter>
+                        <Button onClick={resetPasswordFirebase}>
+                          Reset Password
+                        </Button>
+                      </DialogFooter>
+                    </DialogContent>
+                  </Dialog>
+                </div>
               </div>
               <Input
                 id="password"

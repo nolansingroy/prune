@@ -1,9 +1,13 @@
 /**
  * Service file for authentication related functions.
  */
-
-import error from "next/error";
-import { auth, onAuthStateChanged, User } from "../../firebase";
+import { Auth } from "firebase/auth";
+import {
+  auth,
+  onAuthStateChanged,
+  User,
+  sendPasswordResetEmail,
+} from "../../firebase";
 import { useState, useEffect } from "react";
 
 // Define the user object type
@@ -31,15 +35,19 @@ export const listenForAuthStateChanges = (
 // this logic is currently in firebase.tsx and signUp.tsx
 
 // Logout function
-export const logout = () => {
+/**
+ * Logs the user out by calling the `auth.signOut()` method.
+ *
+ * @returns A Promise that resolves to void.
+ */
+const authLogout = async (): Promise<void> => {
   console.log("Logging out...");
   try {
-    auth.signOut();
+    await auth.signOut();
+    console.log("Successfully logged out.");
   } catch (error: any) {
-    // Add type annotation to 'error' parameter
     console.error("Error logging out:", error?.message);
   }
-  return null;
 };
 
 const formatAuthUser = (user: User | null): AuthUser | null => {
@@ -58,7 +66,7 @@ const formatAuthUser = (user: User | null): AuthUser | null => {
  *
  * @returns An object containing the authenticated user and a loading state.
  */
-export default function useFirebaseAuth() {
+const useFirebaseAuth = () => {
   const [authUser, setAuthUser] = useState<AuthUser | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -73,4 +81,15 @@ export default function useFirebaseAuth() {
   }, []);
 
   return { authUser, loading };
-}
+};
+
+const resetPassword = async (email: string, auth: Auth) => {
+  try {
+    await sendPasswordResetEmail(auth, email); // Correct order: auth first, then email
+    console.log(`Password reset email sent successfully to: ${email}`);
+  } catch (error: any) {
+    console.error("Error sending password reset email:", error?.message);
+  }
+};
+
+export { useFirebaseAuth, authLogout, resetPassword };
