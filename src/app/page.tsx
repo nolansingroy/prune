@@ -22,8 +22,8 @@ export default function Home() {
         </div>
 
         <div className="w-full bg-custom-purple">
-          <div className="flex items-center justify-left ps-8 py-2">
-            <p className="text-2xl md:text-3xl lg:text-4xl text-white font-bold">
+          <div className="flex items-center justify-center ps-8 py-4">
+            <p className="text-2xl md:text-3xl  text-white font-bold">
               Maximize your coaching impact
             </p>
           </div>
