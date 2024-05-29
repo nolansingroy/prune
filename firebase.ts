@@ -1,6 +1,11 @@
 // firebase.ts
 import { initializeApp } from "firebase/app";
-import { getAuth, onAuthStateChanged, User } from "firebase/auth";
+import {
+  getAuth,
+  onAuthStateChanged,
+  User,
+  sendPasswordResetEmail,
+} from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 import { getAnalytics } from "firebase/analytics";
 import { getStorage } from "firebase/storage";
@@ -27,5 +32,13 @@ if (typeof window !== "undefined") {
   analytics = getAnalytics(app);
 }
 
-export { app, auth, onAuthStateChanged, firestore, storage, analytics };
+export {
+  app,
+  auth,
+  onAuthStateChanged,
+  sendPasswordResetEmail,
+  firestore,
+  storage,
+  analytics,
+};
 export type { User };
