@@ -77,7 +77,8 @@ const SignIn = () => {
       console.error(`Error logging in: ${email} +  ${password}`);
     }
   };
-  const timestamp = new Date().toLocaleDateString();
+  // const timestamp = new Date().toLocaleDateString();
+  const timestamp = new Date().toLocaleString();
 
   const resetPasswordFirebase = async () => {
     try {
@@ -86,11 +87,8 @@ const SignIn = () => {
       setResetDialogOpen(false);
 
       toast({
-        title: "Reset successful, please check your email",
+        title: "Reset successful, please check your email!",
         description: `${timestamp}`,
-        action: (
-          <ToastAction altText="Go to schedule to undo">Undo</ToastAction>
-        ),
       });
     } catch (error: any) {}
   };

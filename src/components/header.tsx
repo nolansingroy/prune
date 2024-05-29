@@ -23,7 +23,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { authLogout } from "../services/authService";
-import { useRouter } from "next/router";
+// import { useRouter } from "next/router";
 
 type Checked = DropdownMenuCheckboxItemProps["checked"];
 
@@ -32,14 +32,14 @@ const Header = () => {
   const [showStatusBar, setShowStatusBar] = React.useState<Checked>(true);
   const [showActivityBar, setShowActivityBar] = React.useState<Checked>(false);
   const [showPanel, setShowPanel] = React.useState<Checked>(false);
+  // const router = useRouter();
 
   const handleLogOut = async () => {
     try {
       await authLogout();
       // Perform any post-logout actions here, e.g., redirecting the user
       console.log("User logged out, redirecting...");
-      const router = useRouter(); // Create a router instance using the useRouter hook
-      router.push("/login"); // Use the router instance to push the /login route
+      // router.push("/login"); // Use the router instance to push the /login route
     } catch (error) {
       console.error("Error during logout process:", error);
     }
@@ -116,8 +116,11 @@ const Header = () => {
             <DropdownMenuItem>Support</DropdownMenuItem>
             <DropdownMenuItem disabled>API</DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={authLogout}>
-              Log out
+            <DropdownMenuItem>
+              <Link href="/login" onClick={authLogout}>
+                Log out
+                <DropdownMenuShortcut>⇧⌘Q</DropdownMenuShortcut>
+              </Link>
               <DropdownMenuShortcut>⇧⌘Q</DropdownMenuShortcut>
             </DropdownMenuItem>
           </DropdownMenuContent>
