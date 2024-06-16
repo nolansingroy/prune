@@ -4,16 +4,19 @@ import Image from "next/image";
 
 const Footer: React.FC = () => {
   return (
-    <footer className="bg-custom-purple text-white">
+    <footer className="bg-custom-grey text-custom-green">
       <nav className="flex grid-cols-1 md:flex-row md:gap-16 p-4 justify-between">
         {/* Contact Us with email link on the left */}
         <div className="text-2xl md:col-span-1 flex flex-col md:flex-row items-start md:items-center md:space-x-4">
           <span className="text-xl">Contact Us:</span>
-          <Link href="mailto:info@prune.com" className="text-xl hover:text-gray-300">
-            info@prune.com
+          <Link
+            href="mailto:info@rebuspro.com"
+            className="text-xl hover:text-gray-300"
+          >
+            info@rebuspro.com
           </Link>
         </div>
-  
+
         {/* <div className="md:col-span-1 flex items-center justify-end space-x-1">
           <Image
             src="/logo.svg"
@@ -26,16 +29,16 @@ const Footer: React.FC = () => {
             <h1 className="text-xl md:text-3xl">Prune © 2024</h1>
           </div>
         </div> */}
-          <div className="md:col-span-1 flex items-center justify-end space-x-1">
-            <Image
-              src="/logo.svg"
-              alt="Prune Logo"
-              width={50}
-              height={50}
-              layout="intrinsic"
-            />
+        <div className="md:col-span-1 flex items-center justify-end space-x-1">
+          <Image
+            src="/RebusProLogo.svg"
+            alt="RebusProLogo Logo"
+            width={50}
+            height={50}
+            layout="intrinsic"
+          />
           <div className="flex flex-col items-end justify-end space-y-3">
-            <h1 className="text-xl md:text-2xl">Prune © 2024</h1>
+            <h1 className="text-xl md:text-2xl">REBUSPRO © 2024</h1>
           </div>
         </div>
       </nav>

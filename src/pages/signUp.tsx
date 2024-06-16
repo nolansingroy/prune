@@ -79,7 +79,7 @@ const SignUpPage = () => {
     <div className=" min-h-screen flex items-center justify-center text-gray-800">
       <Card className="mx-auto max-w-sm ">
         <CardHeader>
-          <CardTitle className="text-xl">Sign Up</CardTitle>
+          <CardTitle className="text-xl text-custom-green">Sign Up</CardTitle>
           <CardDescription>
             Enter your information to create an account
           </CardDescription>

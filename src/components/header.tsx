@@ -6,6 +6,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useFirebaseAuth } from "../services/authService";
 import { HamburgerMenuIcon } from "@radix-ui/react-icons";
 import { DropdownMenuCheckboxItemProps } from "@radix-ui/react-dropdown-menu";
+import { PersonIcon } from "@radix-ui/react-icons";
+
 import {
   DropdownMenu,
   DropdownMenuGroup,
@@ -60,11 +62,14 @@ const Header = () => {
       return (
         <Avatar>
           <AvatarImage
-            src="https://github.com/shadcn.png"
+            // src="https://github.com/shadcn.png"
+            // src="/personIcon.svg"
             alt="@shadcn"
             onClick={handleUserClick}
           />
-          <AvatarFallback>CN</AvatarFallback>
+          <AvatarFallback className="bg-custom-black">
+            <PersonIcon className="text-white" viewBox="0 0 14 14" />
+          </AvatarFallback>
         </Avatar>
       );
     } else {
@@ -81,21 +86,18 @@ const Header = () => {
           </DropdownMenuTrigger>
 
           <DropdownMenuContent className="w-56">
-            <DropdownMenuLabel>Home Page</DropdownMenuLabel>
-
+            <DropdownMenuLabel>
+              <Link href="/">Home</Link>
+            </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
               <DropdownMenuItem>
-                Profile
-                <DropdownMenuShortcut>⇧⌘P</DropdownMenuShortcut>
+                <Link href="/calendar">Calendar</Link>
               </DropdownMenuItem>
-              <DropdownMenuItem disabled>
-                Billing
-                <DropdownMenuShortcut>⌘B</DropdownMenuShortcut>
-              </DropdownMenuItem>
+              <DropdownMenuItem disabled>Dashboard</DropdownMenuItem>
+              <DropdownMenuItem>Bookings</DropdownMenuItem>
               <DropdownMenuItem>
-                Settings
-                <DropdownMenuShortcut>⌘S</DropdownMenuShortcut>
+                <Link href="/clients">Clients</Link>
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
@@ -116,6 +118,10 @@ const Header = () => {
             <DropdownMenuItem>Support</DropdownMenuItem>
             <DropdownMenuItem disabled>API</DropdownMenuItem>
             <DropdownMenuSeparator />
+            <DropdownMenuItem disabled>
+              Billing
+              <DropdownMenuShortcut>⌘B</DropdownMenuShortcut>
+            </DropdownMenuItem>
             <DropdownMenuItem>
               <Link href="/login" onClick={authLogout}>
                 Log out
@@ -130,7 +136,7 @@ const Header = () => {
   };
 
   return (
-    <header className="bg-custom-purple text-white">
+    <header className="bg-custom-grey text-white">
       <nav>
         <ul className="flex items-center justify-between p-4">
           {/* {authUser && (
@@ -146,13 +152,13 @@ const Header = () => {
               className="flex items-center text-3xl hover:text-gray-300"
             >
               <Image
-                src="/logo.svg"
-                alt="Prune Logo"
+                src="/RebusProLogo.svg"
+                alt="RebusPro Logo"
                 width={50}
                 height={50}
                 className="inline-block"
               />
-              <p className="ml-2">Prune</p>
+              <p className="ml-2 text-custom-green">REBUSPRO</p>
             </Link>
           </li>
           <li>{renderAvatar()}</li>
