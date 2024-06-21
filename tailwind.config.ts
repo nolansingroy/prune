@@ -19,6 +19,7 @@ const config = {
     },
     extend: {
       colors: {
+        "fc-bg-event": "rgba(173, 216, 230, 0.5)", // Light blue with 50% opacity
         "custom-purple": "#6B81E8",
         "custom-green": "#7ED957",
         "custom-grey": "#303434",

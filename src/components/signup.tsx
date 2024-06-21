@@ -2,6 +2,9 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
+
+import axios from "axios";
+
 import { app } from "../../firebase";
 import {
   addDoc,
@@ -57,7 +60,7 @@ export function Signup() {
         />
       </div>
 
-      <div className="flex w-full">
+      <div className="flex w-full ">
         <Input
           type="email"
           placeholder="email"
@@ -66,7 +69,7 @@ export function Signup() {
           onChange={(e) => setEmail(e.target.value)}
         />
         <Button
-          className="text-custom-green ml-2"
+          className="text-custom-green"
           type="submit"
           onClick={handleSignup}
         >
