@@ -16,19 +16,6 @@ const Footer: React.FC = () => {
             info@rebuspro.com
           </Link>
         </div>
-
-        {/* <div className="md:col-span-1 flex items-center justify-end space-x-1">
-          <Image
-            src="/logo.svg"
-            alt="Prune Logo"
-            width={50}
-            height={50}
-            layout="intrinsic"
-          />
-          <div className="flex flex-col items-end  justify-end space-y-3">
-            <h1 className="text-xl md:text-3xl">Prune © 2024</h1>
-          </div>
-        </div> */}
         <div className="md:col-span-1 flex items-center justify-end space-x-1">
           <Image
             src="/RebusProLogo.svg"
