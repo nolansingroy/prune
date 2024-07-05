@@ -1,5 +1,4 @@
 import Image from "next/image";
-
 import * as React from "react";
 import {
   CaretSortIcon,
@@ -39,6 +38,12 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  DialogOverlay,
+} from "@radix-ui/react-dialog";
 
 const data: Payment[] = [
   {
@@ -51,6 +56,9 @@ const data: Payment[] = [
     startTime: "10:00 AM",
     endTime: "11:00 AM",
     duration: "1 hour",
+    location: "San Francisco, CA",
+    reoccuring: true,
+    clientName: "Ken",
   },
   {
     id: "3u1reuv4",
@@ -62,6 +70,9 @@ const data: Payment[] = [
     startTime: "10:00 AM",
     endTime: "11:00 AM",
     duration: "1 hour",
+    location: "San Francisco, CA",
+    reoccuring: true,
+    clientName: "Abe",
   },
   {
     id: "derv1ws0",
@@ -73,6 +84,9 @@ const data: Payment[] = [
     startTime: "10:00 AM",
     endTime: "11:00 AM",
     duration: "1 hour",
+    location: "San Francisco, CA",
+    reoccuring: true,
+    clientName: "Monserrat",
   },
   {
     id: "5kma53ae",
@@ -84,6 +98,9 @@ const data: Payment[] = [
     startTime: "10:00 AM",
     endTime: "11:00 AM",
     duration: "1 hour",
+    location: "San Francisco, CA",
+    reoccuring: true,
+    clientName: "Silas",
   },
   {
     id: "bhqecj4p",
@@ -95,6 +112,9 @@ const data: Payment[] = [
     startTime: "10:00 AM",
     endTime: "11:00 AM",
     duration: "1 hour",
+    location: "San Francisco, CA",
+    reoccuring: true,
+    clientName: "Carmella",
   },
 ];
 
@@ -108,6 +128,9 @@ export type Payment = {
   startTime: string;
   endTime: string;
   duration: string;
+  location: string;
+  reoccuring: boolean;
+  clientName?: string;
 };
 
 export const columns: ColumnDef<Payment>[] = [
@@ -133,43 +156,6 @@ export const columns: ColumnDef<Payment>[] = [
     enableSorting: false,
     enableHiding: false,
   },
-  // {
-  //   accessorKey: "status",
-  //   header: "Status",
-  //   cell: ({ row }) => (
-  //     <div className="capitalize">{row.getValue("status")}</div>
-  //   ),
-  // },
-  // {
-  //   accessorKey: "email",
-  //   header: ({ column }) => {
-  //     return (
-  //       <Button
-  //         variant="ghost"
-  //         onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-  //       >
-  //         Email
-  //         <CaretSortIcon className="ml-2 h-4 w-4" />
-  //       </Button>
-  //     );
-  //   },
-  //   cell: ({ row }) => <div className="lowercase">{row.getValue("email")}</div>,
-  // },
-  // {
-  //   accessorKey: "amount",
-  //   header: () => <div className="text-right">Amount</div>,
-  //   cell: ({ row }) => {
-  //     const amount = parseFloat(row.getValue("amount"));
-
-  //     // Format the amount as a dollar amount
-  //     const formatted = new Intl.NumberFormat("en-US", {
-  //       style: "currency",
-  //       currency: "USD",
-  //     }).format(amount);
-
-  //     return <div className="text-right font-medium">{formatted}</div>;
-  //   },
-  // },
   {
     accessorKey: "date",
     header: "Date",
@@ -202,6 +188,29 @@ export const columns: ColumnDef<Payment>[] = [
     ),
   },
   {
+    accessorKey: "location",
+    header: "Location",
+    cell: ({ row }) => (
+      <div className="capitalize">{row.getValue("location")}</div>
+    ),
+  },
+  {
+    accessorKey: "reoccuring",
+    header: "Re-occuring",
+    cell: ({ row }) => (
+      <div className="capitalize">
+        {row.getValue("reoccuring") ? "Yes" : "No"}
+      </div>
+    ),
+  },
+  {
+    accessorKey: "clientName",
+    header: "Client",
+    cell: ({ row }) => (
+      <div className="capitalize">{row.getValue("clientName")}</div>
+    ),
+  },
+  {
     id: "actions",
     header: "Actions",
     enableHiding: false,
@@ -218,14 +227,9 @@ export const columns: ColumnDef<Payment>[] = [
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>Actions</DropdownMenuLabel>
-            <DropdownMenuItem
-              onClick={() => navigator.clipboard.writeText(payment.id)}
-            >
-              Copy payment ID
-            </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>View customer</DropdownMenuItem>
-            <DropdownMenuItem>View payment details</DropdownMenuItem>
+            <DropdownMenuItem>Clone</DropdownMenuItem>
+            <DropdownMenuItem>Delete</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       );
@@ -242,6 +246,9 @@ export default function Availability() {
   const [columnVisibility, setColumnVisibility] =
     React.useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = React.useState({});
+
+  const [selectedRow, setSelectedRow] = React.useState<Payment | null>(null);
+  const [isModalOpen, setIsModalOpen] = React.useState(false);
 
   const table = useReactTable({
     data,
@@ -261,6 +268,25 @@ export default function Availability() {
       rowSelection,
     },
   });
+
+  const handleRowClick = (row: Payment) => {
+    setSelectedRow(row);
+    setIsModalOpen(true);
+  };
+
+  const closeModal = () => {
+    setIsModalOpen(false);
+    setSelectedRow(null);
+  };
+
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement>,
+    field: keyof Payment
+  ) => {
+    if (selectedRow) {
+      setSelectedRow({ ...selectedRow, [field]: e.target.value });
+    }
+  };
 
   return (
     <div className="w-full">
@@ -329,6 +355,8 @@ export default function Availability() {
                 <TableRow
                   key={row.id}
                   data-state={row.getIsSelected() && "selected"}
+                  onClick={() => handleRowClick(row.original)}
+                  style={{ cursor: "pointer" }}
                 >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id}>
@@ -377,6 +405,97 @@ export default function Availability() {
           </Button>
         </div>
       </div>
+      {isModalOpen && selectedRow && (
+        <Dialog open={isModalOpen} onOpenChange={closeModal}>
+          <DialogOverlay className="fixed inset-0 bg-black bg-opacity-30" />
+          <DialogContent className="fixed inset-x-0 bottom-0 max-w-lg mx-auto bg-white p-4 rounded-t-lg shadow-lg max-h-150 overflow-y-auto">
+            <DialogTitle>Row Details</DialogTitle>
+            <div className="grid grid-cols-1 gap-4">
+              <label>
+                Date:
+                <Input
+                  value={selectedRow.date}
+                  onChange={(e) => handleChange(e, "date")}
+                />
+              </label>
+              <label>
+                Day:
+                <Input
+                  value={selectedRow.day}
+                  onChange={(e) => handleChange(e, "day")}
+                />
+              </label>
+              <label>
+                Start Time:
+                <Input
+                  value={selectedRow.startTime}
+                  onChange={(e) => handleChange(e, "startTime")}
+                />
+              </label>
+              <label>
+                End Time:
+                <Input
+                  value={selectedRow.endTime}
+                  onChange={(e) => handleChange(e, "endTime")}
+                />
+              </label>
+              <label>
+                Duration:
+                <Input
+                  value={selectedRow.duration}
+                  onChange={(e) => handleChange(e, "duration")}
+                />
+              </label>
+              <label>
+                Location:
+                <Input
+                  value={selectedRow.location}
+                  onChange={(e) => handleChange(e, "location")}
+                />
+              </label>
+              <label>
+                Re-occuring:
+                <Input
+                  value={selectedRow.reoccuring ? "Yes" : "No"}
+                  onChange={(e) => handleChange(e, "reoccuring")}
+                />
+              </label>
+              <label>
+                Client:
+                <Input
+                  value={selectedRow.clientName}
+                  onChange={(e) => handleChange(e, "clientName")}
+                />
+              </label>
+              <label>
+                Email:
+                <Input
+                  value={selectedRow.email}
+                  // onChange={(e) => handleChange(e, "email")}
+                />
+              </label>
+              {/* <label>
+                Status:
+                <Input
+                  value={selectedRow.status}
+                  onChange={(e) => handleChange(e, "status")}
+                />
+              </label> */}
+              {/* <label>
+                Amount:
+                <Input
+                  value={selectedRow.amount}
+                  onChange={(e) => handleChange(e, "amount")}
+                />
+              </label> */}
+            </div>
+            <div className="flex justify-between mt-4">
+              <Button onClick={closeModal}>Save</Button>
+              <Button onClick={closeModal}>Close</Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 }
