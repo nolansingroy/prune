@@ -4,6 +4,7 @@ import {
   CaretSortIcon,
   ChevronDownIcon,
   DotsHorizontalIcon,
+  PlusCircledIcon,
 } from "@radix-ui/react-icons";
 import {
   ColumnDef,
@@ -44,6 +45,10 @@ import {
   DialogTitle,
   DialogOverlay,
 } from "@radix-ui/react-dialog";
+import { auth } from "../../../firebase";
+import { createEvent, updateEvent } from "../../services/userService";
+import EventFormDialog from "../EventFormModal";
+import { Timestamp } from "firebase/firestore";
 
 const data: Payment[] = [
   {
@@ -203,13 +208,13 @@ export const columns: ColumnDef<Payment>[] = [
       </div>
     ),
   },
-  {
-    accessorKey: "clientName",
-    header: "Client",
-    cell: ({ row }) => (
-      <div className="capitalize">{row.getValue("clientName")}</div>
-    ),
-  },
+  // {
+  //   accessorKey: "clientName",
+  //   header: "Client",
+  //   cell: ({ row }) => (
+  //     <div className="capitalize">{row.getValue("clientName")}</div>
+  //   ),
+  // },
   {
     id: "actions",
     header: "Actions",
@@ -246,9 +251,9 @@ export default function Availability() {
   const [columnVisibility, setColumnVisibility] =
     React.useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = React.useState({});
-
   const [selectedRow, setSelectedRow] = React.useState<Payment | null>(null);
   const [isModalOpen, setIsModalOpen] = React.useState(false);
+  const [isNewEvent, setIsNewEvent] = React.useState(false);
 
   const table = useReactTable({
     data,
@@ -271,6 +276,13 @@ export default function Availability() {
 
   const handleRowClick = (row: Payment) => {
     setSelectedRow(row);
+    setIsNewEvent(false);
+    setIsModalOpen(true);
+  };
+
+  const openNewEventModal = () => {
+    setSelectedRow(null);
+    setIsNewEvent(true);
     setIsModalOpen(true);
   };
 
@@ -288,20 +300,44 @@ export default function Availability() {
     }
   };
 
+  const handleSave = async (eventData: {
+    title: string;
+    isBackgroundEvent: boolean;
+    startTime: string;
+    endTime: string;
+  }) => {
+    const user = auth.currentUser;
+    if (user) {
+      console.log(`Current user UID: ${user.uid}`);
+      const event = {
+        title: eventData.title,
+        start: Timestamp.fromDate(new Date(eventData.startTime)),
+        end: Timestamp.fromDate(new Date(eventData.endTime)),
+        description: selectedRow?.location || "", // Customize as needed
+        isBackgroundEvent: eventData.isBackgroundEvent,
+      };
+      console.log(` ${user.uid} Event data to be saved:, ${event}`);
+      try {
+        if (isNewEvent) {
+          await createEvent(user.uid, event);
+          console.log("Availability created in Firestore");
+        } else if (selectedRow) {
+          await updateEvent(user.uid, selectedRow.id, event);
+          console.log("Availability updated in Firestore");
+        }
+      } catch (error) {
+        console.error("Error saving availability in Firestore:", error);
+      }
+    } else {
+      console.error("No authenticated user found.");
+    }
+    closeModal();
+  };
+
   return (
-    <div className="w-full">
-      <div>
-        <h1>My Available Times</h1>
-      </div>
+    <div className="w-full relative">
+      <h1 className="text-xl font-bold mb-4">My Available Times</h1>
       <div className="flex items-center py-4">
-        <Input
-          placeholder="Search Bookings"
-          value={(table.getColumn("email")?.getFilterValue() as string) ?? ""}
-          onChange={(event) =>
-            table.getColumn("email")?.setFilterValue(event.target.value)
-          }
-          className="max-w-sm"
-        />
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="outline" className="ml-auto">
@@ -405,97 +441,19 @@ export default function Availability() {
           </Button>
         </div>
       </div>
-      {isModalOpen && selectedRow && (
-        <Dialog open={isModalOpen} onOpenChange={closeModal}>
-          <DialogOverlay className="fixed inset-0 bg-black bg-opacity-30" />
-          <DialogContent className="fixed inset-x-0 bottom-0 max-w-lg mx-auto bg-white p-4 rounded-t-lg shadow-lg max-h-150 overflow-y-auto">
-            <DialogTitle>Row Details</DialogTitle>
-            <div className="grid grid-cols-1 gap-4">
-              <label>
-                Date:
-                <Input
-                  value={selectedRow.date}
-                  onChange={(e) => handleChange(e, "date")}
-                />
-              </label>
-              <label>
-                Day:
-                <Input
-                  value={selectedRow.day}
-                  onChange={(e) => handleChange(e, "day")}
-                />
-              </label>
-              <label>
-                Start Time:
-                <Input
-                  value={selectedRow.startTime}
-                  onChange={(e) => handleChange(e, "startTime")}
-                />
-              </label>
-              <label>
-                End Time:
-                <Input
-                  value={selectedRow.endTime}
-                  onChange={(e) => handleChange(e, "endTime")}
-                />
-              </label>
-              <label>
-                Duration:
-                <Input
-                  value={selectedRow.duration}
-                  onChange={(e) => handleChange(e, "duration")}
-                />
-              </label>
-              <label>
-                Location:
-                <Input
-                  value={selectedRow.location}
-                  onChange={(e) => handleChange(e, "location")}
-                />
-              </label>
-              <label>
-                Re-occuring:
-                <Input
-                  value={selectedRow.reoccuring ? "Yes" : "No"}
-                  onChange={(e) => handleChange(e, "reoccuring")}
-                />
-              </label>
-              <label>
-                Client:
-                <Input
-                  value={selectedRow.clientName}
-                  onChange={(e) => handleChange(e, "clientName")}
-                />
-              </label>
-              <label>
-                Email:
-                <Input
-                  value={selectedRow.email}
-                  // onChange={(e) => handleChange(e, "email")}
-                />
-              </label>
-              {/* <label>
-                Status:
-                <Input
-                  value={selectedRow.status}
-                  onChange={(e) => handleChange(e, "status")}
-                />
-              </label> */}
-              {/* <label>
-                Amount:
-                <Input
-                  value={selectedRow.amount}
-                  onChange={(e) => handleChange(e, "amount")}
-                />
-              </label> */}
-            </div>
-            <div className="flex justify-between mt-4">
-              <Button onClick={closeModal}>Save</Button>
-              <Button onClick={closeModal}>Close</Button>
-            </div>
-          </DialogContent>
-        </Dialog>
-      )}
+      <Button
+        variant="outline"
+        size="sm"
+        className="fixed bottom-4 right-4 rounded-full p-4 shadow-lg bg-white"
+        onClick={openNewEventModal}
+      >
+        <PlusCircledIcon className="h-6 w-6" />
+      </Button>
+      <EventFormDialog
+        isOpen={isModalOpen}
+        onClose={closeModal}
+        onSave={handleSave}
+      />
     </div>
   );
 }

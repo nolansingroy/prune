@@ -8,11 +8,13 @@ import interactionPlugin from "@fullcalendar/interaction";
 import timeGridPlugin from "@fullcalendar/timegrid";
 import { DateSelectArg } from "@fullcalendar/core";
 import EventFormDialog from "./EventFormModal"; // Import the dialog component
-
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 import Availability from "../pages/tabs/availability";
 import { CreateBookings } from "./tabs/create_bookings";
+import Test from "./test";
+import { auth } from "../../firebase";
+import { createEvent } from "../services/userService";
 
 export default function Calendar() {
   const calendarRef = useRef<FullCalendar>(null);
@@ -29,7 +31,55 @@ export default function Calendar() {
     setSelectInfo(null);
   };
 
-  const handleSave = ({
+  // const handleSave = ({
+  //   title,
+  //   isBackgroundEvent,
+  //   startTime,
+  //   endTime,
+  // }: {
+  //   title: string;
+  //   isBackgroundEvent: boolean;
+  //   startTime: string;
+  //   endTime: string;
+  // }) => {
+  //   if (!selectInfo) return;
+
+  //   let calendarApi = selectInfo.view.calendar;
+  //   calendarApi.unselect(); // clear date selection
+
+  //   if (title) {
+  //     let start = selectInfo.start;
+  //     let end = selectInfo.end;
+
+  //     if (isBackgroundEvent && startTime && endTime) {
+  //       let startDateTime = new Date(selectInfo.start);
+  //       let endDateTime = new Date(selectInfo.end);
+
+  //       let [startHour, startMinute] = startTime.split(":").map(Number);
+  //       let [endHour, endMinute] = endTime.split(":").map(Number);
+
+  //       startDateTime.setHours(startHour, startMinute);
+  //       endDateTime.setHours(endHour, endMinute);
+
+  //       start = startDateTime;
+  //       end = endDateTime;
+  //     }
+
+  //     calendarApi.addEvent({
+  //       id: String(Date.now()), // generate a unique ID
+  //       title,
+  //       start,
+  //       end,
+  //       allDay: selectInfo.allDay,
+  //       display: isBackgroundEvent ? "background" : "auto",
+  //       className: isBackgroundEvent ? "fc-bg-event" : "", // Apply custom class
+  //     });
+  //   }
+
+  //   handleDialogClose();
+  // };
+
+  const handleSave = async ({
     title,
     isBackgroundEvent,
     startTime,
@@ -63,6 +113,24 @@ export default function Calendar() {
         end = endDateTime;
       }
 
+      const event = {
+        title,
+        start,
+        end,
+        description: "",
+        isBackgroundEvent,
+      };
+
+      try {
+        const user = auth.currentUser;
+        if (user) {
+          await createEvent(user.uid, event);
+          console.log("Event created in Firestore");
+        }
+      } catch (error) {
+        console.error("Error creating event in Firestore:", error);
+      }
+
       calendarApi.addEvent({
         id: String(Date.now()), // generate a unique ID
         title,
@@ -85,9 +153,9 @@ export default function Calendar() {
           <TabsTrigger value="availabile_time">My Available Time</TabsTrigger>
           <TabsTrigger value="create_bookings">Create Bookings</TabsTrigger>
         </TabsList>
-
+        <Test />
         <TabsContent value="calendar">
-          <h1 className="text-xl font-bold mb-4">Hello, Calendar Page!</h1>
+          <h1 className="text-xl font-bold mb-4">Calendar Page</h1>
           <div className="overflow-hidden">
             <FullCalendar
               ref={calendarRef}

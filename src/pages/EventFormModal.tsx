@@ -44,10 +44,6 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
     onClose();
   };
 
-  const handleCheckboxChange = (e: ChangeEvent<HTMLInputElement>) => {
-    setIsBackgroundEvent(e.target.checked);
-  };
-
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent>

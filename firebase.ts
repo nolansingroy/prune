@@ -6,7 +6,7 @@ import {
   User,
   sendPasswordResetEmail,
 } from "firebase/auth";
-import { getFirestore } from "firebase/firestore";
+import { getFirestore, Timestamp } from "firebase/firestore";
 import { getAnalytics } from "firebase/analytics";
 import { getStorage } from "firebase/storage";
 
@@ -40,5 +40,6 @@ export {
   firestore,
   storage,
   analytics,
+  Timestamp,
 };
 export type { User };

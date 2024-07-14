@@ -9,6 +9,8 @@ import {
   updateProfile,
 } from "firebase/auth";
 import { collection, addDoc } from "firebase/firestore";
+import { createUser } from "../services/userService";
+import { Timestamp } from "firebase/firestore";
 
 import {
   Card,
@@ -41,17 +43,24 @@ const SignUpPage = () => {
         displayName: `${firstName} ${lastName}`,
       });
 
-      // Add new user data to the Firestore collection "signUps"
-      const d = await addDoc(collection(firestore, "signups"), {
+      const userData = {
         uid: user.uid,
+        displayName: `${firstName} ${lastName}`,
+        email: user.email || "",
+        emailVerified: user.emailVerified,
         firstName,
         lastName,
-        email,
-        createdAt: new Date(),
-      });
-      console.log("Document written with ID: ", d.id);
+        photoURL: user.photoURL || "",
+        role: "user", // default value
+        loginType: "email", // default value
+        contactPreference: "email", // default value
+        creationTime: Timestamp.now(), // Create an instance of Timestamp
+        updated_at: Timestamp.now(),
+      };
 
-      // Handle successful sign-up (e.g., redirect to home page)
+      console.log("User data:", userData);
+      await createUser(userData);
+
       console.log(
         "User created successfully with name:",
         `${firstName} ${lastName}`
