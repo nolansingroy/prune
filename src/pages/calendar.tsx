@@ -7,7 +7,7 @@ import resourceTimelinePlugin from "@fullcalendar/resource-timeline";
 import interactionPlugin from "@fullcalendar/interaction";
 import timeGridPlugin from "@fullcalendar/timegrid";
 import { DateSelectArg } from "@fullcalendar/core";
-import EventFormDialog from "./EventFormModal"; // Import the dialog component
+import EventFormDialog from "./EventFormModal";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 import Availability from "../pages/tabs/availability";
@@ -15,6 +15,7 @@ import { CreateBookings } from "./tabs/create_bookings";
 import Test from "./test";
 import { auth } from "../../firebase";
 import { createEvent } from "../services/userService";
+import { Timestamp } from "firebase/firestore";
 
 export default function Calendar() {
   const calendarRef = useRef<FullCalendar>(null);
@@ -31,54 +32,6 @@ export default function Calendar() {
     setSelectInfo(null);
   };
 
-  // const handleSave = ({
-  //   title,
-  //   isBackgroundEvent,
-  //   startTime,
-  //   endTime,
-  // }: {
-  //   title: string;
-  //   isBackgroundEvent: boolean;
-  //   startTime: string;
-  //   endTime: string;
-  // }) => {
-  //   if (!selectInfo) return;
-
-  //   let calendarApi = selectInfo.view.calendar;
-  //   calendarApi.unselect(); // clear date selection
-
-  //   if (title) {
-  //     let start = selectInfo.start;
-  //     let end = selectInfo.end;
-
-  //     if (isBackgroundEvent && startTime && endTime) {
-  //       let startDateTime = new Date(selectInfo.start);
-  //       let endDateTime = new Date(selectInfo.end);
-
-  //       let [startHour, startMinute] = startTime.split(":").map(Number);
-  //       let [endHour, endMinute] = endTime.split(":").map(Number);
-
-  //       startDateTime.setHours(startHour, startMinute);
-  //       endDateTime.setHours(endHour, endMinute);
-
-  //       start = startDateTime;
-  //       end = endDateTime;
-  //     }
-
-  //     calendarApi.addEvent({
-  //       id: String(Date.now()), // generate a unique ID
-  //       title,
-  //       start,
-  //       end,
-  //       allDay: selectInfo.allDay,
-  //       display: isBackgroundEvent ? "background" : "auto",
-  //       className: isBackgroundEvent ? "fc-bg-event" : "", // Apply custom class
-  //     });
-  //   }
-
-  //   handleDialogClose();
-  // };
-
   const handleSave = async ({
     title,
     isBackgroundEvent,
@@ -93,7 +46,7 @@ export default function Calendar() {
     if (!selectInfo) return;
 
     let calendarApi = selectInfo.view.calendar;
-    calendarApi.unselect(); // clear date selection
+    calendarApi.unselect();
 
     if (title) {
       let start = selectInfo.start;
@@ -115,8 +68,8 @@ export default function Calendar() {
 
       const event = {
         title,
-        start,
-        end,
+        start: Timestamp.fromDate(start),
+        end: Timestamp.fromDate(end),
         description: "",
         isBackgroundEvent,
       };
@@ -153,7 +106,7 @@ export default function Calendar() {
           <TabsTrigger value="availabile_time">My Available Time</TabsTrigger>
           <TabsTrigger value="create_bookings">Create Bookings</TabsTrigger>
         </TabsList>
-        <Test />
+        {/* <Test /> */}
         <TabsContent value="calendar">
           <h1 className="text-xl font-bold mb-4">Calendar Page</h1>
           <div className="overflow-hidden">

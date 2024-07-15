@@ -48,15 +48,15 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Add Event</DialogTitle>
+          <DialogTitle>Add Availability</DialogTitle>
           <DialogDescription>
-            Fill out the details below to create a new event.
+            add your availability to the calendar
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4">
           <div>
             <Label className="block text-sm font-medium text-gray-700">
-              Event Title
+              Availablity Title
             </Label>
             <Input
               value={title}
