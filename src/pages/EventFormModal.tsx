@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Checkbox } from "@/components/ui/checkbox";
+import { Select } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 
 interface EventFormDialogProps {
@@ -17,6 +17,8 @@ interface EventFormDialogProps {
   onClose: () => void;
   onSave: (eventData: {
     title: string;
+    description: string;
+    location: string;
     isBackgroundEvent: boolean;
     startTime: string;
     endTime: string;
@@ -29,14 +31,20 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
   onSave,
 }) => {
   const [title, setTitle] = useState("");
-  const [isBackgroundEvent, setIsBackgroundEvent] = useState(false);
+  const [description, setDescription] = useState("");
+  const [location, setLocation] = useState("");
+  const [isBackgroundEvent, setIsBackgroundEvent] = useState(true);
   const [startTime, setStartTime] = useState("");
   const [endTime, setEndTime] = useState("");
+
+  const presetLocations = ["Location 1", "Location 2", "Location 3"];
 
   const handleSave = (e: MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
     onSave({
       title,
+      description,
+      location,
       isBackgroundEvent,
       startTime,
       endTime,
@@ -56,7 +64,7 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
         <div className="space-y-4">
           <div>
             <Label className="block text-sm font-medium text-gray-700">
-              Availablity Title
+              Availability Title
             </Label>
             <Input
               value={title}
@@ -67,16 +75,34 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
           </div>
           <div>
             <Label className="block text-sm font-medium text-gray-700">
-              Background Event
+              Description
             </Label>
-            <div>
-              <Checkbox
-                checked={isBackgroundEvent}
-                onCheckedChange={(checked) =>
-                  setIsBackgroundEvent(checked as boolean)
-                }
-              />
-            </div>
+            <Input
+              value={description}
+              onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                setDescription(e.target.value)
+              }
+            />
+          </div>
+          <div>
+            <Label className="block text-sm font-medium text-gray-700">
+              Location
+            </Label>
+            <Select
+              value={location}
+              onChange={(e: ChangeEvent<HTMLSelectElement>) =>
+                setLocation(e.target.value)
+              }
+            >
+              <option value="" disabled>
+                Select a location
+              </option>
+              {presetLocations.map((loc) => (
+                <option key={loc} value={loc}>
+                  {loc}
+                </option>
+              ))}
+            </Select>
           </div>
           {isBackgroundEvent && (
             <>
