@@ -11,7 +11,7 @@ import EventFormDialog from "./EventFormModal";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 import Availability from "../pages/tabs/availability";
-import { CreateBookings } from "./tabs/create_bookings";
+import CreateBookings from "./tabs/create_bookings";
 import Test from "./test";
 import { auth } from "../../firebase";
 import { createEvent } from "../services/userService";

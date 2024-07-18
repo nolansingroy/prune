@@ -1,4 +1,3 @@
-// src/components/CalendarForm.tsx
 "use client";
 
 import React from "react"; // Add this import
@@ -31,12 +30,12 @@ const FormSchema = z.object({
   }),
 });
 
-export function CalendarForm() {
+const CalendarForm: React.FC = () => {
   const form = useForm({
     resolver: zodResolver(FormSchema),
   });
 
-  function onSubmit(data) {
+  function onSubmit(data: any) {
     toast({
       title: "You submitted the following values:",
       description: (
@@ -101,4 +100,6 @@ export function CalendarForm() {
       </form>
     </Form>
   );
-}
+};
+
+export default CalendarForm;

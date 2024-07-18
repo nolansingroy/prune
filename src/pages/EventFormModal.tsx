@@ -9,7 +9,13 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Select } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 
 interface EventFormDialogProps {
@@ -88,20 +94,17 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
             <Label className="block text-sm font-medium text-gray-700">
               Location
             </Label>
-            <Select
-              value={location}
-              onChange={(e: ChangeEvent<HTMLSelectElement>) =>
-                setLocation(e.target.value)
-              }
-            >
-              <option value="" disabled>
-                Select a location
-              </option>
-              {presetLocations.map((loc) => (
-                <option key={loc} value={loc}>
-                  {loc}
-                </option>
-              ))}
+            <Select onValueChange={setLocation}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select a location" />
+              </SelectTrigger>
+              <SelectContent>
+                {presetLocations.map((loc) => (
+                  <SelectItem key={loc} value={loc}>
+                    {loc}
+                  </SelectItem>
+                ))}
+              </SelectContent>
             </Select>
           </div>
           {isBackgroundEvent && (

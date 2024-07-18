@@ -171,7 +171,7 @@ export const columns: ColumnDef<Payment>[] = [
   },
 ];
 
-export function CreateBookings() {
+const CreateBookings: React.FC = () => {
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
     []
@@ -315,4 +315,6 @@ export function CreateBookings() {
       </div>
     </div>
   );
-}
+};
+
+export default CreateBookings;
