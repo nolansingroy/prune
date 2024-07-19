@@ -43,7 +43,7 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
   const [startTime, setStartTime] = useState("");
   const [endTime, setEndTime] = useState("");
 
-  const presetLocations = ["Location 1", "Location 2", "Location 3"];
+  const presetLocations = ["Kraken 1", "Kraken 2", "Kraken 3"];
 
   const handleSave = (e: MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
