@@ -9,18 +9,21 @@ import timeGridPlugin from "@fullcalendar/timegrid";
 import { DateSelectArg } from "@fullcalendar/core";
 import EventFormDialog from "./EventFormModal";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-
 import Availability from "../pages/tabs/availability";
 import CreateBookings from "./tabs/create_bookings";
-import Test from "./test";
-import { auth } from "../../firebase";
+import { auth, db } from "../../firebase"; // Ensure 'db' is correctly imported
 import { createEvent } from "../services/userService";
 import { Timestamp } from "firebase/firestore";
+import useFetchEvents from "../hooks/useFetchEvents";
+import useFetchTimezone from "../hooks/useFetchTimezone";
 
 export default function Calendar() {
   const calendarRef = useRef<FullCalendar>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectInfo, setSelectInfo] = useState<DateSelectArg | null>(null);
+  const { timeZone, loading: timezoneLoading } = useFetchTimezone();
+  const { events, loading: eventsLoading } = useFetchEvents();
+  const [calendarEvents, setCalendarEvents] = useState(events);
 
   const handleSelect = (selectInfo: DateSelectArg) => {
     setSelectInfo(selectInfo);
@@ -79,24 +82,31 @@ export default function Calendar() {
         if (user) {
           await createEvent(user.uid, event);
           console.log("Event created in Firestore");
+
+          setCalendarEvents([
+            ...calendarEvents,
+            {
+              id: String(Date.now()), // Generate a unique ID
+              title,
+              start,
+              end,
+              allDay: selectInfo.allDay,
+              display: isBackgroundEvent ? "background" : "auto",
+              className: isBackgroundEvent ? "fc-bg-event" : "", // Apply custom class
+            },
+          ]);
         }
       } catch (error) {
         console.error("Error creating event in Firestore:", error);
       }
-
-      calendarApi.addEvent({
-        id: String(Date.now()), // generate a unique ID
-        title,
-        start,
-        end,
-        allDay: selectInfo.allDay,
-        display: isBackgroundEvent ? "background" : "auto",
-        className: isBackgroundEvent ? "fc-bg-event" : "", // Apply custom class
-      });
     }
 
     handleDialogClose();
   };
+
+  if (timezoneLoading || eventsLoading) {
+    return <div>Loading...</div>; // Or any loading indicator you prefer
+  }
 
   return (
     <div className="p-4">
@@ -106,7 +116,6 @@ export default function Calendar() {
           <TabsTrigger value="availabile_time">My Available Time</TabsTrigger>
           <TabsTrigger value="create_bookings">Create Bookings</TabsTrigger>
         </TabsList>
-        {/* <Test /> */}
         <TabsContent value="calendar">
           <h1 className="text-xl font-bold mb-4">Calendar Page</h1>
           <div className="overflow-hidden">
@@ -130,9 +139,8 @@ export default function Calendar() {
               selectable={true}
               selectMirror={true}
               select={handleSelect}
-              initialEvents={[
-                { title: "nice event", start: new Date(), resourceId: "a" },
-              ]}
+              events={calendarEvents}
+              timeZone={timeZone} // Use the fetched timezone
               resources={[
                 { id: "a", title: "Auditorium A" },
                 { id: "b", title: "Auditorium B", eventColor: "green" },
@@ -155,16 +163,13 @@ export default function Calendar() {
             />
           </div>
         </TabsContent>
-
         <TabsContent value="availabile_time">
           <Availability />
         </TabsContent>
-
         <TabsContent value="create_bookings">
           <CreateBookings />
         </TabsContent>
       </Tabs>
-
       <EventFormDialog
         isOpen={isDialogOpen}
         onClose={handleDialogClose}
