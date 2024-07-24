@@ -1,14 +1,14 @@
 import { useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { auth, firestore } from "../../firebase";
+import { auth } from "../../firebase";
 import {
   createUserWithEmailAndPassword,
   GoogleAuthProvider,
   signInWithPopup,
   updateProfile,
 } from "firebase/auth";
-import { collection, addDoc } from "firebase/firestore";
+
 import { createUser } from "../services/userService";
 import { Timestamp } from "firebase/firestore";
 
