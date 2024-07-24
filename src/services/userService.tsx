@@ -1,16 +1,27 @@
-// services/userService.ts
-import { firestore, Timestamp } from "../../firebase";
 import {
-  collection,
+  db,
+  Timestamp,
   doc,
-  addDoc,
+  updateDoc,
+  serverTimestamp,
+  collection, // Importing the collection function
+  addDoc, // Importing the addDoc function
+} from "../../firebase";
+
+import {
   getDoc,
   setDoc,
-  updateDoc,
   deleteDoc,
   DocumentReference,
-  serverTimestamp,
 } from "firebase/firestore";
+
+interface Event {
+  title: string;
+  start: Date;
+  end: Date;
+  description?: string;
+  isBackgroundEvent: boolean;
+}
 
 interface User {
   uid: string;
@@ -28,15 +39,11 @@ interface User {
   updated_at: Timestamp;
 }
 
-interface Event {
-  title: string;
-  start: Timestamp;
-  end: Timestamp;
-  description?: string;
-  isBackgroundEvent: boolean;
-}
+// Utility function to convert Date to Firestore Timestamp
+const toFirestoreTimestamp = (date?: Date): Timestamp | undefined =>
+  date ? Timestamp.fromDate(date) : undefined;
 
-const usersCollection = collection(firestore, "users");
+const usersCollection = collection(db, "users");
 
 const getUserDocRef = (uid: string): DocumentReference =>
   doc(usersCollection, uid);
@@ -66,29 +73,33 @@ export const deleteUser = async (uid: string): Promise<void> => {
   await deleteDoc(getUserDocRef(uid));
 };
 
-// Create a new event document in the database
-
-const getEventsCollection = (uid: string) =>
-  collection(doc(usersCollection, uid), "events");
-
-export const createEvent = async (uid: string, event: Event): Promise<void> => {
-  await addDoc(getEventsCollection(uid), {
-    ...event,
-    creationTime: serverTimestamp() as unknown as Timestamp,
-    updated_at: serverTimestamp() as unknown as Timestamp,
-  });
-};
-
+// Update an existing event document in Firestore
 export const updateEvent = async (
   uid: string,
   eventId: string,
   event: Partial<Event>
 ): Promise<void> => {
-  console.log(
-    `Updating event ${eventId} for user ${uid} in document path users/${uid}/events/${eventId}`
-  );
-  await updateDoc(doc(getEventsCollection(uid), eventId), {
+  const eventDataToUpdate = {
     ...event,
+    start: toFirestoreTimestamp(event.start),
+    end: toFirestoreTimestamp(event.end),
     updated_at: serverTimestamp(),
-  });
+  };
+
+  await updateDoc(doc(db, "users", uid, "events", eventId), eventDataToUpdate);
+};
+
+// Function to create a new event document in the database
+export const createEvent = async (uid: string, event: Event): Promise<void> => {
+  const eventsCollection = collection(db, "users", uid, "events");
+  const eventWithTimestamp = {
+    ...event,
+    start: toFirestoreTimestamp(event.start), // Convert start date
+    end: toFirestoreTimestamp(event.end), // Convert end date
+    creationTime: serverTimestamp(), // Use server timestamp for creation time
+    updated_at: serverTimestamp(), // Use server timestamp for updated time
+  };
+
+  await addDoc(eventsCollection, eventWithTimestamp);
+  console.log("Event created in Firestore with ID:", eventWithTimestamp);
 };
