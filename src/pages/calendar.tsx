@@ -108,30 +108,33 @@ export default function Calendar() {
     if (!selectInfo) return;
 
     let calendarApi = selectInfo.view.calendar;
-    calendarApi.unselect();
+    calendarApi.unselect(); // Unselect the current selection on the calendar
 
     if (title) {
-      // Correctly handle date and time conversion
-      let startDateTime = new Date(selectInfo.start);
-      let endDateTime = new Date(selectInfo.end);
+      let startDateTime = new Date(selectInfo.startStr); // Use startStr which includes the selected date
+      let endDateTime = new Date(selectInfo.startStr); // Initialize endDateTime with the same day to prevent date rollover
 
       if (startTime && endTime) {
-        let [startHour, startMinute] = startTime.split(":").map(Number);
-        let [endHour, endMinute] = endTime.split(":").map(Number);
+        const [startHour, startMinute] = startTime.split(":").map(Number);
+        const [endHour, endMinute] = endTime.split(":").map(Number);
 
-        startDateTime.setHours(startHour, startMinute);
-        endDateTime.setHours(endHour, endMinute);
+        startDateTime.setHours(startHour, startMinute, 0, 0); // Set start time with seconds and milliseconds reset to 0
+        endDateTime.setHours(endHour, endMinute, 0, 0); // Set end time with seconds and milliseconds reset to 0
       }
 
-      // Create the event object according to the EventInput type
+      // Check if the end date/time is before the start date/time
+      if (endDateTime <= startDateTime) {
+        endDateTime.setDate(endDateTime.getDate() + 1); // Move the end date to the next day if end time is before start time
+      }
+
       const event: EventInput = {
         title,
-        start: startDateTime, // FullCalendar expects Date objects, not Timestamps
+        start: startDateTime,
         end: endDateTime,
         description: "",
-        display: isBackgroundEvent ? "background" : "true",
+        display: isBackgroundEvent ? "background" : "auto",
         className: isBackgroundEvent ? "fc-bg-event" : "",
-        isBackgroundEvent: isBackgroundEvent, // Ensure this property is included
+        isBackgroundEvent,
       };
 
       try {
@@ -139,13 +142,13 @@ export default function Calendar() {
         if (user) {
           await createEvent(user.uid, event);
           console.log("Event created in Firestore");
+          console.log(`start time: ${startDateTime} | End time ${endDateTime}`);
 
-          // Update the state to include the new event
           setEvents((prevEvents) => [
             ...prevEvents,
             {
               ...event,
-              id: String(Date.now()), // Assign a temporary ID until it can be fetched or updated from Firestore
+              id: String(Date.now()), // Assign a temporary ID
             },
           ]);
         }
