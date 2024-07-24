@@ -6,7 +6,16 @@ import {
   User,
   sendPasswordResetEmail,
 } from "firebase/auth";
-import { getFirestore, Timestamp } from "firebase/firestore";
+import {
+  getFirestore,
+  Timestamp,
+  doc,
+  collection, // Importing collection for use in services
+  addDoc, // Importing addDoc for document creation
+  updateDoc, // Importing updateDoc for document updates
+  setDoc, // Importing setDoc for setting document data
+  serverTimestamp, // Importing serverTimestamp for Firestore server time stamps
+} from "firebase/firestore";
 import { getAnalytics } from "firebase/analytics";
 import { getStorage } from "firebase/storage";
 
@@ -24,7 +33,7 @@ const firebaseConfig = {
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
-const firestore = getFirestore(app);
+const db = getFirestore(app);
 const storage = getStorage(app);
 let analytics;
 
@@ -32,14 +41,22 @@ if (typeof window !== "undefined") {
   analytics = getAnalytics(app);
 }
 
+// Export all necessary Firebase functionalities
 export {
   app,
   auth,
   onAuthStateChanged,
   sendPasswordResetEmail,
-  firestore,
+  db,
   storage,
   analytics,
   Timestamp,
+  // Firestore utilities
+  doc,
+  collection,
+  addDoc,
+  updateDoc,
+  setDoc,
+  serverTimestamp,
 };
 export type { User };
