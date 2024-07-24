@@ -319,10 +319,10 @@ export default function Availability() {
       console.log(` ${user.uid} Event data to be saved:, ${event}`);
       try {
         if (isNewEvent) {
-          await createEvent(user.uid, event);
+          // await createEvent(user.uid, event);
           console.log("Availability created in Firestore");
         } else if (selectedRow) {
-          await updateEvent(user.uid, selectedRow.id, event);
+          // await updateEvent(user.uid, selectedRow.id, event);
           console.log("Availability updated in Firestore");
         }
       } catch (error) {
