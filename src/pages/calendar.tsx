@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import resourceTimelinePlugin from "@fullcalendar/resource-timeline";
@@ -11,19 +11,78 @@ import EventFormDialog from "./EventFormModal";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Availability from "../pages/tabs/availability";
 import CreateBookings from "./tabs/create_bookings";
-import { auth, db } from "../../firebase"; // Ensure 'db' is correctly imported
+import { auth, db } from "../../firebase";
 import { createEvent } from "../services/userService";
 import { Timestamp } from "firebase/firestore";
 import useFetchEvents from "../hooks/useFetchEvents";
-import useFetchTimezone from "../hooks/useFetchTimezone";
+// import type { EventInput } from "@fullcalendar/core";
+import { EventInput } from "./types";
 
 export default function Calendar() {
   const calendarRef = useRef<FullCalendar>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectInfo, setSelectInfo] = useState<DateSelectArg | null>(null);
-  const { timeZone, loading: timezoneLoading } = useFetchTimezone();
-  const { events, loading: eventsLoading } = useFetchEvents();
-  const [calendarEvents, setCalendarEvents] = useState(events);
+  const { events: fetchedEvents, loading: eventsLoading } = useFetchEvents();
+  const [events, setEvents] = useState<EventInput[]>([]);
+
+  useEffect(() => {
+    setEvents(fetchedEvents);
+  }, [fetchedEvents]);
+
+  const renderEventContent = (eventInfo: {
+    event: {
+      extendedProps: { isBackgroundEvent: any };
+      title:
+        | string
+        | number
+        | bigint
+        | boolean
+        | React.ReactElement<any, string | React.JSXElementConstructor<any>>
+        | Iterable<React.ReactNode>
+        | Promise<React.AwaitedReactNode>
+        | null
+        | undefined;
+    };
+    view: { type: string };
+    timeText:
+      | string
+      | number
+      | bigint
+      | boolean
+      | React.ReactElement<any, string | React.JSXElementConstructor<any>>
+      | Iterable<React.ReactNode>
+      | React.ReactPortal
+      | Promise<React.AwaitedReactNode>
+      | null
+      | undefined;
+  }) => {
+    const { isBackgroundEvent } = eventInfo.event.extendedProps;
+
+    // Check if it's the month view and the event is a background event
+    if (eventInfo.view.type === "dayGridMonth" && isBackgroundEvent) {
+      // Render as an all-day event in month view with custom styling
+      return (
+        <div className="bg-green-200 opacity-50 text-black p-1 rounded text-center">
+          {eventInfo.event.title} (All Day Background)
+        </div>
+      );
+    } else if (isBackgroundEvent) {
+      // Render with different styling in week or day views
+      return (
+        <div className="bg-green-100 opacity-75 text-black p-1 rounded text-center">
+          {eventInfo.event.title} (Timed Background)
+        </div>
+      );
+    }
+
+    // Default rendering for non-background events
+    return (
+      <>
+        <b>{eventInfo.timeText}</b>
+        <i>{eventInfo.event.title}</i>
+      </>
+    );
+  };
 
   const handleSelect = (selectInfo: DateSelectArg) => {
     setSelectInfo(selectInfo);
@@ -52,29 +111,27 @@ export default function Calendar() {
     calendarApi.unselect();
 
     if (title) {
-      let start = selectInfo.start;
-      let end = selectInfo.end;
+      // Correctly handle date and time conversion
+      let startDateTime = new Date(selectInfo.start);
+      let endDateTime = new Date(selectInfo.end);
 
-      if (isBackgroundEvent && startTime && endTime) {
-        let startDateTime = new Date(selectInfo.start);
-        let endDateTime = new Date(selectInfo.end);
-
+      if (startTime && endTime) {
         let [startHour, startMinute] = startTime.split(":").map(Number);
         let [endHour, endMinute] = endTime.split(":").map(Number);
 
         startDateTime.setHours(startHour, startMinute);
         endDateTime.setHours(endHour, endMinute);
-
-        start = startDateTime;
-        end = endDateTime;
       }
 
-      const event = {
+      // Create the event object according to the EventInput type
+      const event: EventInput = {
         title,
-        start: Timestamp.fromDate(start),
-        end: Timestamp.fromDate(end),
+        start: startDateTime, // FullCalendar expects Date objects, not Timestamps
+        end: endDateTime,
         description: "",
-        isBackgroundEvent,
+        display: isBackgroundEvent ? "background" : "true",
+        className: isBackgroundEvent ? "fc-bg-event" : "",
+        isBackgroundEvent: isBackgroundEvent, // Ensure this property is included
       };
 
       try {
@@ -83,16 +140,12 @@ export default function Calendar() {
           await createEvent(user.uid, event);
           console.log("Event created in Firestore");
 
-          setCalendarEvents([
-            ...calendarEvents,
+          // Update the state to include the new event
+          setEvents((prevEvents) => [
+            ...prevEvents,
             {
-              id: String(Date.now()), // Generate a unique ID
-              title,
-              start,
-              end,
-              allDay: selectInfo.allDay,
-              display: isBackgroundEvent ? "background" : "auto",
-              className: isBackgroundEvent ? "fc-bg-event" : "", // Apply custom class
+              ...event,
+              id: String(Date.now()), // Assign a temporary ID until it can be fetched or updated from Firestore
             },
           ]);
         }
@@ -104,8 +157,8 @@ export default function Calendar() {
     handleDialogClose();
   };
 
-  if (timezoneLoading || eventsLoading) {
-    return <div>Loading...</div>; // Or any loading indicator you prefer
+  if (eventsLoading) {
+    return <div>Loading...</div>;
   }
 
   return (
@@ -139,26 +192,20 @@ export default function Calendar() {
               selectable={true}
               selectMirror={true}
               select={handleSelect}
-              events={calendarEvents}
-              timeZone={timeZone} // Use the fetched timezone
+              events={events}
+              eventContent={renderEventContent}
               resources={[
                 { id: "a", title: "Auditorium A" },
                 { id: "b", title: "Auditorium B", eventColor: "green" },
                 { id: "c", title: "Auditorium C", eventColor: "orange" },
               ]}
               height="auto"
-              aspectRatio={1.35} // Adjust aspect ratio for mobile screens
-              contentHeight="auto" // Make sure content height adjusts properly
+              aspectRatio={1.35}
+              contentHeight="auto"
               views={{
-                dayGridMonth: {
-                  eventLimit: true, // Allow "more" link when too many events
-                },
-                timeGridWeek: {
-                  nowIndicator: true,
-                },
-                timeGridDay: {
-                  nowIndicator: true,
-                },
+                dayGridMonth: { eventLimit: 5 },
+                timeGridWeek: { nowIndicator: true },
+                timeGridDay: { nowIndicator: true },
               }}
             />
           </div>
