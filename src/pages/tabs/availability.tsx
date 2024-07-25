@@ -1,5 +1,11 @@
 import Image from "next/image";
 import * as React from "react";
+import { useEffect, useState } from "react";
+import { collection, query, where, getDocs } from "firebase/firestore";
+import { auth, db } from "../../../firebase";
+import { format } from "date-fns";
+import { EventInput } from "./../types";
+
 import {
   CaretSortIcon,
   ChevronDownIcon,
@@ -45,7 +51,6 @@ import {
   DialogTitle,
   DialogOverlay,
 } from "@radix-ui/react-dialog";
-import { auth } from "../../../firebase";
 import { createEvent, updateEvent } from "../../services/userService";
 import EventFormDialog from "../EventFormModal";
 import { Timestamp } from "firebase/firestore";
@@ -255,6 +260,41 @@ export default function Availability() {
   const [isModalOpen, setIsModalOpen] = React.useState(false);
   const [isNewEvent, setIsNewEvent] = React.useState(false);
 
+  // const [events, setEvents] = useState<{ id: string }[]>([]);
+  const [events, setEvents] = useState<EventInput[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchEvents = async () => {
+      if (auth.currentUser) {
+        const eventsRef = collection(
+          db,
+          "users",
+          auth.currentUser.uid,
+          "events"
+        );
+        const q = query(eventsRef, where("isBackgroundEvent", "==", true));
+        const querySnapshot = await getDocs(q);
+        const fetchedEvents: EventInput[] = querySnapshot.docs.map((doc) => {
+          const data = doc.data();
+          return {
+            id: doc.id,
+            title: data.title,
+            description: data.description || "",
+            start: data.start.toDate(), // Converting Timestamp to Date
+            end: data.end.toDate(), // Converting Timestamp to Date
+            display: data.display,
+            className: data.className,
+            isBackgroundEvent: data.isBackgroundEvent,
+          };
+        });
+        setEvents(fetchedEvents);
+      }
+    };
+
+    fetchEvents();
+  }, []);
+
   const table = useReactTable({
     data,
     columns,
@@ -300,7 +340,12 @@ export default function Availability() {
     }
   };
 
-  const handleSave = async (eventData: {
+  const handleSave = async ({
+    title,
+    isBackgroundEvent,
+    startTime,
+    endTime,
+  }: {
     title: string;
     isBackgroundEvent: boolean;
     startTime: string;
@@ -308,21 +353,38 @@ export default function Availability() {
   }) => {
     const user = auth.currentUser;
     if (user) {
-      console.log(`Current user UID: ${user.uid}`);
-      const event = {
-        title: eventData.title,
-        start: Timestamp.fromDate(new Date(eventData.startTime)),
-        end: Timestamp.fromDate(new Date(eventData.endTime)),
-        description: selectedRow?.location || "", // Customize as needed
-        isBackgroundEvent: eventData.isBackgroundEvent,
+      const startDate = new Date();
+      const endDate = new Date();
+
+      const [startHour, startMinute] = startTime.split(":").map(Number);
+      const [endHour, endMinute] = endTime.split(":").map(Number);
+
+      startDate.setHours(startHour, startMinute, 0, 0); // Set start time with seconds and milliseconds reset to 0
+      endDate.setHours(endHour, endMinute, 0, 0); // Set end time with seconds and milliseconds reset to 0
+
+      // Correct the end date if it is before the start date
+      if (endDate <= startDate) {
+        endDate.setDate(startDate.getDate() + 1); // Adjusts end date to the next day
+      }
+
+      const event: EventInput = {
+        title: title,
+        start: startDate,
+        end: endDate,
+        description: "", // Adjust this if you have a description field
+        display: isBackgroundEvent ? "background" : "block", // Adjust according to your requirements
+        className: isBackgroundEvent ? "fc-bg-event" : "",
+        isBackgroundEvent: isBackgroundEvent,
       };
-      console.log(` ${user.uid} Event data to be saved:, ${event}`);
+
+      console.log(`UID: ${user.uid}, Event data to be saved:`, event);
+
       try {
         if (isNewEvent) {
-          // await createEvent(user.uid, event);
+          await createEvent(user.uid, event); // Create event function should be adapted if necessary
           console.log("Availability created in Firestore");
         } else if (selectedRow) {
-          // await updateEvent(user.uid, selectedRow.id, event);
+          await updateEvent(user.uid, selectedRow.id, event); // Ensure this function exists and is adapted to handle updates
           console.log("Availability updated in Firestore");
         }
       } catch (error) {
@@ -331,129 +393,149 @@ export default function Availability() {
     } else {
       console.error("No authenticated user found.");
     }
-    closeModal();
+    closeModal(); // Make sure closeModal is defined and accessible here
   };
 
   return (
+    // <div className="w-full relative">
+    //   <h1 className="text-xl font-bold mb-4">My Available Times</h1>
+    //   <div className="flex items-center py-4">
+    //     <DropdownMenu>
+    //       <DropdownMenuTrigger asChild>
+    //         <Button variant="outline" className="ml-auto">
+    //           Columns <ChevronDownIcon className="ml-2 h-4 w-4" />
+    //         </Button>
+    //       </DropdownMenuTrigger>
+    //       <DropdownMenuContent align="end">
+    //         {table
+    //           .getAllColumns()
+    //           .filter((column) => column.getCanHide())
+    //           .map((column) => {
+    //             return (
+    //               <DropdownMenuCheckboxItem
+    //                 key={column.id}
+    //                 className="capitalize"
+    //                 checked={column.getIsVisible()}
+    //                 onCheckedChange={(value) =>
+    //                   column.toggleVisibility(!!value)
+    //                 }
+    //               >
+    //                 {column.id}
+    //               </DropdownMenuCheckboxItem>
+    //             );
+    //           })}
+    //       </DropdownMenuContent>
+    //     </DropdownMenu>
+    //   </div>
+    //   <div className="rounded-md border">
+    //     <Table>
+    //       <TableHeader>
+    //         {table.getHeaderGroups().map((headerGroup) => (
+    //           <TableRow key={headerGroup.id}>
+    //             {headerGroup.headers.map((header) => {
+    //               return (
+    //                 <TableHead key={header.id}>
+    //                   {header.isPlaceholder
+    //                     ? null
+    //                     : flexRender(
+    //                         header.column.columnDef.header,
+    //                         header.getContext()
+    //                       )}
+    //                 </TableHead>
+    //               );
+    //             })}
+    //           </TableRow>
+    //         ))}
+    //       </TableHeader>
+    //       <TableBody>
+    //         {table.getRowModel().rows?.length ? (
+    //           table.getRowModel().rows.map((row) => (
+    //             <TableRow
+    //               key={row.id}
+    //               data-state={row.getIsSelected() && "selected"}
+    //               onClick={() => handleRowClick(row.original)}
+    //               style={{ cursor: "pointer" }}
+    //             >
+    //               {row.getVisibleCells().map((cell) => (
+    //                 <TableCell key={cell.id}>
+    //                   {flexRender(
+    //                     cell.column.columnDef.cell,
+    //                     cell.getContext()
+    //                   )}
+    //                 </TableCell>
+    //               ))}
+    //             </TableRow>
+    //           ))
+    //         ) : (
+    //           <TableRow>
+    //             <TableCell
+    //               colSpan={columns.length}
+    //               className="h-24 text-center"
+    //             >
+    //               No results.
+    //             </TableCell>
+    //           </TableRow>
+    //         )}
+    //       </TableBody>
+    //     </Table>
+    //   </div>
+    //   <div className="flex items-center justify-end space-x-2 py-4">
+    //     <div className="flex-1 text-sm text-muted-foreground">
+    //       {table.getFilteredSelectedRowModel().rows.length} of{" "}
+    //       {table.getFilteredRowModel().rows.length} row(s) selected.
+    //     </div>
+    //     <div className="space-x-2">
+    //       <Button
+    //         variant="outline"
+    //         size="sm"
+    //         onClick={() => table.previousPage()}
+    //         disabled={!table.getCanPreviousPage()}
+    //       >
+    //         Previous
+    //       </Button>
+    //       <Button
+    //         variant="outline"
+    //         size="sm"
+    //         onClick={() => table.nextPage()}
+    //         disabled={!table.getCanNextPage()}
+    //       >
+    //         Next
+    //       </Button>
+    //     </div>
+    //   </div>
+    //   <Button
+    //     variant="outline"
+    //     size="sm"
+    //     className="fixed bottom-4 right-4 rounded-full p-4 shadow-lg bg-white"
+    //     onClick={openNewEventModal}
+    //   >
+    //     <PlusCircledIcon className="h-6 w-6" />
+    //   </Button>
+    //   <EventFormDialog
+    //     isOpen={isModalOpen}
+    //     onClose={closeModal}
+    //     onSave={handleSave}
+    //   />
+    // </div>
+
     <div className="w-full relative">
       <h1 className="text-xl font-bold mb-4">My Available Times</h1>
-      <div className="flex items-center py-4">
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline" className="ml-auto">
-              Columns <ChevronDownIcon className="ml-2 h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            {table
-              .getAllColumns()
-              .filter((column) => column.getCanHide())
-              .map((column) => {
-                return (
-                  <DropdownMenuCheckboxItem
-                    key={column.id}
-                    className="capitalize"
-                    checked={column.getIsVisible()}
-                    onCheckedChange={(value) =>
-                      column.toggleVisibility(!!value)
-                    }
-                  >
-                    {column.id}
-                  </DropdownMenuCheckboxItem>
-                );
-              })}
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
-      <div className="rounded-md border">
-        <Table>
-          <TableHeader>
-            {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id}>
-                {headerGroup.headers.map((header) => {
-                  return (
-                    <TableHead key={header.id}>
-                      {header.isPlaceholder
-                        ? null
-                        : flexRender(
-                            header.column.columnDef.header,
-                            header.getContext()
-                          )}
-                    </TableHead>
-                  );
-                })}
-              </TableRow>
-            ))}
-          </TableHeader>
-          <TableBody>
-            {table.getRowModel().rows?.length ? (
-              table.getRowModel().rows.map((row) => (
-                <TableRow
-                  key={row.id}
-                  data-state={row.getIsSelected() && "selected"}
-                  onClick={() => handleRowClick(row.original)}
-                  style={{ cursor: "pointer" }}
-                >
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext()
-                      )}
-                    </TableCell>
-                  ))}
-                </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell
-                  colSpan={columns.length}
-                  className="h-24 text-center"
-                >
-                  No results.
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </div>
-      <div className="flex items-center justify-end space-x-2 py-4">
-        <div className="flex-1 text-sm text-muted-foreground">
-          {table.getFilteredSelectedRowModel().rows.length} of{" "}
-          {table.getFilteredRowModel().rows.length} row(s) selected.
-        </div>
-        <div className="space-x-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => table.previousPage()}
-            disabled={!table.getCanPreviousPage()}
-          >
-            Previous
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => table.nextPage()}
-            disabled={!table.getCanNextPage()}
-          >
-            Next
-          </Button>
-        </div>
-      </div>
-      <Button
-        variant="outline"
-        size="sm"
-        className="fixed bottom-4 right-4 rounded-full p-4 shadow-lg bg-white"
-        onClick={openNewEventModal}
-      >
-        <PlusCircledIcon className="h-6 w-6" />
-      </Button>
-      <EventFormDialog
-        isOpen={isModalOpen}
-        onClose={closeModal}
-        onSave={handleSave}
-      />
+      {/* Implement your table here using the `events` array */}
+      {/* Example: */}
+      <Table>
+        {/* Table Header */}
+        <TableBody>
+          {events.map((event) => (
+            <TableRow key={event.id}>
+              {/* <TableCell>{event.date}</TableCell> */}
+              <TableCell>{event.start.toLocaleString()}</TableCell>
+              <TableCell>{event.end.toLocaleString()}</TableCell>
+              <TableCell>{event.title}</TableCell>
+              {/* other cells */}
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
     </div>
   );
 }
