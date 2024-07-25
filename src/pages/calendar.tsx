@@ -61,6 +61,8 @@ export default function Calendar() {
     // Check if it's the month view and the event is a background event
     if (eventInfo.view.type === "dayGridMonth" && isBackgroundEvent) {
       // Render as an all-day event in month view with custom styling
+      console.log("eventInfo", eventInfo);
+      console.log("We are now in day Grid Month view");
       return (
         <div className="bg-green-200 opacity-50 text-black p-1 rounded text-center">
           {eventInfo.event.title} (All Day Background)
@@ -70,15 +72,16 @@ export default function Calendar() {
       // Render with different styling in week or day views
       return (
         <div className="bg-green-100 opacity-75 text-black p-1 rounded text-center">
-          {eventInfo.event.title} (Timed Background)
+          {eventInfo.event.title} <br></br>
+          (Kraken Rink #1)
         </div>
       );
     }
-
     // Default rendering for non-background events
     return (
       <>
-        <b>{eventInfo.timeText}</b>
+        {/* <b>{eventInfo.timeText}</b> {" |    "} */}
+        <b className="mr-2">{eventInfo.timeText}</b>
         <i>{eventInfo.event.title}</i>
       </>
     );
@@ -169,7 +172,7 @@ export default function Calendar() {
       <Tabs defaultValue="calendar" className="w-full">
         <TabsList>
           <TabsTrigger value="calendar">Calendar</TabsTrigger>
-          <TabsTrigger value="availabile_time">My Available Time</TabsTrigger>
+          <TabsTrigger value="availabile_time">Available Time</TabsTrigger>
           <TabsTrigger value="create_bookings">Create Bookings</TabsTrigger>
         </TabsList>
         <TabsContent value="calendar">
@@ -206,7 +209,7 @@ export default function Calendar() {
               aspectRatio={1.35}
               contentHeight="auto"
               views={{
-                dayGridMonth: { eventLimit: 5 },
+                dayGridMonth: { nowIndicator: true },
                 timeGridWeek: { nowIndicator: true },
                 timeGridDay: { nowIndicator: true },
               }}
