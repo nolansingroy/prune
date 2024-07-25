@@ -25,7 +25,7 @@ import {
   DialogTrigger,
   DialogDescription,
 } from "@/components/ui/dialog";
-import { auth, firestore } from "../../firebase";
+import { auth, db } from "../../firebase";
 import {
   createUserWithEmailAndPassword,
   GoogleAuthProvider,

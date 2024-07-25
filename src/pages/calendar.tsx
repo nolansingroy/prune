@@ -16,7 +16,7 @@ import { createEvent } from "../services/userService";
 import { Timestamp } from "firebase/firestore";
 import useFetchEvents from "../hooks/useFetchEvents";
 // import type { EventInput } from "@fullcalendar/core";
-import { EventInput } from "./types";
+import { EventInput } from "../interfaces/types";
 
 export default function Calendar() {
   const calendarRef = useRef<FullCalendar>(null);

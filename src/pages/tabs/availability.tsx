@@ -11,7 +11,7 @@ import {
 } from "firebase/firestore";
 import { auth, db } from "../../../firebase";
 import { format } from "date-fns";
-import { EventInput } from "./../types";
+import { EventInput } from "../../interfaces/types";
 
 import {
   CaretSortIcon,
