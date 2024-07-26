@@ -136,7 +136,7 @@ const Header = () => {
   };
 
   return (
-    <header className="bg-custom-grey text-white">
+    <header className="bg-custom-fade-blue text-white">
       <nav>
         <ul className="flex items-center justify-between p-4">
           {/* {authUser && (
@@ -149,16 +149,16 @@ const Header = () => {
           <li className="flex items-center">
             <Link
               href="/"
-              className="flex items-center text-3xl hover:text-gray-300"
+              className="flex items-center text-3xl hover:text-gray-300 pl-10"
             >
               <Image
-                src="/RebusProLogo.svg"
+                src="/RebusPrimaryHorizontalDark.png"
                 alt="RebusPro Logo"
-                width={50}
-                height={50}
+                width={250}
+                height={250}
                 className="inline-block"
               />
-              <p className="ml-2 text-custom-green">REBUSPRO</p>
+              {/* <p className="ml-2 text-custom-green">REBUSPRO</p> */}
             </Link>
           </li>
           <li>{renderAvatar()}</li>

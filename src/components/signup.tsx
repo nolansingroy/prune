@@ -69,7 +69,7 @@ export function Signup() {
           onChange={(e) => setEmail(e.target.value)}
         />
         <Button
-          className="text-custom-green"
+          className="text-custom-cream"
           type="submit"
           onClick={handleSignup}
         >

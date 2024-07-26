@@ -4,7 +4,7 @@ import Image from "next/image";
 
 const Footer: React.FC = () => {
   return (
-    <footer className="bg-custom-grey text-custom-green">
+    <footer className="bg-custom-fade-blue text-custom-cream">
       <nav className="flex grid-cols-1 md:flex-row md:gap-16 p-4 justify-between">
         {/* Contact Us with email link on the left */}
         <div className="text-2xl md:col-span-1 flex flex-col md:flex-row items-start md:items-center md:space-x-4">
@@ -18,14 +18,14 @@ const Footer: React.FC = () => {
         </div>
         <div className="md:col-span-1 flex items-center justify-end space-x-1">
           <Image
-            src="/RebusProLogo.svg"
+            src="/RebusPrimaryHorizontalDark.png"
             alt="RebusProLogo Logo"
-            width={50}
-            height={50}
+            width={150}
+            height={150}
             layout="intrinsic"
           />
           <div className="flex flex-col items-end justify-end space-y-3">
-            <h1 className="text-xl md:text-2xl">REBUSPRO © 2024</h1>
+            <h1 className="text-xl md:text-xl"> © 2024</h1>
           </div>
         </div>
       </nav>
