@@ -51,7 +51,7 @@ export default function Home() {
         </section>
         <div className="text-center space-y-3 pb-8 m-4">
           <h3 className="text-xl md:text-xl lg:text-2xl text-custom-cream font-bold">
-            Transform your coaching business without paying the high cost of a
+            Transform your coaching business without paying the high cost.
           </h3>
         </div>
         <div className="relative w-full">
