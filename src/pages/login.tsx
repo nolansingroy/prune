@@ -70,7 +70,7 @@ const SignIn = () => {
       const user = userCredential.user;
       console.log("User logged in successfully with email:", user.email);
       // Redirect to dashboard
-      router.push("/dashboard");
+      router.push("/calendar");
     } catch (error: any) {
       // Add type annotation to catch clause variable
       console.error("Error logging in:", error.message);
