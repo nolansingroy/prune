@@ -29,6 +29,64 @@ export default function Calendar() {
     setEvents(fetchedEvents);
   }, [fetchedEvents]);
 
+  // const renderEventContent = (eventInfo: {
+  //   event: {
+  //     extendedProps: { isBackgroundEvent: any };
+  //     title:
+  //       | string
+  //       | number
+  //       | bigint
+  //       | boolean
+  //       | React.ReactElement<any, string | React.JSXElementConstructor<any>>
+  //       | Iterable<React.ReactNode>
+  //       | Promise<React.AwaitedReactNode>
+  //       | null
+  //       | undefined;
+  //   };
+  //   view: { type: string };
+  //   timeText:
+  //     | string
+  //     | number
+  //     | bigint
+  //     | boolean
+  //     | React.ReactElement<any, string | React.JSXElementConstructor<any>>
+  //     | Iterable<React.ReactNode>
+  //     | React.ReactPortal
+  //     | Promise<React.AwaitedReactNode>
+  //     | null
+  //     | undefined;
+  // }) => {
+  //   const { isBackgroundEvent } = eventInfo.event.extendedProps;
+
+  //   // Check if it's the month view and the event is a background event
+  //   if (eventInfo.view.type === "dayGridMonth" && isBackgroundEvent) {
+  //     // Render as an all-day event in month view with custom styling
+  //     console.log("eventInfo", eventInfo);
+  //     console.log("We are now in day Grid Month view");
+  //     return (
+  //       <div className="bg-green-200 opacity-50 text-black p-1 rounded text-center">
+  //         {eventInfo.event.title} (All Day Background)
+  //       </div>
+  //     );
+  //   } else if (isBackgroundEvent) {
+  //     // Render with different styling in week or day views
+  //     return (
+  //       <div className="bg-green-100 opacity-75 text-black p-1 rounded text-center">
+  //         {eventInfo.event.title} <br></br>
+  //         (Kraken Rink #1)
+  //       </div>
+  //     );
+  //   }
+  //   // Default rendering for non-background events
+  //   return (
+  //     <>
+  //       {/* <b>{eventInfo.timeText}</b> {" |    "} */}
+  //       <b className="mr-2">{eventInfo.timeText}</b>
+  //       <i>{eventInfo.event.title}</i>
+  //     </>
+  //   );
+  // };
+
   const renderEventContent = (eventInfo: {
     event: {
       extendedProps: { isBackgroundEvent: any };
@@ -57,30 +115,36 @@ export default function Calendar() {
       | undefined;
   }) => {
     const { isBackgroundEvent } = eventInfo.event.extendedProps;
+    console.log("--- Event Info:", eventInfo);
 
-    // Check if it's the month view and the event is a background event
-    if (eventInfo.view.type === "dayGridMonth" && isBackgroundEvent) {
-      // Render as an all-day event in month view with custom styling
-      console.log("eventInfo", eventInfo);
-      console.log("We are now in day Grid Month view");
-      return (
-        <div className="bg-green-200 opacity-50 text-black p-1 rounded text-center">
-          {eventInfo.event.title} (All Day Background)
-        </div>
-      );
-    } else if (isBackgroundEvent) {
-      // Render with different styling in week or day views
-      return (
-        <div className="bg-green-100 opacity-75 text-black p-1 rounded text-center">
-          {eventInfo.event.title} <br></br>
-          (Kraken Rink #1)
-        </div>
-      );
+    // Custom rendering for background events in different views
+    if (isBackgroundEvent) {
+      if (eventInfo.view.type === "dayGridMonth") {
+        console.log("Rendering background event in month view:", eventInfo);
+        // Render as an all-day event in month view with custom styling
+        return (
+          <div className="bg-green-200 opacity-50 text-black p-1 rounded text-center">
+            {eventInfo.event.title}
+          </div>
+        );
+      } else {
+        // Render with different styling in week or day views
+        console.log(
+          "Rendering background event in week or day view:",
+          eventInfo
+        );
+        return (
+          <div className="bg-green-100 opacity-75 text-black p-1 rounded text-center">
+            {eventInfo.event.title} <br />
+            (Background Event)
+          </div>
+        );
+      }
     }
+
     // Default rendering for non-background events
     return (
       <>
-        {/* <b>{eventInfo.timeText}</b> {" |    "} */}
         <b className="mr-2">{eventInfo.timeText}</b>
         <i>{eventInfo.event.title}</i>
       </>
@@ -96,6 +160,72 @@ export default function Calendar() {
     setIsDialogOpen(false);
     setSelectInfo(null);
   };
+
+  // const handleSave = async ({
+  //   title,
+  //   isBackgroundEvent,
+  //   startTime,
+  //   endTime,
+  // }: {
+  //   title: string;
+  //   isBackgroundEvent: boolean;
+  //   startTime: string;
+  //   endTime: string;
+  // }) => {
+  //   if (!selectInfo) return;
+
+  //   let calendarApi = selectInfo.view.calendar;
+  //   calendarApi.unselect(); // Unselect the current selection on the calendar
+
+  //   if (title) {
+  //     let startDateTime = new Date(selectInfo.startStr); // Use startStr which includes the selected date
+  //     let endDateTime = new Date(selectInfo.startStr); // Initialize endDateTime with the same day to prevent date rollover
+
+  //     if (startTime && endTime) {
+  //       const [startHour, startMinute] = startTime.split(":").map(Number);
+  //       const [endHour, endMinute] = endTime.split(":").map(Number);
+
+  //       startDateTime.setHours(startHour, startMinute, 0, 0); // Set start time with seconds and milliseconds reset to 0
+  //       endDateTime.setHours(endHour, endMinute, 0, 0); // Set end time with seconds and milliseconds reset to 0
+  //     }
+
+  //     // Check if the end date/time is before the start date/time
+  //     if (endDateTime <= startDateTime) {
+  //       endDateTime.setDate(endDateTime.getDate() + 1); // Move the end date to the next day if end time is before start time
+  //     }
+
+  //     const event: EventInput = {
+  //       title,
+  //       start: startDateTime,
+  //       end: endDateTime,
+  //       description: "",
+  //       display: isBackgroundEvent ? "background" : "auto",
+  //       className: isBackgroundEvent ? "fc-bg-event" : "",
+  //       isBackgroundEvent,
+  //     };
+
+  //     try {
+  //       const user = auth.currentUser;
+  //       if (user) {
+  //         await createEvent(user.uid, event);
+  //         console.log("Event created in Firestore");
+  //         console.log(`start time: ${startDateTime} | End time ${endDateTime}`);
+
+  //         setEvents((prevEvents) => [
+  //           ...prevEvents,
+  //           {
+  //             ...event,
+  //             id: String(Date.now()), // Assign a temporary ID
+  //           },
+  //         ]);
+  //       }
+  //     } catch (error) {
+  //       console.error("Error creating event in Firestore:", error);
+  //     }
+  //   }
+
+  //   handleDialogClose();
+  // };
 
   const handleSave = async ({
     title,
