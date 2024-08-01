@@ -1,4 +1,4 @@
-import React, { useState, ChangeEvent, MouseEvent } from "react";
+import React, { useState, ChangeEvent, MouseEvent, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -55,16 +55,32 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
       startTime,
       endTime,
     });
+    handleClose();
+  };
+
+  const handleClose = () => {
+    setTitle("");
+    setDescription("");
+    setLocation("");
+    setIsBackgroundEvent(true);
+    setStartTime("");
+    setEndTime("");
     onClose();
   };
 
+  useEffect(() => {
+    if (!isOpen) {
+      handleClose();
+    }
+  }, [isOpen]);
+
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Add Availability</DialogTitle>
           <DialogDescription>
-            add your availability to the calendar
+            Add your availability to the calendar
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4">
@@ -137,7 +153,7 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
           )}
         </div>
         <DialogFooter>
-          <Button variant="secondary" onClick={onClose}>
+          <Button variant="secondary" onClick={handleClose}>
             Cancel
           </Button>
           <Button variant="secondary" onClick={handleSave}>
