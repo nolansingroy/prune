@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { auth, db } from "../../firebase";
 import { collection, query, getDocs } from "firebase/firestore";
-import { EventInput } from "../interfaces/types"; // Ensure correct import path
+import { EventInput } from "../interfaces/types";
 
 const useFetchEvents = () => {
   const [events, setEvents] = useState<EventInput[]>([]);
