@@ -17,6 +17,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox"; // Assuming you have a Checkbox component
+import { CheckedState } from "@radix-ui/react-checkbox"; // Ensure you import the correct type
 
 interface EventFormDialogProps {
   isOpen: boolean;
@@ -28,8 +30,25 @@ interface EventFormDialogProps {
     isBackgroundEvent: boolean;
     startTime: string;
     endTime: string;
+    recurrence?: {
+      daysOfWeek: number[];
+      startTime: string;
+      endTime: string;
+      startRecur: string;
+      endRecur: string;
+    };
   }) => void;
 }
+
+const daysOfWeekOptions = [
+  { value: 0, label: "Sunday" },
+  { value: 1, label: "Monday" },
+  { value: 2, label: "Tuesday" },
+  { value: 3, label: "Wednesday" },
+  { value: 4, label: "Thursday" },
+  { value: 5, label: "Friday" },
+  { value: 6, label: "Saturday" },
+];
 
 const EventFormDialog: React.FC<EventFormDialogProps> = ({
   isOpen,
@@ -42,6 +61,10 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
   const [isBackgroundEvent, setIsBackgroundEvent] = useState(true);
   const [startTime, setStartTime] = useState("");
   const [endTime, setEndTime] = useState("");
+  const [isRecurring, setIsRecurring] = useState(false);
+  const [daysOfWeek, setDaysOfWeek] = useState<number[]>([]);
+  const [startRecur, setStartRecur] = useState("");
+  const [endRecur, setEndRecur] = useState("");
 
   const presetLocations = ["Kraken 1", "Kraken 2", "Kraken 3"];
 
@@ -54,6 +77,15 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
       isBackgroundEvent,
       startTime,
       endTime,
+      recurrence: isRecurring
+        ? {
+            daysOfWeek,
+            startTime,
+            endTime,
+            startRecur,
+            endRecur,
+          }
+        : undefined,
     });
     handleClose();
   };
@@ -65,6 +97,10 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
     setIsBackgroundEvent(true);
     setStartTime("");
     setEndTime("");
+    setIsRecurring(false);
+    setDaysOfWeek([]);
+    setStartRecur("");
+    setEndRecur("");
     onClose();
   };
 
@@ -73,6 +109,24 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
       handleClose();
     }
   }, [isOpen]);
+
+  const handleDaysOfWeekChange = (checked: CheckedState, value: number) => {
+    setDaysOfWeek((prev) =>
+      checked ? [...prev, value] : prev.filter((d) => d !== value)
+    );
+  };
+
+  const handleCheckedChange = (checked: CheckedState) => {
+    if (checked !== "indeterminate") {
+      setIsRecurring(checked);
+    }
+  };
+
+  const handleBackgroundChange = (checked: CheckedState) => {
+    if (checked !== "indeterminate") {
+      setIsBackgroundEvent(checked);
+    }
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
@@ -123,29 +177,91 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
               </SelectContent>
             </Select>
           </div>
-          {isBackgroundEvent && (
+          <div>
+            <Label className="block text-sm font-medium text-gray-700">
+              Background Event
+            </Label>
+            <Checkbox
+              checked={isBackgroundEvent}
+              onCheckedChange={handleBackgroundChange}
+            >
+              Is Background Event
+            </Checkbox>
+          </div>
+          <div>
+            <Label className="block text-sm font-medium text-gray-700">
+              Start Time
+            </Label>
+            <Input
+              type="time"
+              value={startTime}
+              onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                setStartTime(e.target.value)
+              }
+            />
+          </div>
+          <div>
+            <Label className="block text-sm font-medium text-gray-700">
+              End Time
+            </Label>
+            <Input
+              type="time"
+              value={endTime}
+              onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                setEndTime(e.target.value)
+              }
+            />
+          </div>
+          <div>
+            <Label className="block text-sm font-medium text-gray-700">
+              Recurring Event
+            </Label>
+            <Checkbox
+              checked={isRecurring}
+              onCheckedChange={handleCheckedChange}
+            >
+              Is Recurring Event
+            </Checkbox>
+          </div>
+          {isRecurring && (
             <>
               <div>
                 <Label className="block text-sm font-medium text-gray-700">
-                  Start Time
+                  Days of Week
+                </Label>
+                {daysOfWeekOptions.map((day) => (
+                  <Checkbox
+                    key={day.value}
+                    checked={daysOfWeek.includes(day.value)}
+                    onCheckedChange={(checked) =>
+                      handleDaysOfWeekChange(checked, day.value)
+                    }
+                  >
+                    {day.label}
+                  </Checkbox>
+                ))}
+              </div>
+              <div>
+                <Label className="block text-sm font-medium text-gray-700">
+                  Start Recurrence
                 </Label>
                 <Input
-                  type="time"
-                  value={startTime}
+                  type="date"
+                  value={startRecur}
                   onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                    setStartTime(e.target.value)
+                    setStartRecur(e.target.value)
                   }
                 />
               </div>
               <div>
                 <Label className="block text-sm font-medium text-gray-700">
-                  End Time
+                  End Recurrence
                 </Label>
                 <Input
-                  type="time"
-                  value={endTime}
+                  type="date"
+                  value={endRecur}
                   onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                    setEndTime(e.target.value)
+                    setEndRecur(e.target.value)
                   }
                 />
               </div>

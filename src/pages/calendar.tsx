@@ -6,7 +6,8 @@ import dayGridPlugin from "@fullcalendar/daygrid";
 import resourceTimelinePlugin from "@fullcalendar/resource-timeline";
 import interactionPlugin from "@fullcalendar/interaction";
 import timeGridPlugin from "@fullcalendar/timegrid";
-import { DateSelectArg, EventApi } from "@fullcalendar/core";
+import rrulePlugin from "@fullcalendar/rrule"; // Import the rrulePlugin
+import { DateSelectArg, EventApi, EventContentArg } from "@fullcalendar/core";
 import EventFormDialog from "./EventFormModal";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Availability from "../pages/tabs/availability";
@@ -27,27 +28,12 @@ export default function Calendar() {
     setEvents(fetchedEvents);
   }, [fetchedEvents]);
 
-  const renderEventContent = (eventInfo: {
-    event: EventApi;
-    view: { type: string };
-    timeText:
-      | string
-      | number
-      | bigint
-      | boolean
-      | React.ReactElement<any, string | React.JSXElementConstructor<any>>
-      | Iterable<React.ReactNode>
-      | React.ReactPortal
-      | Promise<React.ReactNode>
-      | null
-      | undefined;
-  }) => {
+  const renderEventContent = (eventInfo: EventContentArg) => {
     const { isBackgroundEvent } = eventInfo.event.extendedProps;
-    const { classNames } = eventInfo.event;
+    const classNames = eventInfo.event.classNames || [];
 
     console.log("--- Event Info:", eventInfo);
 
-    // Custom rendering for events with the custom class name
     if (classNames.includes("bg-event-mirror")) {
       return (
         <div className="bg-blue-200 opacity-50 text-black p-1 rounded text-center border border-blue-500">
@@ -56,18 +42,15 @@ export default function Calendar() {
       );
     }
 
-    // Custom rendering for background events in different views
     if (isBackgroundEvent) {
       if (eventInfo.view.type === "dayGridMonth") {
         console.log("Rendering background event in month view:", eventInfo);
-        // Render as an all-day event in month view with custom styling
         return (
           <div className="bg-green-200 opacity-50 text-black p-1 rounded text-center">
             {eventInfo.event.title}
           </div>
         );
       } else {
-        // Render with different styling in week or day views
         console.log(
           "Rendering background event in week or day view:",
           eventInfo
@@ -81,10 +64,8 @@ export default function Calendar() {
       }
     }
 
-    // Default rendering for non-background events
     return (
       <>
-        {/* <b className="mr-2">{eventInfo.timeText}</b> */}
         <i>{eventInfo.event.title}</i>
       </>
     );
@@ -99,68 +80,161 @@ export default function Calendar() {
     setIsDialogOpen(false);
     setSelectInfo(null);
   };
+  // const handleSave = async ({
+  //   title,
+  //   description,
+  //   location,
+  //   isBackgroundEvent,
+  //   startTime,
+  //   endTime,
+  //   recurrence,
+  // }: {
+  //   title: string;
+  //   description: string;
+  //   location: string;
+  //   isBackgroundEvent: boolean;
+  //   startTime: string;
+  //   endTime: string;
+  //   recurrence?: {
+  //     daysOfWeek: number[];
+  //     startTime: string;
+  //     endTime: string;
+  //     startRecur: string;
+  //     endRecur: string;
+  //   };
+  // }) => {
+  //   if (!selectInfo) return;
+
+  //   let calendarApi = selectInfo.view.calendar;
+  //   calendarApi.unselect();
+
+  //   // Convert startTime and endTime to Date objects
+  //   let startDateTime = new Date(selectInfo.startStr);
+  //   let endDateTime = new Date(selectInfo.startStr);
+
+  //   if (startTime && endTime) {
+  //     const [startHour, startMinute] = startTime.split(":").map(Number);
+  //     const [endHour, endMinute] = endTime.split(":").map(Number);
+
+  //     startDateTime.setHours(startHour, startMinute, 0, 0);
+  //     endDateTime.setHours(endHour, endMinute, 0, 0);
+
+  //     if (endDateTime <= startDateTime) {
+  //       endDateTime.setDate(endDateTime.getDate() + 1);
+  //     }
+  //   }
+
+  //   const event: EventInput = {
+  //     title,
+  //     start: startDateTime,
+  //     end: endDateTime,
+  //     description,
+  //     display: isBackgroundEvent ? "background" : "auto",
+  //     className: isBackgroundEvent ? "custom-bg-event" : "",
+  //     isBackgroundEvent,
+  //     recurrence: recurrence || undefined,
+  //   };
+
+  //   try {
+  //     const user = auth.currentUser;
+  //     if (user) {
+  //       await createEvent(user.uid, event);
+  //       console.log("Event created in Firestore");
+
+  //       setEvents((prevEvents) => [
+  //         ...prevEvents,
+  //         {
+  //           ...event,
+  //           id: String(Date.now()),
+  //         },
+  //       ]);
+  //     }
+  //   } catch (error) {
+  //     console.error("Error creating event in Firestore:", error);
+  //   }
+
+  //   handleDialogClose();
+  // };
 
   const handleSave = async ({
     title,
+    description,
+    location,
     isBackgroundEvent,
     startTime,
     endTime,
+    recurrence,
   }: {
     title: string;
+    description: string;
+    location: string;
     isBackgroundEvent: boolean;
     startTime: string;
     endTime: string;
+    recurrence?: {
+      daysOfWeek: number[];
+      startTime: string;
+      endTime: string;
+      startRecur: string;
+      endRecur: string;
+    };
   }) => {
     if (!selectInfo) return;
 
     let calendarApi = selectInfo.view.calendar;
-    calendarApi.unselect(); // Unselect the current selection on the calendar
+    calendarApi.unselect();
 
-    if (title) {
-      let startDateTime = new Date(selectInfo.startStr); // Use startStr which includes the selected date
-      let endDateTime = new Date(selectInfo.startStr); // Initialize endDateTime with the same day to prevent date rollover
+    // Convert startTime and endTime to Date objects
+    let startDateTime = new Date(selectInfo.startStr);
+    let endDateTime = new Date(selectInfo.startStr);
 
-      if (startTime && endTime) {
-        const [startHour, startMinute] = startTime.split(":").map(Number);
-        const [endHour, endMinute] = endTime.split(":").map(Number);
+    if (startTime && endTime) {
+      const [startHour, startMinute] = startTime.split(":").map(Number);
+      const [endHour, endMinute] = endTime.split(":").map(Number);
 
-        startDateTime.setHours(startHour, startMinute, 0, 0); // Set start time with seconds and milliseconds reset to 0
-        endDateTime.setHours(endHour, endMinute, 0, 0); // Set end time with seconds and milliseconds reset to 0
-      }
+      startDateTime.setHours(startHour, startMinute, 0, 0);
+      endDateTime.setHours(endHour, endMinute, 0, 0);
 
-      // Check if the end date/time is before the start date/time
       if (endDateTime <= startDateTime) {
-        endDateTime.setDate(endDateTime.getDate() + 1); // Move the end date to the next day if end time is before start time
+        endDateTime.setDate(endDateTime.getDate() + 1);
       }
+    }
 
-      const event: EventInput = {
-        title,
-        start: startDateTime,
-        end: endDateTime,
-        description: "",
-        display: isBackgroundEvent ? "background" : "auto",
-        className: isBackgroundEvent ? "custom-bg-event" : "",
-        isBackgroundEvent,
-      };
+    const event: EventInput = {
+      title,
+      start: startDateTime,
+      end: endDateTime,
+      description,
+      display: isBackgroundEvent ? "background" : "auto",
+      className: isBackgroundEvent ? "custom-bg-event" : "",
+      isBackgroundEvent,
+      recurrence: recurrence
+        ? {
+            daysOfWeek: recurrence.daysOfWeek,
+            startTime: recurrence.startTime,
+            endTime: recurrence.endTime,
+            startRecur: recurrence.startRecur,
+            endRecur: recurrence.endRecur,
+          }
+        : undefined,
+    };
 
-      try {
-        const user = auth.currentUser;
-        if (user) {
-          await createEvent(user.uid, event);
-          console.log("Event created in Firestore");
-          console.log(`start time: ${startDateTime} | End time ${endDateTime}`);
+    try {
+      const user = auth.currentUser;
+      if (user) {
+        await createEvent(user.uid, event);
+        console.log("Event created in Firestore");
 
-          setEvents((prevEvents) => [
-            ...prevEvents,
-            {
-              ...event,
-              id: String(Date.now()), // Assign a temporary ID
-            },
-          ]);
-        }
-      } catch (error) {
-        console.error("Error creating event in Firestore:", error);
+        setEvents((prevEvents) => [
+          ...prevEvents,
+          {
+            ...event,
+            id: String(Date.now()),
+          },
+        ]);
       }
+    } catch (error) {
+      console.error("Error creating event in Firestore:", error);
     }
 
     handleDialogClose();
@@ -189,6 +263,7 @@ export default function Calendar() {
                 resourceTimelinePlugin,
                 interactionPlugin,
                 timeGridPlugin,
+                rrulePlugin,
               ]}
               headerToolbar={{
                 left: "prev,next today",
@@ -196,13 +271,30 @@ export default function Calendar() {
                 right: "dayGridMonth,timeGridWeek,timeGridDay",
               }}
               slotDuration="00:15:00"
-              initialView="timeGridWeek" //dayGridMonth
+              initialView="timeGridWeek"
               nowIndicator={true}
               editable={true}
               selectable={true}
               selectMirror={true}
               select={handleSelect}
-              events={events}
+              events={events.map((event) => {
+                if (event.recurrence) {
+                  return {
+                    ...event,
+                    rrule: {
+                      freq: "weekly",
+                      interval: 1,
+                      byweekday: event.recurrence.daysOfWeek,
+                      dtstart: event.recurrence.startRecur,
+                      until: event.recurrence.endRecur,
+                    },
+                    startTime: event.recurrence.startTime,
+                    endTime: event.recurrence.endTime,
+                  };
+                } else {
+                  return event;
+                }
+              })}
               eventContent={renderEventContent}
               resources={[
                 { id: "a", title: "Auditorium A" },

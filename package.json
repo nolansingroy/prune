@@ -9,12 +9,13 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@fullcalendar/core": "^6.1.14",
-    "@fullcalendar/daygrid": "^6.1.14",
+    "@fullcalendar/core": "^6.1.15",
+    "@fullcalendar/daygrid": "^6.1.15",
     "@fullcalendar/interaction": "^6.1.14",
     "@fullcalendar/react": "^6.1.14",
     "@fullcalendar/resource": "^6.1.14",
     "@fullcalendar/resource-timeline": "^6.1.14",
+    "@fullcalendar/rrule": "^6.1.15",
     "@fullcalendar/timegrid": "^6.1.14",
     "@hookform/resolvers": "^3.9.0",
     "@radix-ui/react-avatar": "^1.0.4",

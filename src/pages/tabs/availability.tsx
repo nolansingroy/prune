@@ -178,8 +178,8 @@ export default function Availability() {
                 />
               </TableCell>
               <TableCell>{event.id}</TableCell>
-              <TableCell>{event.start.toLocaleString()}</TableCell>
-              <TableCell>{event.end.toLocaleString()}</TableCell>
+              <TableCell>{event.start?.toLocaleString() ?? ""}</TableCell>
+              <TableCell>{event.end?.toLocaleString() ?? ""}</TableCell>
               <TableCell>{event.title}</TableCell>
               <TableCell>{event.description}</TableCell>
             </TableRow>
