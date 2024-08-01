@@ -17,8 +17,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox"; // Assuming you have a Checkbox component
-import { CheckedState } from "@radix-ui/react-checkbox"; // Ensure you import the correct type
+import { Checkbox } from "@/components/ui/checkbox";
+import { CheckedState } from "@radix-ui/react-checkbox";
 
 interface EventFormDialogProps {
   isOpen: boolean;
