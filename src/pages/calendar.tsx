@@ -6,16 +6,14 @@ import dayGridPlugin from "@fullcalendar/daygrid";
 import resourceTimelinePlugin from "@fullcalendar/resource-timeline";
 import interactionPlugin from "@fullcalendar/interaction";
 import timeGridPlugin from "@fullcalendar/timegrid";
-import { DateSelectArg } from "@fullcalendar/core";
+import { DateSelectArg, EventApi } from "@fullcalendar/core";
 import EventFormDialog from "./EventFormModal";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Availability from "../pages/tabs/availability";
 import CreateBookings from "./tabs/create_bookings";
 import { auth, db } from "../../firebase";
 import { createEvent } from "../services/userService";
-import { Timestamp } from "firebase/firestore";
 import useFetchEvents from "../hooks/useFetchEvents";
-// import type { EventInput } from "@fullcalendar/core";
 import { EventInput } from "../interfaces/types";
 
 export default function Calendar() {
@@ -29,78 +27,8 @@ export default function Calendar() {
     setEvents(fetchedEvents);
   }, [fetchedEvents]);
 
-  // const renderEventContent = (eventInfo: {
-  //   event: {
-  //     extendedProps: { isBackgroundEvent: any };
-  //     title:
-  //       | string
-  //       | number
-  //       | bigint
-  //       | boolean
-  //       | React.ReactElement<any, string | React.JSXElementConstructor<any>>
-  //       | Iterable<React.ReactNode>
-  //       | Promise<React.AwaitedReactNode>
-  //       | null
-  //       | undefined;
-  //   };
-  //   view: { type: string };
-  //   timeText:
-  //     | string
-  //     | number
-  //     | bigint
-  //     | boolean
-  //     | React.ReactElement<any, string | React.JSXElementConstructor<any>>
-  //     | Iterable<React.ReactNode>
-  //     | React.ReactPortal
-  //     | Promise<React.AwaitedReactNode>
-  //     | null
-  //     | undefined;
-  // }) => {
-  //   const { isBackgroundEvent } = eventInfo.event.extendedProps;
-
-  //   // Check if it's the month view and the event is a background event
-  //   if (eventInfo.view.type === "dayGridMonth" && isBackgroundEvent) {
-  //     // Render as an all-day event in month view with custom styling
-  //     console.log("eventInfo", eventInfo);
-  //     console.log("We are now in day Grid Month view");
-  //     return (
-  //       <div className="bg-green-200 opacity-50 text-black p-1 rounded text-center">
-  //         {eventInfo.event.title} (All Day Background)
-  //       </div>
-  //     );
-  //   } else if (isBackgroundEvent) {
-  //     // Render with different styling in week or day views
-  //     return (
-  //       <div className="bg-green-100 opacity-75 text-black p-1 rounded text-center">
-  //         {eventInfo.event.title} <br></br>
-  //         (Kraken Rink #1)
-  //       </div>
-  //     );
-  //   }
-  //   // Default rendering for non-background events
-  //   return (
-  //     <>
-  //       {/* <b>{eventInfo.timeText}</b> {" |    "} */}
-  //       <b className="mr-2">{eventInfo.timeText}</b>
-  //       <i>{eventInfo.event.title}</i>
-  //     </>
-  //   );
-  // };
-
   const renderEventContent = (eventInfo: {
-    event: {
-      extendedProps: { isBackgroundEvent: any };
-      title:
-        | string
-        | number
-        | bigint
-        | boolean
-        | React.ReactElement<any, string | React.JSXElementConstructor<any>>
-        | Iterable<React.ReactNode>
-        | Promise<React.AwaitedReactNode>
-        | null
-        | undefined;
-    };
+    event: EventApi;
     view: { type: string };
     timeText:
       | string
@@ -110,12 +38,23 @@ export default function Calendar() {
       | React.ReactElement<any, string | React.JSXElementConstructor<any>>
       | Iterable<React.ReactNode>
       | React.ReactPortal
-      | Promise<React.AwaitedReactNode>
+      | Promise<React.ReactNode>
       | null
       | undefined;
   }) => {
     const { isBackgroundEvent } = eventInfo.event.extendedProps;
+    const { classNames } = eventInfo.event;
+
     console.log("--- Event Info:", eventInfo);
+
+    // Custom rendering for events with the custom class name
+    if (classNames.includes("bg-event-mirror")) {
+      return (
+        <div className="bg-blue-200 opacity-50 text-black p-1 rounded text-center border border-blue-500">
+          {eventInfo.event.title}
+        </div>
+      );
+    }
 
     // Custom rendering for background events in different views
     if (isBackgroundEvent) {
@@ -145,7 +84,7 @@ export default function Calendar() {
     // Default rendering for non-background events
     return (
       <>
-        <b className="mr-2">{eventInfo.timeText}</b>
+        {/* <b className="mr-2">{eventInfo.timeText}</b> */}
         <i>{eventInfo.event.title}</i>
       </>
     );
@@ -160,72 +99,6 @@ export default function Calendar() {
     setIsDialogOpen(false);
     setSelectInfo(null);
   };
-
-  // const handleSave = async ({
-  //   title,
-  //   isBackgroundEvent,
-  //   startTime,
-  //   endTime,
-  // }: {
-  //   title: string;
-  //   isBackgroundEvent: boolean;
-  //   startTime: string;
-  //   endTime: string;
-  // }) => {
-  //   if (!selectInfo) return;
-
-  //   let calendarApi = selectInfo.view.calendar;
-  //   calendarApi.unselect(); // Unselect the current selection on the calendar
-
-  //   if (title) {
-  //     let startDateTime = new Date(selectInfo.startStr); // Use startStr which includes the selected date
-  //     let endDateTime = new Date(selectInfo.startStr); // Initialize endDateTime with the same day to prevent date rollover
-
-  //     if (startTime && endTime) {
-  //       const [startHour, startMinute] = startTime.split(":").map(Number);
-  //       const [endHour, endMinute] = endTime.split(":").map(Number);
-
-  //       startDateTime.setHours(startHour, startMinute, 0, 0); // Set start time with seconds and milliseconds reset to 0
-  //       endDateTime.setHours(endHour, endMinute, 0, 0); // Set end time with seconds and milliseconds reset to 0
-  //     }
-
-  //     // Check if the end date/time is before the start date/time
-  //     if (endDateTime <= startDateTime) {
-  //       endDateTime.setDate(endDateTime.getDate() + 1); // Move the end date to the next day if end time is before start time
-  //     }
-
-  //     const event: EventInput = {
-  //       title,
-  //       start: startDateTime,
-  //       end: endDateTime,
-  //       description: "",
-  //       display: isBackgroundEvent ? "background" : "auto",
-  //       className: isBackgroundEvent ? "fc-bg-event" : "",
-  //       isBackgroundEvent,
-  //     };
-
-  //     try {
-  //       const user = auth.currentUser;
-  //       if (user) {
-  //         await createEvent(user.uid, event);
-  //         console.log("Event created in Firestore");
-  //         console.log(`start time: ${startDateTime} | End time ${endDateTime}`);
-
-  //         setEvents((prevEvents) => [
-  //           ...prevEvents,
-  //           {
-  //             ...event,
-  //             id: String(Date.now()), // Assign a temporary ID
-  //           },
-  //         ]);
-  //       }
-  //     } catch (error) {
-  //       console.error("Error creating event in Firestore:", error);
-  //     }
-  //   }
-
-  //   handleDialogClose();
-  // };
 
   const handleSave = async ({
     title,
@@ -266,7 +139,7 @@ export default function Calendar() {
         end: endDateTime,
         description: "",
         display: isBackgroundEvent ? "background" : "auto",
-        className: isBackgroundEvent ? "fc-bg-event" : "",
+        className: isBackgroundEvent ? "custom-bg-event" : "",
         isBackgroundEvent,
       };
 
@@ -322,7 +195,8 @@ export default function Calendar() {
                 center: "title",
                 right: "dayGridMonth,timeGridWeek,timeGridDay",
               }}
-              initialView="dayGridMonth"
+              slotDuration="00:15:00"
+              initialView="timeGridWeek" //dayGridMonth
               nowIndicator={true}
               editable={true}
               selectable={true}
@@ -340,8 +214,8 @@ export default function Calendar() {
               contentHeight="auto"
               views={{
                 dayGridMonth: { nowIndicator: true },
-                timeGridWeek: { nowIndicator: true },
-                timeGridDay: { nowIndicator: true },
+                timeGridWeek: { nowIndicator: true, slotDuration: "00:10:00" },
+                timeGridDay: { nowIndicator: true, slotDuration: "00:10:00" },
               }}
             />
           </div>
