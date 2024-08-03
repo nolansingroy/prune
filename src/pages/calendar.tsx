@@ -6,7 +6,7 @@ import dayGridPlugin from "@fullcalendar/daygrid";
 import resourceTimelinePlugin from "@fullcalendar/resource-timeline";
 import interactionPlugin from "@fullcalendar/interaction";
 import timeGridPlugin from "@fullcalendar/timegrid";
-import rrulePlugin from "@fullcalendar/rrule"; // Import the rrulePlugin
+import rrulePlugin from "@fullcalendar/rrule";
 import { DateSelectArg, EventApi, EventContentArg } from "@fullcalendar/core";
 import EventFormDialog from "./EventFormModal";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
