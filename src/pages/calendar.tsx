@@ -199,6 +199,8 @@ export default function Calendar() {
                 right: "dayGridMonth,timeGridWeek,timeGridDay",
               }}
               slotDuration="00:15:00"
+              // scrollTime="07:00:00"
+              slotMinTime={"07:00:00"}
               initialView="timeGridWeek"
               nowIndicator={true}
               editable={true}
@@ -224,11 +226,6 @@ export default function Calendar() {
                 }
               })}
               eventContent={renderEventContent}
-              // resources={[
-              //   { id: "a", title: "Auditorium A" },
-              //   { id: "b", title: "Auditorium B", eventColor: "green" },
-              //   { id: "c", title: "Auditorium C", eventColor: "orange" },
-              // ]}
               height="auto"
               aspectRatio={1.35}
               contentHeight="auto"
