@@ -80,6 +80,7 @@ export default function Calendar() {
     setIsDialogOpen(false);
     setSelectInfo(null);
   };
+
   // const handleSave = async ({
   //   title,
   //   description,
@@ -156,6 +157,15 @@ export default function Calendar() {
   //   handleDialogClose();
   // };
 
+  const removeUndefinedFields = (obj: any) => {
+    return Object.entries(obj).reduce((acc, [key, value]) => {
+      if (value !== undefined) {
+        acc[key] = value;
+      }
+      return acc;
+    }, {} as any);
+  };
+
   const handleSave = async ({
     title,
     description,
@@ -200,7 +210,7 @@ export default function Calendar() {
       }
     }
 
-    const event: EventInput = {
+    let event: EventInput = {
       title,
       start: startDateTime,
       end: endDateTime,
@@ -208,16 +218,10 @@ export default function Calendar() {
       display: isBackgroundEvent ? "background" : "auto",
       className: isBackgroundEvent ? "custom-bg-event" : "",
       isBackgroundEvent,
-      recurrence: recurrence
-        ? {
-            daysOfWeek: recurrence.daysOfWeek,
-            startTime: recurrence.startTime,
-            endTime: recurrence.endTime,
-            startRecur: recurrence.startRecur,
-            endRecur: recurrence.endRecur,
-          }
-        : undefined,
+      recurrence: recurrence || undefined,
     };
+
+    event = removeUndefinedFields(event);
 
     try {
       const user = auth.currentUser;
@@ -239,6 +243,90 @@ export default function Calendar() {
 
     handleDialogClose();
   };
+
+  // const handleSave = async ({
+  //   title,
+  //   description,
+  //   location,
+  //   isBackgroundEvent,
+  //   startTime,
+  //   endTime,
+  //   recurrence,
+  // }: {
+  //   title: string;
+  //   description: string;
+  //   location: string;
+  //   isBackgroundEvent: boolean;
+  //   startTime: string;
+  //   endTime: string;
+  //   recurrence?: {
+  //     daysOfWeek: number[];
+  //     startTime: string;
+  //     endTime: string;
+  //     startRecur: string;
+  //     endRecur: string;
+  //   };
+  // }) => {
+  //   if (!selectInfo) return;
+
+  //   let calendarApi = selectInfo.view.calendar;
+  //   calendarApi.unselect();
+
+  //   // Convert startTime and endTime to Date objects
+  //   let startDateTime = new Date(selectInfo.startStr);
+  //   let endDateTime = new Date(selectInfo.startStr);
+
+  //   if (startTime && endTime) {
+  //     const [startHour, startMinute] = startTime.split(":").map(Number);
+  //     const [endHour, endMinute] = endTime.split(":").map(Number);
+
+  //     startDateTime.setHours(startHour, startMinute, 0, 0);
+  //     endDateTime.setHours(endHour, endMinute, 0, 0);
+
+  //     if (endDateTime <= startDateTime) {
+  //       endDateTime.setDate(endDateTime.getDate() + 1);
+  //     }
+  //   }
+
+  //   const event: EventInput = {
+  //     title,
+  //     start: startDateTime,
+  //     end: endDateTime,
+  //     description,
+  //     display: isBackgroundEvent ? "background" : "auto",
+  //     className: isBackgroundEvent ? "custom-bg-event" : "",
+  //     isBackgroundEvent,
+  //     recurrence: recurrence
+  //       ? {
+  //           daysOfWeek: recurrence.daysOfWeek,
+  //           startTime: recurrence.startTime,
+  //           endTime: recurrence.endTime,
+  //           startRecur: recurrence.startRecur,
+  //           endRecur: recurrence.endRecur,
+  //         }
+  //       : undefined,
+  //   };
+
+  //   try {
+  //     const user = auth.currentUser;
+  //     if (user) {
+  //       await createEvent(user.uid, event);
+  //       console.log("Event created in Firestore");
+
+  //       setEvents((prevEvents) => [
+  //         ...prevEvents,
+  //         {
+  //           ...event,
+  //           id: String(Date.now()),
+  //         },
+  //       ]);
+  //     }
+  //   } catch (error) {
+  //     console.error("Error creating event in Firestore:", error);
+  //   }
+
+  //   handleDialogClose();
+  // };
 
   if (eventsLoading) {
     return <div>Loading...</div>;

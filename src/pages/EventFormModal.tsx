@@ -19,6 +19,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { CheckedState } from "@radix-ui/react-checkbox";
+import { EventInput } from "../interfaces/types"; // Adjust the import path as needed
 
 interface EventFormDialogProps {
   isOpen: boolean;
@@ -68,9 +69,45 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
 
   const presetLocations = ["Kraken 1", "Kraken 2", "Kraken 3"];
 
+  // const handleSave = (e: MouseEvent<HTMLButtonElement>) => {
+  //   e.preventDefault();
+
+  //   const eventData = {
+  //     title,
+  //     description,
+  //     location,
+  //     isBackgroundEvent,
+  //     startTime,
+  //     endTime,
+  //     recurrence: isRecurring
+  //       ? {
+  //           daysOfWeek,
+  //           startTime,
+  //           endTime,
+  //           startRecur,
+  //           endRecur,
+  //         }
+  //       : undefined,
+  //   };
+
+  //   console.log("Event Data to Save:", eventData);
+  //   onSave(eventData);
+  //   handleClose();
+  // };
+
+  const removeUndefinedFields = (obj: any) => {
+    return Object.entries(obj).reduce((acc, [key, value]) => {
+      if (value !== undefined) {
+        acc[key] = value;
+      }
+      return acc;
+    }, {} as any);
+  };
+
   const handleSave = (e: MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
-    onSave({
+
+    const eventData = {
       title,
       description,
       location,
@@ -78,15 +115,18 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
       startTime,
       endTime,
       recurrence: isRecurring
-        ? {
+        ? removeUndefinedFields({
             daysOfWeek,
             startTime,
             endTime,
             startRecur,
             endRecur,
-          }
+          })
         : undefined,
-    });
+    };
+
+    console.log("Event Data to Save:", eventData);
+    onSave(eventData);
     handleClose();
   };
 
