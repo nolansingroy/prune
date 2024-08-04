@@ -69,32 +69,6 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
 
   const presetLocations = ["Kraken 1", "Kraken 2", "Kraken 3"];
 
-  // const handleSave = (e: MouseEvent<HTMLButtonElement>) => {
-  //   e.preventDefault();
-
-  //   const eventData = {
-  //     title,
-  //     description,
-  //     location,
-  //     isBackgroundEvent,
-  //     startTime,
-  //     endTime,
-  //     recurrence: isRecurring
-  //       ? {
-  //           daysOfWeek,
-  //           startTime,
-  //           endTime,
-  //           startRecur,
-  //           endRecur,
-  //         }
-  //       : undefined,
-  //   };
-
-  //   console.log("Event Data to Save:", eventData);
-  //   onSave(eventData);
-  //   handleClose();
-  // };
-
   const removeUndefinedFields = (obj: any) => {
     return Object.entries(obj).reduce((acc, [key, value]) => {
       if (value !== undefined) {
