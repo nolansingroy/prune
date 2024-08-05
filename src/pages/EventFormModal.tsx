@@ -42,13 +42,13 @@ interface EventFormDialogProps {
 }
 
 const daysOfWeekOptions = [
-  { value: 0, label: "Monday" },
-  { value: 1, label: "Tuesday" },
-  { value: 2, label: "Wednesday" },
-  { value: 3, label: "Thursday" },
-  { value: 4, label: "Friday" },
-  { value: 5, label: "Saturday" },
-  { value: 6, label: "Sunday" },
+  { value: 0, label: "M" },
+  { value: 1, label: "T" },
+  { value: 2, label: "W" },
+  { value: 3, label: "Th" },
+  { value: 4, label: "F" },
+  { value: 5, label: "Sa" },
+  { value: 6, label: "Su" },
 ];
 
 const EventFormDialog: React.FC<EventFormDialogProps> = ({
@@ -243,17 +243,19 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
                 <Label className="block text-sm font-medium text-gray-700">
                   Days of Week
                 </Label>
-                {daysOfWeekOptions.map((day) => (
-                  <Checkbox
-                    key={day.value}
-                    checked={daysOfWeek.includes(day.value)}
-                    onCheckedChange={(checked) =>
-                      handleDaysOfWeekChange(checked, day.value)
-                    }
-                  >
-                    {day.label}
-                  </Checkbox>
-                ))}
+                <div className="flex space-x-2">
+                  {daysOfWeekOptions.map((day) => (
+                    <div key={day.value} className="flex flex-col items-center">
+                      <Checkbox
+                        checked={daysOfWeek.includes(day.value)}
+                        onCheckedChange={(checked) =>
+                          handleDaysOfWeekChange(checked, day.value)
+                        }
+                      />
+                      <Label className="mt-1">{day.label}</Label>
+                    </div>
+                  ))}
+                </div>
               </div>
               <div>
                 <Label className="block text-sm font-medium text-gray-700">

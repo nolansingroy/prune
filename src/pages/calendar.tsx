@@ -199,8 +199,8 @@ export default function Calendar() {
                 right: "dayGridMonth,timeGridWeek,timeGridDay",
               }}
               slotDuration="00:15:00"
-              // scrollTime="07:00:00"
-              slotMinTime={"07:00:00"}
+              scrollTime={"07:00:00"}
+              slotMinTime={"06:00:00"}
               initialView="timeGridWeek"
               nowIndicator={true}
               editable={true}
