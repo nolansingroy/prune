@@ -299,7 +299,9 @@ export default function Availability() {
                       )
                     }
                   >
-                    {event.title}
+                    {event.title || (
+                      <span className="text-gray-500">Enter title</span>
+                    )}
                   </div>
                 )}
               </TableCell>
@@ -323,7 +325,9 @@ export default function Availability() {
                       )
                     }
                   >
-                    {event.description}
+                    {event.description || (
+                      <span className="text-gray-500">Enter description</span>
+                    )}
                   </div>
                 )}
               </TableCell>
