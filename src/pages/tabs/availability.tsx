@@ -62,6 +62,8 @@ import {
 import { createEvent, updateEvent } from "../../services/userService";
 import EventFormDialog from "../EventFormModal";
 
+type SortableKeys = "start" | "end" | "title";
+
 export default function Availability() {
   const [events, setEvents] = useState<EventInput[]>([]);
   const [selectedRows, setSelectedRows] = useState<Set<string>>(new Set());
@@ -72,9 +74,9 @@ export default function Availability() {
   const [editedValue, setEditedValue] = useState<string>("");
   const [search, setSearch] = useState<string>("");
   const [sortConfig, setSortConfig] = useState<{
-    key: string;
-    direction: string;
-  }>({ key: "", direction: "" });
+    key: SortableKeys;
+    direction: "asc" | "desc";
+  }>({ key: "start", direction: "asc" });
 
   useEffect(() => {
     const fetchEvents = async () => {
@@ -117,8 +119,8 @@ export default function Availability() {
     fetchEvents();
   }, []);
 
-  const handleSort = (key: string) => {
-    let direction = "asc";
+  const handleSort = (key: SortableKeys) => {
+    let direction: "asc" | "desc" = "asc";
     if (sortConfig.key === key && sortConfig.direction === "asc") {
       direction = "desc";
     }
@@ -139,7 +141,7 @@ export default function Availability() {
   const filteredEvents = events.filter(
     (event) =>
       event.title.toLowerCase().includes(search.toLowerCase()) ||
-      event.description.toLowerCase().includes(search.toLowerCase())
+      (event.description ?? "").toLowerCase().includes(search.toLowerCase())
   );
 
   const toggleRowSelection = (id: string) => {
