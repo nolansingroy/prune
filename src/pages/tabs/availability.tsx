@@ -174,11 +174,20 @@ export default function Availability() {
     setSelectedRows(new Set());
   };
 
-  const handleCheckboxChange = (
-    e: React.FormEvent<HTMLButtonElement>,
-    id: string | undefined
-  ) => {
-    e.stopPropagation(); // Prevent the event from bubbling
+  const handleSelectAllChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const allSelected = e.target.checked;
+    if (allSelected) {
+      const newSelectedRows = new Set<string>();
+      filteredEvents.forEach((event) => {
+        if (event.id) newSelectedRows.add(event.id);
+      });
+      setSelectedRows(newSelectedRows);
+    } else {
+      setSelectedRows(new Set());
+    }
+  };
+
+  const handleCheckboxChange = (id: string | undefined) => {
     if (id) {
       toggleRowSelection(id);
     }
@@ -236,18 +245,16 @@ export default function Availability() {
           <TableRow>
             <TableHead>
               <Checkbox
-                checked={selectedRows.size === events.length}
-                onChange={(e) => {
-                  e.stopPropagation(); // Correctly stop propagation
-                  const allSelected = selectedRows.size === events.length;
-                  if (allSelected) {
-                    setSelectedRows(new Set());
-                  } else {
+                checked={selectedRows.size === filteredEvents.length}
+                onCheckedChange={(checked) => {
+                  if (checked) {
                     const newSelectedRows = new Set<string>();
-                    events.forEach((event) => {
+                    filteredEvents.forEach((event) => {
                       if (event.id) newSelectedRows.add(event.id);
                     });
                     setSelectedRows(newSelectedRows);
+                  } else {
+                    setSelectedRows(new Set());
                   }
                 }}
               />
@@ -277,7 +284,7 @@ export default function Availability() {
                 </button>
               </div>
             </TableHead>
-            <TableHead>Description</TableHead>
+            <TableHead>Notes</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -286,7 +293,7 @@ export default function Availability() {
               <TableCell>
                 <Checkbox
                   checked={selectedRows.has(event.id || "")}
-                  onChange={(e) => handleCheckboxChange(e, event.id)}
+                  onCheckedChange={() => handleCheckboxChange(event.id)}
                 />
               </TableCell>
               <TableCell>{event.id}</TableCell>
