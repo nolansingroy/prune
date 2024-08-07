@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { auth, db } from "../../firebase";
 import { collection, query, getDocs } from "firebase/firestore";
 import { EventInput } from "../interfaces/types";
+import { Timestamp } from "firebase/firestore"; // Import Timestamp type from Firestore
 
 const useFetchEvents = () => {
   const [events, setEvents] = useState<EventInput[]>([]);
@@ -16,11 +17,19 @@ const useFetchEvents = () => {
         const querySnapshot = await getDocs(q);
         const eventsData = querySnapshot.docs.map((doc) => {
           const data = doc.data();
+
+          // Ensure that start and end are Firestore Timestamps before calling toDate()
+          const startTimestamp =
+            data.start instanceof Timestamp ? data.start : null;
+          const endTimestamp = data.end instanceof Timestamp ? data.end : null;
+
           const event: EventInput = {
             id: doc.id,
             title: data.title || "No title", // Ensure a title is always present
-            start: data.start.toDate(), // Convert Firestore Timestamp to Date
-            end: data.end?.toDate() || data.start.toDate(), // Provide a default or use the start date
+            start: startTimestamp ? startTimestamp.toDate() : new Date(), // Convert Firestore Timestamp to Date
+            end: endTimestamp
+              ? endTimestamp.toDate()
+              : startTimestamp?.toDate() || new Date(), // Provide a default or use the start date
             description: data.description || "", // Include description or a default
             display: data.isBackgroundEvent ? "background" : "auto", // Display as background if specified
             isBackgroundEvent: !!data.isBackgroundEvent, // Ensure this is a boolean
