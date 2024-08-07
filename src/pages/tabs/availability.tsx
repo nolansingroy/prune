@@ -70,6 +70,11 @@ export default function Availability() {
     field: string;
   } | null>(null);
   const [editedValue, setEditedValue] = useState<string>("");
+  const [search, setSearch] = useState<string>("");
+  const [sortConfig, setSortConfig] = useState<{
+    key: string;
+    direction: string;
+  }>({ key: "", direction: "" });
 
   useEffect(() => {
     const fetchEvents = async () => {
@@ -111,6 +116,31 @@ export default function Availability() {
 
     fetchEvents();
   }, []);
+
+  const handleSort = (key: string) => {
+    let direction = "asc";
+    if (sortConfig.key === key && sortConfig.direction === "asc") {
+      direction = "desc";
+    }
+    setSortConfig({ key, direction });
+    setEvents((prevEvents) =>
+      [...prevEvents].sort((a, b) => {
+        if (a[key] < b[key]) return direction === "asc" ? -1 : 1;
+        if (a[key] > b[key]) return direction === "asc" ? 1 : -1;
+        return 0;
+      })
+    );
+  };
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearch(e.target.value);
+  };
+
+  const filteredEvents = events.filter(
+    (event) =>
+      event.title.toLowerCase().includes(search.toLowerCase()) ||
+      event.description.toLowerCase().includes(search.toLowerCase())
+  );
 
   const toggleRowSelection = (id: string) => {
     const newSelectedRows = new Set(selectedRows);
@@ -193,6 +223,12 @@ export default function Availability() {
       <Button onClick={deleteSelectedEvents} disabled={selectedRows.size === 0}>
         Delete Selected
       </Button>
+      <Input
+        value={search}
+        onChange={handleSearchChange}
+        placeholder="Search by title or description"
+        className="mb-4"
+      />
       <Table>
         <TableHeader>
           <TableRow>
@@ -215,14 +251,35 @@ export default function Availability() {
               />
             </TableHead>
             <TableHead>ID</TableHead>
-            <TableHead>Start Time</TableHead>
-            <TableHead>End Time</TableHead>
-            <TableHead>Title</TableHead>
+            <TableHead>
+              <div className="flex items-center">
+                Start Time
+                <button onClick={() => handleSort("start")}>
+                  <CaretSortIcon />
+                </button>
+              </div>
+            </TableHead>
+            <TableHead>
+              <div className="flex items-center">
+                End Time
+                <button onClick={() => handleSort("end")}>
+                  <CaretSortIcon />
+                </button>
+              </div>
+            </TableHead>
+            <TableHead>
+              <div className="flex items-center">
+                Title
+                <button onClick={() => handleSort("title")}>
+                  <CaretSortIcon />
+                </button>
+              </div>
+            </TableHead>
             <TableHead>Description</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          {events.map((event) => (
+          {filteredEvents.map((event) => (
             <TableRow key={event.id || ""}>
               <TableCell>
                 <Checkbox
