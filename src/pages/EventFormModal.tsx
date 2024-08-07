@@ -165,7 +165,7 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
           </div>
           <div>
             <Label className="block text-sm font-medium text-gray-700">
-              Description
+              Notes
             </Label>
             <Input
               value={description}
