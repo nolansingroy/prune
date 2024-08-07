@@ -8,10 +8,11 @@ import {
   getDocs,
   doc,
   writeBatch,
+  updateDoc,
 } from "firebase/firestore";
 import { auth, db } from "../../../firebase";
-import { format } from "date-fns";
 import { EventInput } from "../../interfaces/types";
+import { Timestamp } from "firebase/firestore";
 
 import {
   CaretSortIcon,
@@ -60,11 +61,15 @@ import {
 } from "@radix-ui/react-dialog";
 import { createEvent, updateEvent } from "../../services/userService";
 import EventFormDialog from "../EventFormModal";
-import { Timestamp } from "firebase/firestore";
 
 export default function Availability() {
   const [events, setEvents] = useState<EventInput[]>([]);
   const [selectedRows, setSelectedRows] = useState<Set<string>>(new Set());
+  const [editingCell, setEditingCell] = useState<{
+    id: string;
+    field: string;
+  } | null>(null);
+  const [editedValue, setEditedValue] = useState<string>("");
 
   useEffect(() => {
     const fetchEvents = async () => {
@@ -77,16 +82,29 @@ export default function Availability() {
         );
         const q = query(eventsRef, where("isBackgroundEvent", "==", true));
         const querySnapshot = await getDocs(q);
-        const fetchedEvents = querySnapshot.docs.map((doc) => ({
-          id: doc.id,
-          title: doc.data().title,
-          start: doc.data().start.toDate(), // Converting Timestamp to Date
-          end: doc.data().end.toDate(),
-          description: doc.data().description || "",
-          display: doc.data().display,
-          className: doc.data().className,
-          isBackgroundEvent: doc.data().isBackgroundEvent,
-        }));
+        const fetchedEvents = querySnapshot.docs.map((doc) => {
+          const data = doc.data();
+
+          const start =
+            data.start instanceof Timestamp
+              ? data.start.toDate()
+              : new Date(data.start);
+          const end =
+            data.end instanceof Timestamp
+              ? data.end.toDate()
+              : new Date(data.end);
+
+          return {
+            id: doc.id,
+            title: data.title,
+            start: start,
+            end: end,
+            description: data.description || "",
+            display: data.display,
+            className: data.className,
+            isBackgroundEvent: data.isBackgroundEvent,
+          };
+        });
         setEvents(fetchedEvents);
       }
     };
@@ -134,6 +152,41 @@ export default function Availability() {
     }
   };
 
+  const handleCellClick = (id: string, field: string, value: string) => {
+    setEditingCell({ id, field });
+    setEditedValue(value);
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setEditedValue(e.target.value);
+  };
+
+  const handleBlur = async () => {
+    if (editingCell) {
+      const { id, field } = editingCell;
+      const docRef = doc(
+        db,
+        "users",
+        auth.currentUser?.uid ?? "",
+        "events",
+        id
+      );
+      await updateDoc(docRef, { [field]: editedValue });
+      setEvents((prevEvents) =>
+        prevEvents.map((event) =>
+          event.id === id ? { ...event, [field]: editedValue } : event
+        )
+      );
+      setEditingCell(null);
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      handleBlur();
+    }
+  };
+
   return (
     <div className="w-full relative">
       <h1 className="text-xl font-bold mb-4">My Available Times</h1>
@@ -178,10 +231,102 @@ export default function Availability() {
                 />
               </TableCell>
               <TableCell>{event.id}</TableCell>
-              <TableCell>{event.start?.toLocaleString() ?? ""}</TableCell>
-              <TableCell>{event.end?.toLocaleString() ?? ""}</TableCell>
-              <TableCell>{event.title}</TableCell>
-              <TableCell>{event.description}</TableCell>
+              <TableCell>
+                {editingCell?.id === event.id &&
+                editingCell?.field === "start" ? (
+                  <input
+                    value={editedValue}
+                    onChange={handleInputChange}
+                    onBlur={handleBlur}
+                    onKeyDown={handleKeyDown}
+                    autoFocus
+                  />
+                ) : (
+                  <div
+                    onClick={() =>
+                      handleCellClick(
+                        event.id ?? "",
+                        "start",
+                        event.start?.toLocaleString() ?? ""
+                      )
+                    }
+                  >
+                    {event.start?.toLocaleString() ?? ""}
+                  </div>
+                )}
+              </TableCell>
+              <TableCell>
+                {editingCell?.id === event.id &&
+                editingCell?.field === "end" ? (
+                  <input
+                    value={editedValue}
+                    onChange={handleInputChange}
+                    onBlur={handleBlur}
+                    onKeyDown={handleKeyDown}
+                    autoFocus
+                  />
+                ) : (
+                  <div
+                    onClick={() =>
+                      handleCellClick(
+                        event.id ?? "",
+                        "end",
+                        event.end?.toLocaleString() ?? ""
+                      )
+                    }
+                  >
+                    {event.end?.toLocaleString() ?? ""}
+                  </div>
+                )}
+              </TableCell>
+              <TableCell>
+                {editingCell?.id === event.id &&
+                editingCell?.field === "title" ? (
+                  <input
+                    value={editedValue}
+                    onChange={handleInputChange}
+                    onBlur={handleBlur}
+                    onKeyDown={handleKeyDown}
+                    autoFocus
+                  />
+                ) : (
+                  <div
+                    onClick={() =>
+                      handleCellClick(
+                        event.id ?? "",
+                        "title",
+                        event.title ?? ""
+                      )
+                    }
+                  >
+                    {event.title}
+                  </div>
+                )}
+              </TableCell>
+              <TableCell>
+                {editingCell?.id === event.id &&
+                editingCell?.field === "description" ? (
+                  <input
+                    value={editedValue}
+                    onChange={handleInputChange}
+                    onBlur={handleBlur}
+                    onKeyDown={handleKeyDown}
+                    autoFocus
+                  />
+                ) : (
+                  <div
+                    onClick={() =>
+                      handleCellClick(
+                        event.id ?? "",
+                        "description",
+                        event.description ?? ""
+                      )
+                    }
+                  >
+                    {event.description}
+                  </div>
+                )}
+              </TableCell>
             </TableRow>
           ))}
         </TableBody>
