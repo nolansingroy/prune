@@ -155,23 +155,27 @@ export default function Availability() {
   };
 
   const deleteSelectedEvents = async () => {
-    const batch = writeBatch(db);
-    selectedRows.forEach((id) => {
-      const docRef = doc(
-        db,
-        "users",
-        auth.currentUser?.uid ?? "",
-        "events",
-        id
-      );
-      batch.delete(docRef);
-    });
+    if (
+      window.confirm("Are you sure you want to delete the selected events?")
+    ) {
+      const batch = writeBatch(db);
+      selectedRows.forEach((id) => {
+        const docRef = doc(
+          db,
+          "users",
+          auth.currentUser?.uid ?? "",
+          "events",
+          id
+        );
+        batch.delete(docRef);
+      });
 
-    await batch.commit();
-    setEvents(
-      events.filter((event) => event.id && !selectedRows.has(event.id))
-    );
-    setSelectedRows(new Set());
+      await batch.commit();
+      setEvents(
+        events.filter((event) => event.id && !selectedRows.has(event.id))
+      );
+      setSelectedRows(new Set());
+    }
   };
 
   const handleSelectAllChange = (e: React.ChangeEvent<HTMLInputElement>) => {
