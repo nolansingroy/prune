@@ -101,6 +101,20 @@ export default function Availability() {
               ? data.end.toDate()
               : new Date(data.end);
 
+          // Derive the additional fields
+          const startDate =
+            data.start instanceof Timestamp
+              ? data.start
+              : Timestamp.fromDate(new Date(data.start));
+          const endDate =
+            data.end instanceof Timestamp
+              ? data.end
+              : Timestamp.fromDate(new Date(data.end));
+          const startDay = start.toLocaleDateString("en-US", {
+            weekday: "long",
+          });
+          const endDay = end.toLocaleDateString("en-US", { weekday: "long" });
+
           return {
             id: doc.id,
             title: data.title,
@@ -110,6 +124,10 @@ export default function Availability() {
             display: data.display,
             className: data.className,
             isBackgroundEvent: data.isBackgroundEvent,
+            startDate: startDate, // Adding derived field
+            startDay: startDay, // Adding derived field
+            endDate: endDate, // Adding derived field
+            endDay: endDay, // Adding derived field
           };
         });
         setEvents(fetchedEvents);

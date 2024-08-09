@@ -16,6 +16,7 @@ import { auth, db } from "../../firebase";
 import { createEvent } from "../services/userService";
 import useFetchEvents from "../hooks/useFetchEvents";
 import { EventInput } from "../interfaces/types";
+import { Timestamp } from "firebase/firestore";
 
 export default function Calendar() {
   const calendarRef = useRef<FullCalendar>(null);
@@ -134,6 +135,15 @@ export default function Calendar() {
       }
     }
 
+    // Derive startDate, startDay, endDate, and endDay
+    const startDate = Timestamp.fromDate(startDateTime);
+    const startDay = startDateTime.toLocaleDateString("en-US", {
+      weekday: "long",
+    });
+    const endDate = Timestamp.fromDate(endDateTime);
+    const endDay = endDateTime.toLocaleDateString("en-US", { weekday: "long" });
+
+    // Create the event object with all required fields
     let event: EventInput = {
       title,
       start: startDateTime,
@@ -143,6 +153,10 @@ export default function Calendar() {
       className: isBackgroundEvent ? "custom-bg-event" : "",
       isBackgroundEvent,
       recurrence: recurrence || undefined,
+      startDate: startDate,
+      startDay: startDay,
+      endDate: endDate,
+      endDay: endDay,
     };
 
     event = removeUndefinedFields(event);
