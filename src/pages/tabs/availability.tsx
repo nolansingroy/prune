@@ -101,7 +101,6 @@ export default function Availability() {
               ? data.end.toDate()
               : new Date(data.end);
 
-          // Derive the additional fields
           const startDate =
             data.start instanceof Timestamp
               ? data.start
@@ -124,10 +123,10 @@ export default function Availability() {
             display: data.display,
             className: data.className,
             isBackgroundEvent: data.isBackgroundEvent,
-            startDate: startDate, // Adding derived field
-            startDay: startDay, // Adding derived field
-            endDate: endDate, // Adding derived field
-            endDay: endDay, // Adding derived field
+            startDate: startDate,
+            startDay: startDay,
+            endDate: endDate,
+            endDay: endDay,
           };
         });
         setEvents(fetchedEvents);
@@ -234,12 +233,48 @@ export default function Availability() {
         "events",
         id
       );
-      await updateDoc(docRef, { [field]: editedValue });
+
+      let updates: any = {};
+
+      if (field === "startDate") {
+        // If the startDate field is being edited, update startDate and derive startDay from it
+        const newDate = new Date(editedValue);
+        const newTimestamp = Timestamp.fromDate(newDate);
+        const newDay = newDate.toLocaleDateString("en-US", { weekday: "long" });
+
+        updates = {
+          startDate: newTimestamp,
+          startDay: newDay,
+        };
+      } else if (field === "startDay") {
+        // If startDay is being edited directly (which is rare), it should recalculate based on the startDate
+        const event = events.find((event) => event.id === id);
+        if (event) {
+          const currentStartDate = event.startDate.toDate();
+          const newDay = new Date(currentStartDate).toLocaleDateString(
+            "en-US",
+            { weekday: "long" }
+          );
+
+          updates = {
+            startDay: newDay,
+          };
+        }
+      } else {
+        // For other fields, update them directly
+        updates[field] = editedValue;
+      }
+
+      // Update Firestore document
+      await updateDoc(docRef, updates);
+
+      // Update the local state
       setEvents((prevEvents) =>
         prevEvents.map((event) =>
-          event.id === id ? { ...event, [field]: editedValue } : event
+          event.id === id ? { ...event, ...updates } : event
         )
       );
+
       setEditingCell(null);
     }
   };
@@ -281,7 +316,8 @@ export default function Availability() {
                 }}
               />
             </TableHead>
-            <TableHead>ID</TableHead>
+            <TableHead>Date</TableHead>
+            <TableHead>Day</TableHead>
             <TableHead>
               <div className="flex items-center">
                 Start Time
@@ -307,6 +343,7 @@ export default function Availability() {
               </div>
             </TableHead>
             <TableHead>Notes</TableHead>
+            <TableHead>ID</TableHead> {/* Moved ID to the last column */}
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -318,7 +355,55 @@ export default function Availability() {
                   onCheckedChange={() => handleCheckboxChange(event.id)}
                 />
               </TableCell>
-              <TableCell>{event.id}</TableCell>
+              <TableCell>
+                {editingCell?.id === event.id &&
+                editingCell?.field === "startDate" ? (
+                  <input
+                    type="date"
+                    value={new Date(editedValue).toISOString().split("T")[0]}
+                    onChange={handleInputChange}
+                    onBlur={handleBlur}
+                    onKeyDown={handleKeyDown}
+                    autoFocus
+                  />
+                ) : (
+                  <div
+                    onClick={() =>
+                      handleCellClick(
+                        event.id ?? "",
+                        "startDate",
+                        event.startDate.toDate().toISOString().split("T")[0]
+                      )
+                    }
+                  >
+                    {event.startDate.toDate().toLocaleDateString()}
+                  </div>
+                )}
+              </TableCell>
+              <TableCell>
+                {editingCell?.id === event.id &&
+                editingCell?.field === "startDay" ? (
+                  <input
+                    value={editedValue}
+                    onChange={handleInputChange}
+                    onBlur={handleBlur}
+                    onKeyDown={handleKeyDown}
+                    autoFocus
+                  />
+                ) : (
+                  <div
+                    onClick={() =>
+                      handleCellClick(
+                        event.id ?? "",
+                        "startDay",
+                        event.startDay
+                      )
+                    }
+                  >
+                    {event.startDay}
+                  </div>
+                )}
+              </TableCell>
               <TableCell>
                 {editingCell?.id === event.id &&
                 editingCell?.field === "start" ? (
@@ -419,6 +504,7 @@ export default function Availability() {
                   </div>
                 )}
               </TableCell>
+              <TableCell>{event.id}</TableCell> {/* ID column moved here */}
             </TableRow>
           ))}
         </TableBody>
