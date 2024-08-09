@@ -10,9 +10,9 @@ export interface EventInput {
   display?: string;
   className?: string;
   isBackgroundEvent: boolean;
-  startDate: Timestamp; // Firestore Timestamp
+  startDate: Date; // Use JavaScript Date object as UTC
   startDay: string; // Day of the week derived from startDate
-  endDate: Timestamp; // Firestore Timestamp
+  endDate: Date; // Use JavaScript Date object as UTC
   endDay: string; // Day of the week derived from endDate
   recurrence?: {
     daysOfWeek?: number[];

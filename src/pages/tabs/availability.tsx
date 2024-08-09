@@ -9,11 +9,10 @@ import {
   doc,
   writeBatch,
   updateDoc,
+  Timestamp,
 } from "firebase/firestore";
 import { auth, db } from "../../../firebase";
 import { EventInput } from "../../interfaces/types";
-import { Timestamp } from "firebase/firestore";
-
 import {
   CaretSortIcon,
   ChevronDownIcon,
@@ -92,6 +91,7 @@ export default function Availability() {
         const fetchedEvents = querySnapshot.docs.map((doc) => {
           const data = doc.data();
 
+          // Convert Firestore Timestamps to JavaScript Date objects
           const start =
             data.start instanceof Timestamp
               ? data.start.toDate()
@@ -100,19 +100,24 @@ export default function Availability() {
             data.end instanceof Timestamp
               ? data.end.toDate()
               : new Date(data.end);
-
           const startDate =
-            data.start instanceof Timestamp
-              ? data.start
-              : Timestamp.fromDate(new Date(data.start));
+            data.startDate instanceof Timestamp
+              ? data.startDate.toDate()
+              : new Date(data.startDate);
           const endDate =
-            data.end instanceof Timestamp
-              ? data.end
-              : Timestamp.fromDate(new Date(data.end));
-          const startDay = start.toLocaleDateString("en-US", {
+            data.endDate instanceof Timestamp
+              ? data.endDate.toDate()
+              : new Date(data.endDate);
+
+          // Derive startDay and endDay from startDate and endDate
+          const startDay = startDate.toLocaleDateString("en-US", {
             weekday: "long",
+            timeZone: "UTC",
           });
-          const endDay = end.toLocaleDateString("en-US", { weekday: "long" });
+          const endDay = endDate.toLocaleDateString("en-US", {
+            weekday: "long",
+            timeZone: "UTC",
+          });
 
           return {
             id: doc.id,
@@ -123,10 +128,10 @@ export default function Availability() {
             display: data.display,
             className: data.className,
             isBackgroundEvent: data.isBackgroundEvent,
-            startDate: startDate,
-            startDay: startDay,
-            endDate: endDate,
-            endDay: endDay,
+            startDate: startDate, // Use the UTC Date object
+            startDay: startDay, // Day of the week derived from startDate
+            endDate: endDate, // Use the UTC Date object
+            endDay: endDay, // Day of the week derived from endDate
           };
         });
         setEvents(fetchedEvents);
@@ -237,38 +242,55 @@ export default function Availability() {
       let updates: any = {};
 
       if (field === "startDate") {
-        // If the startDate field is being edited, update startDate and derive startDay from it
         const newDate = new Date(editedValue);
-        const newTimestamp = Timestamp.fromDate(newDate);
-        const newDay = newDate.toLocaleDateString("en-US", { weekday: "long" });
 
-        updates = {
-          startDate: newTimestamp,
-          startDay: newDay,
-        };
-      } else if (field === "startDay") {
-        // If startDay is being edited directly (which is rare), it should recalculate based on the startDate
-        const event = events.find((event) => event.id === id);
-        if (event) {
-          const currentStartDate = event.startDate.toDate();
-          const newDay = new Date(currentStartDate).toLocaleDateString(
-            "en-US",
-            { weekday: "long" }
+        // Get the current event's start time
+        const currentEvent = events.find((event) => event.id === id);
+        if (currentEvent) {
+          // Set the start date to the date selected in the date picker,
+          // but keep the original start time (hours, minutes, etc.)
+          const updatedStart = new Date(currentEvent.start);
+          updatedStart.setUTCFullYear(
+            newDate.getUTCFullYear(),
+            newDate.getUTCMonth(),
+            newDate.getUTCDate()
           );
 
+          const updatedStartDay = updatedStart.toLocaleDateString("en-US", {
+            weekday: "long",
+            timeZone: "UTC",
+          });
+
+          // Update startDate, startDay, and start
           updates = {
-            startDay: newDay,
+            startDate: updatedStart,
+            startDay: updatedStartDay,
+            start: updatedStart,
           };
+
+          // Optionally, adjust endDate and endDay if needed
+          // Adjust the end date based on the new start date (e.g., for the same duration)
+          const updatedEnd = new Date(currentEvent.end);
+          const duration = updatedEnd.getTime() - currentEvent.start.getTime();
+          updatedEnd.setTime(updatedStart.getTime() + duration);
+
+          const updatedEndDay = updatedEnd.toLocaleDateString("en-US", {
+            weekday: "long",
+            timeZone: "UTC",
+          });
+
+          updates.endDate = updatedEnd;
+          updates.endDay = updatedEndDay;
+          updates.end = updatedEnd;
         }
+      } else if (field === "endDate") {
+        // Handle endDate similarly if necessary
       } else {
-        // For other fields, update them directly
         updates[field] = editedValue;
       }
 
-      // Update Firestore document
       await updateDoc(docRef, updates);
 
-      // Update the local state
       setEvents((prevEvents) =>
         prevEvents.map((event) =>
           event.id === id ? { ...event, ...updates } : event
@@ -372,11 +394,25 @@ export default function Availability() {
                       handleCellClick(
                         event.id ?? "",
                         "startDate",
-                        event.startDate.toDate().toISOString().split("T")[0]
+                        event.startDate instanceof Date &&
+                          !isNaN(event.startDate.getTime())
+                          ? event.startDate.toLocaleDateString("en-US", {
+                              year: "numeric",
+                              month: "2-digit",
+                              day: "2-digit",
+                            })
+                          : "Invalid Date"
                       )
                     }
                   >
-                    {event.startDate.toDate().toLocaleDateString()}
+                    {event.startDate instanceof Date &&
+                    !isNaN(event.startDate.getTime())
+                      ? event.startDate.toLocaleDateString("en-US", {
+                          year: "numeric",
+                          month: "2-digit",
+                          day: "2-digit",
+                        })
+                      : "Invalid Date"}
                   </div>
                 )}
               </TableCell>
@@ -420,17 +456,21 @@ export default function Availability() {
                       handleCellClick(
                         event.id ?? "",
                         "start",
-                        event.start?.toLocaleString() ?? ""
+                        event.start?.toLocaleString("en-US", {
+                          timeZone: "UTC",
+                        }) ?? ""
                       )
                     }
                   >
-                    {event.start?.toLocaleString() ?? ""}
+                    {event.start?.toLocaleString("en-US", {
+                      timeZone: "UTC",
+                    }) ?? ""}
                   </div>
                 )}
               </TableCell>
               <TableCell>
                 {editingCell?.id === event.id &&
-                editingCell?.field === "end" ? (
+                editingCell?.field === "endDate" ? (
                   <input
                     value={editedValue}
                     onChange={handleInputChange}
@@ -444,11 +484,27 @@ export default function Availability() {
                       handleCellClick(
                         event.id ?? "",
                         "end",
-                        event.end?.toLocaleString() ?? ""
+                        event.end?.toLocaleString("en-US", {
+                          timeZone: "UTC",
+                          year: "numeric",
+                          month: "2-digit",
+                          day: "2-digit",
+                          hour: "2-digit",
+                          minute: "2-digit",
+                          second: "2-digit",
+                        }) ?? ""
                       )
                     }
                   >
-                    {event.end?.toLocaleString() ?? ""}
+                    {event.end?.toLocaleString("en-US", {
+                      timeZone: "UTC",
+                      year: "numeric",
+                      month: "2-digit",
+                      day: "2-digit",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                      second: "2-digit",
+                    }) ?? ""}
                   </div>
                 )}
               </TableCell>

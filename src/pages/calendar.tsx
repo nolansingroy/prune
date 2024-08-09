@@ -119,7 +119,7 @@ export default function Calendar() {
     let calendarApi = selectInfo.view.calendar;
     calendarApi.unselect();
 
-    // Convert startTime and endTime to Date objects
+    // Convert startTime and endTime to Date objects in UTC
     let startDateTime = new Date(selectInfo.startStr);
     let endDateTime = new Date(selectInfo.startStr);
 
@@ -127,36 +127,35 @@ export default function Calendar() {
       const [startHour, startMinute] = startTime.split(":").map(Number);
       const [endHour, endMinute] = endTime.split(":").map(Number);
 
-      startDateTime.setHours(startHour, startMinute, 0, 0);
-      endDateTime.setHours(endHour, endMinute, 0, 0);
+      // Setting hours and minutes for startDateTime and endDateTime
+      startDateTime.setUTCHours(startHour, startMinute, 0, 0);
+      endDateTime.setUTCHours(endHour, endMinute, 0, 0);
 
       if (endDateTime <= startDateTime) {
-        endDateTime.setDate(endDateTime.getDate() + 1);
+        endDateTime.setUTCDate(endDateTime.getUTCDate() + 1);
       }
     }
 
-    // Derive startDate, startDay, endDate, and endDay
-    const startDate = Timestamp.fromDate(startDateTime);
-    const startDay = startDateTime.toLocaleDateString("en-US", {
-      weekday: "long",
-    });
-    const endDate = Timestamp.fromDate(endDateTime);
-    const endDay = endDateTime.toLocaleDateString("en-US", { weekday: "long" });
-
-    // Create the event object with all required fields
+    // Create the event object with UTC times
     let event: EventInput = {
       title,
-      start: startDateTime,
-      end: endDateTime,
+      start: startDateTime, // These are already UTC
+      end: endDateTime, // These are already UTC
       description,
       display: isBackgroundEvent ? "background" : "auto",
       className: isBackgroundEvent ? "custom-bg-event" : "",
       isBackgroundEvent,
+      startDate: startDateTime, // UTC date
+      startDay: startDateTime.toLocaleDateString("en-US", {
+        weekday: "long",
+        timeZone: "UTC",
+      }),
+      endDate: endDateTime, // UTC date
+      endDay: endDateTime.toLocaleDateString("en-US", {
+        weekday: "long",
+        timeZone: "UTC",
+      }),
       recurrence: recurrence || undefined,
-      startDate: startDate,
-      startDay: startDay,
-      endDate: endDate,
-      endDay: endDay,
     };
 
     event = removeUndefinedFields(event);
@@ -198,6 +197,7 @@ export default function Calendar() {
           <h1 className="text-xl font-bold mb-4">Calendar Page</h1>
           <div className="overflow-hidden">
             <FullCalendar
+              timeZone="UTC"
               ref={calendarRef}
               schedulerLicenseKey="0899673068-fcs-1718558974"
               plugins={[
