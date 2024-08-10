@@ -244,16 +244,25 @@ export default function Availability() {
       if (field === "startDate") {
         const newDate = new Date(editedValue);
 
-        // Get the current event's start time
-        const currentEvent = events.find((event) => event.id === id);
-        if (currentEvent) {
-          // Set the start date to the date selected in the date picker,
-          // but keep the original start time (hours, minutes, etc.)
-          const updatedStart = new Date(currentEvent.start);
-          updatedStart.setUTCFullYear(
+        // Convert the date to UTC explicitly
+        const utcDate = new Date(
+          Date.UTC(
             newDate.getUTCFullYear(),
             newDate.getUTCMonth(),
-            newDate.getUTCDate()
+            newDate.getUTCDate(),
+            newDate.getUTCHours(),
+            newDate.getUTCMinutes(),
+            newDate.getUTCSeconds()
+          )
+        );
+
+        const currentEvent = events.find((event) => event.id === id);
+        if (currentEvent) {
+          const updatedStart = new Date(currentEvent.start);
+          updatedStart.setUTCFullYear(
+            utcDate.getUTCFullYear(),
+            utcDate.getUTCMonth(),
+            utcDate.getUTCDate()
           );
 
           const updatedStartDay = updatedStart.toLocaleDateString("en-US", {
@@ -269,7 +278,6 @@ export default function Availability() {
           };
 
           // Optionally, adjust endDate and endDay if needed
-          // Adjust the end date based on the new start date (e.g., for the same duration)
           const updatedEnd = new Date(currentEvent.end);
           const duration = updatedEnd.getTime() - currentEvent.start.getTime();
           updatedEnd.setTime(updatedStart.getTime() + duration);
@@ -284,7 +292,56 @@ export default function Availability() {
           updates.end = updatedEnd;
         }
       } else if (field === "endDate") {
-        // Handle endDate similarly if necessary
+        const newDate = new Date(editedValue);
+        const utcDate = new Date(
+          Date.UTC(
+            newDate.getUTCFullYear(),
+            newDate.getUTCMonth(),
+            newDate.getUTCDate(),
+            newDate.getUTCHours(),
+            newDate.getUTCMinutes(),
+            newDate.getUTCSeconds()
+          )
+        );
+
+        const currentEvent = events.find((event) => event.id === id);
+        if (currentEvent) {
+          const updatedEnd = new Date(currentEvent.end);
+          updatedEnd.setUTCFullYear(
+            utcDate.getUTCFullYear(),
+            utcDate.getUTCMonth(),
+            utcDate.getUTCDate()
+          );
+
+          const updatedEndDay = updatedEnd.toLocaleDateString("en-US", {
+            weekday: "long",
+            timeZone: "UTC",
+          });
+
+          updates = {
+            endDate: updatedEnd,
+            endDay: updatedEndDay,
+            end: updatedEnd,
+          };
+        }
+      } else if (field === "end") {
+        const newEndTime = new Date(editedValue);
+
+        // Convert the new time to UTC explicitly
+        const utcEndTime = new Date(
+          Date.UTC(
+            newEndTime.getUTCFullYear(),
+            newEndTime.getUTCMonth(),
+            newEndTime.getUTCDate(),
+            newEndTime.getUTCHours(),
+            newEndTime.getUTCMinutes(),
+            newEndTime.getUTCSeconds()
+          )
+        );
+
+        updates = {
+          end: utcEndTime,
+        };
       } else {
         updates[field] = editedValue;
       }
@@ -470,9 +527,10 @@ export default function Availability() {
               </TableCell>
               <TableCell>
                 {editingCell?.id === event.id &&
-                editingCell?.field === "endDate" ? (
+                editingCell?.field === "end" ? (
                   <input
-                    value={editedValue}
+                    type="datetime-local"
+                    value={new Date(editedValue).toISOString().slice(0, -8)}
                     onChange={handleInputChange}
                     onBlur={handleBlur}
                     onKeyDown={handleKeyDown}
