@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { auth, db } from "../../firebase";
 import { collection, query, getDocs } from "firebase/firestore";
 import { EventInput } from "../interfaces/types";
-import { Timestamp } from "firebase/firestore"; // Import Timestamp type from Firestore
 
 const useFetchEvents = () => {
   const [events, setEvents] = useState<EventInput[]>([]);
@@ -18,18 +17,29 @@ const useFetchEvents = () => {
         const eventsData = querySnapshot.docs.map((doc) => {
           const data = doc.data();
 
-          // Ensure that start and end are Firestore Timestamps before calling toDate()
-          const startTimestamp =
-            data.start instanceof Timestamp ? data.start : null;
-          const endTimestamp = data.end instanceof Timestamp ? data.end : null;
+          // Assuming start and end are stored as UTC Date objects
+          const startDate = new Date(data.start); // This will be UTC
+          const endDate = new Date(data.end); // This will be UTC
+
+          // Derive the day of the week in UTC
+          const startDay = startDate.toLocaleDateString("en-US", {
+            weekday: "long",
+            timeZone: "UTC",
+          });
+          const endDay = endDate.toLocaleDateString("en-US", {
+            weekday: "long",
+            timeZone: "UTC",
+          });
 
           const event: EventInput = {
             id: doc.id,
             title: data.title || "No title", // Ensure a title is always present
-            start: startTimestamp ? startTimestamp.toDate() : new Date(), // Convert Firestore Timestamp to Date
-            end: endTimestamp
-              ? endTimestamp.toDate()
-              : startTimestamp?.toDate() || new Date(), // Provide a default or use the start date
+            start: startDate, // Use the UTC Date
+            end: endDate, // Use the UTC Date
+            startDate: startDate, // Store as UTC Date
+            startDay: startDay, // Day of the week derived from startDate
+            endDate: endDate, // Store as UTC Date
+            endDay: endDay, // Day of the week derived from endDate
             description: data.description || "", // Include description or a default
             display: data.isBackgroundEvent ? "background" : "auto", // Display as background if specified
             isBackgroundEvent: !!data.isBackgroundEvent, // Ensure this is a boolean
@@ -38,25 +48,41 @@ const useFetchEvents = () => {
 
           // Handle recurrence
           if (data.recurrence) {
-            const startDate = new Date(data.recurrence.startRecur);
-            const endDate = new Date(data.recurrence.endRecur);
+            let recurrenceStartDate = new Date(data.recurrence.startRecur);
+            let recurrenceEndDate = new Date(data.recurrence.endRecur);
 
-            const [startHour, startMinute] = data.recurrence.startTime
-              .split(":")
-              .map(Number);
-            const [endHour, endMinute] = data.recurrence.endTime
-              .split(":")
-              .map(Number);
+            // Check if the dates are valid
+            if (isNaN(recurrenceStartDate.getTime())) {
+              recurrenceStartDate = new Date(); // Fallback to current date or handle appropriately
+            }
+            if (isNaN(recurrenceEndDate.getTime())) {
+              recurrenceEndDate = recurrenceStartDate; // Fallback to startDate or handle appropriately
+            }
 
-            startDate.setHours(startHour, startMinute, 0, 0);
-            endDate.setHours(endHour, endMinute, 0, 0);
+            let startHour = 0,
+              startMinute = 0,
+              endHour = 0,
+              endMinute = 0;
+
+            // Check if startTime and endTime exist before splitting
+            if (data.recurrence.startTime && data.recurrence.endTime) {
+              [startHour, startMinute] = data.recurrence.startTime
+                .split(":")
+                .map(Number);
+              [endHour, endMinute] = data.recurrence.endTime
+                .split(":")
+                .map(Number);
+            }
+
+            recurrenceStartDate.setUTCHours(startHour, startMinute, 0, 0);
+            recurrenceEndDate.setUTCHours(endHour, endMinute, 0, 0);
 
             event.recurrence = {
               daysOfWeek: data.recurrence.daysOfWeek,
               startTime: data.recurrence.startTime,
               endTime: data.recurrence.endTime,
-              startRecur: startDate.toISOString(),
-              endRecur: endDate.toISOString(),
+              startRecur: recurrenceStartDate.toISOString(),
+              endRecur: recurrenceEndDate.toISOString(),
               rrule: data.recurrence.rrule,
             };
           }

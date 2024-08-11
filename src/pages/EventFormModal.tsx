@@ -191,18 +191,28 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
               </SelectContent>
             </Select>
           </div>
-          <div>
+          <div className="space-y-2">
             <Label className="block text-sm font-medium text-gray-700">
               Background Event
             </Label>
-            <Checkbox
-              checked={isBackgroundEvent}
-              onCheckedChange={handleBackgroundChange}
-            >
-              Is Background Event
-            </Checkbox>
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                checked={isBackgroundEvent}
+                onCheckedChange={handleBackgroundChange}
+                id="backgroundEventCheckbox"
+              />
+              <Label
+                htmlFor="backgroundEventCheckbox"
+                className="text-sm font-medium text-gray-700"
+              >
+                Is Background Event
+              </Label>
+            </div>
+            <p className="mt-2 text-sm text-gray-500">
+              Will show on calendar as background / Available time
+            </p>
           </div>
-          <div>
+          {/* <div>
             <Label className="block text-sm font-medium text-gray-700">
               Start Time
             </Label>
@@ -213,8 +223,8 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
                 setStartTime(e.target.value)
               }
             />
-          </div>
-          <div>
+          </div> */}
+          {/* <div>
             <Label className="block text-sm font-medium text-gray-700">
               End Time
             </Label>
@@ -225,7 +235,36 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
                 setEndTime(e.target.value)
               }
             />
+          </div> */}
+          <div className="flex items-center space-x-6">
+            <div className="flex flex-col">
+              <Label className="text-sm font-medium text-gray-700">
+                Start Time
+              </Label>
+              <Input
+                type="time"
+                value={startTime}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  setStartTime(e.target.value)
+                }
+                className="w-32 px-2 py-2 text-center rounded-md border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+              />
+            </div>
+            <div className="flex flex-col">
+              <Label className="text-sm font-medium text-gray-700">
+                End Time
+              </Label>
+              <Input
+                type="time"
+                value={endTime}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  setEndTime(e.target.value)
+                }
+                className="w-32 px-2 py-2 text-center rounded-md border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+              />
+            </div>
           </div>
+
           <div>
             <Label className="block text-sm font-medium text-gray-700">
               Recurring Event
