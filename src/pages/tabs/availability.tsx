@@ -58,7 +58,7 @@ import {
   DialogTitle,
   DialogOverlay,
 } from "@radix-ui/react-dialog";
-import { createEvent, updateEvent } from "../../services/userService";
+import { createEvent } from "../../services/userService";
 import EventFormDialog from "../EventFormModal";
 
 type SortableKeys = "start" | "end" | "title";
@@ -402,6 +402,77 @@ export default function Availability() {
     }
   };
 
+  //Save event data form from the dialog to firestore
+
+  const handleSave = async ({
+    title,
+    description,
+    location,
+    isBackgroundEvent,
+    startTime,
+    endTime,
+  }: {
+    title: string;
+    description: string;
+    location: string;
+    isBackgroundEvent: boolean;
+    startTime: string;
+    endTime: string;
+  }) => {
+    // Assuming the user should select a date. Replace this with the actual date selection logic.
+    const date = new Date(); // Replace this with the actual date chosen by the user
+
+    // Convert startTime and endTime to Date objects in UTC
+    let startDateTime = new Date(date);
+    let endDateTime = new Date(date);
+
+    if (startTime && endTime) {
+      const [startHour, startMinute] = startTime.split(":").map(Number);
+      const [endHour, endMinute] = endTime.split(":").map(Number);
+
+      // Setting hours and minutes for startDateTime and endDateTime
+      startDateTime.setUTCHours(startHour, startMinute, 0, 0);
+      endDateTime.setUTCHours(endHour, endMinute, 0, 0);
+
+      if (endDateTime <= startDateTime) {
+        endDateTime.setUTCDate(endDateTime.getUTCDate() + 1);
+      }
+    }
+
+    // Create the event object with UTC times
+    const event: EventInput = {
+      title,
+      start: startDateTime, // These are already UTC
+      end: endDateTime, // These are already UTC
+      description,
+      display: isBackgroundEvent ? "background" : "auto",
+      className: isBackgroundEvent ? "custom-bg-event" : "",
+      isBackgroundEvent,
+      startDate: startDateTime, // UTC date
+      startDay: startDateTime.toLocaleDateString("en-US", {
+        weekday: "long",
+        timeZone: "UTC",
+      }),
+      endDate: endDateTime, // UTC date
+      endDay: endDateTime.toLocaleDateString("en-US", {
+        weekday: "long",
+        timeZone: "UTC",
+      }),
+    };
+
+    try {
+      const user = auth.currentUser;
+      if (user) {
+        const docRef = await createEvent(user.uid, event);
+        console.log("Event created with ID: ", docRef.id);
+
+        setEvents((prevEvents) => [...prevEvents, { ...event, id: docRef.id }]);
+      }
+    } catch (error) {
+      console.error("Error creating event in Firestore:", error);
+    }
+  };
+
   return (
     <div className="w-full relative">
       <h1 className="text-xl font-bold mb-4">My Available Times</h1>
@@ -688,10 +759,7 @@ export default function Availability() {
       <EventFormDialog
         isOpen={isDialogOpen}
         onClose={() => setIsDialogOpen(false)}
-        onSave={(eventData) => {
-          console.log("Event Data to Save:", eventData);
-          // Handle saving the event data
-        }}
+        onSave={handleSave}
       />
     </div>
   );
