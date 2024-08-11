@@ -196,59 +196,66 @@ export default function Calendar() {
         <TabsContent value="calendar">
           <h1 className="text-xl font-bold mb-4">Calendar Page</h1>
           <div className="overflow-hidden">
-            <FullCalendar
-              timeZone="UTC"
-              ref={calendarRef}
-              schedulerLicenseKey="0899673068-fcs-1718558974"
-              plugins={[
-                dayGridPlugin,
-                resourceTimelinePlugin,
-                interactionPlugin,
-                timeGridPlugin,
-                rrulePlugin,
-              ]}
-              headerToolbar={{
-                left: "prev,next today",
-                center: "title",
-                right: "dayGridMonth,timeGridWeek,timeGridDay",
-              }}
-              slotDuration="00:15:00"
-              scrollTime={"07:00:00"}
-              slotMinTime={"06:00:00"}
-              initialView="timeGridWeek"
-              nowIndicator={true}
-              editable={true}
-              selectable={true}
-              selectMirror={true}
-              select={handleSelect}
-              events={events.map((event) => {
-                if (event.recurrence) {
-                  return {
-                    ...event,
-                    rrule: {
-                      freq: "weekly",
-                      interval: 1,
-                      byweekday: event.recurrence.daysOfWeek,
-                      dtstart: event.recurrence.startRecur,
-                      until: event.recurrence.endRecur,
-                    },
-                    startTime: event.recurrence.startTime,
-                    endTime: event.recurrence.endTime,
-                  };
-                } else {
-                  return event;
-                }
-              })}
-              eventContent={renderEventContent}
-              height="auto"
-              aspectRatio={1.35}
-              contentHeight="auto"
-              views={{
-                dayGridMonth: { nowIndicator: true },
-                timeGridWeek: { nowIndicator: true, slotDuration: "00:10:00" },
-                timeGridDay: { nowIndicator: true, slotDuration: "00:10:00" },
-              }}
-            />
+            <div className="calendar-container overflow-y-scroll h-[600px]">
+              <FullCalendar
+                timeZone="UTC"
+                ref={calendarRef}
+                schedulerLicenseKey="0899673068-fcs-1718558974"
+                plugins={[
+                  dayGridPlugin,
+                  resourceTimelinePlugin,
+                  interactionPlugin,
+                  timeGridPlugin,
+                  rrulePlugin,
+                ]}
+                headerToolbar={{
+                  left: "prev,next today",
+                  center: "title",
+                  right: "dayGridMonth,timeGridWeek,timeGridDay",
+                }}
+                slotDuration="00:15:00"
+                slotMinTime="04:00:00"
+                // scrollTime="07:00:00"
+                initialView="timeGridWeek"
+                nowIndicator={true}
+                editable={true}
+                selectable={true}
+                selectMirror={true}
+                select={handleSelect}
+                events={events.map((event) => {
+                  if (event.recurrence) {
+                    return {
+                      ...event,
+                      rrule: {
+                        freq: "weekly",
+                        interval: 1,
+                        byweekday: event.recurrence.daysOfWeek,
+                        dtstart: event.recurrence.startRecur,
+                        until: event.recurrence.endRecur,
+                      },
+                      startTime: event.recurrence.startTime,
+                      endTime: event.recurrence.endTime,
+                    };
+                  } else {
+                    return event;
+                  }
+                })}
+                eventContent={renderEventContent}
+                slotMaxTime="22:00:00" // End time of the visible time grid
+                height="auto"
+                aspectRatio={1.35}
+                contentHeight="auto"
+                views={{
+                  dayGridMonth: { nowIndicator: true },
+                  timeGridWeek: {
+                    nowIndicator: true,
+                    // slotDuration: "00:10:00",
+                    scrollTime: "07:00:00",
+                  },
+                  timeGridDay: { nowIndicator: true, slotDuration: "00:10:00" },
+                }}
+              />
+            </div>
           </div>
         </TabsContent>
         <TabsContent value="availabile_time">
