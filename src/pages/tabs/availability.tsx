@@ -76,6 +76,7 @@ export default function Availability() {
     key: SortableKeys;
     direction: "asc" | "desc";
   }>({ key: "start", direction: "asc" });
+  const [isDialogOpen, setIsDialogOpen] = useState(false); // State for the dialog
 
   useEffect(() => {
     const fetchEvents = async () => {
@@ -219,11 +220,6 @@ export default function Availability() {
     }
   };
 
-  // const handleCellClick = (id: string, field: string, value: string) => {
-  //   setEditingCell({ id, field });
-  //   setEditedValue(value);
-  // };
-
   const handleCellClick = (id: string, field: string, value: string) => {
     setEditingCell({ id, field });
 
@@ -245,139 +241,6 @@ export default function Availability() {
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setEditedValue(e.target.value);
   };
-  // end tim is working fine
-  // const handleBlur = async () => {
-  //   if (editingCell) {
-  //     const { id, field } = editingCell;
-  //     const docRef = doc(
-  //       db,
-  //       "users",
-  //       auth.currentUser?.uid ?? "",
-  //       "events",
-  //       id
-  //     );
-
-  //     let updates: any = {};
-
-  //     if (field === "startDate") {
-  //       const newDate = new Date(editedValue);
-
-  //       // Convert the date to UTC explicitly
-  //       const utcDate = new Date(
-  //         Date.UTC(
-  //           newDate.getUTCFullYear(),
-  //           newDate.getUTCMonth(),
-  //           newDate.getUTCDate(),
-  //           newDate.getUTCHours(),
-  //           newDate.getUTCMinutes(),
-  //           newDate.getUTCSeconds()
-  //         )
-  //       );
-
-  //       const currentEvent = events.find((event) => event.id === id);
-  //       if (currentEvent) {
-  //         const updatedStart = new Date(currentEvent.start);
-  //         updatedStart.setUTCFullYear(
-  //           utcDate.getUTCFullYear(),
-  //           utcDate.getUTCMonth(),
-  //           utcDate.getUTCDate()
-  //         );
-
-  //         const updatedStartDay = updatedStart.toLocaleDateString("en-US", {
-  //           weekday: "long",
-  //           timeZone: "UTC",
-  //         });
-
-  //         // Update startDate, startDay, and start
-  //         updates = {
-  //           startDate: updatedStart,
-  //           startDay: updatedStartDay,
-  //           start: updatedStart,
-  //         };
-
-  //         // Optionally, adjust endDate and endDay if needed
-  //         const updatedEnd = new Date(currentEvent.end);
-  //         const duration = updatedEnd.getTime() - currentEvent.start.getTime();
-  //         updatedEnd.setTime(updatedStart.getTime() + duration);
-
-  //         const updatedEndDay = updatedEnd.toLocaleDateString("en-US", {
-  //           weekday: "long",
-  //           timeZone: "UTC",
-  //         });
-
-  //         updates.endDate = updatedEnd;
-  //         updates.endDay = updatedEndDay;
-  //         updates.end = updatedEnd;
-  //       }
-  //     } else if (field === "endDate") {
-  //       const newDate = new Date(editedValue);
-  //       const utcDate = new Date(
-  //         Date.UTC(
-  //           newDate.getUTCFullYear(),
-  //           newDate.getUTCMonth(),
-  //           newDate.getUTCDate(),
-  //           newDate.getUTCHours(),
-  //           newDate.getUTCMinutes(),
-  //           newDate.getUTCSeconds()
-  //         )
-  //       );
-
-  //       const currentEvent = events.find((event) => event.id === id);
-  //       if (currentEvent) {
-  //         const updatedEnd = new Date(currentEvent.end);
-  //         updatedEnd.setUTCFullYear(
-  //           utcDate.getUTCFullYear(),
-  //           utcDate.getUTCMonth(),
-  //           utcDate.getUTCDate()
-  //         );
-
-  //         const updatedEndDay = updatedEnd.toLocaleDateString("en-US", {
-  //           weekday: "long",
-  //           timeZone: "UTC",
-  //         });
-
-  //         updates = {
-  //           endDate: updatedEnd,
-  //           endDay: updatedEndDay,
-  //           end: updatedEnd,
-  //         };
-  //       }
-  //     } else if (field === "end") {
-  //       const [hours, minutes] = editedValue.split(":");
-
-  //       if (hours !== undefined && minutes !== undefined) {
-  //         const currentEvent = events.find((event) => event.id === id);
-  //         if (currentEvent) {
-  //           const updatedEnd = new Date(currentEvent.end);
-
-  //           // Update only the time portion of the Date object
-  //           updatedEnd.setHours(parseInt(hours, 10));
-  //           updatedEnd.setMinutes(parseInt(minutes, 10));
-  //           updatedEnd.setSeconds(0); // Reset seconds to 0
-
-  //           updates = {
-  //             end: updatedEnd,
-  //           };
-  //         }
-  //       } else {
-  //         console.error("Invalid time format for end time.");
-  //         return; // Don't proceed if the time format is invalid
-  //       }
-  //     } else {
-  //       updates[field] = editedValue;
-  //     }
-
-  //     await updateDoc(docRef, updates);
-
-  //     setEvents((prevEvents) =>
-  //       prevEvents.map((event) =>
-  //         event.id === id ? { ...event, ...updates } : event
-  //       )
-  //     );
-
-  //     setEditingCell(null);
-  //   }
-  // };
 
   const handleBlur = async () => {
     if (editingCell) {
@@ -811,6 +674,25 @@ export default function Availability() {
           ))}
         </TableBody>
       </Table>
+
+      {/* Floating Action Button */}
+      <div className="fixed bottom-[calc(4rem+30px)] right-4">
+        <button
+          className="p-4 bg-blue-600 text-white rounded-full shadow-lg hover:bg-blue-500 focus:outline-none"
+          onClick={() => setIsDialogOpen(true)}
+        >
+          <PlusCircledIcon className="h-6 w-6" />
+        </button>
+      </div>
+
+      <EventFormDialog
+        isOpen={isDialogOpen}
+        onClose={() => setIsDialogOpen(false)}
+        onSave={(eventData) => {
+          console.log("Event Data to Save:", eventData);
+          // Handle saving the event data
+        }}
+      />
     </div>
   );
 }
