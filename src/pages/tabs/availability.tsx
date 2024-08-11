@@ -245,6 +245,139 @@ export default function Availability() {
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setEditedValue(e.target.value);
   };
+  // end tim is working fine
+  // const handleBlur = async () => {
+  //   if (editingCell) {
+  //     const { id, field } = editingCell;
+  //     const docRef = doc(
+  //       db,
+  //       "users",
+  //       auth.currentUser?.uid ?? "",
+  //       "events",
+  //       id
+  //     );
+
+  //     let updates: any = {};
+
+  //     if (field === "startDate") {
+  //       const newDate = new Date(editedValue);
+
+  //       // Convert the date to UTC explicitly
+  //       const utcDate = new Date(
+  //         Date.UTC(
+  //           newDate.getUTCFullYear(),
+  //           newDate.getUTCMonth(),
+  //           newDate.getUTCDate(),
+  //           newDate.getUTCHours(),
+  //           newDate.getUTCMinutes(),
+  //           newDate.getUTCSeconds()
+  //         )
+  //       );
+
+  //       const currentEvent = events.find((event) => event.id === id);
+  //       if (currentEvent) {
+  //         const updatedStart = new Date(currentEvent.start);
+  //         updatedStart.setUTCFullYear(
+  //           utcDate.getUTCFullYear(),
+  //           utcDate.getUTCMonth(),
+  //           utcDate.getUTCDate()
+  //         );
+
+  //         const updatedStartDay = updatedStart.toLocaleDateString("en-US", {
+  //           weekday: "long",
+  //           timeZone: "UTC",
+  //         });
+
+  //         // Update startDate, startDay, and start
+  //         updates = {
+  //           startDate: updatedStart,
+  //           startDay: updatedStartDay,
+  //           start: updatedStart,
+  //         };
+
+  //         // Optionally, adjust endDate and endDay if needed
+  //         const updatedEnd = new Date(currentEvent.end);
+  //         const duration = updatedEnd.getTime() - currentEvent.start.getTime();
+  //         updatedEnd.setTime(updatedStart.getTime() + duration);
+
+  //         const updatedEndDay = updatedEnd.toLocaleDateString("en-US", {
+  //           weekday: "long",
+  //           timeZone: "UTC",
+  //         });
+
+  //         updates.endDate = updatedEnd;
+  //         updates.endDay = updatedEndDay;
+  //         updates.end = updatedEnd;
+  //       }
+  //     } else if (field === "endDate") {
+  //       const newDate = new Date(editedValue);
+  //       const utcDate = new Date(
+  //         Date.UTC(
+  //           newDate.getUTCFullYear(),
+  //           newDate.getUTCMonth(),
+  //           newDate.getUTCDate(),
+  //           newDate.getUTCHours(),
+  //           newDate.getUTCMinutes(),
+  //           newDate.getUTCSeconds()
+  //         )
+  //       );
+
+  //       const currentEvent = events.find((event) => event.id === id);
+  //       if (currentEvent) {
+  //         const updatedEnd = new Date(currentEvent.end);
+  //         updatedEnd.setUTCFullYear(
+  //           utcDate.getUTCFullYear(),
+  //           utcDate.getUTCMonth(),
+  //           utcDate.getUTCDate()
+  //         );
+
+  //         const updatedEndDay = updatedEnd.toLocaleDateString("en-US", {
+  //           weekday: "long",
+  //           timeZone: "UTC",
+  //         });
+
+  //         updates = {
+  //           endDate: updatedEnd,
+  //           endDay: updatedEndDay,
+  //           end: updatedEnd,
+  //         };
+  //       }
+  //     } else if (field === "end") {
+  //       const [hours, minutes] = editedValue.split(":");
+
+  //       if (hours !== undefined && minutes !== undefined) {
+  //         const currentEvent = events.find((event) => event.id === id);
+  //         if (currentEvent) {
+  //           const updatedEnd = new Date(currentEvent.end);
+
+  //           // Update only the time portion of the Date object
+  //           updatedEnd.setHours(parseInt(hours, 10));
+  //           updatedEnd.setMinutes(parseInt(minutes, 10));
+  //           updatedEnd.setSeconds(0); // Reset seconds to 0
+
+  //           updates = {
+  //             end: updatedEnd,
+  //           };
+  //         }
+  //       } else {
+  //         console.error("Invalid time format for end time.");
+  //         return; // Don't proceed if the time format is invalid
+  //       }
+  //     } else {
+  //       updates[field] = editedValue;
+  //     }
+
+  //     await updateDoc(docRef, updates);
+
+  //     setEvents((prevEvents) =>
+  //       prevEvents.map((event) =>
+  //         event.id === id ? { ...event, ...updates } : event
+  //       )
+  //     );
+
+  //     setEditingCell(null);
+  //   }
+  // };
 
   const handleBlur = async () => {
     if (editingCell) {
@@ -341,6 +474,27 @@ export default function Availability() {
             endDay: updatedEndDay,
             end: updatedEnd,
           };
+        }
+      } else if (field === "start") {
+        const [hours, minutes] = editedValue.split(":");
+
+        if (hours !== undefined && minutes !== undefined) {
+          const currentEvent = events.find((event) => event.id === id);
+          if (currentEvent) {
+            const updatedStart = new Date(currentEvent.start);
+
+            // Update only the time portion of the Date object
+            updatedStart.setHours(parseInt(hours, 10));
+            updatedStart.setMinutes(parseInt(minutes, 10));
+            updatedStart.setSeconds(0); // Reset seconds to 0
+
+            updates = {
+              start: updatedStart,
+            };
+          }
+        } else {
+          console.error("Invalid time format for start time.");
+          return; // Don't proceed if the time format is invalid
         }
       } else if (field === "end") {
         const [hours, minutes] = editedValue.split(":");
@@ -522,7 +676,9 @@ export default function Availability() {
                 {editingCell?.id === event.id &&
                 editingCell?.field === "start" ? (
                   <input
+                    type="time"
                     value={editedValue}
+                    step="900" // 900 seconds = 15 minutes
                     onChange={handleInputChange}
                     onBlur={handleBlur}
                     onKeyDown={handleKeyDown}
@@ -530,63 +686,40 @@ export default function Availability() {
                   />
                 ) : (
                   <div
-                    onClick={() =>
-                      handleCellClick(
-                        event.id ?? "",
-                        "start",
-                        event.start?.toLocaleString("en-US", {
-                          timeZone: "UTC",
-                        }) ?? ""
-                      )
-                    }
+                    onClick={() => {
+                      console.log("start value:", event.start);
+                      console.log("Is Date:", event.start instanceof Date);
+                      console.log("start type:", typeof event.start);
+
+                      if (
+                        event.start instanceof Date &&
+                        !isNaN(event.start.getTime())
+                      ) {
+                        handleCellClick(
+                          event.id ?? "",
+                          "start",
+                          event.start.toLocaleTimeString("en-US", {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                            hour12: true,
+                          })
+                        );
+                      } else {
+                        console.error("Invalid Date for start:", event.start);
+                      }
+                    }}
                   >
-                    {event.start?.toLocaleString("en-US", {
-                      timeZone: "UTC",
-                    }) ?? ""}
+                    {event.start instanceof Date &&
+                    !isNaN(event.start.getTime())
+                      ? event.start.toLocaleTimeString("en-US", {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                          hour12: true,
+                        })
+                      : "Invalid Date"}
                   </div>
                 )}
               </TableCell>
-              {/* <TableCell>
-                {editingCell?.id === event.id &&
-                editingCell?.field === "end" ? (
-                  <input
-                    type="datetime-local"
-                    value={new Date(editedValue).toISOString().slice(0, -8)}
-                    onChange={handleInputChange}
-                    onBlur={handleBlur}
-                    onKeyDown={handleKeyDown}
-                    autoFocus
-                  />
-                ) : (
-                  <div
-                    onClick={() =>
-                      handleCellClick(
-                        event.id ?? "",
-                        "end",
-                        event.end?.toLocaleString("en-US", {
-                          timeZone: "UTC",
-                          year: "numeric",
-                          month: "2-digit",
-                          day: "2-digit",
-                          hour: "2-digit",
-                          minute: "2-digit",
-                          second: "2-digit",
-                        }) ?? ""
-                      )
-                    }
-                  >
-                    {event.end?.toLocaleString("en-US", {
-                      timeZone: "UTC",
-                      year: "numeric",
-                      month: "2-digit",
-                      day: "2-digit",
-                      hour: "2-digit",
-                      minute: "2-digit",
-                      second: "2-digit",
-                    }) ?? ""}
-                  </div>
-                )}
-              </TableCell> */}
               <TableCell>
                 {editingCell?.id === event.id &&
                 editingCell?.field === "end" ? (
