@@ -44,6 +44,7 @@
     "react-dom": "^18",
     "react-firebase-hooks": "^5.1.1",
     "react-hook-form": "^7.52.1",
+    "react-time-picker": "^7.0.0",
     "rrule": "^2.8.1",
     "tailwind-merge": "^2.3.0",
     "tailwindcss-animate": "^1.0.7",
