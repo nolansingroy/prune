@@ -191,16 +191,26 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
               </SelectContent>
             </Select>
           </div>
-          <div>
+          <div className="space-y-2">
             <Label className="block text-sm font-medium text-gray-700">
               Background Event
             </Label>
-            <Checkbox
-              checked={isBackgroundEvent}
-              onCheckedChange={handleBackgroundChange}
-            >
-              Is Background Event
-            </Checkbox>
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                checked={isBackgroundEvent}
+                onCheckedChange={handleBackgroundChange}
+                id="backgroundEventCheckbox"
+              />
+              <Label
+                htmlFor="backgroundEventCheckbox"
+                className="text-sm font-medium text-gray-700"
+              >
+                Is Background Event
+              </Label>
+            </div>
+            <p className="mt-2 text-sm text-gray-500">
+              Will show on calendar as background / Available time
+            </p>
           </div>
           <div>
             <Label className="block text-sm font-medium text-gray-700">
