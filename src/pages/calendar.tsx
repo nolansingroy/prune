@@ -215,7 +215,12 @@ export default function Calendar() {
                 }}
                 slotDuration="00:15:00"
                 slotMinTime="04:00:00"
-                // scrollTime="07:00:00"
+                slotLabelFormat={{
+                  hour: "numeric",
+                  minute: "2-digit",
+                  meridiem: "short",
+                  omitZeroMinute: false, // This ensures "2:00pm" is displayed instead of "2pm"
+                }}
                 initialView="timeGridWeek"
                 nowIndicator={true}
                 editable={true}
