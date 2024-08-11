@@ -219,9 +219,27 @@ export default function Availability() {
     }
   };
 
+  // const handleCellClick = (id: string, field: string, value: string) => {
+  //   setEditingCell({ id, field });
+  //   setEditedValue(value);
+  // };
+
   const handleCellClick = (id: string, field: string, value: string) => {
     setEditingCell({ id, field });
-    setEditedValue(value);
+
+    if (field === "end") {
+      const currentEvent = events.find((event) => event.id === id);
+      if (currentEvent && currentEvent.end) {
+        const formattedTime = currentEvent.end.toLocaleTimeString("en-US", {
+          hour: "2-digit",
+          minute: "2-digit",
+          hour12: false,
+        });
+        setEditedValue(formattedTime);
+      }
+    } else {
+      setEditedValue(value);
+    }
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -325,23 +343,26 @@ export default function Availability() {
           };
         }
       } else if (field === "end") {
-        const newEndTime = new Date(editedValue);
+        const [hours, minutes] = editedValue.split(":");
 
-        // Convert the new time to UTC explicitly
-        const utcEndTime = new Date(
-          Date.UTC(
-            newEndTime.getUTCFullYear(),
-            newEndTime.getUTCMonth(),
-            newEndTime.getUTCDate(),
-            newEndTime.getUTCHours(),
-            newEndTime.getUTCMinutes(),
-            newEndTime.getUTCSeconds()
-          )
-        );
+        if (hours !== undefined && minutes !== undefined) {
+          const currentEvent = events.find((event) => event.id === id);
+          if (currentEvent) {
+            const updatedEnd = new Date(currentEvent.end);
 
-        updates = {
-          end: utcEndTime,
-        };
+            // Update only the time portion of the Date object
+            updatedEnd.setHours(parseInt(hours, 10));
+            updatedEnd.setMinutes(parseInt(minutes, 10));
+            updatedEnd.setSeconds(0); // Reset seconds to 0
+
+            updates = {
+              end: updatedEnd,
+            };
+          }
+        } else {
+          console.error("Invalid time format for end time.");
+          return; // Don't proceed if the time format is invalid
+        }
       } else {
         updates[field] = editedValue;
       }
@@ -525,7 +546,7 @@ export default function Availability() {
                   </div>
                 )}
               </TableCell>
-              <TableCell>
+              {/* <TableCell>
                 {editingCell?.id === event.id &&
                 editingCell?.field === "end" ? (
                   <input
@@ -562,6 +583,40 @@ export default function Availability() {
                       hour: "2-digit",
                       minute: "2-digit",
                       second: "2-digit",
+                    }) ?? ""}
+                  </div>
+                )}
+              </TableCell> */}
+              <TableCell>
+                {editingCell?.id === event.id &&
+                editingCell?.field === "end" ? (
+                  <input
+                    type="time"
+                    value={editedValue}
+                    step="900" // 900 seconds = 15 minutes
+                    onChange={handleInputChange}
+                    onBlur={handleBlur}
+                    onKeyDown={handleKeyDown}
+                    autoFocus
+                  />
+                ) : (
+                  <div
+                    onClick={() =>
+                      handleCellClick(
+                        event.id ?? "",
+                        "end",
+                        event.end?.toLocaleTimeString("en-US", {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                          hour12: true,
+                        }) ?? ""
+                      )
+                    }
+                  >
+                    {event.end?.toLocaleTimeString("en-US", {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                      hour12: true,
                     }) ?? ""}
                   </div>
                 )}
