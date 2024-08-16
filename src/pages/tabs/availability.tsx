@@ -133,6 +133,7 @@ export default function Availability() {
             startDay: startDay, // Day of the week derived from startDate
             endDate: endDate, // Use the UTC Date object
             endDay: endDay, // Day of the week derived from endDate
+            recurrence: data.recurrence || null, // Add recurrence to the event object
           };
         });
         setEvents(fetchedEvents);
@@ -530,6 +531,7 @@ export default function Availability() {
                 </button>
               </div>
             </TableHead>
+            <TableHead>Recurring</TableHead>
             <TableHead>Notes</TableHead>
             <TableHead>ID</TableHead> {/* Moved ID to the last column */}
           </TableRow>
@@ -688,6 +690,7 @@ export default function Availability() {
                   </div>
                 )}
               </TableCell>
+              {/* // Title Column */}
               <TableCell>
                 {editingCell?.id === event.id &&
                 editingCell?.field === "title" ? (
@@ -714,6 +717,14 @@ export default function Availability() {
                   </div>
                 )}
               </TableCell>
+              <TableCell>
+                {event.recurrence ? (
+                  <span className="text-green-500">Yes</span>
+                ) : (
+                  <span className="text-red-500">No</span>
+                )}
+              </TableCell>
+              {/* // Description Column as Notes  */}
               <TableCell>
                 {editingCell?.id === event.id &&
                 editingCell?.field === "description" ? (
