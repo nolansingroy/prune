@@ -18,6 +18,8 @@ export interface EventInput {
     endTime?: string;
     startRecur?: string;
     endRecur?: string;
+    exdate?: string[];
     rrule?: any;
   };
+  exceptions?: string[];
 }

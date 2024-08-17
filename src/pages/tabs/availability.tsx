@@ -10,6 +10,7 @@ import {
   writeBatch,
   updateDoc,
   Timestamp,
+  arrayUnion,
 } from "firebase/firestore";
 import { auth, db } from "../../../firebase";
 import { EventInput } from "../../interfaces/types";
@@ -111,6 +112,8 @@ export default function Availability() {
               ? data.endDate.toDate()
               : new Date(data.endDate);
 
+          const exceptions = data.exceptions || [];
+
           if (data.recurrence) {
             // Generate occurrences using RRule
             const rule = new RRule({
@@ -126,27 +129,31 @@ export default function Availability() {
                 occurrenceStart.getTime() + (end.getTime() - start.getTime())
               );
 
-              expandedEvents.push({
-                id: doc.id,
-                title: data.title,
-                start: occurrenceStart,
-                end: occurrenceEnd,
-                description: data.description || "",
-                display: data.display,
-                className: data.className,
-                isBackgroundEvent: data.isBackgroundEvent,
-                startDate: occurrenceStart,
-                startDay: occurrenceStart.toLocaleDateString("en-US", {
-                  weekday: "long",
-                  timeZone: "UTC",
-                }),
-                endDate: occurrenceEnd,
-                endDay: occurrenceEnd.toLocaleDateString("en-US", {
-                  weekday: "long",
-                  timeZone: "UTC",
-                }),
-                recurrence: data.recurrence,
-              });
+              // Skip dates that are in the exceptions list
+              if (!exceptions.includes(occurrenceStart.toISOString())) {
+                expandedEvents.push({
+                  id: doc.id,
+                  title: data.title,
+                  start: occurrenceStart,
+                  end: occurrenceEnd,
+                  description: data.description || "",
+                  display: data.display,
+                  className: data.className,
+                  isBackgroundEvent: data.isBackgroundEvent,
+                  startDate: occurrenceStart,
+                  startDay: occurrenceStart.toLocaleDateString("en-US", {
+                    weekday: "long",
+                    timeZone: "UTC",
+                  }),
+                  endDate: occurrenceEnd,
+                  endDay: occurrenceEnd.toLocaleDateString("en-US", {
+                    weekday: "long",
+                    timeZone: "UTC",
+                  }),
+                  recurrence: data.recurrence,
+                  exceptions: exceptions,
+                });
+              }
             });
           } else {
             // Non-recurring event
@@ -236,6 +243,44 @@ export default function Availability() {
         events.filter((event) => event.id && !selectedRows.has(event.id))
       );
       setSelectedRows(new Set());
+    }
+  };
+
+  const deleteOccurrence = async (eventId: string, occurrenceDate: Date) => {
+    const eventRef = doc(
+      db,
+      "users",
+      auth.currentUser?.uid ?? "",
+      "events",
+      eventId
+    );
+
+    // Convert the occurrence date to an ISO string (adjust for UTC if necessary)
+    const occurrenceISO = occurrenceDate.toISOString();
+
+    // Add the date to the exceptions array in Firestore
+    await updateDoc(eventRef, {
+      exceptions: arrayUnion(occurrenceISO),
+    });
+
+    // Update local state (or re-fetch events) to reflect changes
+    setEvents((prevEvents) =>
+      prevEvents.filter(
+        (event) =>
+          !(
+            event.id === eventId &&
+            event.start.getTime() === occurrenceDate.getTime()
+          )
+      )
+    );
+
+    // Optionally, fetch events again to ensure UI consistency
+    // await fetchEvents();
+  };
+
+  const handleDeleteClick = (eventId: string, occurrenceStart: Date) => {
+    if (window.confirm("Are you sure you want to delete this occurrence?")) {
+      deleteOccurrence(eventId, occurrenceStart);
     }
   };
 
@@ -779,6 +824,16 @@ export default function Availability() {
                 )}
               </TableCell>
               <TableCell>{event.id}</TableCell> {/* ID column moved here */}
+              <TableCell>
+                {event.recurrence ? (
+                  <Button
+                    variant="destructive"
+                    onClick={() => handleDeleteClick(event.id!, event.start)}
+                  >
+                    Delete Occurrence
+                  </Button>
+                ) : null}
+              </TableCell>
             </TableRow>
           ))}
         </TableBody>
