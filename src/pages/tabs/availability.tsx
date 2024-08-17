@@ -13,6 +13,7 @@ import {
 } from "firebase/firestore";
 import { auth, db } from "../../../firebase";
 import { EventInput } from "../../interfaces/types";
+import { RRule } from "rrule";
 import {
   CaretSortIcon,
   ChevronDownIcon,
@@ -89,10 +90,10 @@ export default function Availability() {
         );
         const q = query(eventsRef, where("isBackgroundEvent", "==", true));
         const querySnapshot = await getDocs(q);
-        const fetchedEvents = querySnapshot.docs.map((doc) => {
-          const data = doc.data();
+        let expandedEvents: EventInput[] = [];
 
-          // Convert Firestore Timestamps to JavaScript Date objects
+        querySnapshot.docs.forEach((doc) => {
+          const data = doc.data();
           const start =
             data.start instanceof Timestamp
               ? data.start.toDate()
@@ -110,32 +111,69 @@ export default function Availability() {
               ? data.endDate.toDate()
               : new Date(data.endDate);
 
-          // Derive startDay and endDay from startDate and endDate
-          const startDay = startDate.toLocaleDateString("en-US", {
-            weekday: "long",
-            timeZone: "UTC",
-          });
-          const endDay = endDate.toLocaleDateString("en-US", {
-            weekday: "long",
-            timeZone: "UTC",
-          });
+          if (data.recurrence) {
+            // Generate occurrences using RRule
+            const rule = new RRule({
+              freq: RRule.WEEKLY,
+              byweekday: data.recurrence.daysOfWeek,
+              dtstart: start,
+              until: new Date(data.recurrence.endRecur),
+            });
 
-          return {
-            id: doc.id,
-            title: data.title,
-            start: start,
-            end: end,
-            description: data.description || "",
-            display: data.display,
-            className: data.className,
-            isBackgroundEvent: data.isBackgroundEvent,
-            startDate: startDate, // Use the UTC Date object
-            startDay: startDay, // Day of the week derived from startDate
-            endDate: endDate, // Use the UTC Date object
-            endDay: endDay, // Day of the week derived from endDate
-          };
+            rule.all().forEach((date) => {
+              const occurrenceStart = new Date(date);
+              const occurrenceEnd = new Date(
+                occurrenceStart.getTime() + (end.getTime() - start.getTime())
+              );
+
+              expandedEvents.push({
+                id: doc.id,
+                title: data.title,
+                start: occurrenceStart,
+                end: occurrenceEnd,
+                description: data.description || "",
+                display: data.display,
+                className: data.className,
+                isBackgroundEvent: data.isBackgroundEvent,
+                startDate: occurrenceStart,
+                startDay: occurrenceStart.toLocaleDateString("en-US", {
+                  weekday: "long",
+                  timeZone: "UTC",
+                }),
+                endDate: occurrenceEnd,
+                endDay: occurrenceEnd.toLocaleDateString("en-US", {
+                  weekday: "long",
+                  timeZone: "UTC",
+                }),
+                recurrence: data.recurrence,
+              });
+            });
+          } else {
+            // Non-recurring event
+            expandedEvents.push({
+              id: doc.id,
+              title: data.title,
+              start: start,
+              end: end,
+              description: data.description || "",
+              display: data.display,
+              className: data.className,
+              isBackgroundEvent: data.isBackgroundEvent,
+              startDate: startDate,
+              startDay: startDate.toLocaleDateString("en-US", {
+                weekday: "long",
+                timeZone: "UTC",
+              }),
+              endDate: endDate,
+              endDay: endDate.toLocaleDateString("en-US", {
+                weekday: "long",
+                timeZone: "UTC",
+              }),
+            });
+          }
         });
-        setEvents(fetchedEvents);
+
+        setEvents(expandedEvents);
       }
     };
 
