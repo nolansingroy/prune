@@ -71,11 +71,16 @@ export const getUser = async (uid: string): Promise<User | null> => {
 
 // Create a new user document in the database
 export const createUser = async (user: User): Promise<void> => {
-  await setDoc(getUserDocRef(user.uid), {
+  const userDocRef = getUserDocRef(user.uid);
+
+  await setDoc(userDocRef, {
     ...user,
-    creationTime: serverTimestamp() as unknown as Timestamp, // Set the creation time of the user document to the current server timestamp
-    updated_at: serverTimestamp() as unknown as Timestamp, // Set the updated_at field of the user document to the current server timestamp
+    creationTime: serverTimestamp() as unknown as Timestamp,
+    updated_at: serverTimestamp() as unknown as Timestamp,
   });
+
+  const eventsCollection = collection(userDocRef, "events");
+  await addDoc(eventsCollection, {}); // Create an empty document in the "events" subcollection
 };
 
 export const updateUser = async (

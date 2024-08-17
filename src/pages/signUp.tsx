@@ -1,5 +1,6 @@
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/router";
 import { Button } from "@/components/ui/button";
 import { auth } from "../../firebase";
 import {
@@ -28,7 +29,9 @@ const SignUpPage = () => {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
 
-  // Handle the singUp logic Here
+  const router = useRouter(); // Initialize useRouter
+
+  // Handle the signUp logic here
   const handleSignUp = async () => {
     try {
       const userCredential = await createUserWithEmailAndPassword(
@@ -65,8 +68,10 @@ const SignUpPage = () => {
         "User created successfully with name:",
         `${firstName} ${lastName}`
       );
+
+      // Redirect to the /calendar page after successful sign-up
+      router.push("/calendar");
     } catch (error: any) {
-      // Add type annotation to catch clause variable
       // Handle sign-up error (display error message, etc.)
       console.error("Error creating user:", error.message);
     }
@@ -85,8 +90,8 @@ const SignUpPage = () => {
   };
 
   return (
-    <div className=" min-h-screen flex items-center justify-center text-gray-800">
-      <Card className="mx-auto max-w-sm ">
+    <div className="min-h-screen flex items-center justify-center text-gray-800">
+      <Card className="mx-auto max-w-sm">
         <CardHeader>
           <CardTitle className="text-xl text-black">Sign Up</CardTitle>
           <CardDescription>
