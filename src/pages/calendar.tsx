@@ -16,7 +16,11 @@ import { auth, db } from "../../firebase";
 import { createEvent } from "../services/userService";
 import useFetchEvents from "../hooks/useFetchEvents";
 import { EventInput } from "../interfaces/types";
-import { Timestamp } from "firebase/firestore";
+import { addDoc, getDoc, Timestamp } from "firebase/firestore";
+import { doc, updateDoc } from "firebase/firestore";
+import { collection, query, getDocs } from "firebase/firestore";
+import { EventResizeDoneArg } from "@fullcalendar/interaction";
+import { EventDropArg } from "@fullcalendar/core";
 
 export default function Calendar() {
   const calendarRef = useRef<FullCalendar>(null);
@@ -70,6 +74,102 @@ export default function Calendar() {
         <i>{eventInfo.event.title}</i>
       </>
     );
+  };
+
+  const handleEventResize = async (resizeInfo: EventResizeDoneArg) => {
+    console.log("Event resized:", resizeInfo);
+    try {
+      const user = auth.currentUser;
+      if (user) {
+        const eventRef = doc(
+          db,
+          "users",
+          user.uid,
+          "events",
+          resizeInfo.event.id
+        );
+
+        // Calculate the new startDay and endDay
+        const startDay = resizeInfo.event.start?.toLocaleDateString("en-US", {
+          weekday: "long",
+          timeZone: "UTC",
+        });
+        const endDay = resizeInfo.event.end
+          ? resizeInfo.event.end.toLocaleDateString("en-US", {
+              weekday: "long",
+              timeZone: "UTC",
+            })
+          : "";
+
+        // Update the event in Firestore with new start and end times
+        await updateDoc(eventRef, {
+          start: resizeInfo.event.start?.toISOString(),
+          end: resizeInfo.event.end?.toISOString(),
+          startDate: resizeInfo.event.start?.toISOString(), // Update startDate with null check
+          endDate: resizeInfo.event.end?.toISOString(), // Update endDate with null check
+          startDay: startDay, // Update startDay
+          endDay: endDay, // Update endDay
+          updated_at: Timestamp.now(),
+        });
+
+        console.log(
+          `Event resized and updated in Firestore - ${resizeInfo.event.id}`
+        );
+      }
+    } catch (error) {
+      console.error("Error updating event in Firestore:", error);
+    }
+  };
+
+  const handleEventDrop = async (dropInfo: EventDropArg) => {
+    console.log("Event dropped:", dropInfo);
+    try {
+      const user = auth.currentUser;
+      if (user) {
+        const eventRef = doc(
+          db,
+          "users",
+          user.uid,
+          "events",
+          dropInfo.event.id
+        );
+
+        // Calculate the new startDay and endDay
+        const startDay = dropInfo.event.start
+          ? dropInfo.event.start.toLocaleDateString("en-US", {
+              weekday: "long",
+              timeZone: "UTC",
+            })
+          : "";
+        const endDay = dropInfo.event.end
+          ? dropInfo.event.end.toLocaleDateString("en-US", {
+              weekday: "long",
+              timeZone: "UTC",
+            })
+          : "";
+
+        // Update the event in Firestore with new start and end times
+        await updateDoc(eventRef, {
+          start: dropInfo.event.start
+            ? dropInfo.event.start.toISOString()
+            : null,
+          end: dropInfo.event.end ? dropInfo.event.end.toISOString() : null,
+          startDate: dropInfo.event.start
+            ? dropInfo.event.start.toISOString()
+            : null, // Update startDate
+          endDate: dropInfo.event.end ? dropInfo.event.end.toISOString() : null, // Update endDate
+          startDay: startDay, // Update startDay
+          endDay: endDay, // Update endDay
+          updated_at: Timestamp.now(),
+        });
+
+        console.log(
+          `Event dropped and updated in Firestore - ${dropInfo.event.id}`
+        );
+      }
+    } catch (error) {
+      console.error("Error updating event in Firestore:", error);
+    }
   };
 
   const handleSelect = (selectInfo: DateSelectArg) => {
@@ -138,6 +238,7 @@ export default function Calendar() {
 
     // Create the event object with UTC times
     let event: EventInput = {
+      id: "", // Placeholder for the Firestore document ID
       title,
       start: startDateTime, // These are already UTC
       end: endDateTime, // These are already UTC
@@ -163,16 +264,23 @@ export default function Calendar() {
     try {
       const user = auth.currentUser;
       if (user) {
-        await createEvent(user.uid, event);
-        console.log("Event created in Firestore");
+        // Create a new document in Firestore
+        const eventRef = await addDoc(
+          collection(db, "users", user.uid, "events"),
+          event
+        );
 
-        setEvents((prevEvents) => [
-          ...prevEvents,
-          {
-            ...event,
-            id: String(Date.now()),
-          },
-        ]);
+        // Update the event object with the Firestore document ID
+        const eventId = eventRef.id;
+        event.id = eventId;
+
+        // Update Firestore document with the correct ID
+        await updateDoc(eventRef, { id: eventId });
+
+        console.log("Event created in Firestore with ID:", event.id);
+
+        // Update local state with the new event
+        setEvents((prevEvents) => [...prevEvents, event]);
       }
     } catch (error) {
       console.error("Error creating event in Firestore:", error);
@@ -227,6 +335,8 @@ export default function Calendar() {
                 selectable={true}
                 selectMirror={true}
                 select={handleSelect}
+                eventResize={handleEventResize} // Called when resizing an event
+                eventDrop={handleEventDrop}
                 events={events.map((event) => {
                   if (event.recurrence) {
                     return {
