@@ -101,12 +101,20 @@ export default function Calendar() {
             })
           : "";
 
+        // Convert ISO strings back to Date objects to store as timestamps
+        const startDateUTC = resizeInfo.event.start
+          ? new Date(resizeInfo.event.start.toISOString())
+          : null;
+        const endDateUTC = resizeInfo.event.end
+          ? new Date(resizeInfo.event.end.toISOString())
+          : null;
+
         // Update the event in Firestore with new start and end times
         await updateDoc(eventRef, {
-          start: resizeInfo.event.start?.toISOString(),
-          end: resizeInfo.event.end?.toISOString(),
-          startDate: resizeInfo.event.start?.toISOString(), // Update startDate with null check
-          endDate: resizeInfo.event.end?.toISOString(), // Update endDate with null check
+          start: startDateUTC, // Store as Date object (which Firestore stores as Timestamp)
+          end: endDateUTC, // Store as Date object (which Firestore stores as Timestamp)
+          startDate: startDateUTC, // Update startDate
+          endDate: endDateUTC, // Update endDate
           startDay: startDay, // Update startDay
           endDay: endDay, // Update endDay
           updated_at: Timestamp.now(),
@@ -148,16 +156,20 @@ export default function Calendar() {
             })
           : "";
 
+        // Convert ISO strings back to Date objects to store as timestamps
+        const startDateUTC = dropInfo.event.start
+          ? new Date(dropInfo.event.start.toISOString())
+          : null;
+        const endDateUTC = dropInfo.event.end
+          ? new Date(dropInfo.event.end.toISOString())
+          : null;
+
         // Update the event in Firestore with new start and end times
         await updateDoc(eventRef, {
-          start: dropInfo.event.start
-            ? dropInfo.event.start.toISOString()
-            : null,
-          end: dropInfo.event.end ? dropInfo.event.end.toISOString() : null,
-          startDate: dropInfo.event.start
-            ? dropInfo.event.start.toISOString()
-            : null, // Update startDate
-          endDate: dropInfo.event.end ? dropInfo.event.end.toISOString() : null, // Update endDate
+          start: startDateUTC, // Store as Date object (which Firestore stores as Timestamp)
+          end: endDateUTC, // Store as Date object (which Firestore stores as Timestamp)
+          startDate: startDateUTC, // Update startDate
+          endDate: endDateUTC, // Update endDate
           startDay: startDay, // Update startDay
           endDay: endDay, // Update endDay
           updated_at: Timestamp.now(),
