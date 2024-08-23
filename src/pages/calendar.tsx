@@ -26,12 +26,22 @@ export default function Calendar() {
   const calendarRef = useRef<FullCalendar>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectInfo, setSelectInfo] = useState<DateSelectArg | null>(null);
-  const { events: fetchedEvents, loading: eventsLoading } = useFetchEvents();
+  const {
+    events: fetchedEvents,
+    loading: eventsLoading,
+    fetchEvents,
+  } = useFetchEvents();
   const [events, setEvents] = useState<EventInput[]>([]);
 
   useEffect(() => {
     setEvents(fetchedEvents);
   }, [fetchedEvents]);
+
+  const handleTabChange = (value: string) => {
+    if (value === "calendar") {
+      fetchEvents(); // Force fetch events when the calendar tab is clicked
+    }
+  };
 
   const renderEventContent = (eventInfo: EventContentArg) => {
     const { isBackgroundEvent } = eventInfo.event.extendedProps;
@@ -307,7 +317,11 @@ export default function Calendar() {
 
   return (
     <div className="p-4">
-      <Tabs defaultValue="calendar" className="w-full">
+      <Tabs
+        defaultValue="calendar"
+        className="w-full"
+        onValueChange={handleTabChange}
+      >
         <TabsList>
           <TabsTrigger value="calendar">Calendar</TabsTrigger>
           <TabsTrigger value="availabile_time">Available Time</TabsTrigger>
