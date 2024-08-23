@@ -26,12 +26,22 @@ export default function Calendar() {
   const calendarRef = useRef<FullCalendar>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectInfo, setSelectInfo] = useState<DateSelectArg | null>(null);
-  const { events: fetchedEvents, loading: eventsLoading } = useFetchEvents();
+  const {
+    events: fetchedEvents,
+    loading: eventsLoading,
+    fetchEvents,
+  } = useFetchEvents();
   const [events, setEvents] = useState<EventInput[]>([]);
 
   useEffect(() => {
     setEvents(fetchedEvents);
   }, [fetchedEvents]);
+
+  const handleTabChange = (value: string) => {
+    if (value === "calendar") {
+      fetchEvents(); // Force fetch events when the calendar tab is clicked
+    }
+  };
 
   const renderEventContent = (eventInfo: EventContentArg) => {
     const { isBackgroundEvent } = eventInfo.event.extendedProps;
@@ -101,12 +111,20 @@ export default function Calendar() {
             })
           : "";
 
+        // Convert ISO strings back to Date objects to store as timestamps
+        const startDateUTC = resizeInfo.event.start
+          ? new Date(resizeInfo.event.start.toISOString())
+          : null;
+        const endDateUTC = resizeInfo.event.end
+          ? new Date(resizeInfo.event.end.toISOString())
+          : null;
+
         // Update the event in Firestore with new start and end times
         await updateDoc(eventRef, {
-          start: resizeInfo.event.start?.toISOString(),
-          end: resizeInfo.event.end?.toISOString(),
-          startDate: resizeInfo.event.start?.toISOString(), // Update startDate with null check
-          endDate: resizeInfo.event.end?.toISOString(), // Update endDate with null check
+          start: startDateUTC, // Store as Date object (which Firestore stores as Timestamp)
+          end: endDateUTC, // Store as Date object (which Firestore stores as Timestamp)
+          startDate: startDateUTC, // Update startDate
+          endDate: endDateUTC, // Update endDate
           startDay: startDay, // Update startDay
           endDay: endDay, // Update endDay
           updated_at: Timestamp.now(),
@@ -148,16 +166,20 @@ export default function Calendar() {
             })
           : "";
 
+        // Convert ISO strings back to Date objects to store as timestamps
+        const startDateUTC = dropInfo.event.start
+          ? new Date(dropInfo.event.start.toISOString())
+          : null;
+        const endDateUTC = dropInfo.event.end
+          ? new Date(dropInfo.event.end.toISOString())
+          : null;
+
         // Update the event in Firestore with new start and end times
         await updateDoc(eventRef, {
-          start: dropInfo.event.start
-            ? dropInfo.event.start.toISOString()
-            : null,
-          end: dropInfo.event.end ? dropInfo.event.end.toISOString() : null,
-          startDate: dropInfo.event.start
-            ? dropInfo.event.start.toISOString()
-            : null, // Update startDate
-          endDate: dropInfo.event.end ? dropInfo.event.end.toISOString() : null, // Update endDate
+          start: startDateUTC, // Store as Date object (which Firestore stores as Timestamp)
+          end: endDateUTC, // Store as Date object (which Firestore stores as Timestamp)
+          startDate: startDateUTC, // Update startDate
+          endDate: endDateUTC, // Update endDate
           startDay: startDay, // Update startDay
           endDay: endDay, // Update endDay
           updated_at: Timestamp.now(),
@@ -295,7 +317,11 @@ export default function Calendar() {
 
   return (
     <div className="p-4">
-      <Tabs defaultValue="calendar" className="w-full">
+      <Tabs
+        defaultValue="calendar"
+        className="w-full"
+        onValueChange={handleTabChange}
+      >
         <TabsList>
           <TabsTrigger value="calendar">Calendar</TabsTrigger>
           <TabsTrigger value="availabile_time">Available Time</TabsTrigger>

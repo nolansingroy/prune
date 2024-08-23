@@ -273,9 +273,6 @@ export default function Availability() {
           )
       )
     );
-
-    // Optionally, fetch events again to ensure UI consistency
-    // await fetchEvents();
   };
 
   const handleDeleteClick = (eventId: string, occurrenceStart: Date) => {
@@ -556,6 +553,12 @@ export default function Availability() {
     }
   };
 
+  const addHoursToDate = (date: Date, hours: number) => {
+    const newDate = new Date(date);
+    newDate.setHours(newDate.getHours() + hours);
+    return newDate;
+  };
+
   return (
     <div className="w-full relative">
       <h1 className="text-xl font-bold mb-4">My Available Times</h1>
@@ -704,18 +707,15 @@ export default function Availability() {
                 ) : (
                   <div
                     onClick={() => {
-                      console.log("start value:", event.start);
-                      console.log("Is Date:", event.start instanceof Date);
-                      console.log("start type:", typeof event.start);
-
                       if (
                         event.start instanceof Date &&
                         !isNaN(event.start.getTime())
                       ) {
+                        const localStart = addHoursToDate(event.start, 5);
                         handleCellClick(
                           event.id ?? "",
                           "start",
-                          event.start.toLocaleTimeString("en-US", {
+                          localStart.toLocaleTimeString("en-US", {
                             hour: "2-digit",
                             minute: "2-digit",
                             hour12: true,
@@ -728,11 +728,14 @@ export default function Availability() {
                   >
                     {event.start instanceof Date &&
                     !isNaN(event.start.getTime())
-                      ? event.start.toLocaleTimeString("en-US", {
-                          hour: "2-digit",
-                          minute: "2-digit",
-                          hour12: true,
-                        })
+                      ? addHoursToDate(event.start, 5).toLocaleTimeString(
+                          "en-US",
+                          {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                            hour12: true,
+                          }
+                        )
                       : "Invalid Date"}
                   </div>
                 )}
@@ -751,23 +754,36 @@ export default function Availability() {
                   />
                 ) : (
                   <div
-                    onClick={() =>
-                      handleCellClick(
-                        event.id ?? "",
-                        "end",
-                        event.end?.toLocaleTimeString("en-US", {
-                          hour: "2-digit",
-                          minute: "2-digit",
-                          hour12: true,
-                        }) ?? ""
-                      )
-                    }
+                    onClick={() => {
+                      if (
+                        event.end instanceof Date &&
+                        !isNaN(event.end.getTime())
+                      ) {
+                        const localEnd = addHoursToDate(event.end, 5);
+                        handleCellClick(
+                          event.id ?? "",
+                          "end",
+                          localEnd.toLocaleTimeString("en-US", {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                            hour12: true,
+                          })
+                        );
+                      } else {
+                        console.error("Invalid Date for end:", event.end);
+                      }
+                    }}
                   >
-                    {event.end?.toLocaleTimeString("en-US", {
-                      hour: "2-digit",
-                      minute: "2-digit",
-                      hour12: true,
-                    }) ?? ""}
+                    {event.end instanceof Date && !isNaN(event.end.getTime())
+                      ? addHoursToDate(event.end, 5).toLocaleTimeString(
+                          "en-US",
+                          {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                            hour12: true,
+                          }
+                        )
+                      : "Invalid Date"}
                   </div>
                 )}
               </TableCell>
