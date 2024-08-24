@@ -556,7 +556,7 @@ export default function Availability() {
 
   const getUserTimeZoneOffset = () => {
     const offsetMinutes = new Date().getTimezoneOffset();
-    return -offsetMinutes / 60; // Convert minutes to hours and invert sign
+    return offsetMinutes / 60; // Convert minutes to hours and invert sign
   };
 
   const addHoursToDate = (date: Date, hours: number) => {
