@@ -709,6 +709,11 @@ export default function Availability() {
     }
   };
 
+  const getUserTimeZoneOffset = () => {
+    const offsetMinutes = new Date().getTimezoneOffset();
+    return offsetMinutes / 60; // Convert minutes to hours and invert sign
+  };
+
   const addHoursToDate = (date: Date, hours: number) => {
     const newDate = new Date(date);
     newDate.setHours(newDate.getHours() + hours);
@@ -826,30 +831,6 @@ export default function Availability() {
               </TableCell>
               <TableCell>
                 {editingCell?.id === event.id &&
-                editingCell?.field === "startDay" ? (
-                  <input
-                    value={editedValue}
-                    onChange={handleInputChange}
-                    onBlur={handleBlur}
-                    onKeyDown={handleKeyDown}
-                    autoFocus
-                  />
-                ) : (
-                  <div
-                    onClick={() =>
-                      handleCellClick(
-                        event.id ?? "",
-                        "startDay",
-                        event.startDay
-                      )
-                    }
-                  >
-                    {event.startDay}
-                  </div>
-                )}
-              </TableCell>
-              <TableCell>
-                {editingCell?.id === event.id &&
                 editingCell?.field === "start" ? (
                   <input
                     type="time"
@@ -867,7 +848,11 @@ export default function Availability() {
                         event.start instanceof Date &&
                         !isNaN(event.start.getTime())
                       ) {
-                        const localStart = addHoursToDate(event.start, 5);
+                        const timezoneOffset = getUserTimeZoneOffset(); // Get current timezone offset
+                        const localStart = addHoursToDate(
+                          event.start,
+                          timezoneOffset
+                        ); // Adjust time to user's local time
                         handleCellClick(
                           event.id ?? "",
                           "start",
@@ -884,14 +869,14 @@ export default function Availability() {
                   >
                     {event.start instanceof Date &&
                     !isNaN(event.start.getTime())
-                      ? addHoursToDate(event.start, 5).toLocaleTimeString(
-                          "en-US",
-                          {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                            hour12: true,
-                          }
-                        )
+                      ? addHoursToDate(
+                          event.start,
+                          getUserTimeZoneOffset()
+                        ).toLocaleTimeString("en-US", {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                          hour12: true,
+                        })
                       : "Invalid Date"}
                   </div>
                 )}
@@ -915,7 +900,11 @@ export default function Availability() {
                         event.end instanceof Date &&
                         !isNaN(event.end.getTime())
                       ) {
-                        const localEnd = addHoursToDate(event.end, 5);
+                        const timezoneOffset = getUserTimeZoneOffset(); // Get current timezone offset
+                        const localEnd = addHoursToDate(
+                          event.end,
+                          timezoneOffset
+                        ); // Adjust time to user's local time
                         handleCellClick(
                           event.id ?? "",
                           "end",
@@ -931,14 +920,14 @@ export default function Availability() {
                     }}
                   >
                     {event.end instanceof Date && !isNaN(event.end.getTime())
-                      ? addHoursToDate(event.end, 5).toLocaleTimeString(
-                          "en-US",
-                          {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                            hour12: true,
-                          }
-                        )
+                      ? addHoursToDate(
+                          event.end,
+                          getUserTimeZoneOffset()
+                        ).toLocaleTimeString("en-US", {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                          hour12: true,
+                        })
                       : "Invalid Date"}
                   </div>
                 )}
