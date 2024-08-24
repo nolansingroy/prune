@@ -321,161 +321,6 @@ export default function Availability() {
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setEditedValue(e.target.value);
   };
-  // TODO: this function is works as expected where it updates the event data in firestore with the right time
-
-  // const handleBlur = async () => {
-  //   if (editingCell) {
-  //     const { id, field } = editingCell;
-  //     const docRef = doc(
-  //       db,
-  //       "users",
-  //       auth.currentUser?.uid ?? "",
-  //       "events",
-  //       id
-  //     );
-
-  //     let updates: any = {};
-
-  //     if (field === "startDate") {
-  //       const newDate = new Date(editedValue);
-
-  //       // Convert the date to UTC explicitly
-  //       const utcDate = new Date(
-  //         Date.UTC(
-  //           newDate.getUTCFullYear(),
-  //           newDate.getUTCMonth(),
-  //           newDate.getUTCDate(),
-  //           newDate.getUTCHours(),
-  //           newDate.getUTCMinutes(),
-  //           newDate.getUTCSeconds()
-  //         )
-  //       );
-
-  //       const currentEvent = events.find((event) => event.id === id);
-  //       if (currentEvent) {
-  //         const updatedStart = new Date(currentEvent.start);
-  //         updatedStart.setUTCFullYear(
-  //           utcDate.getUTCFullYear(),
-  //           utcDate.getUTCMonth(),
-  //           utcDate.getUTCDate()
-  //         );
-
-  //         const updatedStartDay = updatedStart.toLocaleDateString("en-US", {
-  //           weekday: "long",
-  //           timeZone: "UTC",
-  //         });
-
-  //         // Update startDate, startDay, and start
-  //         updates = {
-  //           startDate: updatedStart,
-  //           startDay: updatedStartDay,
-  //           start: updatedStart,
-  //         };
-
-  //         // Optionally, adjust endDate and endDay if needed
-  //         const updatedEnd = new Date(currentEvent.end);
-  //         const duration = updatedEnd.getTime() - currentEvent.start.getTime();
-  //         updatedEnd.setTime(updatedStart.getTime() + duration);
-
-  //         const updatedEndDay = updatedEnd.toLocaleDateString("en-US", {
-  //           weekday: "long",
-  //           timeZone: "UTC",
-  //         });
-
-  //         updates.endDate = updatedEnd;
-  //         updates.endDay = updatedEndDay;
-  //         updates.end = updatedEnd;
-  //       }
-  //     } else if (field === "endDate") {
-  //       const newDate = new Date(editedValue);
-  //       const utcDate = new Date(
-  //         Date.UTC(
-  //           newDate.getUTCFullYear(),
-  //           newDate.getUTCMonth(),
-  //           newDate.getUTCDate(),
-  //           newDate.getUTCHours(),
-  //           newDate.getUTCMinutes(),
-  //           newDate.getUTCSeconds()
-  //         )
-  //       );
-
-  //       const currentEvent = events.find((event) => event.id === id);
-  //       if (currentEvent) {
-  //         const updatedEnd = new Date(currentEvent.end);
-  //         updatedEnd.setUTCFullYear(
-  //           utcDate.getUTCFullYear(),
-  //           utcDate.getUTCMonth(),
-  //           utcDate.getUTCDate()
-  //         );
-
-  //         const updatedEndDay = updatedEnd.toLocaleDateString("en-US", {
-  //           weekday: "long",
-  //           timeZone: "UTC",
-  //         });
-
-  //         updates = {
-  //           endDate: updatedEnd,
-  //           endDay: updatedEndDay,
-  //           end: updatedEnd,
-  //         };
-  //       }
-  //     } else if (field === "start") {
-  //       const [hours, minutes] = editedValue.split(":");
-
-  //       if (hours !== undefined && minutes !== undefined) {
-  //         const currentEvent = events.find((event) => event.id === id);
-  //         if (currentEvent) {
-  //           const updatedStart = new Date(currentEvent.start);
-
-  //           // Update only the time portion of the Date object
-  //           updatedStart.setHours(parseInt(hours, 10));
-  //           updatedStart.setMinutes(parseInt(minutes, 10));
-  //           updatedStart.setSeconds(0); // Reset seconds to 0
-
-  //           updates = {
-  //             start: updatedStart,
-  //           };
-  //         }
-  //       } else {
-  //         console.error("Invalid time format for start time.");
-  //         return; // Don't proceed if the time format is invalid
-  //       }
-  //     } else if (field === "end") {
-  //       const [hours, minutes] = editedValue.split(":");
-
-  //       if (hours !== undefined && minutes !== undefined) {
-  //         const currentEvent = events.find((event) => event.id === id);
-  //         if (currentEvent) {
-  //           const updatedEnd = new Date(currentEvent.end);
-
-  //           // Update only the time portion of the Date object
-  //           updatedEnd.setHours(parseInt(hours, 10));
-  //           updatedEnd.setMinutes(parseInt(minutes, 10));
-  //           updatedEnd.setSeconds(0); // Reset seconds to 0
-
-  //           updates = {
-  //             end: updatedEnd,
-  //           };
-  //         }
-  //       } else {
-  //         console.error("Invalid time format for end time.");
-  //         return; // Don't proceed if the time format is invalid
-  //       }
-  //     } else {
-  //       updates[field] = editedValue;
-  //     }
-
-  //     await updateDoc(docRef, updates);
-
-  //     setEvents((prevEvents) =>
-  //       prevEvents.map((event) =>
-  //         event.id === id ? { ...event, ...updates } : event
-  //       )
-  //     );
-
-  //     setEditingCell(null);
-  //   }
-  // };
 
   // Adding temporary handleBlur function to with -5 hours to the time
   const handleBlur = async () => {
@@ -711,7 +556,7 @@ export default function Availability() {
 
   const getUserTimeZoneOffset = () => {
     const offsetMinutes = new Date().getTimezoneOffset();
-    return offsetMinutes / 60; // Convert minutes to hours and invert sign
+    return -offsetMinutes / 60; // Convert minutes to hours and invert sign
   };
 
   const addHoursToDate = (date: Date, hours: number) => {
@@ -778,7 +623,6 @@ export default function Availability() {
               </div>
             </TableHead>
             <TableHead>Notes</TableHead>
-            <TableHead>ID</TableHead> {/* Moved ID to the last column */}
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -826,6 +670,31 @@ export default function Availability() {
                           day: "2-digit",
                         })
                       : "Invalid Date"}
+                  </div>
+                )}
+              </TableCell>
+              {/* Day  */}
+              <TableCell>
+                {editingCell?.id === event.id &&
+                editingCell?.field === "startDay" ? (
+                  <input
+                    value={editedValue}
+                    onChange={handleInputChange}
+                    onBlur={handleBlur}
+                    onKeyDown={handleKeyDown}
+                    autoFocus
+                  />
+                ) : (
+                  <div
+                    onClick={() =>
+                      handleCellClick(
+                        event.id ?? "",
+                        "startDay",
+                        event.startDay
+                      )
+                    }
+                  >
+                    {event.startDay}
                   </div>
                 )}
               </TableCell>
@@ -932,6 +801,33 @@ export default function Availability() {
                   </div>
                 )}
               </TableCell>
+              {/* <TableCell>
+                {editingCell?.id === event.id &&
+                editingCell?.field === "title" ? (
+                  <input
+                    value={editedValue}
+                    onChange={handleInputChange}
+                    onBlur={handleBlur}
+                    onKeyDown={handleKeyDown}
+                    autoFocus
+                  />
+                ) : (
+                  <div
+                    onClick={() =>
+                      handleCellClick(
+                        event.id ?? "",
+                        "title",
+                        event.title ?? ""
+                      )
+                    }
+                  >
+                    {event.title || (
+                      <span className="text-gray-500">Enter title</span>
+                    )}
+                  </div>
+                )}
+              </TableCell> */}
+              {/* // Title */}
               <TableCell>
                 {editingCell?.id === event.id &&
                 editingCell?.field === "title" ? (
@@ -958,6 +854,7 @@ export default function Availability() {
                   </div>
                 )}
               </TableCell>
+              {/* // Description */}
               <TableCell>
                 {editingCell?.id === event.id &&
                 editingCell?.field === "description" ? (
@@ -984,7 +881,7 @@ export default function Availability() {
                   </div>
                 )}
               </TableCell>
-              <TableCell>{event.id}</TableCell> {/* ID column moved here */}
+              {/* <TableCell>{event.id}</TableCell> ID column moved here */}
               <TableCell>
                 {event.recurrence ? (
                   <Button
