@@ -4,6 +4,7 @@ import Layout from "../app/layout"; // Adjust the import path as needed
 import Header from "@/components/header";
 import Footer from "@/components/footer";
 import { Toaster } from "@/components/ui/toaster";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 
 function MyApp({ Component, pageProps }: { Component: any; pageProps: any }) {
   return (
@@ -19,6 +20,7 @@ function MyApp({ Component, pageProps }: { Component: any; pageProps: any }) {
       <Header />
       <main className="flex-grow">
         <Component {...pageProps} />
+        <SpeedInsights />
       </main>
       <Footer />
     </div>
