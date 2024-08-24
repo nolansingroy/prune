@@ -368,11 +368,18 @@ export default function Calendar() {
                     return {
                       ...event,
                       rrule: {
-                        freq: "weekly",
-                        interval: 1,
-                        byweekday: event.recurrence.daysOfWeek,
-                        dtstart: event.recurrence.startRecur,
-                        until: event.recurrence.endRecur,
+                        freq: "weekly", // Assuming a weekly recurrence
+                        interval: 1, // Assuming a default interval of 1 week, adjust if necessary
+                        byweekday: event.recurrence.daysOfWeek
+                          ? event.recurrence.daysOfWeek.map(
+                              (day) =>
+                                ["SU", "MO", "TU", "WE", "TH", "FR", "SA"][day]
+                            )
+                          : undefined, // Handle the case where daysOfWeek is undefined
+                        dtstart: new Date(event.start).toISOString(), // Use start date and convert to ISO string
+                        until: event.recurrence.endRecur
+                          ? new Date(event.recurrence.endRecur).toISOString()
+                          : undefined, // Convert endRecur to ISO string
                       },
                       startTime: event.recurrence.startTime,
                       endTime: event.recurrence.endTime,

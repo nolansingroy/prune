@@ -42,13 +42,13 @@ interface EventFormDialogProps {
 }
 
 const daysOfWeekOptions = [
-  { value: 0, label: "M" },
-  { value: 1, label: "T" },
-  { value: 2, label: "W" },
-  { value: 3, label: "Th" },
-  { value: 4, label: "F" },
-  { value: 5, label: "Sa" },
-  { value: 6, label: "Su" },
+  { value: 1, label: "M" },
+  { value: 2, label: "T" },
+  { value: 3, label: "W" },
+  { value: 4, label: "Th" },
+  { value: 5, label: "F" },
+  { value: 6, label: "Sa" },
+  { value: 0, label: "Su" },
 ];
 
 const EventFormDialog: React.FC<EventFormDialogProps> = ({

@@ -54,6 +54,19 @@ const useFetchEvents = () => {
           timeZone: "UTC",
         });
 
+        // Handle recurrence data only if it exists
+        const recurrence = data.recurrence
+          ? {
+              daysOfWeek: data.recurrence.daysOfWeek || [],
+              startTime: data.recurrence.startTime || "",
+              endTime: data.recurrence.endTime || "",
+              startRecur: data.recurrence.startRecur || "",
+              endRecur: data.recurrence.endRecur || "",
+              exdate: data.recurrence.exdate || [],
+              rrule: data.recurrence.rrule || null,
+            }
+          : undefined;
+
         const event: EventInput = {
           id: doc.id,
           title: data.title || "No title", // Ensure a title is always present
@@ -67,6 +80,7 @@ const useFetchEvents = () => {
           display: data.isBackgroundEvent ? "background" : "auto", // Display as background if specified
           isBackgroundEvent: !!data.isBackgroundEvent, // Ensure this is a boolean
           className: data.isBackgroundEvent ? "fc-bg-event" : "", // Additional class based on condition
+          recurrence: recurrence, // Include the recurrence data if available
         };
 
         console.log("Processed event data:", event);
