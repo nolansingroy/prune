@@ -138,8 +138,16 @@ export default function Availability() {
 
             rule.all().forEach((date) => {
               const occurrenceStart = new Date(date);
+              // const occurrenceEnd = new Date(
+              //   occurrenceStart.getTime() + (end.getTime() - start.getTime())
+              // );
+
+              // Calculate the duration from the original event start and end times
+              const duration = end.getTime() - start.getTime();
+
+              // Calculate the occurrence end time based on the local start time plus the duration
               const occurrenceEnd = new Date(
-                occurrenceStart.getTime() + (end.getTime() - start.getTime())
+                occurrenceStart.getTime() + duration
               );
 
               console.log("Occurrence Start:", occurrenceStart);
