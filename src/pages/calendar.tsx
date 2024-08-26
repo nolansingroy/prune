@@ -253,10 +253,15 @@ export default function Calendar() {
       startDateTime.setUTCHours(startHour, startMinute, 0, 0);
       endDateTime.setUTCHours(endHour, endMinute, 0, 0);
 
+      // If endTime is before startTime, adjust endDateTime to the next day
       if (endDateTime <= startDateTime) {
         endDateTime.setUTCDate(endDateTime.getUTCDate() + 1);
       }
     }
+
+    // Log the startDateTime and endDateTime to ensure they are correct
+    console.log("Start DateTime (UTC):", startDateTime);
+    console.log("End DateTime (UTC):", endDateTime);
 
     // Create the event object with UTC times
     let event: EventInput = {

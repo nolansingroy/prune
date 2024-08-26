@@ -103,25 +103,34 @@ export default function Availability() {
             data.end instanceof Timestamp
               ? data.end.toDate()
               : new Date(data.end);
-          const startDate =
-            data.startDate instanceof Timestamp
-              ? data.startDate.toDate()
-              : new Date(data.startDate);
-          const endDate =
-            data.endDate instanceof Timestamp
-              ? data.endDate.toDate()
-              : new Date(data.endDate);
-
-          const exceptions = data.exceptions || [];
 
           if (data.recurrence) {
-            // Generate occurrences using RRule
+            console.log("Recurrence data found:", data.recurrence);
+            console.log(
+              `days of the week (original): ${data.recurrence.daysOfWeek}`
+            );
+            console.log(`startRecur - ${data.recurrence.startRecur}`);
+            console.log(`endRecur - ${data.recurrence.endRecur}`);
+
+            // Adjust daysOfWeek by subtracting 1
+            const adjustedDaysOfWeek = data.recurrence.daysOfWeek.map(
+              (day: number) => (day === 0 ? 6 : day - 1)
+            );
+            console.log(`days of the week (adjusted): ${adjustedDaysOfWeek}`);
+
+            const dtstart = new Date(start);
+            console.log("dtstart (UTC):", dtstart);
+
             const rule = new RRule({
               freq: RRule.WEEKLY,
-              byweekday: data.recurrence.daysOfWeek,
-              dtstart: start,
+              byweekday: adjustedDaysOfWeek,
+              dtstart: dtstart,
+              tzid: "UTC",
               until: new Date(data.recurrence.endRecur),
             });
+
+            const firstOccurrence = rule.all()[0];
+            console.log("First Occurrence Date:", new Date(firstOccurrence));
 
             rule.all().forEach((date) => {
               const occurrenceStart = new Date(date);
@@ -129,8 +138,11 @@ export default function Availability() {
                 occurrenceStart.getTime() + (end.getTime() - start.getTime())
               );
 
-              // Skip dates that are in the exceptions list
-              if (!exceptions.includes(occurrenceStart.toISOString())) {
+              console.log("Occurrence Start:", occurrenceStart);
+              console.log("Occurrence End:", occurrenceEnd);
+              console.log("Occurrence Day of Week:", occurrenceStart.getDay());
+
+              if (!data.exceptions?.includes(occurrenceStart.toISOString())) {
                 expandedEvents.push({
                   id: doc.id,
                   title: data.title,
@@ -143,20 +155,17 @@ export default function Availability() {
                   startDate: occurrenceStart,
                   startDay: occurrenceStart.toLocaleDateString("en-US", {
                     weekday: "long",
-                    timeZone: "UTC",
                   }),
                   endDate: occurrenceEnd,
                   endDay: occurrenceEnd.toLocaleDateString("en-US", {
                     weekday: "long",
-                    timeZone: "UTC",
                   }),
                   recurrence: data.recurrence,
-                  exceptions: exceptions,
+                  exceptions: data.exceptions,
                 });
               }
             });
           } else {
-            // Non-recurring event
             expandedEvents.push({
               id: doc.id,
               title: data.title,
@@ -166,13 +175,13 @@ export default function Availability() {
               display: data.display,
               className: data.className,
               isBackgroundEvent: data.isBackgroundEvent,
-              startDate: startDate,
-              startDay: startDate.toLocaleDateString("en-US", {
+              startDate: start,
+              startDay: start.toLocaleDateString("en-US", {
                 weekday: "long",
                 timeZone: "UTC",
               }),
-              endDate: endDate,
-              endDay: endDate.toLocaleDateString("en-US", {
+              endDate: end,
+              endDay: end.toLocaleDateString("en-US", {
                 weekday: "long",
                 timeZone: "UTC",
               }),
