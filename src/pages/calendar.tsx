@@ -26,6 +26,7 @@ export default function Calendar() {
   const calendarRef = useRef<FullCalendar>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectInfo, setSelectInfo] = useState<DateSelectArg | null>(null);
+  const [forceUpdate, setForceUpdate] = useState(false);
   const {
     events: fetchedEvents,
     loading: eventsLoading,
@@ -35,6 +36,7 @@ export default function Calendar() {
 
   useEffect(() => {
     setEvents(fetchedEvents);
+    setForceUpdate((prev) => !prev); // Trigger force update after setting events
   }, [fetchedEvents]);
 
   const handleTabChange = (value: string) => {
