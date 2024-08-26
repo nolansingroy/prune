@@ -80,6 +80,10 @@ export default function Availability() {
   }>({ key: "start", direction: "asc" });
   const [isDialogOpen, setIsDialogOpen] = useState(false); // State for the dialog
 
+  // Pagination states
+  const [pageIndex, setPageIndex] = useState(0);
+  const [pageSize, setPageSize] = useState(5); // Adjust page size as needed
+
   useEffect(() => {
     const fetchEvents = async () => {
       if (auth.currentUser) {
@@ -220,6 +224,22 @@ export default function Availability() {
       event.title.toLowerCase().includes(search.toLowerCase()) ||
       (event.description ?? "").toLowerCase().includes(search.toLowerCase())
   );
+
+  // Pagination logic
+  const paginatedEvents = filteredEvents.slice(
+    pageIndex * pageSize,
+    (pageIndex + 1) * pageSize
+  );
+
+  const handlePreviousPage = () => {
+    setPageIndex((old) => Math.max(old - 1, 0));
+  };
+
+  const handleNextPage = () => {
+    setPageIndex((old) =>
+      Math.min(old + 1, Math.ceil(filteredEvents.length / pageSize) - 1)
+    );
+  };
 
   const toggleRowSelection = (id: string) => {
     const newSelectedRows = new Set(selectedRows);
@@ -492,8 +512,7 @@ export default function Availability() {
     }
   };
 
-  //Save event data form from the dialog to firestore
-
+  // Save event data form from the dialog to Firestore
   const handleSave = async ({
     title,
     description,
@@ -574,6 +593,10 @@ export default function Availability() {
     return newDate;
   };
 
+  const totalEvents = filteredEvents.length;
+  const startItemIndex = pageIndex * pageSize + 1;
+  const endItemIndex = Math.min(startItemIndex + pageSize - 1, totalEvents);
+
   return (
     <div className="w-full relative">
       <h1 className="text-xl font-bold mb-4">My Available Times</h1>
@@ -591,11 +614,11 @@ export default function Availability() {
           <TableRow>
             <TableHead>
               <Checkbox
-                checked={selectedRows.size === filteredEvents.length}
+                checked={selectedRows.size === paginatedEvents.length}
                 onCheckedChange={(checked) => {
                   if (checked) {
                     const newSelectedRows = new Set<string>();
-                    filteredEvents.forEach((event) => {
+                    paginatedEvents.forEach((event) => {
                       if (event.id) newSelectedRows.add(event.id);
                     });
                     setSelectedRows(newSelectedRows);
@@ -635,7 +658,7 @@ export default function Availability() {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {filteredEvents.map((event) => (
+          {paginatedEvents.map((event) => (
             <TableRow key={event.id || ""}>
               <TableCell>
                 <Checkbox
@@ -810,32 +833,6 @@ export default function Availability() {
                   </div>
                 )}
               </TableCell>
-              {/* <TableCell>
-                {editingCell?.id === event.id &&
-                editingCell?.field === "title" ? (
-                  <input
-                    value={editedValue}
-                    onChange={handleInputChange}
-                    onBlur={handleBlur}
-                    onKeyDown={handleKeyDown}
-                    autoFocus
-                  />
-                ) : (
-                  <div
-                    onClick={() =>
-                      handleCellClick(
-                        event.id ?? "",
-                        "title",
-                        event.title ?? ""
-                      )
-                    }
-                  >
-                    {event.title || (
-                      <span className="text-gray-500">Enter title</span>
-                    )}
-                  </div>
-                )}
-              </TableCell> */}
               {/* // Title */}
               <TableCell>
                 {editingCell?.id === event.id &&
@@ -890,7 +887,6 @@ export default function Availability() {
                   </div>
                 )}
               </TableCell>
-              {/* <TableCell>{event.id}</TableCell> ID column moved here */}
               <TableCell>
                 {event.recurrence ? (
                   <Button
@@ -905,6 +901,30 @@ export default function Availability() {
           ))}
         </TableBody>
       </Table>
+
+      {/* Row Selection and Pagination Controls */}
+      <div className="flex justify-between mt-4">
+        <span>{`${selectedRows.size} of ${filteredEvents.length} row(s) selected`}</span>
+
+        {/* Pagination Controls */}
+        <div className="flex items-center  -ml-24">
+          <span className="mx-2">
+            Showing {startItemIndex}-{endItemIndex} of {totalEvents}
+          </span>
+          <Button onClick={handlePreviousPage} disabled={pageIndex === 0}>
+            Previous
+          </Button>
+
+          <Button
+            onClick={handleNextPage}
+            disabled={
+              pageIndex === Math.ceil(filteredEvents.length / pageSize) - 1
+            }
+          >
+            Next
+          </Button>
+        </div>
+      </div>
 
       {/* Floating Action Button */}
       <div className="fixed bottom-[calc(4rem+30px)] right-4">
