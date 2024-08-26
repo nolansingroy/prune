@@ -193,7 +193,7 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
           </div>
           <div className="space-y-2">
             <Label className="block text-sm font-medium text-gray-700">
-              Background Event
+              Availability Event
             </Label>
             <div className="flex items-center space-x-2">
               <Checkbox
@@ -205,7 +205,7 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
                 htmlFor="backgroundEventCheckbox"
                 className="text-sm font-medium text-gray-700"
               >
-                Is Background Event
+                Is Availability Event
               </Label>
             </div>
             <p className="mt-2 text-sm text-gray-500">

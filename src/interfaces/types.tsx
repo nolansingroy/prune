@@ -21,5 +21,6 @@ export interface EventInput {
     exdate?: string[];
     rrule?: any;
   };
-  exceptions?: string[];
+  exceptions?: string[]; // used in availabilty logic to exclude dates fomr the list
+  exdate?: string[]; // Convert exceptions to exdate for FullCalendar RRule to work
 }

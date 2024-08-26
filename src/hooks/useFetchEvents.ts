@@ -20,12 +20,6 @@ const useFetchEvents = () => {
       const eventsData = querySnapshot.docs.map((doc) => {
         const data = doc.data();
 
-        // Check the type of startDate, endDate, start, and end
-        console.log("startDate type:", typeof data.startDate, data.startDate);
-        console.log("endDate type:", typeof data.endDate, data.endDate);
-        console.log("start type:", typeof data.start, data.start);
-        console.log("end type:", typeof data.end, data.end);
-
         // Convert Firestore Timestamps back to JS Dates
         const startDate =
           data.start instanceof Timestamp
@@ -35,14 +29,6 @@ const useFetchEvents = () => {
           data.end instanceof Timestamp
             ? data.end.toDate()
             : new Date(data.end);
-
-        // Validate dates
-        if (isNaN(startDate.getTime())) {
-          console.error("Invalid start date for event:", doc.id, data.start);
-        }
-        if (isNaN(endDate.getTime())) {
-          console.error("Invalid end date for event:", doc.id, data.end);
-        }
 
         // Derive the day of the week in UTC
         const startDay = startDate.toLocaleDateString("en-US", {
@@ -62,7 +48,7 @@ const useFetchEvents = () => {
               endTime: data.recurrence.endTime || "",
               startRecur: data.recurrence.startRecur || "",
               endRecur: data.recurrence.endRecur || "",
-              exdate: data.recurrence.exdate || [],
+              exdate: data.exceptions || [], // Convert exceptions to exdate
               rrule: data.recurrence.rrule || null,
             }
           : undefined;
@@ -81,13 +67,16 @@ const useFetchEvents = () => {
           isBackgroundEvent: !!data.isBackgroundEvent, // Ensure this is a boolean
           className: data.isBackgroundEvent ? "fc-bg-event" : "", // Additional class based on condition
           recurrence: recurrence, // Include the recurrence data if available
+          exdate: data.exceptions || [], // Convert exceptions to exdate
         };
 
         console.log("Processed event data:", event);
 
         return event;
       });
-      setEvents(eventsData); // Set the events
+
+      // Update the event state with the processed data
+      setEvents(eventsData);
       console.log("Events set to state:", eventsData);
     } else {
       console.warn("No authenticated user found.");
