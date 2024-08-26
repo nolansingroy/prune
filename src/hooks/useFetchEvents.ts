@@ -56,6 +56,7 @@ const useFetchEvents = () => {
         const event: EventInput = {
           id: doc.id,
           title: data.title || "No title", // Ensure a title is always present
+          location: data.location || "", // Include location or an empty string
           start: startDate, // Use the UTC Date
           end: endDate, // Use the UTC Date
           startDate: startDate, // Store as UTC Date

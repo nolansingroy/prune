@@ -46,7 +46,7 @@ export default function Calendar() {
   };
 
   const renderEventContent = (eventInfo: EventContentArg) => {
-    const { isBackgroundEvent } = eventInfo.event.extendedProps;
+    const { isBackgroundEvent, location } = eventInfo.event.extendedProps;
     const classNames = eventInfo.event.classNames || [];
 
     console.log("--- Event Info:", eventInfo);
@@ -65,6 +65,7 @@ export default function Calendar() {
         return (
           <div className="bg-green-200 opacity-50 text-black p-1 rounded text-center">
             {eventInfo.event.title}
+            {location && <div>{location}</div>} {/* Display the location */}
           </div>
         );
       } else {
@@ -75,7 +76,8 @@ export default function Calendar() {
         return (
           <div className="bg-green-100 opacity-75 text-black p-1 rounded text-center">
             {eventInfo.event.title} <br />
-            (Background Event)
+            {location && <div>{location}</div>} {/* Display the location */}
+            {/* (Background Event) */}
           </div>
         );
       }
@@ -269,6 +271,7 @@ export default function Calendar() {
     let event: EventInput = {
       id: "", // Placeholder for the Firestore document ID
       title,
+      location: location || "",
       start: startDateTime, // These are already UTC
       end: endDateTime, // These are already UTC
       description,
@@ -374,6 +377,7 @@ export default function Calendar() {
                   if (event.recurrence) {
                     return {
                       ...event,
+                      location: event.location, // Ensure location is passed here
                       rrule: {
                         freq: "weekly", // Assuming a weekly recurrence
                         interval: 1, // Assuming a default interval of 1 week, adjust if necessary
@@ -392,7 +396,10 @@ export default function Calendar() {
                       endTime: event.recurrence.endTime,
                     };
                   } else {
-                    return event;
+                    return {
+                      ...event,
+                      location: event.location, // Ensure location is passed here
+                    };
                   }
                 })}
                 eventContent={renderEventContent}
