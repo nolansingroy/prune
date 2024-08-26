@@ -19,7 +19,6 @@ import {
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { CheckedState } from "@radix-ui/react-checkbox";
-import { EventInput } from "../interfaces/types"; // Adjust the import path as needed
 
 interface EventFormDialogProps {
   isOpen: boolean;
@@ -29,6 +28,7 @@ interface EventFormDialogProps {
     description: string;
     location: string;
     isBackgroundEvent: boolean;
+    date?: string; // Make date optional
     startTime: string;
     endTime: string;
     recurrence?: {
@@ -39,6 +39,7 @@ interface EventFormDialogProps {
       endRecur: string;
     };
   }) => void;
+  showDateSelector?: boolean; // New prop
 }
 
 const daysOfWeekOptions = [
@@ -55,10 +56,12 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
   isOpen,
   onClose,
   onSave,
+  showDateSelector = false, // Default is false
 }) => {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [location, setLocation] = useState("");
+  const [date, setDate] = useState(""); // New state for the date selector
   const [isBackgroundEvent, setIsBackgroundEvent] = useState(true);
   const [startTime, setStartTime] = useState("");
   const [endTime, setEndTime] = useState("");
@@ -86,6 +89,7 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
       description,
       location,
       isBackgroundEvent,
+      date: showDateSelector ? date : undefined, // Include the selected date if applicable
       startTime,
       endTime,
       recurrence: isRecurring
@@ -100,7 +104,7 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
     };
 
     console.log("Event Data to Save:", eventData);
-    onSave(eventData);
+    onSave(eventData); // Ensure this passes the date to the parent component's handleSave
     handleClose();
   };
 
@@ -108,6 +112,7 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
     setTitle("");
     setDescription("");
     setLocation("");
+    setDate(""); // Reset the date
     setIsBackgroundEvent(true);
     setStartTime("");
     setEndTime("");
@@ -212,30 +217,23 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
               Will show on calendar as background / Available time
             </p>
           </div>
-          {/* <div>
-            <Label className="block text-sm font-medium text-gray-700">
-              Start Time
-            </Label>
-            <Input
-              type="time"
-              value={startTime}
-              onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                setStartTime(e.target.value)
-              }
-            />
-          </div> */}
-          {/* <div>
-            <Label className="block text-sm font-medium text-gray-700">
-              End Time
-            </Label>
-            <Input
-              type="time"
-              value={endTime}
-              onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                setEndTime(e.target.value)
-              }
-            />
-          </div> */}
+
+          {/* Date Selector - Conditionally rendered */}
+          {showDateSelector && (
+            <div>
+              <Label className="block text-sm font-medium text-gray-700">
+                Date
+              </Label>
+              <Input
+                type="date"
+                value={date}
+                onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                  setDate(e.target.value)
+                }
+              />
+            </div>
+          )}
+
           <div className="flex items-center space-x-6">
             <div className="flex flex-col">
               <Label className="text-sm font-medium text-gray-700">

@@ -521,11 +521,13 @@ export default function Availability() {
   };
 
   // Save event data form from the dialog to Firestore
+  // Save event data form from the dialog to Firestore
   const handleSave = async ({
     title,
     description,
     location,
     isBackgroundEvent,
+    date, // Make sure to capture the passed date here
     startTime,
     endTime,
   }: {
@@ -533,15 +535,15 @@ export default function Availability() {
     description: string;
     location: string;
     isBackgroundEvent: boolean;
+    date?: string; // Date can be undefined if not applicable
     startTime: string;
     endTime: string;
   }) => {
-    // Assuming the user should select a date. Replace this with the actual date selection logic.
-    const date = new Date(); // Replace this with the actual date chosen by the user
+    const selectedDate = date ? new Date(date) : new Date(); // Use the passed date or default to today
 
-    // Convert startTime and endTime to Date objects in UTC
-    let startDateTime = new Date(date);
-    let endDateTime = new Date(date);
+    // Convert startTime and endTime to Date objects using selectedDate
+    let startDateTime = new Date(selectedDate);
+    let endDateTime = new Date(selectedDate);
 
     if (startTime && endTime) {
       const [startHour, startMinute] = startTime.split(":").map(Number);
@@ -559,6 +561,7 @@ export default function Availability() {
     // Create the event object with UTC times
     const event: EventInput = {
       title,
+      location: location || "",
       start: startDateTime, // These are already UTC
       end: endDateTime, // These are already UTC
       description,
@@ -948,6 +951,7 @@ export default function Availability() {
         isOpen={isDialogOpen}
         onClose={() => setIsDialogOpen(false)}
         onSave={handleSave}
+        showDateSelector={true} // Show date selector in the dialog
       />
     </div>
   );
