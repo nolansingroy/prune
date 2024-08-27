@@ -46,51 +46,51 @@ export default function Calendar() {
     };
   }, []);
 
-  useEffect(() => {
-    console.log("Component mounted, fetching events...");
-    fetchEvents(); // Fetch events when the component mounts (on load or refresh)
-  }, [fetchEvents]);
+  // useEffect(() => {
+  //   console.log("Component mounted, fetching events...");
+  //   fetchEvents(); // Fetch events when the component mounts (on load or refresh)
+  // }, [fetchEvents]);
 
-  useEffect(() => {
-    const handleLoad = () => {
-      fetchEvents(); // Fetch events after the page has loaded
-    };
+  // useEffect(() => {
+  //   const handleLoad = () => {
+  //     fetchEvents(); // Fetch events after the page has loaded
+  //   };
 
-    // Add event listener for load event
-    window.addEventListener("load", handleLoad);
+  //   // Add event listener for load event
+  //   window.addEventListener("load", handleLoad);
 
-    // Clean up event listener on unmount
-    return () => {
-      window.removeEventListener("load", handleLoad);
-    };
-  }, []);
+  //   // Clean up event listener on unmount
+  //   return () => {
+  //     window.removeEventListener("load", handleLoad);
+  //   };
+  // }, []);
 
-  useEffect(() => {
-    const fetchOnMount = async () => {
-      console.log("Fetching events on mount...");
-      await fetchEvents();
-    };
+  // useEffect(() => {
+  //   const fetchOnMount = async () => {
+  //     console.log("Fetching events on mount...");
+  //     await fetchEvents();
+  //   };
 
-    fetchOnMount();
-  }, [fetchEvents]);
+  //   fetchOnMount();
+  // }, [fetchEvents]);
 
-  useEffect(() => {
-    if (sessionStorage.getItem("isRefreshed")) {
-      fetchEvents(); // Fetch events if the page was refreshed
-    } else {
-      sessionStorage.setItem("isRefreshed", "true");
-    }
-  }, []);
+  // useEffect(() => {
+  //   if (sessionStorage.getItem("isRefreshed")) {
+  //     fetchEvents(); // Fetch events if the page was refreshed
+  //   } else {
+  //     sessionStorage.setItem("isRefreshed", "true");
+  //   }
+  // }, []);
 
-  useEffect(() => {
-    const [navigationEntry] = performance.getEntriesByType(
-      "navigation"
-    ) as PerformanceNavigationTiming[];
+  // useEffect(() => {
+  //   const [navigationEntry] = performance.getEntriesByType(
+  //     "navigation"
+  //   ) as PerformanceNavigationTiming[];
 
-    if (navigationEntry?.type === "reload") {
-      fetchEvents(); // Fetch events if the page was refreshed
-    }
-  }, [fetchEvents]);
+  //   if (navigationEntry?.type === "reload") {
+  //     fetchEvents(); // Fetch events if the page was refreshed
+  //   }
+  // }, [fetchEvents]);
 
   const handleTabChange = (value: string) => {
     if (value === "calendar") {
@@ -365,12 +365,14 @@ export default function Calendar() {
     if (isBackgroundEvent) return false;
 
     const eventStart = event.start.getTime();
-    const eventEnd = event.end.getTime();
+    // const eventEnd = event.end.getTime();
+    const eventEnd = event.end ? event.end.getTime() : eventStart;
 
     return allEvents.some((e) => {
       if (e.id !== event.id && e.extendedProps.isBackgroundEvent) {
         const bgStart = e.start.getTime();
-        const bgEnd = e.end.getTime();
+        // const bgEnd = e.end.getTime();
+        const bgEnd = e.end ? e.end.getTime() : bgStart;
 
         return (
           (eventStart >= bgStart && eventStart < bgEnd) ||
