@@ -176,7 +176,7 @@ const CreateBookings: React.FC = () => {
 
   return (
     <div className="w-full relative">
-      <h1 className="text-xl font-bold mb-4">Create Bookings</h1>
+      <h1 className="text-xl font-bold mb-4">Bookings</h1>
       <Button onClick={deleteSelectedEvents} disabled={selectedRows.size === 0}>
         Delete Selected
       </Button>

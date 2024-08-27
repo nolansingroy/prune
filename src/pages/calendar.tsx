@@ -406,7 +406,7 @@ export default function Calendar() {
         <TabsList>
           <TabsTrigger value="calendar">Calendar</TabsTrigger>
           <TabsTrigger value="availabile_time">Available Time</TabsTrigger>
-          <TabsTrigger value="create_bookings">Create Bookings</TabsTrigger>
+          <TabsTrigger value="create_bookings">Bookings</TabsTrigger>
         </TabsList>
         <TabsContent value="calendar">
           <h1 className="text-xl font-bold mb-4">Calendar Page</h1>
