@@ -26,7 +26,8 @@ export default function Calendar() {
   const calendarRef = useRef<FullCalendar>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectInfo, setSelectInfo] = useState<DateSelectArg | null>(null);
-  const [forceUpdate, setForceUpdate] = useState(false);
+  const [editingEvent, setEditingEvent] = useState<EventInput | null>(null);
+  const [editAll, setEditAll] = useState(false); // New state to control if we're editing all instances
   const {
     events: fetchedEvents,
     loading: eventsLoading,
@@ -36,7 +37,6 @@ export default function Calendar() {
 
   useEffect(() => {
     setEvents(fetchedEvents);
-    setForceUpdate((prev) => !prev); // Trigger force update after setting events
   }, [fetchedEvents]);
 
   const handleTabChange = (value: string) => {
@@ -49,8 +49,6 @@ export default function Calendar() {
     const { isBackgroundEvent, location } = eventInfo.event.extendedProps;
     const classNames = eventInfo.event.classNames || [];
 
-    console.log("--- Event Info:", eventInfo);
-
     if (classNames.includes("bg-event-mirror")) {
       return (
         <div className="bg-blue-200 opacity-50 text-black p-1 rounded text-center border border-blue-500">
@@ -61,23 +59,17 @@ export default function Calendar() {
 
     if (isBackgroundEvent) {
       if (eventInfo.view.type === "dayGridMonth") {
-        console.log("Rendering background event in month view:", eventInfo);
         return (
           <div className="bg-green-200 opacity-50 text-black p-1 rounded text-center">
             {eventInfo.event.title}
-            {location && <div>{location}</div>} {/* Display the location */}
+            {location && <div>{location}</div>}
           </div>
         );
       } else {
-        console.log(
-          "Rendering background event in week or day view:",
-          eventInfo
-        );
         return (
           <div className="bg-green-100 opacity-75 text-black p-1 rounded text-center">
             {eventInfo.event.title} <br />
-            {location && <div>{location}</div>} {/* Display the location */}
-            {/* (Background Event) */}
+            {location && <div>{location}</div>}
           </div>
         );
       }
@@ -91,7 +83,6 @@ export default function Calendar() {
   };
 
   const handleEventResize = async (resizeInfo: EventResizeDoneArg) => {
-    console.log("Event resized:", resizeInfo);
     try {
       const user = auth.currentUser;
       if (user) {
@@ -103,7 +94,6 @@ export default function Calendar() {
           resizeInfo.event.id
         );
 
-        // Calculate the new startDay and endDay
         const startDay = resizeInfo.event.start?.toLocaleDateString("en-US", {
           weekday: "long",
           timeZone: "UTC",
@@ -115,7 +105,6 @@ export default function Calendar() {
             })
           : "";
 
-        // Convert ISO strings back to Date objects to store as timestamps
         const startDateUTC = resizeInfo.event.start
           ? new Date(resizeInfo.event.start.toISOString())
           : null;
@@ -123,20 +112,15 @@ export default function Calendar() {
           ? new Date(resizeInfo.event.end.toISOString())
           : null;
 
-        // Update the event in Firestore with new start and end times
         await updateDoc(eventRef, {
-          start: startDateUTC, // Store as Date object (which Firestore stores as Timestamp)
-          end: endDateUTC, // Store as Date object (which Firestore stores as Timestamp)
-          startDate: startDateUTC, // Update startDate
-          endDate: endDateUTC, // Update endDate
-          startDay: startDay, // Update startDay
-          endDay: endDay, // Update endDay
+          start: startDateUTC,
+          end: endDateUTC,
+          startDate: startDateUTC,
+          endDate: endDateUTC,
+          startDay: startDay,
+          endDay: endDay,
           updated_at: Timestamp.now(),
         });
-
-        console.log(
-          `Event resized and updated in Firestore - ${resizeInfo.event.id}`
-        );
       }
     } catch (error) {
       console.error("Error updating event in Firestore:", error);
@@ -144,7 +128,6 @@ export default function Calendar() {
   };
 
   const handleEventDrop = async (dropInfo: EventDropArg) => {
-    console.log("Event dropped:", dropInfo);
     try {
       const user = auth.currentUser;
       if (user) {
@@ -156,7 +139,6 @@ export default function Calendar() {
           dropInfo.event.id
         );
 
-        // Calculate the new startDay and endDay
         const startDay = dropInfo.event.start
           ? dropInfo.event.start.toLocaleDateString("en-US", {
               weekday: "long",
@@ -170,7 +152,6 @@ export default function Calendar() {
             })
           : "";
 
-        // Convert ISO strings back to Date objects to store as timestamps
         const startDateUTC = dropInfo.event.start
           ? new Date(dropInfo.event.start.toISOString())
           : null;
@@ -178,20 +159,15 @@ export default function Calendar() {
           ? new Date(dropInfo.event.end.toISOString())
           : null;
 
-        // Update the event in Firestore with new start and end times
         await updateDoc(eventRef, {
-          start: startDateUTC, // Store as Date object (which Firestore stores as Timestamp)
-          end: endDateUTC, // Store as Date object (which Firestore stores as Timestamp)
-          startDate: startDateUTC, // Update startDate
-          endDate: endDateUTC, // Update endDate
-          startDay: startDay, // Update startDay
-          endDay: endDay, // Update endDay
+          start: startDateUTC,
+          end: endDateUTC,
+          startDate: startDateUTC,
+          endDate: endDateUTC,
+          startDay: startDay,
+          endDay: endDay,
           updated_at: Timestamp.now(),
         });
-
-        console.log(
-          `Event dropped and updated in Firestore - ${dropInfo.event.id}`
-        );
       }
     } catch (error) {
       console.error("Error updating event in Firestore:", error);
@@ -200,12 +176,22 @@ export default function Calendar() {
 
   const handleSelect = (selectInfo: DateSelectArg) => {
     setSelectInfo(selectInfo);
+    setEditingEvent(null); // Clear editing event
+    setIsDialogOpen(true);
+  };
+
+  const handleEventClick = (clickInfo: { event: { extendedProps: any } }) => {
+    const event = clickInfo.event.extendedProps;
+    setEditingEvent(event);
+    setEditAll(!!event.recurrence); // Set editAll based on whether the event is recurring
     setIsDialogOpen(true);
   };
 
   const handleDialogClose = () => {
     setIsDialogOpen(false);
     setSelectInfo(null);
+    setEditingEvent(null);
+    setEditAll(false);
   };
 
   const removeUndefinedFields = (obj: any) => {
@@ -245,7 +231,6 @@ export default function Calendar() {
     let calendarApi = selectInfo.view.calendar;
     calendarApi.unselect();
 
-    // Convert startTime and endTime to Date objects in UTC
     let startDateTime = new Date(selectInfo.startStr);
     let endDateTime = new Date(selectInfo.startStr);
 
@@ -253,37 +238,30 @@ export default function Calendar() {
       const [startHour, startMinute] = startTime.split(":").map(Number);
       const [endHour, endMinute] = endTime.split(":").map(Number);
 
-      // Setting hours and minutes for startDateTime and endDateTime
       startDateTime.setUTCHours(startHour, startMinute, 0, 0);
       endDateTime.setUTCHours(endHour, endMinute, 0, 0);
 
-      // If endTime is before startTime, adjust endDateTime to the next day
       if (endDateTime <= startDateTime) {
         endDateTime.setUTCDate(endDateTime.getUTCDate() + 1);
       }
     }
 
-    // Log the startDateTime and endDateTime to ensure they are correct
-    console.log("Start DateTime (UTC):", startDateTime);
-    console.log("End DateTime (UTC):", endDateTime);
-
-    // Create the event object with UTC times
     let event: EventInput = {
-      id: "", // Placeholder for the Firestore document ID
+      id: "",
       title,
       location: location || "",
-      start: startDateTime, // These are already UTC
-      end: endDateTime, // These are already UTC
+      start: startDateTime,
+      end: endDateTime,
       description,
       display: isBackgroundEvent ? "background" : "auto",
       className: isBackgroundEvent ? "custom-bg-event" : "",
       isBackgroundEvent,
-      startDate: startDateTime, // UTC date
+      startDate: startDateTime,
       startDay: startDateTime.toLocaleDateString("en-US", {
         weekday: "long",
         timeZone: "UTC",
       }),
-      endDate: endDateTime, // UTC date
+      endDate: endDateTime,
       endDay: endDateTime.toLocaleDateString("en-US", {
         weekday: "long",
         timeZone: "UTC",
@@ -296,22 +274,18 @@ export default function Calendar() {
     try {
       const user = auth.currentUser;
       if (user) {
-        // Create a new document in Firestore
         const eventRef = await addDoc(
           collection(db, "users", user.uid, "events"),
           event
         );
 
-        // Update the event object with the Firestore document ID
         const eventId = eventRef.id;
         event.id = eventId;
 
-        // Update Firestore document with the correct ID
         await updateDoc(eventRef, { id: eventId });
 
         console.log("Event created in Firestore with ID:", event.id);
 
-        // Update local state with the new event
         setEvents((prevEvents) => [...prevEvents, event]);
       }
     } catch (error) {
@@ -357,13 +331,14 @@ export default function Calendar() {
                   center: "title",
                   right: "dayGridMonth,timeGridWeek,timeGridDay",
                 }}
+                stickyHeaderDates={true}
                 slotDuration="00:15:00"
                 slotMinTime="04:00:00"
                 slotLabelFormat={{
                   hour: "numeric",
                   minute: "2-digit",
                   meridiem: "short",
-                  omitZeroMinute: false, // This ensures "2:00pm" is displayed instead of "2pm"
+                  omitZeroMinute: false,
                 }}
                 initialView="timeGridWeek"
                 nowIndicator={true}
@@ -371,26 +346,27 @@ export default function Calendar() {
                 selectable={true}
                 selectMirror={true}
                 select={handleSelect}
+                eventClick={handleEventClick} // Handle event click to open dialog
                 eventResize={handleEventResize} // Called when resizing an event
                 eventDrop={handleEventDrop}
                 events={events.map((event) => {
                   if (event.recurrence) {
                     return {
                       ...event,
-                      location: event.location, // Ensure location is passed here
+                      location: event.location,
                       rrule: {
-                        freq: "weekly", // Assuming a weekly recurrence
-                        interval: 1, // Assuming a default interval of 1 week, adjust if necessary
+                        freq: "weekly",
+                        interval: 1,
                         byweekday: event.recurrence.daysOfWeek
                           ? event.recurrence.daysOfWeek.map(
                               (day) =>
                                 ["SU", "MO", "TU", "WE", "TH", "FR", "SA"][day]
                             )
-                          : undefined, // Handle the case where daysOfWeek is undefined
-                        dtstart: new Date(event.start).toISOString(), // Use start date and convert to ISO string
+                          : undefined,
+                        dtstart: new Date(event.start).toISOString(),
                         until: event.recurrence.endRecur
                           ? new Date(event.recurrence.endRecur).toISOString()
-                          : undefined, // Convert endRecur to ISO string
+                          : undefined,
                       },
                       startTime: event.recurrence.startTime,
                       endTime: event.recurrence.endTime,
@@ -398,12 +374,12 @@ export default function Calendar() {
                   } else {
                     return {
                       ...event,
-                      location: event.location, // Ensure location is passed here
+                      location: event.location,
                     };
                   }
                 })}
                 eventContent={renderEventContent}
-                slotMaxTime="22:00:00" // End time of the visible time grid
+                slotMaxTime="22:00:00"
                 height="auto"
                 aspectRatio={1.35}
                 contentHeight="auto"
@@ -411,7 +387,6 @@ export default function Calendar() {
                   dayGridMonth: { nowIndicator: true },
                   timeGridWeek: {
                     nowIndicator: true,
-                    // slotDuration: "00:10:00",
                     scrollTime: "07:00:00",
                   },
                   timeGridDay: { nowIndicator: true, slotDuration: "00:10:00" },
@@ -431,6 +406,8 @@ export default function Calendar() {
         isOpen={isDialogOpen}
         onClose={handleDialogClose}
         onSave={handleSave}
+        event={editingEvent} // Pass the selected event
+        editAll={false} // Pass the editAll state
       />
     </div>
   );
