@@ -352,6 +352,50 @@ export default function Calendar() {
     return <div>Loading...</div>;
   }
 
+  const checkOverlap = (
+    event: {
+      extendedProps: { isBackgroundEvent: any };
+      start: { getTime: () => any };
+      end: { getTime: () => any };
+      id: any;
+    },
+    allEvents: any[]
+  ) => {
+    const isBackgroundEvent = event.extendedProps.isBackgroundEvent;
+    if (isBackgroundEvent) return false;
+
+    const eventStart = event.start.getTime();
+    const eventEnd = event.end.getTime();
+
+    return allEvents.some((e) => {
+      if (e.id !== event.id && e.extendedProps.isBackgroundEvent) {
+        const bgStart = e.start.getTime();
+        const bgEnd = e.end.getTime();
+
+        return (
+          (eventStart >= bgStart && eventStart < bgEnd) ||
+          (eventEnd > bgStart && eventEnd <= bgEnd) ||
+          (eventStart <= bgStart && eventEnd >= bgEnd)
+        );
+      }
+      return false;
+    });
+  };
+
+  const handleEventDidMount = (info: {
+    view: { calendar: any };
+    event: any;
+    el: { classList: { add: (arg0: string) => void } };
+  }) => {
+    const calendarApi = info.view.calendar;
+    const allEvents = calendarApi.getEvents();
+
+    // Check for overlap with background events
+    if (checkOverlap(info.event, allEvents)) {
+      info.el.classList.add("overlap-event");
+    }
+  };
+
   return (
     <div className="p-4">
       <Tabs
@@ -401,6 +445,7 @@ export default function Calendar() {
                 select={handleSelect}
                 eventClick={handleEventClick} // Handle event click to open dialog
                 eventResize={handleEventResize} // Called when resizing an event
+                eventDidMount={handleEventDidMount} // Called after an event is rendered
                 eventDrop={handleEventDrop}
                 events={events.map((event) => {
                   if (event.recurrence) {

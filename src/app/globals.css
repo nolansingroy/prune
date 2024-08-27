@@ -78,3 +78,8 @@
 .fc-bg-event {
   @apply bg-fc-bg-event;
 }
+
+.fc-event.overlap-event {
+  width: 75% !important;
+  margin-left: auto;
+}
