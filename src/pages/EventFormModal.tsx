@@ -52,7 +52,7 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
   onSave,
   showDateSelector = false,
   event,
-  editAll = true, // This controls the visibility of the recurrence options
+  editAll = true,
 }) => {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -61,7 +61,7 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
   const [isBackgroundEvent, setIsBackgroundEvent] = useState(true);
   const [startTime, setStartTime] = useState("");
   const [endTime, setEndTime] = useState("");
-  const [isRecurring, setIsRecurring] = useState(false); // Default to false to create single events by default
+  const [isRecurring, setIsRecurring] = useState(false);
   const [daysOfWeek, setDaysOfWeek] = useState<number[]>([]);
   const [startRecur, setStartRecur] = useState("");
   const [endRecur, setEndRecur] = useState("");
@@ -281,7 +281,7 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
             </div>
           </div>
 
-          {isRecurring && editAll && (
+          {isRecurring && (
             <>
               <div>
                 <Label className="block text-sm font-medium text-gray-700">
@@ -307,29 +307,31 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
                   ))}
                 </div>
               </div>
-              <div>
-                <Label className="block text-sm font-medium text-gray-700">
-                  Start Recurrence
-                </Label>
-                <Input
-                  type="date"
-                  value={startRecur}
-                  onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                    setStartRecur(e.target.value)
-                  }
-                />
-              </div>
-              <div>
-                <Label className="block text-sm font-medium text-gray-700">
-                  End Recurrence
-                </Label>
-                <Input
-                  type="date"
-                  value={endRecur}
-                  onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                    setEndRecur(e.target.value)
-                  }
-                />
+              <div className="flex space-x-4">
+                <div className="flex flex-col">
+                  <Label className="block text-sm font-medium text-gray-700">
+                    Start Recurrence
+                  </Label>
+                  <Input
+                    type="date"
+                    value={startRecur}
+                    onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                      setStartRecur(e.target.value)
+                    }
+                  />
+                </div>
+                <div className="flex flex-col">
+                  <Label className="block text-sm font-medium text-gray-700">
+                    End Recurrence
+                  </Label>
+                  <Input
+                    type="date"
+                    value={endRecur}
+                    onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                      setEndRecur(e.target.value)
+                    }
+                  />
+                </div>
               </div>
             </>
           )}

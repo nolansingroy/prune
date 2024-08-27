@@ -569,10 +569,8 @@ export default function Availability() {
   const startItemIndex = pageIndex * pageSize + 1;
   const endItemIndex = Math.min(startItemIndex + pageSize - 1, totalEvents);
 
-  const handleEditClick = async (event: EventInput) => {
+  const handleEditClick = (event: EventInput) => {
     try {
-      await deleteOccurrence(event.id!, event.start);
-
       const newEvent = {
         ...event,
         recurrence: undefined, // Remove the recurrence to make it a single event
@@ -626,6 +624,11 @@ export default function Availability() {
           `${formattedDate}T${formattedStartTime}`
         );
         const endDateTime = new Date(`${formattedDate}T${formattedEndTime}`);
+
+        // Delete the original occurrence now, before saving the new event
+        if (editingEvent.id && !editAll) {
+          await deleteOccurrence(editingEvent.id, editingEvent.start);
+        }
 
         if (editAll && editingEvent.recurrence) {
           if (editingEvent.id) {
