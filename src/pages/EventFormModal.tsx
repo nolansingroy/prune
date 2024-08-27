@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { CheckedState } from "@radix-ui/react-checkbox";
+import { EventInput } from "@/interfaces/types";
 
 interface EventFormDialogProps {
   isOpen: boolean;
@@ -28,7 +28,7 @@ interface EventFormDialogProps {
     description: string;
     location: string;
     isBackgroundEvent: boolean;
-    date?: string; // Make date optional
+    date?: string;
     startTime: string;
     endTime: string;
     recurrence?: {
@@ -39,47 +39,64 @@ interface EventFormDialogProps {
       endRecur: string;
     };
   }) => void;
-  showDateSelector?: boolean; // New prop
+  showDateSelector?: boolean;
+  event?: EventInput | null;
+  editAll?: boolean;
 }
 
-const daysOfWeekOptions = [
-  { value: 1, label: "M" },
-  { value: 2, label: "T" },
-  { value: 3, label: "W" },
-  { value: 4, label: "Th" },
-  { value: 5, label: "F" },
-  { value: 6, label: "Sa" },
-  { value: 0, label: "Su" },
-];
+const presetLocations = ["Kraken 1", "Kraken 2", "Kraken 3"];
 
 const EventFormDialog: React.FC<EventFormDialogProps> = ({
   isOpen,
   onClose,
   onSave,
-  showDateSelector = false, // Default is false
+  showDateSelector = false,
+  event,
+  editAll = true, // This controls the visibility of the recurrence options
 }) => {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [location, setLocation] = useState("");
-  const [date, setDate] = useState(""); // New state for the date selector
+  const [date, setDate] = useState("");
   const [isBackgroundEvent, setIsBackgroundEvent] = useState(true);
   const [startTime, setStartTime] = useState("");
   const [endTime, setEndTime] = useState("");
-  const [isRecurring, setIsRecurring] = useState(false);
+  const [isRecurring, setIsRecurring] = useState(false); // Default to false to create single events by default
   const [daysOfWeek, setDaysOfWeek] = useState<number[]>([]);
   const [startRecur, setStartRecur] = useState("");
   const [endRecur, setEndRecur] = useState("");
 
-  const presetLocations = ["Kraken 1", "Kraken 2", "Kraken 3"];
-
-  const removeUndefinedFields = (obj: any) => {
-    return Object.entries(obj).reduce((acc, [key, value]) => {
-      if (value !== undefined) {
-        acc[key] = value;
+  useEffect(() => {
+    if (event) {
+      setTitle(event.title || "");
+      setDescription(event.description || "");
+      setLocation(event.location || "");
+      setIsBackgroundEvent(event.isBackgroundEvent || false);
+      setDate(
+        event.startDate ? event.startDate.toISOString().split("T")[0] : ""
+      );
+      setStartTime(
+        event.start
+          ? event.start
+              .toLocaleTimeString("en-US", { hour12: false })
+              .substring(0, 5)
+          : ""
+      );
+      setEndTime(
+        event.end
+          ? event.end
+              .toLocaleTimeString("en-US", { hour12: false })
+              .substring(0, 5)
+          : ""
+      );
+      if (event.recurrence) {
+        setIsRecurring(true);
+        setDaysOfWeek(event.recurrence.daysOfWeek || []);
+        setStartRecur(event.recurrence.startRecur || "");
+        setEndRecur(event.recurrence.endRecur || "");
       }
-      return acc;
-    }, {} as any);
-  };
+    }
+  }, [event, isOpen]);
 
   const handleSave = (e: MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
@@ -89,22 +106,21 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
       description,
       location,
       isBackgroundEvent,
-      date: showDateSelector ? date : undefined, // Include the selected date if applicable
+      date: showDateSelector ? date : undefined,
       startTime,
       endTime,
       recurrence: isRecurring
-        ? removeUndefinedFields({
+        ? {
             daysOfWeek,
             startTime,
             endTime,
             startRecur,
             endRecur,
-          })
+          }
         : undefined,
     };
 
-    console.log("Event Data to Save:", eventData);
-    onSave(eventData); // Ensure this passes the date to the parent component's handleSave
+    onSave(eventData);
     handleClose();
   };
 
@@ -112,48 +128,28 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
     setTitle("");
     setDescription("");
     setLocation("");
-    setDate(""); // Reset the date
+    setDate("");
     setIsBackgroundEvent(true);
     setStartTime("");
     setEndTime("");
-    setIsRecurring(false);
+    setIsRecurring(false); // Reset to false to avoid unintended recurring events
     setDaysOfWeek([]);
     setStartRecur("");
     setEndRecur("");
     onClose();
   };
 
-  useEffect(() => {
-    if (!isOpen) {
-      handleClose();
-    }
-  }, [isOpen]);
-
-  const handleDaysOfWeekChange = (checked: CheckedState, value: number) => {
-    setDaysOfWeek((prev) =>
-      checked ? [...prev, value] : prev.filter((d) => d !== value)
-    );
-  };
-
-  const handleCheckedChange = (checked: CheckedState) => {
-    if (checked !== "indeterminate") {
-      setIsRecurring(checked);
-    }
-  };
-
-  const handleBackgroundChange = (checked: CheckedState) => {
-    if (checked !== "indeterminate") {
-      setIsBackgroundEvent(checked);
-    }
-  };
-
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Add Availability</DialogTitle>
+          <DialogTitle>
+            {editAll ? "Edit All Instances" : "Edit Availability"}
+          </DialogTitle>
           <DialogDescription>
-            Add your availability to the calendar
+            {editAll
+              ? "Edit all instances of this recurring event"
+              : "Edit this availability event"}
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4">
@@ -183,7 +179,7 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
             <Label className="block text-sm font-medium text-gray-700">
               Location
             </Label>
-            <Select onValueChange={setLocation}>
+            <Select value={location} onValueChange={setLocation}>
               <SelectTrigger>
                 <SelectValue placeholder="Select a location" />
               </SelectTrigger>
@@ -203,7 +199,9 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
             <div className="flex items-center space-x-2">
               <Checkbox
                 checked={isBackgroundEvent}
-                onCheckedChange={handleBackgroundChange}
+                onCheckedChange={(checked) =>
+                  setIsBackgroundEvent(checked !== "indeterminate" && checked)
+                }
                 id="backgroundEventCheckbox"
               />
               <Label
@@ -218,7 +216,27 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
             </p>
           </div>
 
-          {/* Date Selector - Conditionally rendered */}
+          <div className="space-y-2">
+            <Label className="block text-sm font-medium text-gray-700">
+              Recurring Event
+            </Label>
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                checked={isRecurring}
+                onCheckedChange={(checked) =>
+                  setIsRecurring(checked !== "indeterminate" && checked)
+                }
+                id="recurringEventCheckbox"
+              />
+              <Label
+                htmlFor="recurringEventCheckbox"
+                className="text-sm font-medium text-gray-700"
+              >
+                Is Recurring
+              </Label>
+            </div>
+          </div>
+
           {showDateSelector && (
             <div>
               <Label className="block text-sm font-medium text-gray-700">
@@ -263,33 +281,28 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
             </div>
           </div>
 
-          <div>
-            <Label className="block text-sm font-medium text-gray-700">
-              Recurring Event
-            </Label>
-            <Checkbox
-              checked={isRecurring}
-              onCheckedChange={handleCheckedChange}
-            >
-              Is Recurring Event
-            </Checkbox>
-          </div>
-          {isRecurring && (
+          {isRecurring && editAll && (
             <>
               <div>
                 <Label className="block text-sm font-medium text-gray-700">
                   Days of Week
                 </Label>
                 <div className="flex space-x-2">
-                  {daysOfWeekOptions.map((day) => (
-                    <div key={day.value} className="flex flex-col items-center">
+                  {[0, 1, 2, 3, 4, 5, 6].map((day) => (
+                    <div key={day} className="flex flex-col items-center">
                       <Checkbox
-                        checked={daysOfWeek.includes(day.value)}
+                        checked={daysOfWeek.includes(day)}
                         onCheckedChange={(checked) =>
-                          handleDaysOfWeekChange(checked, day.value)
+                          setDaysOfWeek((prev) =>
+                            checked
+                              ? [...prev, day]
+                              : prev.filter((d) => d !== day)
+                          )
                         }
                       />
-                      <Label className="mt-1">{day.label}</Label>
+                      <Label className="mt-1">
+                        {["Su", "M", "T", "W", "Th", "F", "Sa"][day]}
+                      </Label>
                     </div>
                   ))}
                 </div>

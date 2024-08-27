@@ -78,11 +78,13 @@ export default function Availability() {
     key: SortableKeys;
     direction: "asc" | "desc";
   }>({ key: "start", direction: "asc" });
-  const [isDialogOpen, setIsDialogOpen] = useState(false); // State for the dialog
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [editingEvent, setEditingEvent] = useState<EventInput | null>(null);
+  const [editAll, setEditAll] = useState(false); // New state for editing all instances
 
   // Pagination states
   const [pageIndex, setPageIndex] = useState(0);
-  const [pageSize, setPageSize] = useState(5); // Adjust page size as needed
+  const [pageSize, setPageSize] = useState(5);
 
   useEffect(() => {
     const fetchEvents = async () => {
@@ -93,6 +95,8 @@ export default function Availability() {
           auth.currentUser.uid,
           "events"
         );
+
+        // Query for all background events, whether they are recurring or not
         const q = query(eventsRef, where("isBackgroundEvent", "==", true));
         const querySnapshot = await getDocs(q);
         let expandedEvents: EventInput[] = [];
@@ -109,21 +113,11 @@ export default function Availability() {
               : new Date(data.end);
 
           if (data.recurrence) {
-            console.log("Recurrence data found:", data.recurrence);
-            console.log(
-              `days of the week (original): ${data.recurrence.daysOfWeek}`
-            );
-            console.log(`startRecur - ${data.recurrence.startRecur}`);
-            console.log(`endRecur - ${data.recurrence.endRecur}`);
-
-            // Adjust daysOfWeek by subtracting 1
             const adjustedDaysOfWeek = data.recurrence.daysOfWeek.map(
               (day: number) => (day === 0 ? 6 : day - 1)
             );
-            console.log(`days of the week (adjusted): ${adjustedDaysOfWeek}`);
 
             const dtstart = new Date(start);
-            console.log("dtstart (UTC):", dtstart);
 
             const rule = new RRule({
               freq: RRule.WEEKLY,
@@ -133,26 +127,12 @@ export default function Availability() {
               until: new Date(data.recurrence.endRecur),
             });
 
-            const firstOccurrence = rule.all()[0];
-            console.log("First Occurrence Date:", new Date(firstOccurrence));
-
             rule.all().forEach((date) => {
               const occurrenceStart = new Date(date);
-              // const occurrenceEnd = new Date(
-              //   occurrenceStart.getTime() + (end.getTime() - start.getTime())
-              // );
-
-              // Calculate the duration from the original event start and end times
               const duration = end.getTime() - start.getTime();
-
-              // Calculate the occurrence end time based on the local start time plus the duration
               const occurrenceEnd = new Date(
                 occurrenceStart.getTime() + duration
               );
-
-              console.log("Occurrence Start:", occurrenceStart);
-              console.log("Occurrence End:", occurrenceEnd);
-              console.log("Occurrence Day of Week:", occurrenceStart.getDay());
 
               if (!data.exceptions?.includes(occurrenceStart.toISOString())) {
                 expandedEvents.push({
@@ -178,6 +158,7 @@ export default function Availability() {
               }
             });
           } else {
+            // Also include non-recurring background events
             expandedEvents.push({
               id: doc.id,
               title: data.title,
@@ -292,15 +273,12 @@ export default function Availability() {
       eventId
     );
 
-    // Convert the occurrence date to an ISO string (adjust for UTC if necessary)
     const occurrenceISO = occurrenceDate.toISOString();
 
-    // Add the date to the exceptions array in Firestore
     await updateDoc(eventRef, {
       exceptions: arrayUnion(occurrenceISO),
     });
 
-    // Update local state (or re-fetch events) to reflect changes
     setEvents((prevEvents) =>
       prevEvents.filter(
         (event) =>
@@ -337,20 +315,14 @@ export default function Availability() {
     }
   };
 
-  const handleCellClick = (id: string, field: string, value: string) => {
-    setEditingCell({ id, field });
-
-    if (field === "end") {
-      const currentEvent = events.find((event) => event.id === id);
-      if (currentEvent && currentEvent.end) {
-        const formattedTime = currentEvent.end.toLocaleTimeString("en-US", {
-          hour: "2-digit",
-          minute: "2-digit",
-          hour12: false,
-        });
-        setEditedValue(formattedTime);
-      }
-    } else {
+  const handleCellClick = (
+    id: string,
+    field: string,
+    value: string,
+    isRecurring: boolean
+  ) => {
+    if (!isRecurring) {
+      setEditingCell({ id, field });
       setEditedValue(value);
     }
   };
@@ -359,7 +331,6 @@ export default function Availability() {
     setEditedValue(e.target.value);
   };
 
-  // Adding temporary handleBlur function to with -5 hours to the time
   const handleBlur = async () => {
     if (editingCell) {
       const { id, field } = editingCell;
@@ -376,7 +347,6 @@ export default function Availability() {
       if (field === "startDate") {
         const newDate = new Date(editedValue);
 
-        // Convert the date to UTC explicitly
         const utcDate = new Date(
           Date.UTC(
             newDate.getUTCFullYear(),
@@ -402,14 +372,12 @@ export default function Availability() {
             timeZone: "UTC",
           });
 
-          // Update startDate, startDay, and start
           updates = {
             startDate: updatedStart,
             startDay: updatedStartDay,
             start: updatedStart,
           };
 
-          // Optionally, adjust endDate and endDay if needed
           const updatedEnd = new Date(currentEvent.end);
           const duration = updatedEnd.getTime() - currentEvent.start.getTime();
           updatedEnd.setTime(updatedStart.getTime() + duration);
@@ -464,10 +432,9 @@ export default function Availability() {
           if (currentEvent) {
             const updatedStart = new Date(currentEvent.start);
 
-            // Update only the time portion of the Date object
-            updatedStart.setHours(parseInt(hours, 10) - 5); // Subtract 5 hours
+            updatedStart.setHours(parseInt(hours, 10) - 5);
             updatedStart.setMinutes(parseInt(minutes, 10));
-            updatedStart.setSeconds(0); // Reset seconds to 0
+            updatedStart.setSeconds(0);
 
             updates = {
               start: updatedStart,
@@ -475,7 +442,7 @@ export default function Availability() {
           }
         } else {
           console.error("Invalid time format for start time.");
-          return; // Don't proceed if the time format is invalid
+          return;
         }
       } else if (field === "end") {
         const [hours, minutes] = editedValue.split(":");
@@ -485,10 +452,9 @@ export default function Availability() {
           if (currentEvent) {
             const updatedEnd = new Date(currentEvent.end);
 
-            // Update only the time portion of the Date object
-            updatedEnd.setHours(parseInt(hours, 10) - 5); // Subtract 5 hours
+            updatedEnd.setHours(parseInt(hours, 10) - 5);
             updatedEnd.setMinutes(parseInt(minutes, 10));
-            updatedEnd.setSeconds(0); // Reset seconds to 0
+            updatedEnd.setSeconds(0);
 
             updates = {
               end: updatedEnd,
@@ -496,7 +462,7 @@ export default function Availability() {
           }
         } else {
           console.error("Invalid time format for end time.");
-          return; // Don't proceed if the time format is invalid
+          return;
         }
       } else {
         updates[field] = editedValue;
@@ -520,14 +486,12 @@ export default function Availability() {
     }
   };
 
-  // Save event data form from the dialog to Firestore
-  // Save event data form from the dialog to Firestore
   const handleSave = async ({
     title,
     description,
     location,
     isBackgroundEvent,
-    date, // Make sure to capture the passed date here
+    date,
     startTime,
     endTime,
   }: {
@@ -535,13 +499,12 @@ export default function Availability() {
     description: string;
     location: string;
     isBackgroundEvent: boolean;
-    date?: string; // Date can be undefined if not applicable
+    date?: string;
     startTime: string;
     endTime: string;
   }) => {
-    const selectedDate = date ? new Date(date) : new Date(); // Use the passed date or default to today
+    const selectedDate = date ? new Date(date) : new Date();
 
-    // Convert startTime and endTime to Date objects using selectedDate
     let startDateTime = new Date(selectedDate);
     let endDateTime = new Date(selectedDate);
 
@@ -549,7 +512,6 @@ export default function Availability() {
       const [startHour, startMinute] = startTime.split(":").map(Number);
       const [endHour, endMinute] = endTime.split(":").map(Number);
 
-      // Setting hours and minutes for startDateTime and endDateTime
       startDateTime.setUTCHours(startHour, startMinute, 0, 0);
       endDateTime.setUTCHours(endHour, endMinute, 0, 0);
 
@@ -558,22 +520,21 @@ export default function Availability() {
       }
     }
 
-    // Create the event object with UTC times
     const event: EventInput = {
       title,
       location: location || "",
-      start: startDateTime, // These are already UTC
-      end: endDateTime, // These are already UTC
+      start: startDateTime,
+      end: endDateTime,
       description,
       display: isBackgroundEvent ? "background" : "auto",
       className: isBackgroundEvent ? "custom-bg-event" : "",
       isBackgroundEvent,
-      startDate: startDateTime, // UTC date
+      startDate: startDateTime,
       startDay: startDateTime.toLocaleDateString("en-US", {
         weekday: "long",
         timeZone: "UTC",
       }),
-      endDate: endDateTime, // UTC date
+      endDate: endDateTime,
       endDay: endDateTime.toLocaleDateString("en-US", {
         weekday: "long",
         timeZone: "UTC",
@@ -595,7 +556,7 @@ export default function Availability() {
 
   const getUserTimeZoneOffset = () => {
     const offsetMinutes = new Date().getTimezoneOffset();
-    return offsetMinutes / 60; // Convert minutes to hours and invert sign
+    return offsetMinutes / 60;
   };
 
   const addHoursToDate = (date: Date, hours: number) => {
@@ -607,6 +568,114 @@ export default function Availability() {
   const totalEvents = filteredEvents.length;
   const startItemIndex = pageIndex * pageSize + 1;
   const endItemIndex = Math.min(startItemIndex + pageSize - 1, totalEvents);
+
+  const handleEditClick = async (event: EventInput) => {
+    try {
+      await deleteOccurrence(event.id!, event.start);
+
+      const newEvent = {
+        ...event,
+        recurrence: undefined, // Remove the recurrence to make it a single event
+        exceptions: [], // Clear exceptions since it's a new event
+      };
+
+      setEditingEvent(newEvent);
+      setEditAll(false); // Make sure editAll is false when editing only one occurrence
+      setIsDialogOpen(true);
+    } catch (error) {
+      console.error("Error preparing the event for editing:", error);
+      alert("An error occurred. Please try again.");
+    }
+  };
+
+  const handleEditAllClick = (event: EventInput) => {
+    // Temporarily disable the Edit All functionality
+    console.log("Edit All is currently disabled until further notice.");
+    // setEditingEvent(event);
+    // setEditAll(true); // Indicate that we are editing the entire series
+    // setIsDialogOpen(true);
+  };
+
+  const handleSaveEditedEvent = async ({
+    title,
+    description,
+    location,
+    isBackgroundEvent,
+    date,
+    startTime,
+    endTime,
+  }: {
+    title: string;
+    description: string;
+    location: string;
+    isBackgroundEvent: boolean;
+    date?: string;
+    startTime: string;
+    endTime: string;
+  }) => {
+    try {
+      if (editingEvent) {
+        const formattedDate =
+          date || editingEvent.startDate.toISOString().split("T")[0];
+        const formattedStartTime =
+          startTime || editingEvent.start.toTimeString().split(" ")[0];
+        const formattedEndTime =
+          endTime || editingEvent.end.toTimeString().split(" ")[0];
+
+        const startDateTime = new Date(
+          `${formattedDate}T${formattedStartTime}`
+        );
+        const endDateTime = new Date(`${formattedDate}T${formattedEndTime}`);
+
+        if (editAll && editingEvent.recurrence) {
+          if (editingEvent.id) {
+            // Update the entire series
+            const docRef = doc(
+              db,
+              "users",
+              auth.currentUser?.uid ?? "",
+              "events",
+              editingEvent.id
+            );
+
+            await updateDoc(docRef, {
+              title,
+              description,
+              location,
+              isBackgroundEvent,
+              start: startDateTime,
+              end: endDateTime,
+              recurrence: editingEvent.recurrence,
+            });
+          } else {
+            console.error("Editing all instances but no valid event ID found.");
+            alert(
+              "Unable to update the event series. No valid event ID found."
+            );
+          }
+        } else {
+          // Save as a new single background event
+          await handleSave({
+            title,
+            description,
+            location,
+            isBackgroundEvent,
+            date: formattedDate,
+            startTime: formattedStartTime,
+            endTime: formattedEndTime,
+          });
+        }
+
+        setEditingEvent(null);
+        setIsDialogOpen(false);
+      }
+    } catch (error) {
+      console.error("Error saving edited event:", error);
+      alert(
+        "An error occurred while saving the event. Please check the console for details."
+      );
+    }
+  };
 
   return (
     <div className="w-full relative">
@@ -666,11 +735,15 @@ export default function Availability() {
               </div>
             </TableHead>
             <TableHead>Notes</TableHead>
+            <TableHead>Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {paginatedEvents.map((event) => (
-            <TableRow key={event.id || ""}>
+            <TableRow
+              key={event.id || ""}
+              className={event.recurrence ? "bg-gray-200 bg-opacity-50" : ""}
+            >
               <TableCell>
                 <Checkbox
                   checked={selectedRows.has(event.id || "")}
@@ -701,7 +774,8 @@ export default function Availability() {
                               month: "2-digit",
                               day: "2-digit",
                             })
-                          : "Invalid Date"
+                          : "Invalid Date",
+                        !!event.recurrence
                       )
                     }
                   >
@@ -716,7 +790,6 @@ export default function Availability() {
                   </div>
                 )}
               </TableCell>
-              {/* Day  */}
               <TableCell>
                 {editingCell?.id === event.id &&
                 editingCell?.field === "startDay" ? (
@@ -733,7 +806,8 @@ export default function Availability() {
                       handleCellClick(
                         event.id ?? "",
                         "startDay",
-                        event.startDay
+                        event.startDay,
+                        !!event.recurrence
                       )
                     }
                   >
@@ -747,7 +821,7 @@ export default function Availability() {
                   <input
                     type="time"
                     value={editedValue}
-                    step="900" // 900 seconds = 15 minutes
+                    step="900"
                     onChange={handleInputChange}
                     onBlur={handleBlur}
                     onKeyDown={handleKeyDown}
@@ -760,11 +834,11 @@ export default function Availability() {
                         event.start instanceof Date &&
                         !isNaN(event.start.getTime())
                       ) {
-                        const timezoneOffset = getUserTimeZoneOffset(); // Get current timezone offset
+                        const timezoneOffset = getUserTimeZoneOffset();
                         const localStart = addHoursToDate(
                           event.start,
                           timezoneOffset
-                        ); // Adjust time to user's local time
+                        );
                         handleCellClick(
                           event.id ?? "",
                           "start",
@@ -772,7 +846,8 @@ export default function Availability() {
                             hour: "2-digit",
                             minute: "2-digit",
                             hour12: true,
-                          })
+                          }),
+                          !!event.recurrence
                         );
                       } else {
                         console.error("Invalid Date for start:", event.start);
@@ -799,7 +874,7 @@ export default function Availability() {
                   <input
                     type="time"
                     value={editedValue}
-                    step="900" // 900 seconds = 15 minutes
+                    step="900"
                     onChange={handleInputChange}
                     onBlur={handleBlur}
                     onKeyDown={handleKeyDown}
@@ -812,11 +887,11 @@ export default function Availability() {
                         event.end instanceof Date &&
                         !isNaN(event.end.getTime())
                       ) {
-                        const timezoneOffset = getUserTimeZoneOffset(); // Get current timezone offset
+                        const timezoneOffset = getUserTimeZoneOffset();
                         const localEnd = addHoursToDate(
                           event.end,
                           timezoneOffset
-                        ); // Adjust time to user's local time
+                        );
                         handleCellClick(
                           event.id ?? "",
                           "end",
@@ -824,7 +899,8 @@ export default function Availability() {
                             hour: "2-digit",
                             minute: "2-digit",
                             hour12: true,
-                          })
+                          }),
+                          !!event.recurrence
                         );
                       } else {
                         console.error("Invalid Date for end:", event.end);
@@ -844,7 +920,6 @@ export default function Availability() {
                   </div>
                 )}
               </TableCell>
-              {/* // Title */}
               <TableCell>
                 {editingCell?.id === event.id &&
                 editingCell?.field === "title" ? (
@@ -861,7 +936,8 @@ export default function Availability() {
                       handleCellClick(
                         event.id ?? "",
                         "title",
-                        event.title ?? ""
+                        event.title ?? "",
+                        !!event.recurrence
                       )
                     }
                   >
@@ -871,7 +947,6 @@ export default function Availability() {
                   </div>
                 )}
               </TableCell>
-              {/* // Description */}
               <TableCell>
                 {editingCell?.id === event.id &&
                 editingCell?.field === "description" ? (
@@ -888,7 +963,8 @@ export default function Availability() {
                       handleCellClick(
                         event.id ?? "",
                         "description",
-                        event.description ?? ""
+                        event.description ?? "",
+                        !!event.recurrence
                       )
                     }
                   >
@@ -900,24 +976,50 @@ export default function Availability() {
               </TableCell>
               <TableCell>
                 {event.recurrence ? (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost">
+                        <DotsHorizontalIcon />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent>
+                      <DropdownMenuItem onClick={() => handleEditClick(event)}>
+                        Edit Occurrence
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => handleEditAllClick(event)}
+                      >
+                        Edit All
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                        <Button
+                          variant="destructive"
+                          onClick={() =>
+                            handleDeleteClick(event.id!, event.start)
+                          }
+                        >
+                          Delete Occurrence
+                        </Button>
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                ) : (
                   <Button
                     variant="destructive"
                     onClick={() => handleDeleteClick(event.id!, event.start)}
                   >
-                    Delete Occurrence
+                    Delete
                   </Button>
-                ) : null}
+                )}
               </TableCell>
             </TableRow>
           ))}
         </TableBody>
       </Table>
 
-      {/* Row Selection and Pagination Controls */}
       <div className="flex justify-between mt-4">
         <span>{`${selectedRows.size} of ${filteredEvents.length} row(s) selected`}</span>
 
-        {/* Pagination Controls */}
         <div className="flex items-center  -ml-24">
           <span className="mx-2">
             Showing {startItemIndex}-{endItemIndex} of {totalEvents}
@@ -937,7 +1039,6 @@ export default function Availability() {
         </div>
       </div>
 
-      {/* Floating Action Button */}
       <div className="fixed bottom-[calc(4rem+30px)] right-4">
         <button
           className="p-4 bg-blue-600 text-white rounded-full shadow-lg hover:bg-blue-500 focus:outline-none"
@@ -949,9 +1050,14 @@ export default function Availability() {
 
       <EventFormDialog
         isOpen={isDialogOpen}
-        onClose={() => setIsDialogOpen(false)}
-        onSave={handleSave}
-        showDateSelector={true} // Show date selector in the dialog
+        onClose={() => {
+          setIsDialogOpen(false);
+          setEditAll(false); // Reset the edit all state
+        }}
+        onSave={handleSaveEditedEvent}
+        event={editingEvent}
+        showDateSelector={true} // Always show date selector
+        editAll={editAll} // Pass the editAll state to the form dialog
       />
     </div>
   );
