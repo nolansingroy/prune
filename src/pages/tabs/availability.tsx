@@ -589,9 +589,11 @@ export default function Availability() {
   };
 
   const handleEditAllClick = (event: EventInput) => {
-    setEditingEvent(event);
-    setEditAll(true); // Indicate that we are editing the entire series
-    setIsDialogOpen(true);
+    // Temporarily disable the Edit All functionality
+    console.log("Edit All is currently disabled until further notice.");
+    // setEditingEvent(event);
+    // setEditAll(true); // Indicate that we are editing the entire series
+    // setIsDialogOpen(true);
   };
 
   const handleSaveEditedEvent = async ({
@@ -1054,7 +1056,7 @@ export default function Availability() {
         }}
         onSave={handleSaveEditedEvent}
         event={editingEvent}
-        showDateSelector={!editAll} // Show date selector only if not editing all
+        showDateSelector={true} // Always show date selector
         editAll={editAll} // Pass the editAll state to the form dialog
       />
     </div>
