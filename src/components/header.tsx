@@ -1,76 +1,80 @@
 "use client";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
-import Image from "next/image"; // Import the Image component from the correct package
+import Image from "next/image";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useFirebaseAuth } from "../services/authService";
-import { HamburgerMenuIcon } from "@radix-ui/react-icons";
-import { DropdownMenuCheckboxItemProps } from "@radix-ui/react-dropdown-menu";
-import { PersonIcon } from "@radix-ui/react-icons";
-
+import { PersonIcon, HamburgerMenuIcon } from "@radix-ui/react-icons";
 import {
   DropdownMenu,
-  DropdownMenuGroup,
-  DropdownMenuPortal,
-  DropdownMenuShortcut,
-  DropdownMenuSub,
-  DropdownMenuSubContent,
-  DropdownMenuSubTrigger,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-  DropdownMenuCheckboxItem,
 } from "@/components/ui/dropdown-menu";
-import { Button } from "@/components/ui/button";
 import { authLogout } from "../services/authService";
-// import { useRouter } from "next/router";
-
-type Checked = DropdownMenuCheckboxItemProps["checked"];
+import { doc, getDoc } from "firebase/firestore";
+import { db } from "../../firebase"; // Make sure the Firebase instance is correctly imported
 
 const Header = () => {
   const { authUser } = useFirebaseAuth();
-  const [showStatusBar, setShowStatusBar] = React.useState<Checked>(true);
-  const [showActivityBar, setShowActivityBar] = React.useState<Checked>(false);
-  const [showPanel, setShowPanel] = React.useState<Checked>(false);
-  // const router = useRouter();
+  const [userName, setUserName] = useState("");
+
+  // Fetch user data from Firestore
+  useEffect(() => {
+    const fetchUserData = async () => {
+      if (authUser) {
+        const userDocRef = doc(db, "users", authUser.uid);
+        const userDoc = await getDoc(userDocRef);
+        if (userDoc.exists()) {
+          const userData = userDoc.data();
+          setUserName(`${userData.firstName} ${userData.lastName}`);
+        }
+      }
+    };
+
+    fetchUserData();
+  }, [authUser]);
 
   const handleLogOut = async () => {
     try {
       await authLogout();
-      // Perform any post-logout actions here, e.g., redirecting the user
       console.log("User logged out, redirecting...");
-      // router.push("/login"); // Use the router instance to push the /login route
     } catch (error) {
       console.error("Error during logout process:", error);
     }
   };
 
-  const handleMenuClick = () => {
-    // Add your logic here
-    console.log("Menu clicked");
-  };
-
-  const handleUserClick = () => {
-    // Add your logic here
-    console.log("User clicked");
-  };
-  // user Avatar Image function
   const renderAvatar = () => {
     if (authUser) {
       return (
-        <Avatar>
-          <AvatarImage
-            // src="https://github.com/shadcn.png"
-            // src="/personIcon.svg"
-            alt="@shadcn"
-            onClick={handleUserClick}
-          />
-          <AvatarFallback className="bg-custom-black">
-            <PersonIcon className="text-white" viewBox="0 0 14 14" />
-          </AvatarFallback>
-        </Avatar>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Avatar>
+              <AvatarImage
+                src={
+                  authUser.photoURL ||
+                  "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgd2lkdGg9IjI0IiBoZWlnaHQ9IjI0IiBmaWxsPSJjdXJyZW50Q29sb3IiPjxjaXJjbGUgY3g9IjEyIiBjeT0iMTIiIHI9IjEwIiBmaWxsPSIjZjNmNGY2IiAvPjxwYXRoIGQ9Ik0xMiAxMmMyLjIxIDAgNC0xLjc5IDQtNHMtMS43OS00LTQtNC00IDEuNzktNCA0IDEuNzkgNCA0IDQtNC0yLjY3IDAtOCAxLjM0LTggNHYyIGgxNnYtMmMwLTIuNjYtNS4zMy00LTgtNHoiIGZpbGw9IiNhMGFlYzAiIC8+PC9zdmc+"
+                }
+                alt={userName}
+              />
+              <AvatarFallback>
+                <PersonIcon className="text-white" />
+              </AvatarFallback>
+            </Avatar>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent className="w-56">
+            <DropdownMenuItem>
+              <span className="font-semibold">{userName}</span>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem>
+              <Link href="/settings">Settings</Link>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={handleLogOut}>Logout</DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       );
     } else {
       return <Link href="/signUp">Login</Link>;
@@ -82,53 +86,26 @@ const Header = () => {
       return (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <HamburgerMenuIcon className="h-8 w-8"></HamburgerMenuIcon>
+            <HamburgerMenuIcon className="h-8 w-8 cursor-pointer" />
           </DropdownMenuTrigger>
-
           <DropdownMenuContent className="w-56">
-            <DropdownMenuLabel>
-              <Link href="/">Home</Link>
-            </DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuGroup>
-              <DropdownMenuItem>
-                <Link href="/calendar">Calendar</Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem disabled>Dashboard</DropdownMenuItem>
-              <DropdownMenuItem>Bookings</DropdownMenuItem>
-              <DropdownMenuItem>
-                <Link href="/clients">Clients</Link>
-              </DropdownMenuItem>
-            </DropdownMenuGroup>
-            <DropdownMenuSeparator />
-            <DropdownMenuGroup>
-              <DropdownMenuSub>
-                <DropdownMenuSubTrigger>Invite users</DropdownMenuSubTrigger>
-                <DropdownMenuPortal>
-                  <DropdownMenuSubContent>
-                    <DropdownMenuItem>Email</DropdownMenuItem>
-                    <DropdownMenuItem>Message</DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem>More...</DropdownMenuItem>
-                  </DropdownMenuSubContent>
-                </DropdownMenuPortal>
-              </DropdownMenuSub>
-            </DropdownMenuGroup>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem>Support</DropdownMenuItem>
-            <DropdownMenuItem disabled>API</DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem disabled>
-              Billing
-              <DropdownMenuShortcut>⌘B</DropdownMenuShortcut>
-            </DropdownMenuItem>
             <DropdownMenuItem>
-              <Link href="/login" onClick={authLogout}>
-                Log out
-                <DropdownMenuShortcut>⇧⌘Q</DropdownMenuShortcut>
-              </Link>
-              <DropdownMenuShortcut>⇧⌘Q</DropdownMenuShortcut>
+              <Link href="/">Home</Link>
             </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem>
+              <Link href="/calendar">Calendar</Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem disabled>Dashboard</DropdownMenuItem>
+            <DropdownMenuItem>
+              <Link href="/clients">Clients</Link>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem>
+              <Link href="/settings">Settings</Link>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={handleLogOut}>Logout</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       );
@@ -139,12 +116,6 @@ const Header = () => {
     <header className="bg-custom-fade-blue text-white">
       <nav>
         <ul className="flex items-center justify-between p-4">
-          {/* {authUser && (
-            <HamburgerMenuIcon
-              className="h-8 w-8"
-              onClick={handleMenuClick}
-            ></HamburgerMenuIcon>
-          )} */}
           <li>{renderHamburgerMenu()}</li>
           <li className="flex items-center">
             <Link
@@ -158,7 +129,6 @@ const Header = () => {
                 height={250}
                 className="inline-block"
               />
-              {/* <p className="ml-2 text-custom-green">REBUSPRO</p> */}
             </Link>
           </li>
           <li>{renderAvatar()}</li>

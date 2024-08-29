@@ -12,6 +12,7 @@ import { useState, useEffect } from "react";
 
 // Define the user object type
 interface AuthUser {
+  photoURL: string;
   uid: string;
   email: string;
   // Add any other relevant user properties you need
@@ -53,6 +54,7 @@ const authLogout = async (): Promise<void> => {
 const formatAuthUser = (user: User | null): AuthUser | null => {
   if (user) {
     return {
+      photoURL: "", // Provide a default value for photoURL
       uid: user.uid,
       email: user.email || "", // Ensure email is not null
       // Add any other relevant user properties you need
