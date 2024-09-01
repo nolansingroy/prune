@@ -361,6 +361,99 @@ export default function Availability() {
     setEditedValue(e.target.value);
   };
 
+  // const handleBlur = async () => {
+  //   if (editingCell) {
+  //     const { id, field } = editingCell;
+  //     const docRef = doc(
+  //       db,
+  //       "users",
+  //       auth.currentUser?.uid ?? "",
+  //       "events",
+  //       id
+  //     );
+
+  //     let updates: any = {};
+
+  //     if (field === "start" || field === "end") {
+  //       const [hours, minutes] = editedValue.split(":");
+
+  //       if (hours !== undefined && minutes !== undefined) {
+  //         const currentEvent = events.find((event) => event.id === id);
+  //         if (currentEvent) {
+  //           let updatedTime = new Date(currentEvent[field]);
+
+  //           // Parse the edited time
+  //           updatedTime.setHours(parseInt(hours, 10));
+  //           updatedTime.setMinutes(parseInt(minutes, 10));
+  //           updatedTime.setSeconds(0);
+
+  //           // Calculate the UTC offset for the user's timezone
+  //           const utcOffset = moment.tz(userTimezone).utcOffset();
+
+  //           // Subtract the UTC offset to get the time in UTC
+  //           updatedTime.setMinutes(updatedTime.getMinutes() + utcOffset);
+
+  //           updates = {
+  //             [field]: updatedTime,
+  //           };
+
+  //           // Log the offset and adjusted time
+  //           console.log(`UTC Offset (in minutes): ${utcOffset}`);
+  //           console.log(`${field} DateTime saved to Firestore: ${updatedTime}`);
+  //         }
+  //       } else {
+  //         console.error("Invalid time format for time field.");
+  //         return;
+  //       }
+  //     } else if (field === "startDate" || field === "endDate") {
+  //       const newDate = new Date(editedValue);
+
+  //       const utcDate = new Date(
+  //         Date.UTC(
+  //           newDate.getUTCFullYear(),
+  //           newDate.getUTCMonth(),
+  //           newDate.getUTCDate(),
+  //           newDate.getUTCHours(),
+  //           newDate.getUTCMinutes(),
+  //           newDate.getUTCSeconds()
+  //         )
+  //       );
+
+  //       const currentEvent = events.find((event) => event.id === id);
+  //       if (currentEvent) {
+  //         const updatedDate = new Date(currentEvent[field]);
+  //         updatedDate.setUTCFullYear(
+  //           utcDate.getUTCFullYear(),
+  //           utcDate.getUTCMonth(),
+  //           utcDate.getUTCDate()
+  //         );
+
+  //         const updatedDay = updatedDate.toLocaleDateString("en-US", {
+  //           weekday: "long",
+  //           timeZone: "UTC",
+  //         });
+
+  //         updates = {
+  //           [field]: updatedDate,
+  //           [`${field}Day`]: updatedDay,
+  //         };
+  //       }
+  //     } else {
+  //       updates[field] = editedValue;
+  //     }
+
+  //     await updateDoc(docRef, updates);
+
+  //     setEvents((prevEvents) =>
+  //       prevEvents.map((event) =>
+  //         event.id === id ? { ...event, ...updates } : event
+  //       )
+  //     );
+
+  //     setEditingCell(null);
+  //   }
+  // };
+
   const handleBlur = async () => {
     if (editingCell) {
       const { id, field } = editingCell;
@@ -374,38 +467,69 @@ export default function Availability() {
 
       let updates: any = {};
 
-      if (field === "start" || field === "end") {
+      if (field === "start") {
         const [hours, minutes] = editedValue.split(":");
 
         if (hours !== undefined && minutes !== undefined) {
           const currentEvent = events.find((event) => event.id === id);
           if (currentEvent) {
-            let updatedTime = new Date(currentEvent[field]);
+            const updatedStart = new Date(currentEvent.start);
 
-            // Parse the edited time
-            updatedTime.setHours(parseInt(hours, 10));
-            updatedTime.setMinutes(parseInt(minutes, 10));
-            updatedTime.setSeconds(0);
+            // Apply the changes to the start time
+            updatedStart.setHours(
+              parseInt(hours, 10) - getUserTimeZoneOffset()
+            );
+            updatedStart.setMinutes(parseInt(minutes, 10));
+            updatedStart.setSeconds(0);
 
-            // Calculate the UTC offset for the user's timezone
-            const utcOffset = moment.tz(userTimezone).utcOffset();
+            // Calculate related fields (startDate and startDay)
+            const updatedStartDay = updatedStart.toLocaleDateString("en-US", {
+              weekday: "long",
+              timeZone: "UTC",
+            });
 
-            // Subtract the UTC offset to get the time in UTC
-            updatedTime.setMinutes(updatedTime.getMinutes() + utcOffset);
+            const updatedStartDate = updatedStart;
 
             updates = {
-              [field]: updatedTime,
+              start: updatedStart,
+              startDate: updatedStartDate,
+              startDay: updatedStartDay,
             };
-
-            // Log the offset and adjusted time
-            console.log(`UTC Offset (in minutes): ${utcOffset}`);
-            console.log(`${field} DateTime saved to Firestore: ${updatedTime}`);
           }
         } else {
-          console.error("Invalid time format for time field.");
+          console.error("Invalid time format for start time.");
           return;
         }
-      } else if (field === "startDate" || field === "endDate") {
+      } else if (field === "end") {
+        const [hours, minutes] = editedValue.split(":");
+
+        if (hours !== undefined && minutes !== undefined) {
+          const currentEvent = events.find((event) => event.id === id);
+          if (currentEvent) {
+            const updatedEnd = new Date(currentEvent.end);
+
+            updatedEnd.setHours(parseInt(hours, 10) - getUserTimeZoneOffset());
+            updatedEnd.setMinutes(parseInt(minutes, 10));
+            updatedEnd.setSeconds(0);
+
+            const updatedEndDay = updatedEnd.toLocaleDateString("en-US", {
+              weekday: "long",
+              timeZone: "UTC",
+            });
+
+            const updatedEndDate = updatedEnd;
+
+            updates = {
+              end: updatedEnd,
+              endDate: updatedEndDate,
+              endDay: updatedEndDay,
+            };
+          }
+        } else {
+          console.error("Invalid time format for end time.");
+          return;
+        }
+      } else if (field === "startDate") {
         const newDate = new Date(editedValue);
 
         const utcDate = new Date(
@@ -421,21 +545,55 @@ export default function Availability() {
 
         const currentEvent = events.find((event) => event.id === id);
         if (currentEvent) {
-          const updatedDate = new Date(currentEvent[field]);
-          updatedDate.setUTCFullYear(
+          const updatedStart = new Date(currentEvent.start);
+          updatedStart.setUTCFullYear(
             utcDate.getUTCFullYear(),
             utcDate.getUTCMonth(),
             utcDate.getUTCDate()
           );
 
-          const updatedDay = updatedDate.toLocaleDateString("en-US", {
+          const updatedStartDay = updatedStart.toLocaleDateString("en-US", {
             weekday: "long",
             timeZone: "UTC",
           });
 
           updates = {
-            [field]: updatedDate,
-            [`${field}Day`]: updatedDay,
+            startDate: updatedStart,
+            startDay: updatedStartDay,
+            start: updatedStart,
+          };
+        }
+      } else if (field === "endDate") {
+        const newDate = new Date(editedValue);
+        const utcDate = new Date(
+          Date.UTC(
+            newDate.getUTCFullYear(),
+            newDate.getUTCMonth(),
+            newDate.getUTCDate(),
+            newDate.getUTCHours(),
+            newDate.getUTCMinutes(),
+            newDate.getUTCSeconds()
+          )
+        );
+
+        const currentEvent = events.find((event) => event.id === id);
+        if (currentEvent) {
+          const updatedEnd = new Date(currentEvent.end);
+          updatedEnd.setUTCFullYear(
+            utcDate.getUTCFullYear(),
+            utcDate.getUTCMonth(),
+            utcDate.getUTCDate()
+          );
+
+          const updatedEndDay = updatedEnd.toLocaleDateString("en-US", {
+            weekday: "long",
+            timeZone: "UTC",
+          });
+
+          updates = {
+            endDate: updatedEnd,
+            endDay: updatedEndDay,
+            end: updatedEnd,
           };
         }
       } else {
