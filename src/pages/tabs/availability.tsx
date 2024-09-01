@@ -11,6 +11,7 @@ import {
   updateDoc,
   Timestamp,
   arrayUnion,
+  getDoc,
 } from "firebase/firestore";
 import { auth, db } from "../../../firebase";
 import { EventInput } from "../../interfaces/types";
@@ -62,6 +63,7 @@ import {
 } from "@radix-ui/react-dialog";
 import { createEvent } from "../../services/userService";
 import EventFormDialog from "../EventFormModal";
+import moment from "moment-timezone";
 
 type SortableKeys = "start" | "end" | "title";
 
@@ -81,10 +83,29 @@ export default function Availability() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingEvent, setEditingEvent] = useState<EventInput | null>(null);
   const [editAll, setEditAll] = useState(false); // New state for editing all instances
+  const [userTimezone, setUserTimezone] = useState<string>("UTC");
 
   // Pagination states
   const [pageIndex, setPageIndex] = useState(0);
   const [pageSize, setPageSize] = useState(5);
+
+  useEffect(() => {
+    const fetchUserTimezone = async () => {
+      if (auth.currentUser) {
+        const userRef = doc(db, "users", auth.currentUser.uid);
+        const userDoc = await getDoc(userRef);
+        const userData = userDoc.data();
+        console.log(
+          `Component is fetching the user doc.timezone - ${
+            userData?.timezone ?? ""
+          }`
+        );
+        setUserTimezone(userData?.timezone || "UTC");
+      }
+    };
+
+    fetchUserTimezone();
+  }, []);
 
   useEffect(() => {
     const fetchEvents = async () => {
@@ -327,6 +348,15 @@ export default function Availability() {
     }
   };
 
+  const displayTimeInUserTimezone = (date: Date, timezone: string) => {
+    return date.toLocaleTimeString("en-US", {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true,
+      timeZone: timezone, // Use the fetched user timezone
+    });
+  };
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setEditedValue(e.target.value);
   };
@@ -344,7 +374,38 @@ export default function Availability() {
 
       let updates: any = {};
 
-      if (field === "startDate") {
+      if (field === "start" || field === "end") {
+        const [hours, minutes] = editedValue.split(":");
+
+        if (hours !== undefined && minutes !== undefined) {
+          const currentEvent = events.find((event) => event.id === id);
+          if (currentEvent) {
+            let updatedTime = new Date(currentEvent[field]);
+
+            // Parse the edited time
+            updatedTime.setHours(parseInt(hours, 10));
+            updatedTime.setMinutes(parseInt(minutes, 10));
+            updatedTime.setSeconds(0);
+
+            // Calculate the UTC offset for the user's timezone
+            const utcOffset = moment.tz(userTimezone).utcOffset();
+
+            // Subtract the UTC offset to get the time in UTC
+            updatedTime.setMinutes(updatedTime.getMinutes() + utcOffset);
+
+            updates = {
+              [field]: updatedTime,
+            };
+
+            // Log the offset and adjusted time
+            console.log(`UTC Offset (in minutes): ${utcOffset}`);
+            console.log(`${field} DateTime saved to Firestore: ${updatedTime}`);
+          }
+        } else {
+          console.error("Invalid time format for time field.");
+          return;
+        }
+      } else if (field === "startDate" || field === "endDate") {
         const newDate = new Date(editedValue);
 
         const utcDate = new Date(
@@ -360,109 +421,22 @@ export default function Availability() {
 
         const currentEvent = events.find((event) => event.id === id);
         if (currentEvent) {
-          const updatedStart = new Date(currentEvent.start);
-          updatedStart.setUTCFullYear(
+          const updatedDate = new Date(currentEvent[field]);
+          updatedDate.setUTCFullYear(
             utcDate.getUTCFullYear(),
             utcDate.getUTCMonth(),
             utcDate.getUTCDate()
           );
 
-          const updatedStartDay = updatedStart.toLocaleDateString("en-US", {
+          const updatedDay = updatedDate.toLocaleDateString("en-US", {
             weekday: "long",
             timeZone: "UTC",
           });
 
           updates = {
-            startDate: updatedStart,
-            startDay: updatedStartDay,
-            start: updatedStart,
+            [field]: updatedDate,
+            [`${field}Day`]: updatedDay,
           };
-
-          const updatedEnd = new Date(currentEvent.end);
-          const duration = updatedEnd.getTime() - currentEvent.start.getTime();
-          updatedEnd.setTime(updatedStart.getTime() + duration);
-
-          const updatedEndDay = updatedEnd.toLocaleDateString("en-US", {
-            weekday: "long",
-            timeZone: "UTC",
-          });
-
-          updates.endDate = updatedEnd;
-          updates.endDay = updatedEndDay;
-          updates.end = updatedEnd;
-        }
-      } else if (field === "endDate") {
-        const newDate = new Date(editedValue);
-        const utcDate = new Date(
-          Date.UTC(
-            newDate.getUTCFullYear(),
-            newDate.getUTCMonth(),
-            newDate.getUTCDate(),
-            newDate.getUTCHours(),
-            newDate.getUTCMinutes(),
-            newDate.getUTCSeconds()
-          )
-        );
-
-        const currentEvent = events.find((event) => event.id === id);
-        if (currentEvent) {
-          const updatedEnd = new Date(currentEvent.end);
-          updatedEnd.setUTCFullYear(
-            utcDate.getUTCFullYear(),
-            utcDate.getUTCMonth(),
-            utcDate.getUTCDate()
-          );
-
-          const updatedEndDay = updatedEnd.toLocaleDateString("en-US", {
-            weekday: "long",
-            timeZone: "UTC",
-          });
-
-          updates = {
-            endDate: updatedEnd,
-            endDay: updatedEndDay,
-            end: updatedEnd,
-          };
-        }
-      } else if (field === "start") {
-        const [hours, minutes] = editedValue.split(":");
-
-        if (hours !== undefined && minutes !== undefined) {
-          const currentEvent = events.find((event) => event.id === id);
-          if (currentEvent) {
-            const updatedStart = new Date(currentEvent.start);
-
-            updatedStart.setHours(parseInt(hours, 10) - 5);
-            updatedStart.setMinutes(parseInt(minutes, 10));
-            updatedStart.setSeconds(0);
-
-            updates = {
-              start: updatedStart,
-            };
-          }
-        } else {
-          console.error("Invalid time format for start time.");
-          return;
-        }
-      } else if (field === "end") {
-        const [hours, minutes] = editedValue.split(":");
-
-        if (hours !== undefined && minutes !== undefined) {
-          const currentEvent = events.find((event) => event.id === id);
-          if (currentEvent) {
-            const updatedEnd = new Date(currentEvent.end);
-
-            updatedEnd.setHours(parseInt(hours, 10) - 5);
-            updatedEnd.setMinutes(parseInt(minutes, 10));
-            updatedEnd.setSeconds(0);
-
-            updates = {
-              end: updatedEnd,
-            };
-          }
-        } else {
-          console.error("Invalid time format for end time.");
-          return;
         }
       } else {
         updates[field] = editedValue;
@@ -505,21 +479,31 @@ export default function Availability() {
   }) => {
     const selectedDate = date ? new Date(date) : new Date();
 
-    let startDateTime = new Date(selectedDate);
-    let endDateTime = new Date(selectedDate);
+    // Convert start and end time to UTC based on the user's timezone
+    let startDateTime = moment
+      .tz(
+        `${selectedDate.toISOString().split("T")[0]} ${startTime}`,
+        "YYYY-MM-DD HH:mm",
+        userTimezone
+      )
+      .utc()
+      .toDate();
 
-    if (startTime && endTime) {
-      const [startHour, startMinute] = startTime.split(":").map(Number);
-      const [endHour, endMinute] = endTime.split(":").map(Number);
+    let endDateTime = moment
+      .tz(
+        `${selectedDate.toISOString().split("T")[0]} ${endTime}`,
+        "YYYY-MM-DD HH:mm",
+        userTimezone
+      )
+      .utc()
+      .toDate();
 
-      startDateTime.setUTCHours(startHour, startMinute, 0, 0);
-      endDateTime.setUTCHours(endHour, endMinute, 0, 0);
-
-      if (endDateTime <= startDateTime) {
-        endDateTime.setUTCDate(endDateTime.getUTCDate() + 1);
-      }
+    // Handle the case where end time is before start time
+    if (endDateTime <= startDateTime) {
+      endDateTime.setUTCDate(endDateTime.getUTCDate() + 1);
     }
 
+    // Prepare the event object
     const event: EventInput = {
       title,
       location: location || "",
@@ -532,12 +516,12 @@ export default function Availability() {
       startDate: startDateTime,
       startDay: startDateTime.toLocaleDateString("en-US", {
         weekday: "long",
-        timeZone: "UTC",
+        timeZone: "UTC", // This displays the day in UTC, you might want to adjust this for the user's timezone if needed
       }),
       endDate: endDateTime,
       endDay: endDateTime.toLocaleDateString("en-US", {
         weekday: "long",
-        timeZone: "UTC",
+        timeZone: "UTC", // This displays the day in UTC, you might want to adjust this for the user's timezone if needed
       }),
     };
 
@@ -570,6 +554,7 @@ export default function Availability() {
   const endItemIndex = Math.min(startItemIndex + pageSize - 1, totalEvents);
 
   const handleEditClick = (event: EventInput) => {
+    console.log("handle edit click called");
     try {
       const newEvent = {
         ...event,
@@ -620,10 +605,32 @@ export default function Availability() {
         const formattedEndTime =
           endTime || editingEvent.end.toTimeString().split(" ")[0];
 
-        const startDateTime = new Date(
-          `${formattedDate}T${formattedStartTime}`
-        );
-        const endDateTime = new Date(`${formattedDate}T${formattedEndTime}`);
+        // Convert the start and end time to UTC by subtracting the timezone offset
+        let startDateTime = moment
+          .tz(
+            `${formattedDate} ${formattedStartTime}`,
+            "YYYY-MM-DD HH:mm",
+            userTimezone
+          )
+          .toDate(); // Keep as local time
+
+        let endDateTime = moment
+          .tz(
+            `${formattedDate} ${formattedEndTime}`,
+            "YYYY-MM-DD HH:mm",
+            userTimezone
+          )
+          .toDate(); // Keep as local time
+
+        // Adjust the dates to UTC by subtracting the timezone offset
+        const utcOffset = moment.tz(userTimezone).utcOffset();
+        startDateTime.setMinutes(startDateTime.getMinutes() - utcOffset);
+        endDateTime.setMinutes(endDateTime.getMinutes() - utcOffset);
+
+        // Handle the case where end time is before start time
+        if (endDateTime <= startDateTime) {
+          endDateTime.setUTCDate(endDateTime.getUTCDate() + 1);
+        }
 
         // Delete the original occurrence now, before saving the new event
         if (editingEvent.id && !editAll) {
@@ -871,6 +878,7 @@ export default function Availability() {
                   </div>
                 )}
               </TableCell>
+
               <TableCell>
                 {editingCell?.id === event.id &&
                 editingCell?.field === "end" ? (
