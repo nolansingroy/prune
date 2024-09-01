@@ -19,6 +19,7 @@ import { db } from "../../firebase"; // Make sure the Firebase instance is corre
 const Header = () => {
   const { authUser } = useFirebaseAuth();
   const [userName, setUserName] = useState("");
+  const [userTimezone, setUserTimezone] = useState("");
 
   // Fetch user data from Firestore
   useEffect(() => {
@@ -29,6 +30,7 @@ const Header = () => {
         if (userDoc.exists()) {
           const userData = userDoc.data();
           setUserName(`${userData.firstName} ${userData.lastName}`);
+          setUserTimezone(userData.timezone || "Unknown Timezone");
         }
       }
     };
@@ -66,6 +68,9 @@ const Header = () => {
           <DropdownMenuContent className="w-56">
             <DropdownMenuItem>
               <span className="font-semibold">{userName}</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem>
+              <span className="text-sm text-gray-500">{userTimezone}</span>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem>
