@@ -113,7 +113,7 @@ export default function Calendar() {
     if (isBackgroundEvent) {
       if (eventInfo.view.type === "dayGridMonth") {
         return (
-          <div className="bg-green-200 opacity-50 text-black p-1 rounded text-center">
+          <div className="bg-green-200 opacity-75 text-black p-1 rounded text-center">
             {eventInfo.event.title}
             {location && <div>{location}</div>}
           </div>
@@ -432,7 +432,7 @@ export default function Calendar() {
                 }}
                 stickyHeaderDates={true}
                 slotDuration="00:15:00"
-                slotMinTime="04:00:00"
+                slotMinTime="07:00:00"
                 slotLabelFormat={{
                   hour: "numeric",
                   minute: "2-digit",
