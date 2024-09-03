@@ -19,8 +19,8 @@ export interface EventInput {
     startRecur?: string;
     endRecur?: string;
     exdate?: string[];
-    rrule?: any;
+    rrule?: string; // Add the rrule property here
   };
-  exceptions?: string[]; // used in availabilty logic to exclude dates fomr the list
+  exceptions?: string[]; // used in availability logic to exclude dates from the list
   exdate?: string[]; // Convert exceptions to exdate for FullCalendar RRule to work
 }

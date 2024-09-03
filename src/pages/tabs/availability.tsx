@@ -35,6 +35,8 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 
+import AvailabilityDialog from "../AvailabilityFormDialog";
+
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -361,99 +363,6 @@ export default function Availability() {
     setEditedValue(e.target.value);
   };
 
-  // const handleBlur = async () => {
-  //   if (editingCell) {
-  //     const { id, field } = editingCell;
-  //     const docRef = doc(
-  //       db,
-  //       "users",
-  //       auth.currentUser?.uid ?? "",
-  //       "events",
-  //       id
-  //     );
-
-  //     let updates: any = {};
-
-  //     if (field === "start" || field === "end") {
-  //       const [hours, minutes] = editedValue.split(":");
-
-  //       if (hours !== undefined && minutes !== undefined) {
-  //         const currentEvent = events.find((event) => event.id === id);
-  //         if (currentEvent) {
-  //           let updatedTime = new Date(currentEvent[field]);
-
-  //           // Parse the edited time
-  //           updatedTime.setHours(parseInt(hours, 10));
-  //           updatedTime.setMinutes(parseInt(minutes, 10));
-  //           updatedTime.setSeconds(0);
-
-  //           // Calculate the UTC offset for the user's timezone
-  //           const utcOffset = moment.tz(userTimezone).utcOffset();
-
-  //           // Subtract the UTC offset to get the time in UTC
-  //           updatedTime.setMinutes(updatedTime.getMinutes() + utcOffset);
-
-  //           updates = {
-  //             [field]: updatedTime,
-  //           };
-
-  //           // Log the offset and adjusted time
-  //           console.log(`UTC Offset (in minutes): ${utcOffset}`);
-  //           console.log(`${field} DateTime saved to Firestore: ${updatedTime}`);
-  //         }
-  //       } else {
-  //         console.error("Invalid time format for time field.");
-  //         return;
-  //       }
-  //     } else if (field === "startDate" || field === "endDate") {
-  //       const newDate = new Date(editedValue);
-
-  //       const utcDate = new Date(
-  //         Date.UTC(
-  //           newDate.getUTCFullYear(),
-  //           newDate.getUTCMonth(),
-  //           newDate.getUTCDate(),
-  //           newDate.getUTCHours(),
-  //           newDate.getUTCMinutes(),
-  //           newDate.getUTCSeconds()
-  //         )
-  //       );
-
-  //       const currentEvent = events.find((event) => event.id === id);
-  //       if (currentEvent) {
-  //         const updatedDate = new Date(currentEvent[field]);
-  //         updatedDate.setUTCFullYear(
-  //           utcDate.getUTCFullYear(),
-  //           utcDate.getUTCMonth(),
-  //           utcDate.getUTCDate()
-  //         );
-
-  //         const updatedDay = updatedDate.toLocaleDateString("en-US", {
-  //           weekday: "long",
-  //           timeZone: "UTC",
-  //         });
-
-  //         updates = {
-  //           [field]: updatedDate,
-  //           [`${field}Day`]: updatedDay,
-  //         };
-  //       }
-  //     } else {
-  //       updates[field] = editedValue;
-  //     }
-
-  //     await updateDoc(docRef, updates);
-
-  //     setEvents((prevEvents) =>
-  //       prevEvents.map((event) =>
-  //         event.id === id ? { ...event, ...updates } : event
-  //       )
-  //     );
-
-  //     setEditingCell(null);
-  //   }
-  // };
-
   const handleBlur = async () => {
     if (editingCell) {
       const { id, field } = editingCell;
@@ -618,7 +527,7 @@ export default function Availability() {
     }
   };
 
-  const handleSave = async ({
+  const handleSaveEvent = async ({
     title,
     description,
     location,
@@ -626,6 +535,7 @@ export default function Availability() {
     date,
     startTime,
     endTime,
+    recurrence,
   }: {
     title: string;
     description: string;
@@ -634,65 +544,161 @@ export default function Availability() {
     date?: string;
     startTime: string;
     endTime: string;
-  }) => {
-    const selectedDate = date ? new Date(date) : new Date();
-
-    // Convert start and end time to UTC based on the user's timezone
-    let startDateTime = moment
-      .tz(
-        `${selectedDate.toISOString().split("T")[0]} ${startTime}`,
-        "YYYY-MM-DD HH:mm",
-        userTimezone
-      )
-      .utc()
-      .toDate();
-
-    let endDateTime = moment
-      .tz(
-        `${selectedDate.toISOString().split("T")[0]} ${endTime}`,
-        "YYYY-MM-DD HH:mm",
-        userTimezone
-      )
-      .utc()
-      .toDate();
-
-    // Handle the case where end time is before start time
-    if (endDateTime <= startDateTime) {
-      endDateTime.setUTCDate(endDateTime.getUTCDate() + 1);
-    }
-
-    // Prepare the event object
-    const event: EventInput = {
-      title,
-      location: location || "",
-      start: startDateTime,
-      end: endDateTime,
-      description,
-      display: isBackgroundEvent ? "background" : "auto",
-      className: isBackgroundEvent ? "custom-bg-event" : "",
-      isBackgroundEvent,
-      startDate: startDateTime,
-      startDay: startDateTime.toLocaleDateString("en-US", {
-        weekday: "long",
-        timeZone: "UTC", // This displays the day in UTC, you might want to adjust this for the user's timezone if needed
-      }),
-      endDate: endDateTime,
-      endDay: endDateTime.toLocaleDateString("en-US", {
-        weekday: "long",
-        timeZone: "UTC", // This displays the day in UTC, you might want to adjust this for the user's timezone if needed
-      }),
+    recurrence?: {
+      daysOfWeek: number[];
+      startTime: string;
+      endTime: string;
+      startRecur: string;
+      endRecur: string;
     };
-
+  }) => {
     try {
+      console.log("handleSaveEvent triggered");
+      console.log("Data passed in:", {
+        title,
+        description,
+        location,
+        isBackgroundEvent,
+        date,
+        startTime,
+        endTime,
+        recurrence,
+        editingEvent,
+      });
+
+      const selectedDate = date ? new Date(date) : new Date();
+
+      // Set start time based on the user's timezone
+      const [startHours, startMinutes] = startTime.split(":");
+      const startDateTime = new Date(selectedDate);
+      startDateTime.setDate(startDateTime.getDate() + 1); // Add one day to correct the date shift
+      startDateTime.setHours(
+        parseInt(startHours, 10) - getUserTimeZoneOffset()
+      );
+      startDateTime.setMinutes(parseInt(startMinutes, 10));
+      startDateTime.setSeconds(0);
+
+      // Set end time based on the user's timezone
+      const [endHours, endMinutes] = endTime.split(":");
+      const endDateTime = new Date(selectedDate);
+      endDateTime.setDate(endDateTime.getDate() + 1); // Add one day to correct the date shift
+      endDateTime.setHours(parseInt(endHours, 10) - getUserTimeZoneOffset());
+      endDateTime.setMinutes(parseInt(endMinutes, 10));
+      endDateTime.setSeconds(0);
+
+      console.log("Adjusted Start DateTime:", startDateTime);
+      console.log("Adjusted End DateTime:", endDateTime);
+
+      // Handle the case where end time is before start time
+      if (endDateTime <= startDateTime) {
+        endDateTime.setUTCDate(endDateTime.getUTCDate() + 1);
+        console.log("Adjusted End DateTime to next day:", endDateTime);
+      }
+
+      // Prepare the event object
+      const event: EventInput = {
+        title,
+        location: location || "",
+        start: startDateTime,
+        end: endDateTime,
+        description,
+        display: isBackgroundEvent ? "background" : "auto",
+        className: isBackgroundEvent ? "custom-bg-event" : "",
+        isBackgroundEvent,
+        startDate: startDateTime,
+        startDay: startDateTime.toLocaleDateString("en-US", {
+          weekday: "long",
+          timeZone: "UTC",
+        }),
+        endDate: endDateTime,
+        endDay: endDateTime.toLocaleDateString("en-US", {
+          weekday: "long",
+          timeZone: "UTC",
+        }),
+      };
+
+      if (recurrence) {
+        // Remove automatic date prefill; let the user manually fill the startRecur date
+        const dtstart = new Date(
+          `${recurrence.startRecur}T${recurrence.startTime}:00`
+        );
+
+        console.log("RRule dtstart:", dtstart);
+
+        if (isNaN(dtstart.getTime())) {
+          throw new Error("Invalid dtstart date");
+        }
+
+        event.recurrence = {
+          ...recurrence,
+          rrule: new RRule({
+            freq: RRule.WEEKLY,
+            byweekday: recurrence.daysOfWeek.map((day) => {
+              switch (day) {
+                case 0:
+                  return RRule.SU;
+                case 1:
+                  return RRule.MO;
+                case 2:
+                  return RRule.TU;
+                case 3:
+                  return RRule.WE;
+                case 4:
+                  return RRule.TH;
+                case 5:
+                  return RRule.FR;
+                case 6:
+                  return RRule.SA;
+                default:
+                  throw new Error("Invalid day of week");
+              }
+            }),
+            dtstart,
+            until: new Date(`${recurrence.endRecur}T${recurrence.endTime}:00`),
+          }).toString(),
+        };
+      }
+
+      console.log("Prepared Event Object:", event);
+
       const user = auth.currentUser;
       if (user) {
-        const docRef = await createEvent(user.uid, event);
-        console.log("Event created with ID: ", docRef.id);
+        if (editingEvent) {
+          // If editing an existing event, delete the original occurrence if necessary
+          if (!editAll) {
+            await deleteOccurrence(editingEvent.id!, editingEvent.start);
+            console.log(
+              `Deleted original occurrence of event with ID: ${editingEvent.id}`
+            );
+          }
+        }
 
-        setEvents((prevEvents) => [...prevEvents, { ...event, id: docRef.id }]);
+        // Save the event (create new or replace the old one)
+        const docRef = await createEvent(user.uid, event);
+        console.log(`Event saved with ID: ${docRef.id}`);
+
+        setEvents((prevEvents) => {
+          const updatedEvents = editingEvent
+            ? prevEvents.map((evt) =>
+                evt.id === editingEvent.id ? { ...event, id: docRef.id } : evt
+              )
+            : [...prevEvents, { ...event, id: docRef.id }];
+
+          console.log("Updated Events State:", updatedEvents);
+          return updatedEvents;
+        });
+
+        setEditingEvent(null);
+        setIsDialogOpen(false);
+      } else {
+        console.error("User not authenticated");
       }
     } catch (error) {
-      console.error("Error creating event in Firestore:", error);
+      console.error(
+        "Error saving event in Firestore:",
+        (error as Error).message
+      );
+      console.error("Error stack trace:", (error as Error).stack);
     }
   };
 
@@ -737,113 +743,82 @@ export default function Availability() {
     // setIsDialogOpen(true);
   };
 
-  const handleSaveEditedEvent = async ({
-    title,
-    description,
-    location,
-    isBackgroundEvent,
-    date,
-    startTime,
-    endTime,
-  }: {
-    title: string;
-    description: string;
-    location: string;
-    isBackgroundEvent: boolean;
-    date?: string;
-    startTime: string;
-    endTime: string;
-  }) => {
-    try {
-      if (editingEvent) {
-        const formattedDate =
-          date || editingEvent.startDate.toISOString().split("T")[0];
-        const formattedStartTime =
-          startTime || editingEvent.start.toTimeString().split(" ")[0];
-        const formattedEndTime =
-          endTime || editingEvent.end.toTimeString().split(" ")[0];
+  // const handleSaveEditedEvent = async ({
+  //   title,
+  //   description,
+  //   location,
+  //   isBackgroundEvent,
+  //   date,
+  //   startTime,
+  //   endTime,
+  // }: {
+  //   title: string;
+  //   description: string;
+  //   location: string;
+  //   isBackgroundEvent: boolean;
+  //   date?: string;
+  //   startTime: string;
+  //   endTime: string;
+  // }) => {
+  //   try {
+  //     if (editingEvent) {
+  //       const formattedDate =
+  //         date || editingEvent.startDate.toISOString().split("T")[0];
+  //       const formattedStartTime =
+  //         startTime || editingEvent.start.toTimeString().split(" ")[0];
+  //       const formattedEndTime =
+  //         endTime || editingEvent.end.toTimeString().split(" ")[0];
 
-        // Convert the start and end time to UTC by subtracting the timezone offset
-        let startDateTime = moment
-          .tz(
-            `${formattedDate} ${formattedStartTime}`,
-            "YYYY-MM-DD HH:mm",
-            userTimezone
-          )
-          .toDate(); // Keep as local time
+  //       // Convert start and end time to UTC
+  //       let startDateTime = moment
+  //         .tz(
+  //           `${formattedDate} ${formattedStartTime}`,
+  //           "YYYY-MM-DD HH:mm",
+  //           userTimezone
+  //         )
+  //         .utc()
+  //         .toDate();
 
-        let endDateTime = moment
-          .tz(
-            `${formattedDate} ${formattedEndTime}`,
-            "YYYY-MM-DD HH:mm",
-            userTimezone
-          )
-          .toDate(); // Keep as local time
+  //       let endDateTime = moment
+  //         .tz(
+  //           `${formattedDate} ${formattedEndTime}`,
+  //           "YYYY-MM-DD HH:mm",
+  //           userTimezone
+  //         )
+  //         .utc()
+  //         .toDate();
 
-        // Adjust the dates to UTC by subtracting the timezone offset
-        const utcOffset = moment.tz(userTimezone).utcOffset();
-        startDateTime.setMinutes(startDateTime.getMinutes() - utcOffset);
-        endDateTime.setMinutes(endDateTime.getMinutes() - utcOffset);
+  //       // Handle the case where end time is before start time
+  //       if (endDateTime <= startDateTime) {
+  //         endDateTime.setUTCDate(endDateTime.getUTCDate() + 1);
+  //       }
 
-        // Handle the case where end time is before start time
-        if (endDateTime <= startDateTime) {
-          endDateTime.setUTCDate(endDateTime.getUTCDate() + 1);
-        }
+  //       // Delete the original occurrence now, before saving the new event
+  //       if (editingEvent.id && !editAll) {
+  //         await deleteOccurrence(editingEvent.id, editingEvent.start);
+  //       }
 
-        // Delete the original occurrence now, before saving the new event
-        if (editingEvent.id && !editAll) {
-          await deleteOccurrence(editingEvent.id, editingEvent.start);
-        }
+  //       // Save the edited event as a new single background event
+  //       await handleSave({
+  //         title,
+  //         description,
+  //         location,
+  //         isBackgroundEvent,
+  //         date: formattedDate,
+  //         startTime: formattedStartTime,
+  //         endTime: formattedEndTime,
+  //       });
 
-        if (editAll && editingEvent.recurrence) {
-          if (editingEvent.id) {
-            // Update the entire series
-            const docRef = doc(
-              db,
-              "users",
-              auth.currentUser?.uid ?? "",
-              "events",
-              editingEvent.id
-            );
-
-            await updateDoc(docRef, {
-              title,
-              description,
-              location,
-              isBackgroundEvent,
-              start: startDateTime,
-              end: endDateTime,
-              recurrence: editingEvent.recurrence,
-            });
-          } else {
-            console.error("Editing all instances but no valid event ID found.");
-            alert(
-              "Unable to update the event series. No valid event ID found."
-            );
-          }
-        } else {
-          // Save as a new single background event
-          await handleSave({
-            title,
-            description,
-            location,
-            isBackgroundEvent,
-            date: formattedDate,
-            startTime: formattedStartTime,
-            endTime: formattedEndTime,
-          });
-        }
-
-        setEditingEvent(null);
-        setIsDialogOpen(false);
-      }
-    } catch (error) {
-      console.error("Error saving edited event:", error);
-      alert(
-        "An error occurred while saving the event. Please check the console for details."
-      );
-    }
-  };
+  //       setEditingEvent(null);
+  //       setIsDialogOpen(false);
+  //     }
+  //   } catch (error) {
+  //     console.error("Error saving edited event:", error);
+  //     alert(
+  //       "An error occurred while saving the event. Please check the console for details."
+  //     );
+  //   }
+  // };
 
   return (
     <div className="w-full relative">
@@ -1217,16 +1192,11 @@ export default function Availability() {
         </button>
       </div>
 
-      <EventFormDialog
+      <AvailabilityDialog
         isOpen={isDialogOpen}
-        onClose={() => {
-          setIsDialogOpen(false);
-          setEditAll(false); // Reset the edit all state
-        }}
-        onSave={handleSaveEditedEvent}
+        onClose={() => setIsDialogOpen(false)}
+        onSave={handleSaveEvent}
         event={editingEvent}
-        showDateSelector={true} // Always show date selector
-        editAll={editAll} // Pass the editAll state to the form dialog
       />
     </div>
   );
