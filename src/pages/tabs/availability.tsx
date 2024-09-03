@@ -618,11 +618,16 @@ export default function Availability() {
       };
 
       if (recurrence) {
-        // Create the dtstart date for RRule based on startDateTime
+        // Remove automatic date prefill; let the user manually fill the startRecur date
         const dtstart = new Date(
-          `${recurrence.startRecur}T${recurrence.startTime}`
+          `${recurrence.startRecur}T${recurrence.startTime}:00`
         );
-        dtstart.setDate(dtstart.getDate() + 1); // Adjust date forward by one day
+
+        console.log("RRule dtstart:", dtstart);
+
+        if (isNaN(dtstart.getTime())) {
+          throw new Error("Invalid dtstart date");
+        }
 
         event.recurrence = {
           ...recurrence,
@@ -645,11 +650,11 @@ export default function Availability() {
                 case 6:
                   return RRule.SA;
                 default:
-                  return RRule.MO;
+                  throw new Error("Invalid day of week");
               }
             }),
             dtstart,
-            until: new Date(`${recurrence.endRecur}T${recurrence.endTime}`),
+            until: new Date(`${recurrence.endRecur}T${recurrence.endTime}:00`),
           }).toString(),
         };
       }
