@@ -568,33 +568,23 @@ export default function Availability() {
 
       const selectedDate = date ? new Date(date) : new Date();
 
-      // Adjust start time based on user timezone
-      let startDateTime = new Date(selectedDate);
+      // Set start time based on the user's timezone
       const [startHours, startMinutes] = startTime.split(":");
+      const startDateTime = new Date(selectedDate);
+      startDateTime.setDate(startDateTime.getDate() + 1); // Add one day to correct the date shift
+      startDateTime.setHours(
+        parseInt(startHours, 10) - getUserTimeZoneOffset()
+      );
+      startDateTime.setMinutes(parseInt(startMinutes, 10));
+      startDateTime.setSeconds(0);
 
-      if (startHours !== undefined && startMinutes !== undefined) {
-        startDateTime.setHours(
-          parseInt(startHours, 10) - getUserTimeZoneOffset()
-        );
-        startDateTime.setMinutes(parseInt(startMinutes, 10));
-        startDateTime.setSeconds(0);
-      } else {
-        console.error("Invalid start time format.");
-        return;
-      }
-
-      // Adjust end time based on user timezone
-      let endDateTime = new Date(selectedDate);
+      // Set end time based on the user's timezone
       const [endHours, endMinutes] = endTime.split(":");
-
-      if (endHours !== undefined && endMinutes !== undefined) {
-        endDateTime.setHours(parseInt(endHours, 10) - getUserTimeZoneOffset());
-        endDateTime.setMinutes(parseInt(endMinutes, 10));
-        endDateTime.setSeconds(0);
-      } else {
-        console.error("Invalid end time format.");
-        return;
-      }
+      const endDateTime = new Date(selectedDate);
+      endDateTime.setDate(endDateTime.getDate() + 1); // Add one day to correct the date shift
+      endDateTime.setHours(parseInt(endHours, 10) - getUserTimeZoneOffset());
+      endDateTime.setMinutes(parseInt(endMinutes, 10));
+      endDateTime.setSeconds(0);
 
       console.log("Adjusted Start DateTime:", startDateTime);
       console.log("Adjusted End DateTime:", endDateTime);
@@ -628,6 +618,12 @@ export default function Availability() {
       };
 
       if (recurrence) {
+        // Create the dtstart date for RRule based on startDateTime
+        const dtstart = new Date(
+          `${recurrence.startRecur}T${recurrence.startTime}`
+        );
+        dtstart.setDate(dtstart.getDate() + 1); // Adjust date forward by one day
+
         event.recurrence = {
           ...recurrence,
           rrule: new RRule({
@@ -652,9 +648,7 @@ export default function Availability() {
                   return RRule.MO;
               }
             }),
-            dtstart: new Date(
-              `${recurrence.startRecur}T${recurrence.startTime}`
-            ),
+            dtstart,
             until: new Date(`${recurrence.endRecur}T${recurrence.endTime}`),
           }).toString(),
         };
