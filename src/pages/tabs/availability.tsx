@@ -67,7 +67,7 @@ import { createEvent } from "../../services/userService";
 import EventFormDialog from "../EventFormModal";
 import moment from "moment-timezone";
 
-type SortableKeys = "start" | "end" | "title";
+type SortableKeys = "start" | "end" | "title" | "startDate";
 
 export default function Availability() {
   const [events, setEvents] = useState<EventInput[]>([]);
@@ -212,6 +212,21 @@ export default function Availability() {
     fetchEvents();
   }, []);
 
+  // const handleSort = (key: SortableKeys) => {
+  //   let direction: "asc" | "desc" = "asc";
+  //   if (sortConfig.key === key && sortConfig.direction === "asc") {
+  //     direction = "desc";
+  //   }
+  //   setSortConfig({ key, direction });
+  //   setEvents((prevEvents) =>
+  //     [...prevEvents].sort((a, b) => {
+  //       if (a[key] < b[key]) return direction === "asc" ? -1 : 1;
+  //       if (a[key] > b[key]) return direction === "asc" ? 1 : -1;
+  //       return 0;
+  //     })
+  //   );
+  // };
+
   const handleSort = (key: SortableKeys) => {
     let direction: "asc" | "desc" = "asc";
     if (sortConfig.key === key && sortConfig.direction === "asc") {
@@ -220,8 +235,17 @@ export default function Availability() {
     setSortConfig({ key, direction });
     setEvents((prevEvents) =>
       [...prevEvents].sort((a, b) => {
-        if (a[key] < b[key]) return direction === "asc" ? -1 : 1;
-        if (a[key] > b[key]) return direction === "asc" ? 1 : -1;
+        let aValue, bValue;
+        if (key === "startDate") {
+          aValue = new Date(a.startDate).getTime();
+          bValue = new Date(b.startDate).getTime();
+        } else {
+          aValue = a[key];
+          bValue = b[key];
+        }
+
+        if (aValue < bValue) return direction === "asc" ? -1 : 1;
+        if (aValue > bValue) return direction === "asc" ? 1 : -1;
         return 0;
       })
     );
@@ -851,7 +875,20 @@ export default function Availability() {
                 }}
               />
             </TableHead>
-            <TableHead>Date</TableHead>
+            <TableHead>
+              <div className="flex items-center">
+                Date
+                <button onClick={() => handleSort("startDate")}>
+                  {sortConfig.key === "startDate" &&
+                  sortConfig.direction === "asc" ? (
+                    <CaretSortIcon className="rotate-180" />
+                  ) : (
+                    <CaretSortIcon />
+                  )}
+                </button>
+              </div>
+            </TableHead>
+
             <TableHead>Day</TableHead>
             <TableHead>
               <div className="flex items-center">
