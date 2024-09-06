@@ -67,7 +67,7 @@ import { createEvent } from "../../services/userService";
 import EventFormDialog from "../EventFormModal";
 import moment from "moment-timezone";
 
-type SortableKeys = "start" | "end" | "title";
+type SortableKeys = "start" | "end" | "title" | "startDate";
 
 export default function Availability() {
   const [events, setEvents] = useState<EventInput[]>([]);
@@ -76,206 +76,113 @@ export default function Availability() {
   const [sortConfig, setSortConfig] = useState<{
     key: SortableKeys;
     direction: "asc" | "desc";
-  }>({ key: "start", direction: "asc" });
+  }>({
+    key: "startDate",
+    direction: "asc",
+  });
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingEvent, setEditingEvent] = useState<EventInput | null>(null);
-  const [userTimezone, setUserTimezone] = useState<string>("UTC");
 
-  useEffect(() => {
-    const fetchUserTimezone = async () => {
-      if (auth.currentUser) {
-        const userRef = doc(db, "users", auth.currentUser.uid);
-        const userDoc = await getDoc(userRef);
-        const userData = userDoc.data();
-        setUserTimezone(userData?.timezone || "UTC");
-      }
-    };
-
-    fetchUserTimezone();
-  }, []);
-
-  const fetchEvents = async () => {
-    if (!auth.currentUser) return;
-
-    const eventsRef = collection(db, "users", auth.currentUser.uid, "events");
-    const q = query(eventsRef, where("isBackgroundEvent", "==", true));
-
-    const querySnapshot = await getDocs(q);
-    let expandedEvents: EventInput[] = [];
-
-    querySnapshot.docs.forEach((doc) => {
-      const data = doc.data();
-      const start =
-        data.start instanceof Timestamp
-          ? data.start.toDate()
-          : new Date(data.start);
-      const end =
-        data.end instanceof Timestamp ? data.end.toDate() : new Date(data.end);
-
-      if (data.recurrence) {
-        const adjustedDaysOfWeek = data.recurrence.daysOfWeek.map(
-          (day: number) => (day === 0 ? 6 : day - 1)
-        );
-
-        const dtstart = new Date(start);
-        const rule = new RRule({
-          freq: RRule.WEEKLY,
-          byweekday: adjustedDaysOfWeek,
-          dtstart: dtstart,
-          tzid: "UTC",
-          until: new Date(data.recurrence.endRecur),
-        });
-
-        rule.all().forEach((date) => {
-          const occurrenceStart = new Date(date);
-          const duration = end.getTime() - start.getTime();
-          const occurrenceEnd = new Date(occurrenceStart.getTime() + duration);
-
-          if (!data.exceptions?.includes(occurrenceStart.toISOString())) {
-            expandedEvents.push({
-              id: doc.id,
-              title: data.title,
-              start: occurrenceStart,
-              end: occurrenceEnd,
-              description: data.description || "",
-              isBackgroundEvent: data.isBackgroundEvent,
-              startDate: occurrenceStart,
-              startDay: occurrenceStart.toLocaleDateString("en-US", {
-                weekday: "long",
-              }),
-              endDate: occurrenceEnd,
-              endDay: occurrenceEnd.toLocaleDateString("en-US", {
-                weekday: "long",
-              }),
-              recurrence: data.recurrence,
-              exceptions: data.exceptions,
-            });
-          }
-        });
-      } else {
-        expandedEvents.push({
-          id: doc.id,
-          title: data.title,
-          start: start,
-          end: end,
-          description: data.description || "",
-          isBackgroundEvent: data.isBackgroundEvent,
-          startDate: start,
-          startDay: start.toLocaleDateString("en-US", {
-            weekday: "long",
-            timeZone: "UTC",
-          }),
-          endDate: end,
-          endDay: end.toLocaleDateString("en-US", {
-            weekday: "long",
-            timeZone: "UTC",
-          }),
-        });
-      }
-    });
-
-    setEvents(expandedEvents);
-  };
   useEffect(() => {
     fetchEvents();
   }, []);
 
-  // useEffect(() => {
-  //   const fetchEvents = async () => {
-  //     if (auth.currentUser) {
-  //       const eventsRef = collection(
-  //         db,
-  //         "users",
-  //         auth.currentUser.uid,
-  //         "events"
-  //       );
+  const fetchEvents = async () => {
+    if (auth.currentUser) {
+      const eventsRef = collection(db, "users", auth.currentUser.uid, "events");
+      const q = query(eventsRef, where("isBackgroundEvent", "==", true));
+      const querySnapshot = await getDocs(q);
+      let expandedEvents: EventInput[] = [];
 
-  //       const q = query(eventsRef, where("isBackgroundEvent", "==", true));
-  //       const querySnapshot = await getDocs(q);
-  //       let expandedEvents: EventInput[] = [];
+      const eventInstancesSet = new Set<string>();
 
-  //       querySnapshot.docs.forEach((doc) => {
-  //         const data = doc.data();
-  //         const start =
-  //           data.start instanceof Timestamp
-  //             ? data.start.toDate()
-  //             : new Date(data.start);
-  //         const end =
-  //           data.end instanceof Timestamp
-  //             ? data.end.toDate()
-  //             : new Date(data.end);
+      querySnapshot.docs.forEach((doc) => {
+        const data = doc.data();
+        const start =
+          data.start instanceof Timestamp
+            ? data.start.toDate()
+            : new Date(data.start);
+        const end =
+          data.end instanceof Timestamp
+            ? data.end.toDate()
+            : new Date(data.end);
 
-  //         if (data.recurrence) {
-  //           const adjustedDaysOfWeek = data.recurrence.daysOfWeek.map(
-  //             (day: number) => (day === 0 ? 6 : day - 1)
-  //           );
+        if (data.recurrence) {
+          const adjustedDaysOfWeek = data.recurrence.daysOfWeek.map(
+            (day: number) => (day === 0 ? 6 : day - 1)
+          );
+          const dtstart = new Date(start);
+          const rule = new RRule({
+            freq: RRule.WEEKLY,
+            byweekday: adjustedDaysOfWeek,
+            dtstart: dtstart,
+            tzid: "UTC",
+            until: new Date(data.recurrence.endRecur),
+          });
 
-  //           const dtstart = new Date(start);
+          rule.all().forEach((date) => {
+            const occurrenceStart = new Date(date);
+            const duration = end.getTime() - start.getTime();
+            const occurrenceEnd = new Date(
+              occurrenceStart.getTime() + duration
+            );
 
-  //           const rule = new RRule({
-  //             freq: RRule.WEEKLY,
-  //             byweekday: adjustedDaysOfWeek,
-  //             dtstart: dtstart,
-  //             tzid: "UTC",
-  //             until: new Date(data.recurrence.endRecur),
-  //           });
+            const occurrenceStartString = occurrenceStart.toISOString();
 
-  //           rule.all().forEach((date) => {
-  //             const occurrenceStart = new Date(date);
-  //             const duration = end.getTime() - start.getTime();
-  //             const occurrenceEnd = new Date(
-  //               occurrenceStart.getTime() + duration
-  //             );
+            if (
+              !eventInstancesSet.has(occurrenceStartString) &&
+              !data.exceptions?.includes(occurrenceStartString)
+            ) {
+              eventInstancesSet.add(occurrenceStartString);
+              expandedEvents.push({
+                id: doc.id,
+                title: data.title,
+                start: occurrenceStart,
+                end: occurrenceEnd,
+                description: data.description || "",
+                isBackgroundEvent: data.isBackgroundEvent,
+                startDate: occurrenceStart,
+                startDay: occurrenceStart.toLocaleDateString("en-US", {
+                  weekday: "long",
+                }),
+                endDate: occurrenceEnd,
+                endDay: occurrenceEnd.toLocaleDateString("en-US", {
+                  weekday: "long",
+                }),
+                recurrence: data.recurrence,
+                exceptions: data.exceptions,
+              });
+            }
+          });
+        } else {
+          const startString = start.toISOString();
+          if (!eventInstancesSet.has(startString)) {
+            eventInstancesSet.add(startString);
+            expandedEvents.push({
+              id: doc.id,
+              title: data.title,
+              start: start,
+              end: end,
+              description: data.description || "",
+              isBackgroundEvent: data.isBackgroundEvent,
+              startDate: start,
+              startDay: start.toLocaleDateString("en-US", {
+                weekday: "long",
+                timeZone: "UTC",
+              }),
+              endDate: end,
+              endDay: end.toLocaleDateString("en-US", {
+                weekday: "long",
+                timeZone: "UTC",
+              }),
+            });
+          }
+        }
+      });
 
-  //             if (!data.exceptions?.includes(occurrenceStart.toISOString())) {
-  //               expandedEvents.push({
-  //                 id: doc.id,
-  //                 title: data.title,
-  //                 start: occurrenceStart,
-  //                 end: occurrenceEnd,
-  //                 description: data.description || "",
-  //                 isBackgroundEvent: data.isBackgroundEvent,
-  //                 startDate: occurrenceStart,
-  //                 startDay: occurrenceStart.toLocaleDateString("en-US", {
-  //                   weekday: "long",
-  //                 }),
-  //                 endDate: occurrenceEnd,
-  //                 endDay: occurrenceEnd.toLocaleDateString("en-US", {
-  //                   weekday: "long",
-  //                 }),
-  //                 recurrence: data.recurrence,
-  //                 exceptions: data.exceptions,
-  //               });
-  //             }
-  //           });
-  //         } else {
-  //           expandedEvents.push({
-  //             id: doc.id,
-  //             title: data.title,
-  //             start: start,
-  //             end: end,
-  //             description: data.description || "",
-  //             isBackgroundEvent: data.isBackgroundEvent,
-  //             startDate: start,
-  //             startDay: start.toLocaleDateString("en-US", {
-  //               weekday: "long",
-  //               timeZone: "UTC",
-  //             }),
-  //             endDate: end,
-  //             endDay: end.toLocaleDateString("en-US", {
-  //               weekday: "long",
-  //               timeZone: "UTC",
-  //             }),
-  //           });
-  //         }
-  //       });
-
-  //       setEvents(expandedEvents);
-  //     }
-  //   };
-
-  //   fetchEvents();
-  // }, []);
+      setEvents(expandedEvents);
+    }
+  };
 
   const handleSort = (key: SortableKeys) => {
     let direction: "asc" | "desc" = "asc";
@@ -283,10 +190,22 @@ export default function Availability() {
       direction = "desc";
     }
     setSortConfig({ key, direction });
+
     setEvents((prevEvents) =>
       [...prevEvents].sort((a, b) => {
-        if (a[key] < b[key]) return direction === "asc" ? -1 : 1;
-        if (a[key] > b[key]) return direction === "asc" ? 1 : -1;
+        let aValue: string, bValue: string;
+
+        // Convert dates to timestamps for comparison
+        if (key === "startDate" || key === "start" || key === "end") {
+          aValue = new Date(a[key]).getTime().toString();
+          bValue = new Date(b[key]).getTime().toString();
+        } else {
+          aValue = a[key] as string;
+          bValue = b[key] as string;
+        }
+
+        if (aValue < bValue) return direction === "asc" ? -1 : 1;
+        if (aValue > bValue) return direction === "asc" ? 1 : -1;
         return 0;
       })
     );
@@ -439,7 +358,19 @@ export default function Availability() {
                   }
                 />
               </TableHead>
-              <TableHead>Date</TableHead>
+              <TableHead>
+                <div className="flex items-center">
+                  Date
+                  <button onClick={() => handleSort("startDate")}>
+                    {sortConfig.key === "startDate" &&
+                    sortConfig.direction === "asc" ? (
+                      <CaretSortIcon className="rotate-180" />
+                    ) : (
+                      <CaretSortIcon />
+                    )}
+                  </button>
+                </div>
+              </TableHead>
               <TableHead>Day</TableHead>
               <TableHead>
                 <div className="flex items-center">
@@ -524,11 +455,9 @@ export default function Availability() {
           </TableBody>
         </Table>
       </div>
-
       <div className="flex justify-between mt-4">
         <span>{`${selectedRows.size} of ${filteredEvents.length} row(s) selected`}</span>
       </div>
-
       <div className="fixed bottom-[calc(4rem+30px)] right-4">
         <button
           className="p-4 bg-blue-600 text-white rounded-full shadow-lg hover:bg-blue-500 focus:outline-none"
@@ -537,7 +466,6 @@ export default function Availability() {
           <PlusCircledIcon className="h-6 w-6" />
         </button>
       </div>
-
       <AvailabilityDialog
         isOpen={isDialogOpen}
         onClose={() => setIsDialogOpen(false)}
