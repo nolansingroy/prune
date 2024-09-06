@@ -90,11 +90,11 @@ export default function Availability() {
   const fetchEvents = async () => {
     if (auth.currentUser) {
       const eventsRef = collection(db, "users", auth.currentUser.uid, "events");
+
+      // Query to fetch background events (recurring or not)
       const q = query(eventsRef, where("isBackgroundEvent", "==", true));
       const querySnapshot = await getDocs(q);
-      let expandedEvents: EventInput[] = [];
-
-      const eventInstancesSet = new Set<string>();
+      let eventsList: EventInput[] = [];
 
       querySnapshot.docs.forEach((doc) => {
         const data = doc.data();
@@ -107,80 +107,49 @@ export default function Availability() {
             ? data.end.toDate()
             : new Date(data.end);
 
+        // If it's a recurring event, only add the first instance to the UI
         if (data.recurrence) {
-          const adjustedDaysOfWeek = data.recurrence.daysOfWeek.map(
-            (day: number) => (day === 0 ? 6 : day - 1)
-          );
           const dtstart = new Date(start);
-          const rule = new RRule({
-            freq: RRule.WEEKLY,
-            byweekday: adjustedDaysOfWeek,
-            dtstart: dtstart,
-            tzid: "UTC",
-            until: new Date(data.recurrence.endRecur),
-          });
 
-          rule.all().forEach((date) => {
-            const occurrenceStart = new Date(date);
-            const duration = end.getTime() - start.getTime();
-            const occurrenceEnd = new Date(
-              occurrenceStart.getTime() + duration
-            );
-
-            const occurrenceStartString = occurrenceStart.toISOString();
-
-            if (
-              !eventInstancesSet.has(occurrenceStartString) &&
-              !data.exceptions?.includes(occurrenceStartString)
-            ) {
-              eventInstancesSet.add(occurrenceStartString);
-              expandedEvents.push({
-                id: doc.id,
-                title: data.title,
-                start: occurrenceStart,
-                end: occurrenceEnd,
-                description: data.description || "",
-                isBackgroundEvent: data.isBackgroundEvent,
-                startDate: occurrenceStart,
-                startDay: occurrenceStart.toLocaleDateString("en-US", {
-                  weekday: "long",
-                }),
-                endDate: occurrenceEnd,
-                endDay: occurrenceEnd.toLocaleDateString("en-US", {
-                  weekday: "long",
-                }),
-                recurrence: data.recurrence,
-                exceptions: data.exceptions,
-              });
-            }
+          // First instance of recurrence (based on RRule start date)
+          eventsList.push({
+            id: doc.id,
+            title: data.title,
+            start: dtstart,
+            end: new Date(
+              dtstart.getTime() + (end.getTime() - start.getTime())
+            ), // Calculate end time based on duration
+            description: data.description || "",
+            isBackgroundEvent: data.isBackgroundEvent,
+            startDate: dtstart,
+            startDay: dtstart.toLocaleDateString("en-US", { weekday: "long" }),
+            endDate: new Date(
+              dtstart.getTime() + (end.getTime() - start.getTime())
+            ),
+            endDay: new Date(
+              dtstart.getTime() + (end.getTime() - start.getTime())
+            ).toLocaleDateString("en-US", { weekday: "long" }),
+            recurrence: data.recurrence, // Keep recurrence data intact for reference
+            exceptions: data.exceptions,
           });
         } else {
-          const startString = start.toISOString();
-          if (!eventInstancesSet.has(startString)) {
-            eventInstancesSet.add(startString);
-            expandedEvents.push({
-              id: doc.id,
-              title: data.title,
-              start: start,
-              end: end,
-              description: data.description || "",
-              isBackgroundEvent: data.isBackgroundEvent,
-              startDate: start,
-              startDay: start.toLocaleDateString("en-US", {
-                weekday: "long",
-                timeZone: "UTC",
-              }),
-              endDate: end,
-              endDay: end.toLocaleDateString("en-US", {
-                weekday: "long",
-                timeZone: "UTC",
-              }),
-            });
-          }
+          // Non-recurring event
+          eventsList.push({
+            id: doc.id,
+            title: data.title,
+            start: start,
+            end: end,
+            description: data.description || "",
+            isBackgroundEvent: data.isBackgroundEvent,
+            startDate: start,
+            startDay: start.toLocaleDateString("en-US", { weekday: "long" }),
+            endDate: end,
+            endDay: end.toLocaleDateString("en-US", { weekday: "long" }),
+          });
         }
       });
 
-      setEvents(expandedEvents);
+      setEvents(eventsList); // Set the state with the updated list
     }
   };
 
