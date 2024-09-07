@@ -22,19 +22,6 @@ import {
   DotsHorizontalIcon,
   PlusCircledIcon,
 } from "@radix-ui/react-icons";
-import {
-  ColumnDef,
-  ColumnFiltersState,
-  SortingState,
-  VisibilityState,
-  flexRender,
-  getCoreRowModel,
-  getFilteredRowModel,
-  getPaginationRowModel,
-  getSortedRowModel,
-  useReactTable,
-} from "@tanstack/react-table";
-
 import AvailabilityDialog from "../AvailabilityFormDialog";
 
 import { Button } from "@/components/ui/button";
@@ -57,15 +44,10 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  Dialog,
-  DialogContent,
-  DialogTitle,
-  DialogOverlay,
-} from "@radix-ui/react-dialog";
 import { createEvent } from "../../services/userService";
-import EventFormDialog from "../EventFormModal";
+import { getFunctions, httpsCallable } from "firebase/functions";
 import moment from "moment-timezone";
+import axios from "axios";
 
 type SortableKeys = "start" | "end" | "title" | "startDate";
 
@@ -76,22 +58,30 @@ export default function Availability() {
   const [sortConfig, setSortConfig] = useState<{
     key: SortableKeys;
     direction: "asc" | "desc";
-  }>({
-    key: "startDate",
-    direction: "asc",
-  });
+  }>({ key: "startDate", direction: "asc" });
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingEvent, setEditingEvent] = useState<EventInput | null>(null);
+  const [userTimezone, setUserTimezone] = useState<string>("UTC");
 
   useEffect(() => {
+    fetchUserTimezone();
     fetchEvents();
   }, []);
 
+  // Fetch user timezone from Firestore
+  const fetchUserTimezone = async () => {
+    if (auth.currentUser) {
+      const userRef = doc(db, "users", auth.currentUser.uid);
+      const userDoc = await getDoc(userRef);
+      const userData = userDoc.data();
+      setUserTimezone(userData?.timezone || "UTC");
+    }
+  };
+
+  // Fetch events from Firestore
   const fetchEvents = async () => {
     if (auth.currentUser) {
       const eventsRef = collection(db, "users", auth.currentUser.uid, "events");
-
-      // Query to fetch background events (recurring or not)
       const q = query(eventsRef, where("isBackgroundEvent", "==", true));
       const querySnapshot = await getDocs(q);
       let eventsList: EventInput[] = [];
@@ -107,11 +97,8 @@ export default function Availability() {
             ? data.end.toDate()
             : new Date(data.end);
 
-        // If it's a recurring event, only add the first instance to the UI
         if (data.recurrence) {
           const dtstart = new Date(start);
-
-          // First instance of recurrence (based on RRule start date)
           eventsList.push({
             id: doc.id,
             title: data.title,
@@ -129,7 +116,7 @@ export default function Availability() {
             endDay: new Date(
               dtstart.getTime() + (end.getTime() - start.getTime())
             ).toLocaleDateString("en-US", { weekday: "long" }),
-            recurrence: data.recurrence, // Keep recurrence data intact for reference
+            recurrence: data.recurrence,
             exceptions: data.exceptions,
           });
         } else {
@@ -149,10 +136,33 @@ export default function Availability() {
         }
       });
 
-      setEvents(eventsList); // Set the state with the updated list
+      setEvents(eventsList);
     }
   };
 
+  const displayTimeWithOffset = (date: Date) => {
+    // Get the user's timezone offset in hours (this is in minutes, so divide by 60)
+    const userTimezoneOffsetInHours = new Date().getTimezoneOffset() / 60;
+
+    // Convert the UTC time stored in the database to the local time
+    const adjustedDate = new Date(
+      date.getTime() + userTimezoneOffsetInHours * 60 * 60 * 1000
+    );
+
+    // Log for debugging purposes
+    console.log(`Original Time (UTC): ${date}`);
+    console.log(`Timezone Offset (hours): ${userTimezoneOffsetInHours}`);
+    console.log(`Adjusted Time: ${adjustedDate}`);
+
+    // Return the adjusted time in user's local time format
+    return adjustedDate.toLocaleTimeString("en-US", {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true,
+    });
+  };
+
+  // Sorting functionality
   const handleSort = (key: SortableKeys) => {
     let direction: "asc" | "desc" = "asc";
     if (sortConfig.key === key && sortConfig.direction === "asc") {
@@ -164,7 +174,6 @@ export default function Availability() {
       [...prevEvents].sort((a, b) => {
         let aValue: string, bValue: string;
 
-        // Convert dates to timestamps for comparison
         if (key === "startDate" || key === "start" || key === "end") {
           aValue = new Date(a[key]).getTime().toString();
           bValue = new Date(b[key]).getTime().toString();
@@ -180,16 +189,19 @@ export default function Availability() {
     );
   };
 
+  // Handle search input
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearch(e.target.value);
   };
 
+  // Filtered events based on search
   const filteredEvents = events.filter(
     (event) =>
       event.title.toLowerCase().includes(search.toLowerCase()) ||
       (event.description ?? "").toLowerCase().includes(search.toLowerCase())
   );
 
+  // Handle row selection
   const toggleRowSelection = (id: string) => {
     const newSelectedRows = new Set(selectedRows);
     if (newSelectedRows.has(id)) {
@@ -200,6 +212,7 @@ export default function Availability() {
     setSelectedRows(newSelectedRows);
   };
 
+  // Handle select all rows
   const handleSelectAllChange = (checked: boolean) => {
     if (checked) {
       const newSelectedRows = new Set<string>();
@@ -212,6 +225,7 @@ export default function Availability() {
     }
   };
 
+  // Delete selected events
   const deleteSelectedEvents = async () => {
     if (
       window.confirm("Are you sure you want to delete the selected events?")
@@ -236,6 +250,7 @@ export default function Availability() {
     }
   };
 
+  // Handle saving events
   const handleSaveEvent = async (eventData: {
     title: string;
     description: string;
@@ -246,8 +261,6 @@ export default function Availability() {
     endTime: string;
     recurrence?: {
       daysOfWeek: number[];
-      startTime: string;
-      endTime: string;
       startRecur: string;
       endRecur: string;
     };
@@ -258,25 +271,26 @@ export default function Availability() {
         throw new Error("User not authenticated");
       }
 
-      const startDate = new Date(eventData.date + " " + eventData.startTime);
-      const endDate = new Date(eventData.date + " " + eventData.endTime);
-
-      const newEvent: EventInput = {
+      const startDate =
+        eventData.date || new Date().toISOString().split("T")[0];
+      const eventInput = {
         title: eventData.title,
         description: eventData.description,
         location: eventData.location || "",
-        start: startDate,
-        end: endDate,
-        isBackgroundEvent: eventData.isBackgroundEvent,
-        startDate: startDate,
-        startDay: startDate.toLocaleDateString("en-US", { weekday: "long" }),
-        endDate: endDate,
-        endDay: endDate.toLocaleDateString("en-US", { weekday: "long" }),
+        startDate,
+        startTime: eventData.startTime,
+        endTime: eventData.endTime,
         recurrence: eventData.recurrence,
+        userId: user.uid,
       };
 
-      await createEvent(user.uid, newEvent);
-      await fetchEvents(); // Call to refresh events
+      const result = await axios.post(
+        "https://us-central1-YOUR_PROJECT_ID.cloudfunctions.net/createRecurringAvailabilityInstances",
+        eventInput
+      );
+
+      console.log("Recurring event instances created:", result.data);
+      await fetchEvents();
     } catch (error) {
       console.error("Error saving event:", error);
     }
@@ -373,20 +387,8 @@ export default function Availability() {
                 </TableCell>
                 <TableCell>{event.startDate.toLocaleDateString()}</TableCell>
                 <TableCell>{event.startDay}</TableCell>
-                <TableCell>
-                  {event.start.toLocaleTimeString("en-US", {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                    hour12: true,
-                  })}
-                </TableCell>
-                <TableCell>
-                  {event.end.toLocaleTimeString("en-US", {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                    hour12: true,
-                  })}
-                </TableCell>
+                <TableCell>{displayTimeWithOffset(event.start)}</TableCell>
+                <TableCell>{displayTimeWithOffset(event.end)}</TableCell>
                 <TableCell>{event.title}</TableCell>
                 <TableCell>{event.description}</TableCell>
                 <TableCell>
@@ -423,9 +425,6 @@ export default function Availability() {
             ))}
           </TableBody>
         </Table>
-      </div>
-      <div className="flex justify-between mt-4">
-        <span>{`${selectedRows.size} of ${filteredEvents.length} row(s) selected`}</span>
       </div>
       <div className="fixed bottom-[calc(4rem+30px)] right-4">
         <button

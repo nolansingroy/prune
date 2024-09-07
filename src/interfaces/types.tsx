@@ -23,4 +23,10 @@ export interface EventInput {
   };
   exceptions?: string[]; // used in availability logic to exclude dates from the list
   exdate?: string[]; // Convert exceptions to exdate for FullCalendar RRule to work
+
+  originalEventId?: string; // Reference to the original recurring event
+  isInstance?: boolean; // Flag to indicate if this is an instance of a recurring event
+
+  // New field: Map for tracking references of instance documents
+  instanceMap?: { [instanceDate: string]: string }; // Maps instance date to document ID
 }
