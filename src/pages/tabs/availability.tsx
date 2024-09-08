@@ -12,6 +12,7 @@ import {
   Timestamp,
   arrayUnion,
   getDoc,
+  setDoc,
 } from "firebase/firestore";
 import { auth, db } from "../../../firebase";
 import { EventInput } from "../../interfaces/types";
@@ -67,6 +68,7 @@ export default function Availability() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingEvent, setEditingEvent] = useState<EventInput | null>(null);
   const [userTimezone, setUserTimezone] = useState<string>("UTC");
+  const [loading, setLoading] = useState(false); // New loading state
 
   useEffect(() => {
     fetchUserTimezone();
@@ -147,10 +149,9 @@ export default function Availability() {
     value: string,
     isRecurring: boolean
   ) => {
-    if (!isRecurring) {
-      setEditingCell({ id, field });
-      setEditedValue(value);
-    }
+    // Remove the condition that prevents non-recurring events from being edited
+    setEditingCell({ id, field });
+    setEditedValue(value);
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -299,6 +300,7 @@ export default function Availability() {
       endRecur: string; // YYYY-MM-DD
     };
   }) => {
+    setLoading(true); // Start loading
     try {
       const user = auth.currentUser;
       if (!user) {
@@ -336,6 +338,8 @@ export default function Availability() {
       await fetchEvents();
     } catch (error) {
       console.error("Error saving event:", error);
+    } finally {
+      setLoading(false); // Stop loading
     }
   };
 
@@ -467,9 +471,43 @@ export default function Availability() {
       (event.description ?? "").toLowerCase().includes(search.toLowerCase())
   );
 
+  // Function to clone the event
+  const handleCloneClick = async (event: EventInput) => {
+    try {
+      const user = auth.currentUser;
+      if (!user) {
+        throw new Error("User not authenticated");
+      }
+
+      // Create a clone of the event with a new ID
+      const clonedEvent = {
+        ...event,
+        title: `${event.title} (Clone)`, // Optional: Append "Clone" to the title
+        id: undefined, // Reset the ID to allow Firestore to generate a new one
+        created_at: new Date(), // Update creation timestamp
+      };
+
+      // Save the cloned event to Firestore
+      const eventRef = doc(collection(db, "users", user.uid, "events"));
+      await setDoc(eventRef, clonedEvent);
+
+      // Update local state
+      setEvents((prevEvents) => [
+        ...prevEvents,
+        { ...clonedEvent, id: eventRef.id },
+      ]);
+
+      console.log("Event cloned successfully");
+    } catch (error) {
+      console.error("Error cloning event:", error);
+    }
+  };
+
   return (
     <div className="w-full relative">
       <h1 className="text-xl font-bold mb-4">My Available Times</h1>
+      {/* Add loading spinner here */}
+      {loading && <div className="spinner">Loading...</div>}
       <hr></hr>
       <Input
         value={search}
@@ -666,9 +704,11 @@ export default function Availability() {
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent>
-                      {/* <DropdownMenuItem onClick={() => handleEditClick(event)}>
-                        Edit Occurrence
+                      {/* Clone option
+                      <DropdownMenuItem onClick={() => handleCloneClick(event)}>
+                        Clone
                       </DropdownMenuItem> */}
+                      {/*  Delete Option */}
                       <DropdownMenuItem
                         onClick={() => handleDeleteClick(event.id!)}
                       >
