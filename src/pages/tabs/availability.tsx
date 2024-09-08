@@ -12,6 +12,7 @@ import {
   Timestamp,
   arrayUnion,
   getDoc,
+  setDoc,
 } from "firebase/firestore";
 import { auth, db } from "../../../firebase";
 import { EventInput } from "../../interfaces/types";
@@ -22,19 +23,6 @@ import {
   DotsHorizontalIcon,
   PlusCircledIcon,
 } from "@radix-ui/react-icons";
-import {
-  ColumnDef,
-  ColumnFiltersState,
-  SortingState,
-  VisibilityState,
-  flexRender,
-  getCoreRowModel,
-  getFilteredRowModel,
-  getPaginationRowModel,
-  getSortedRowModel,
-  useReactTable,
-} from "@tanstack/react-table";
-
 import AvailabilityDialog from "../AvailabilityFormDialog";
 
 import { Button } from "@/components/ui/button";
@@ -57,15 +45,10 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  Dialog,
-  DialogContent,
-  DialogTitle,
-  DialogOverlay,
-} from "@radix-ui/react-dialog";
 import { createEvent } from "../../services/userService";
-import EventFormDialog from "../EventFormModal";
+import { getFunctions, httpsCallable } from "firebase/functions";
 import moment from "moment-timezone";
+import axios from "axios";
 
 type SortableKeys = "start" | "end" | "title" | "startDate";
 
@@ -81,167 +64,309 @@ export default function Availability() {
   const [sortConfig, setSortConfig] = useState<{
     key: SortableKeys;
     direction: "asc" | "desc";
-  }>({ key: "start", direction: "asc" });
+  }>({ key: "startDate", direction: "asc" });
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingEvent, setEditingEvent] = useState<EventInput | null>(null);
-  const [editAll, setEditAll] = useState(false); // New state for editing all instances
   const [userTimezone, setUserTimezone] = useState<string>("UTC");
-
-  // Pagination states
-  const [pageIndex, setPageIndex] = useState(0);
-  const [pageSize, setPageSize] = useState(5);
+  const [loading, setLoading] = useState(false); // New loading state
 
   useEffect(() => {
-    const fetchUserTimezone = async () => {
-      if (auth.currentUser) {
-        const userRef = doc(db, "users", auth.currentUser.uid);
-        const userDoc = await getDoc(userRef);
-        const userData = userDoc.data();
-        console.log(
-          `Component is fetching the user doc.timezone - ${
-            userData?.timezone ?? ""
-          }`
-        );
-        setUserTimezone(userData?.timezone || "UTC");
-      }
-    };
-
     fetchUserTimezone();
-  }, []);
-
-  useEffect(() => {
-    const fetchEvents = async () => {
-      if (auth.currentUser) {
-        const eventsRef = collection(
-          db,
-          "users",
-          auth.currentUser.uid,
-          "events"
-        );
-
-        // Query for all background events, whether they are recurring or not
-        const q = query(eventsRef, where("isBackgroundEvent", "==", true));
-        const querySnapshot = await getDocs(q);
-        let expandedEvents: EventInput[] = [];
-
-        querySnapshot.docs.forEach((doc) => {
-          const data = doc.data();
-          const start =
-            data.start instanceof Timestamp
-              ? data.start.toDate()
-              : new Date(data.start);
-          const end =
-            data.end instanceof Timestamp
-              ? data.end.toDate()
-              : new Date(data.end);
-
-          if (data.recurrence) {
-            const adjustedDaysOfWeek = data.recurrence.daysOfWeek.map(
-              (day: number) => (day === 0 ? 6 : day - 1)
-            );
-
-            const dtstart = new Date(start);
-
-            const rule = new RRule({
-              freq: RRule.WEEKLY,
-              byweekday: adjustedDaysOfWeek,
-              dtstart: dtstart,
-              tzid: "UTC",
-              until: new Date(data.recurrence.endRecur),
-            });
-
-            rule.all().forEach((date) => {
-              const occurrenceStart = new Date(date);
-              const duration = end.getTime() - start.getTime();
-              const occurrenceEnd = new Date(
-                occurrenceStart.getTime() + duration
-              );
-
-              if (!data.exceptions?.includes(occurrenceStart.toISOString())) {
-                expandedEvents.push({
-                  id: doc.id,
-                  title: data.title,
-                  start: occurrenceStart,
-                  end: occurrenceEnd,
-                  description: data.description || "",
-                  display: data.display,
-                  className: data.className,
-                  isBackgroundEvent: data.isBackgroundEvent,
-                  startDate: occurrenceStart,
-                  startDay: occurrenceStart.toLocaleDateString("en-US", {
-                    weekday: "long",
-                  }),
-                  endDate: occurrenceEnd,
-                  endDay: occurrenceEnd.toLocaleDateString("en-US", {
-                    weekday: "long",
-                  }),
-                  recurrence: data.recurrence,
-                  exceptions: data.exceptions,
-                });
-              }
-            });
-          } else {
-            // Also include non-recurring background events
-            expandedEvents.push({
-              id: doc.id,
-              title: data.title,
-              start: start,
-              end: end,
-              description: data.description || "",
-              display: data.display,
-              className: data.className,
-              isBackgroundEvent: data.isBackgroundEvent,
-              startDate: start,
-              startDay: start.toLocaleDateString("en-US", {
-                weekday: "long",
-                timeZone: "UTC",
-              }),
-              endDate: end,
-              endDay: end.toLocaleDateString("en-US", {
-                weekday: "long",
-                timeZone: "UTC",
-              }),
-            });
-          }
-        });
-
-        setEvents(expandedEvents);
-      }
-    };
-
     fetchEvents();
   }, []);
 
-  // const handleSort = (key: SortableKeys) => {
-  //   let direction: "asc" | "desc" = "asc";
-  //   if (sortConfig.key === key && sortConfig.direction === "asc") {
-  //     direction = "desc";
-  //   }
-  //   setSortConfig({ key, direction });
-  //   setEvents((prevEvents) =>
-  //     [...prevEvents].sort((a, b) => {
-  //       if (a[key] < b[key]) return direction === "asc" ? -1 : 1;
-  //       if (a[key] > b[key]) return direction === "asc" ? 1 : -1;
-  //       return 0;
-  //     })
-  //   );
-  // };
+  const fetchUserTimezone = async () => {
+    if (auth.currentUser) {
+      const userRef = doc(db, "users", auth.currentUser.uid);
+      const userDoc = await getDoc(userRef);
+      const userData = userDoc.data();
+      setUserTimezone(userData?.timezone || "UTC");
+    }
+  };
+
+  const fetchEvents = async () => {
+    if (auth.currentUser) {
+      const eventsRef = collection(db, "users", auth.currentUser.uid, "events");
+      const q = query(eventsRef, where("isBackgroundEvent", "==", true));
+      const querySnapshot = await getDocs(q);
+      let eventsList: EventInput[] = [];
+
+      querySnapshot.docs.forEach((doc) => {
+        const data = doc.data();
+        const start =
+          data.start instanceof Timestamp
+            ? data.start.toDate()
+            : new Date(data.start);
+        const end =
+          data.end instanceof Timestamp
+            ? data.end.toDate()
+            : new Date(data.end);
+
+        if (data.recurrence) {
+          const dtstart = new Date(start);
+          eventsList.push({
+            id: doc.id,
+            title: data.title,
+            start: dtstart,
+            end: new Date(
+              dtstart.getTime() + (end.getTime() - start.getTime())
+            ), // Calculate end time based on duration
+            description: data.description || "",
+            isBackgroundEvent: data.isBackgroundEvent,
+            startDate: dtstart,
+            startDay: dtstart.toLocaleDateString("en-US", { weekday: "long" }),
+            endDate: new Date(
+              dtstart.getTime() + (end.getTime() - start.getTime())
+            ),
+            endDay: new Date(
+              dtstart.getTime() + (end.getTime() - start.getTime())
+            ).toLocaleDateString("en-US", { weekday: "long" }),
+            recurrence: data.recurrence,
+            exceptions: data.exceptions,
+          });
+        } else {
+          eventsList.push({
+            id: doc.id,
+            title: data.title,
+            start: start,
+            end: end,
+            description: data.description || "",
+            isBackgroundEvent: data.isBackgroundEvent,
+            startDate: start,
+            startDay: start.toLocaleDateString("en-US", { weekday: "long" }),
+            endDate: end,
+            endDay: end.toLocaleDateString("en-US", { weekday: "long" }),
+          });
+        }
+      });
+      setEvents(eventsList);
+    }
+  };
+
+  const handleCellClick = (
+    id: string,
+    field: string,
+    value: string,
+    isRecurring: boolean
+  ) => {
+    // Remove the condition that prevents non-recurring events from being edited
+    setEditingCell({ id, field });
+    setEditedValue(value);
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setEditedValue(e.target.value);
+  };
+
+  const handleBlur = async () => {
+    if (editingCell) {
+      const { id, field } = editingCell;
+      const docRef = doc(
+        db,
+        "users",
+        auth.currentUser?.uid ?? "",
+        "events",
+        id
+      );
+      let updates: any = {};
+
+      const getUserTimeZoneOffset = () => {
+        // Returns the time zone offset in hours (e.g., -7 for PDT)
+        return new Date().getTimezoneOffset() / 60;
+      };
+
+      if (field === "start" || field === "end") {
+        const [hours, minutes] = editedValue.split(":");
+        if (hours !== undefined && minutes !== undefined) {
+          const currentEvent = events.find((event) => event.id === id);
+          if (currentEvent) {
+            const updatedTime = new Date(
+              currentEvent[field === "start" ? "start" : "end"]
+            );
+            updatedTime.setHours(parseInt(hours, 10) - getUserTimeZoneOffset()); // Subtract time zone offset
+            updatedTime.setMinutes(parseInt(minutes, 10));
+            updatedTime.setSeconds(0);
+
+            // Calculate related fields
+            const updatedDay = updatedTime.toLocaleDateString("en-US", {
+              weekday: "long",
+              timeZone: "UTC",
+            });
+            const updatedDate = updatedTime;
+
+            if (field === "start") {
+              updates = {
+                start: updatedTime,
+                startDate: updatedDate,
+                startDay: updatedDay,
+              };
+            } else if (field === "end") {
+              updates = {
+                end: updatedTime,
+                endDate: updatedDate,
+                endDay: updatedDay,
+              };
+            }
+          }
+        } else {
+          console.error("Invalid time format for start or end time.");
+          return;
+        }
+      } else if (field === "startDate" || field === "endDate") {
+        const newDate = new Date(editedValue);
+        const utcDate = new Date(
+          Date.UTC(
+            newDate.getUTCFullYear(),
+            newDate.getUTCMonth(),
+            newDate.getUTCDate(),
+            newDate.getUTCHours(),
+            newDate.getUTCMinutes(),
+            newDate.getUTCSeconds()
+          )
+        );
+
+        const currentEvent = events.find((event) => event.id === id);
+        if (currentEvent) {
+          const updatedDateField = field === "startDate" ? "start" : "end";
+          const updatedTime = new Date(currentEvent[updatedDateField]);
+
+          updatedTime.setUTCFullYear(
+            utcDate.getUTCFullYear(),
+            utcDate.getUTCMonth(),
+            utcDate.getUTCDate()
+          );
+
+          const updatedDay = updatedTime.toLocaleDateString("en-US", {
+            weekday: "long",
+            timeZone: "UTC",
+          });
+
+          if (field === "startDate") {
+            updates = {
+              startDate: updatedTime,
+              startDay: updatedDay,
+              start: updatedTime,
+            };
+          } else if (field === "endDate") {
+            updates = {
+              endDate: updatedTime,
+              endDay: updatedDay,
+              end: updatedTime,
+            };
+          }
+        }
+      } else if (field === "title" || field === "description") {
+        updates = { [field]: editedValue };
+      }
+
+      // Save the updates to Firestore
+      await updateDoc(docRef, updates);
+
+      // Update local state
+      setEvents((prevEvents) =>
+        prevEvents.map((event) =>
+          event.id === id ? { ...event, ...updates } : event
+        )
+      );
+
+      setEditingCell(null);
+    }
+  };
+
+  const getUserTimeZoneOffset = () => {
+    // Get the user's timezone offset in minutes and convert to hours
+    const offsetMinutes = new Date().getTimezoneOffset();
+    return offsetMinutes / 60;
+  };
+
+  // Function to add hours to a given date object
+  const addHoursToDate = (date: Date, hours: number) => {
+    const newDate = new Date(date);
+    newDate.setHours(newDate.getHours() + hours);
+    return newDate;
+  };
+
+  const handleSaveEvent = async (eventData: {
+    title: string;
+    description: string;
+    location: string;
+    isBackgroundEvent: boolean;
+    date?: string;
+    startTime: string;
+    endTime: string;
+    recurrence?: {
+      daysOfWeek: number[];
+      startRecur: string; // YYYY-MM-DD
+      endRecur: string; // YYYY-MM-DD
+    };
+  }) => {
+    setLoading(true); // Start loading
+    try {
+      const user = auth.currentUser;
+      if (!user) {
+        throw new Error("User not authenticated");
+      }
+
+      const startDate =
+        eventData.date || new Date().toISOString().split("T")[0];
+
+      // Add 1 day to the endRecur date to ensure the last day is included
+      const endRecur = new Date(eventData.recurrence?.endRecur || startDate);
+      endRecur.setDate(endRecur.getDate() + 1);
+
+      const eventInput = {
+        title: eventData.title,
+        description: eventData.description,
+        location: eventData.location || "",
+        startDate,
+        startTime: eventData.startTime,
+        endTime: eventData.endTime,
+        recurrence: {
+          daysOfWeek: eventData.recurrence?.daysOfWeek || [],
+          startRecur: eventData.recurrence?.startRecur || startDate,
+          endRecur: endRecur.toISOString().split("T")[0], // Adjusted endRecur
+        },
+        userId: user.uid,
+      };
+
+      const result = await axios.post(
+        "https://us-central1-prune-94ad9.cloudfunctions.net/createRecurringAvailabilityInstances",
+        eventInput
+      );
+
+      console.log("Recurring event instances created:", result.data);
+      await fetchEvents();
+    } catch (error) {
+      console.error("Error saving event:", error);
+    } finally {
+      setLoading(false); // Stop loading
+    }
+  };
 
   const handleSort = (key: SortableKeys) => {
     let direction: "asc" | "desc" = "asc";
+
+    // Toggle direction if the same key is clicked
     if (sortConfig.key === key && sortConfig.direction === "asc") {
       direction = "desc";
     }
+
+    // Update sort config state
     setSortConfig({ key, direction });
+
+    // Perform sorting on events array
     setEvents((prevEvents) =>
       [...prevEvents].sort((a, b) => {
-        let aValue, bValue;
-        if (key === "startDate") {
-          aValue = new Date(a.startDate).getTime();
-          bValue = new Date(b.startDate).getTime();
+        let aValue: string | number;
+        let bValue: string | number;
+
+        // Convert dates to timestamps for comparison
+        if (key === "startDate" || key === "start" || key === "end") {
+          aValue = new Date(a[key]).getTime();
+          bValue = new Date(b[key]).getTime();
         } else {
-          aValue = a[key];
-          bValue = b[key];
+          aValue = a[key] as string;
+          bValue = b[key] as string;
         }
 
         if (aValue < bValue) return direction === "asc" ? -1 : 1;
@@ -251,30 +376,60 @@ export default function Availability() {
     );
   };
 
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearch(e.target.value);
-  };
-
-  const filteredEvents = events.filter(
-    (event) =>
-      event.title.toLowerCase().includes(search.toLowerCase()) ||
-      (event.description ?? "").toLowerCase().includes(search.toLowerCase())
-  );
-
-  // Pagination logic
-  const paginatedEvents = filteredEvents.slice(
-    pageIndex * pageSize,
-    (pageIndex + 1) * pageSize
-  );
-
-  const handlePreviousPage = () => {
-    setPageIndex((old) => Math.max(old - 1, 0));
-  };
-
-  const handleNextPage = () => {
-    setPageIndex((old) =>
-      Math.min(old + 1, Math.ceil(filteredEvents.length / pageSize) - 1)
+  const displayTimeWithOffset = (date: Date) => {
+    const userTimezoneOffsetInHours = new Date().getTimezoneOffset() / 60;
+    const adjustedDate = new Date(
+      date.getTime() + userTimezoneOffsetInHours * 60 * 60 * 1000
     );
+    return adjustedDate.toLocaleTimeString("en-US", {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true,
+    });
+  };
+
+  const handleEditClick = (event: EventInput) => {
+    setEditingEvent(event);
+    setIsDialogOpen(true);
+  };
+
+  const handleDeleteClick = async (eventId: string) => {
+    if (window.confirm("Are you sure you want to delete this event?")) {
+      try {
+        const batch = writeBatch(db); // Create a Firestore batch operation
+        const eventRef = doc(
+          db,
+          "users",
+          auth.currentUser?.uid ?? "",
+          "events",
+          eventId
+        );
+
+        batch.delete(eventRef); // Add delete operation to batch
+
+        // Commit the batch to execute the delete
+        await batch.commit();
+
+        // Update the local state to remove the deleted event
+        setEvents((prev) => prev.filter((event) => event.id !== eventId));
+
+        console.log("Event deleted successfully");
+      } catch (error) {
+        console.error("Error deleting event:", error);
+      }
+    }
+  };
+
+  const handleSelectAllChange = (checked: boolean) => {
+    if (checked) {
+      const newSelectedRows = new Set<string>();
+      filteredEvents.forEach((event) => {
+        if (event.id) newSelectedRows.add(event.id);
+      });
+      setSelectedRows(newSelectedRows);
+    } else {
+      setSelectedRows(new Set());
+    }
   };
 
   const toggleRowSelection = (id: string) => {
@@ -302,7 +457,6 @@ export default function Availability() {
         );
         batch.delete(docRef);
       });
-
       await batch.commit();
       setEvents(
         events.filter((event) => event.id && !selectedRows.has(event.id))
@@ -311,852 +465,238 @@ export default function Availability() {
     }
   };
 
-  const deleteOccurrence = async (eventId: string, occurrenceDate: Date) => {
-    const eventRef = doc(
-      db,
-      "users",
-      auth.currentUser?.uid ?? "",
-      "events",
-      eventId
-    );
+  const filteredEvents = events.filter(
+    (event) =>
+      event.title.toLowerCase().includes(search.toLowerCase()) ||
+      (event.description ?? "").toLowerCase().includes(search.toLowerCase())
+  );
 
-    const occurrenceISO = occurrenceDate.toISOString();
-
-    await updateDoc(eventRef, {
-      exceptions: arrayUnion(occurrenceISO),
-    });
-
-    setEvents((prevEvents) =>
-      prevEvents.filter(
-        (event) =>
-          !(
-            event.id === eventId &&
-            event.start.getTime() === occurrenceDate.getTime()
-          )
-      )
-    );
-  };
-
-  const handleDeleteClick = (eventId: string, occurrenceStart: Date) => {
-    if (window.confirm("Are you sure you want to delete this occurrence?")) {
-      deleteOccurrence(eventId, occurrenceStart);
-    }
-  };
-
-  const handleSelectAllChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const allSelected = e.target.checked;
-    if (allSelected) {
-      const newSelectedRows = new Set<string>();
-      filteredEvents.forEach((event) => {
-        if (event.id) newSelectedRows.add(event.id);
-      });
-      setSelectedRows(newSelectedRows);
-    } else {
-      setSelectedRows(new Set());
-    }
-  };
-
-  const handleCheckboxChange = (id: string | undefined) => {
-    if (id) {
-      toggleRowSelection(id);
-    }
-  };
-
-  const handleCellClick = (
-    id: string,
-    field: string,
-    value: string,
-    isRecurring: boolean
-  ) => {
-    if (!isRecurring) {
-      setEditingCell({ id, field });
-      setEditedValue(value);
-    }
-  };
-
-  const displayTimeInUserTimezone = (date: Date, timezone: string) => {
-    return date.toLocaleTimeString("en-US", {
-      hour: "2-digit",
-      minute: "2-digit",
-      hour12: true,
-      timeZone: timezone, // Use the fetched user timezone
-    });
-  };
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setEditedValue(e.target.value);
-  };
-
-  const handleBlur = async () => {
-    if (editingCell) {
-      const { id, field } = editingCell;
-      const docRef = doc(
-        db,
-        "users",
-        auth.currentUser?.uid ?? "",
-        "events",
-        id
-      );
-
-      let updates: any = {};
-
-      if (field === "start") {
-        const [hours, minutes] = editedValue.split(":");
-
-        if (hours !== undefined && minutes !== undefined) {
-          const currentEvent = events.find((event) => event.id === id);
-          if (currentEvent) {
-            const updatedStart = new Date(currentEvent.start);
-
-            // Apply the changes to the start time
-            updatedStart.setHours(
-              parseInt(hours, 10) - getUserTimeZoneOffset()
-            );
-            updatedStart.setMinutes(parseInt(minutes, 10));
-            updatedStart.setSeconds(0);
-
-            // Calculate related fields (startDate and startDay)
-            const updatedStartDay = updatedStart.toLocaleDateString("en-US", {
-              weekday: "long",
-              timeZone: "UTC",
-            });
-
-            const updatedStartDate = updatedStart;
-
-            updates = {
-              start: updatedStart,
-              startDate: updatedStartDate,
-              startDay: updatedStartDay,
-            };
-          }
-        } else {
-          console.error("Invalid time format for start time.");
-          return;
-        }
-      } else if (field === "end") {
-        const [hours, minutes] = editedValue.split(":");
-
-        if (hours !== undefined && minutes !== undefined) {
-          const currentEvent = events.find((event) => event.id === id);
-          if (currentEvent) {
-            const updatedEnd = new Date(currentEvent.end);
-
-            updatedEnd.setHours(parseInt(hours, 10) - getUserTimeZoneOffset());
-            updatedEnd.setMinutes(parseInt(minutes, 10));
-            updatedEnd.setSeconds(0);
-
-            const updatedEndDay = updatedEnd.toLocaleDateString("en-US", {
-              weekday: "long",
-              timeZone: "UTC",
-            });
-
-            const updatedEndDate = updatedEnd;
-
-            updates = {
-              end: updatedEnd,
-              endDate: updatedEndDate,
-              endDay: updatedEndDay,
-            };
-          }
-        } else {
-          console.error("Invalid time format for end time.");
-          return;
-        }
-      } else if (field === "startDate") {
-        const newDate = new Date(editedValue);
-
-        const utcDate = new Date(
-          Date.UTC(
-            newDate.getUTCFullYear(),
-            newDate.getUTCMonth(),
-            newDate.getUTCDate(),
-            newDate.getUTCHours(),
-            newDate.getUTCMinutes(),
-            newDate.getUTCSeconds()
-          )
-        );
-
-        const currentEvent = events.find((event) => event.id === id);
-        if (currentEvent) {
-          const updatedStart = new Date(currentEvent.start);
-          updatedStart.setUTCFullYear(
-            utcDate.getUTCFullYear(),
-            utcDate.getUTCMonth(),
-            utcDate.getUTCDate()
-          );
-
-          const updatedStartDay = updatedStart.toLocaleDateString("en-US", {
-            weekday: "long",
-            timeZone: "UTC",
-          });
-
-          updates = {
-            startDate: updatedStart,
-            startDay: updatedStartDay,
-            start: updatedStart,
-          };
-        }
-      } else if (field === "endDate") {
-        const newDate = new Date(editedValue);
-        const utcDate = new Date(
-          Date.UTC(
-            newDate.getUTCFullYear(),
-            newDate.getUTCMonth(),
-            newDate.getUTCDate(),
-            newDate.getUTCHours(),
-            newDate.getUTCMinutes(),
-            newDate.getUTCSeconds()
-          )
-        );
-
-        const currentEvent = events.find((event) => event.id === id);
-        if (currentEvent) {
-          const updatedEnd = new Date(currentEvent.end);
-          updatedEnd.setUTCFullYear(
-            utcDate.getUTCFullYear(),
-            utcDate.getUTCMonth(),
-            utcDate.getUTCDate()
-          );
-
-          const updatedEndDay = updatedEnd.toLocaleDateString("en-US", {
-            weekday: "long",
-            timeZone: "UTC",
-          });
-
-          updates = {
-            endDate: updatedEnd,
-            endDay: updatedEndDay,
-            end: updatedEnd,
-          };
-        }
-      } else {
-        updates[field] = editedValue;
-      }
-
-      await updateDoc(docRef, updates);
-
-      setEvents((prevEvents) =>
-        prevEvents.map((event) =>
-          event.id === id ? { ...event, ...updates } : event
-        )
-      );
-
-      setEditingCell(null);
-    }
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter") {
-      handleBlur();
-    }
-  };
-
-  const handleSaveEvent = async ({
-    title,
-    description,
-    location,
-    isBackgroundEvent,
-    date,
-    startTime,
-    endTime,
-    recurrence,
-  }: {
-    title: string;
-    description: string;
-    location: string;
-    isBackgroundEvent: boolean;
-    date?: string;
-    startTime: string;
-    endTime: string;
-    recurrence?: {
-      daysOfWeek: number[];
-      startTime: string;
-      endTime: string;
-      startRecur: string;
-      endRecur: string;
-    };
-  }) => {
+  // Function to clone the event
+  const handleCloneClick = async (event: EventInput) => {
     try {
-      console.log("handleSaveEvent triggered");
-      console.log("Data passed in:", {
-        title,
-        description,
-        location,
-        isBackgroundEvent,
-        date,
-        startTime,
-        endTime,
-        recurrence,
-        editingEvent,
-      });
-
-      const selectedDate = date ? new Date(date) : new Date();
-
-      // Set start time based on the user's timezone
-      const [startHours, startMinutes] = startTime.split(":");
-      const startDateTime = new Date(selectedDate);
-      startDateTime.setDate(startDateTime.getDate() + 1); // Add one day to correct the date shift
-      startDateTime.setHours(
-        parseInt(startHours, 10) - getUserTimeZoneOffset()
-      );
-      startDateTime.setMinutes(parseInt(startMinutes, 10));
-      startDateTime.setSeconds(0);
-
-      // Set end time based on the user's timezone
-      const [endHours, endMinutes] = endTime.split(":");
-      const endDateTime = new Date(selectedDate);
-      endDateTime.setDate(endDateTime.getDate() + 1); // Add one day to correct the date shift
-      endDateTime.setHours(parseInt(endHours, 10) - getUserTimeZoneOffset());
-      endDateTime.setMinutes(parseInt(endMinutes, 10));
-      endDateTime.setSeconds(0);
-
-      console.log("Adjusted Start DateTime:", startDateTime);
-      console.log("Adjusted End DateTime:", endDateTime);
-
-      // Handle the case where end time is before start time
-      if (endDateTime <= startDateTime) {
-        endDateTime.setUTCDate(endDateTime.getUTCDate() + 1);
-        console.log("Adjusted End DateTime to next day:", endDateTime);
-      }
-
-      // Prepare the event object
-      const event: EventInput = {
-        title,
-        location: location || "",
-        start: startDateTime,
-        end: endDateTime,
-        description,
-        display: isBackgroundEvent ? "background" : "auto",
-        className: isBackgroundEvent ? "custom-bg-event" : "",
-        isBackgroundEvent,
-        startDate: startDateTime,
-        startDay: startDateTime.toLocaleDateString("en-US", {
-          weekday: "long",
-          timeZone: "UTC",
-        }),
-        endDate: endDateTime,
-        endDay: endDateTime.toLocaleDateString("en-US", {
-          weekday: "long",
-          timeZone: "UTC",
-        }),
-      };
-
-      if (recurrence) {
-        // Remove automatic date prefill; let the user manually fill the startRecur date
-        const dtstart = new Date(
-          `${recurrence.startRecur}T${recurrence.startTime}:00`
-        );
-
-        console.log("RRule dtstart:", dtstart);
-
-        if (isNaN(dtstart.getTime())) {
-          throw new Error("Invalid dtstart date");
-        }
-
-        event.recurrence = {
-          ...recurrence,
-          rrule: new RRule({
-            freq: RRule.WEEKLY,
-            byweekday: recurrence.daysOfWeek.map((day) => {
-              switch (day) {
-                case 0:
-                  return RRule.SU;
-                case 1:
-                  return RRule.MO;
-                case 2:
-                  return RRule.TU;
-                case 3:
-                  return RRule.WE;
-                case 4:
-                  return RRule.TH;
-                case 5:
-                  return RRule.FR;
-                case 6:
-                  return RRule.SA;
-                default:
-                  throw new Error("Invalid day of week");
-              }
-            }),
-            dtstart,
-            until: new Date(`${recurrence.endRecur}T${recurrence.endTime}:00`),
-          }).toString(),
-        };
-      }
-
-      console.log("Prepared Event Object:", event);
-
       const user = auth.currentUser;
-      if (user) {
-        if (editingEvent) {
-          // If editing an existing event, delete the original occurrence if necessary
-          if (!editAll) {
-            await deleteOccurrence(editingEvent.id!, editingEvent.start);
-            console.log(
-              `Deleted original occurrence of event with ID: ${editingEvent.id}`
-            );
-          }
-        }
-
-        // Save the event (create new or replace the old one)
-        const docRef = await createEvent(user.uid, event);
-        console.log(`Event saved with ID: ${docRef.id}`);
-
-        setEvents((prevEvents) => {
-          const updatedEvents = editingEvent
-            ? prevEvents.map((evt) =>
-                evt.id === editingEvent.id ? { ...event, id: docRef.id } : evt
-              )
-            : [...prevEvents, { ...event, id: docRef.id }];
-
-          console.log("Updated Events State:", updatedEvents);
-          return updatedEvents;
-        });
-
-        setEditingEvent(null);
-        setIsDialogOpen(false);
-      } else {
-        console.error("User not authenticated");
+      if (!user) {
+        throw new Error("User not authenticated");
       }
-    } catch (error) {
-      console.error(
-        "Error saving event in Firestore:",
-        (error as Error).message
-      );
-      console.error("Error stack trace:", (error as Error).stack);
-    }
-  };
 
-  const getUserTimeZoneOffset = () => {
-    const offsetMinutes = new Date().getTimezoneOffset();
-    return offsetMinutes / 60;
-  };
-
-  const addHoursToDate = (date: Date, hours: number) => {
-    const newDate = new Date(date);
-    newDate.setHours(newDate.getHours() + hours);
-    return newDate;
-  };
-
-  const totalEvents = filteredEvents.length;
-  const startItemIndex = pageIndex * pageSize + 1;
-  const endItemIndex = Math.min(startItemIndex + pageSize - 1, totalEvents);
-
-  const handleEditClick = (event: EventInput) => {
-    console.log("handle edit click called");
-    try {
-      const newEvent = {
+      // Create a clone of the event with a new ID
+      const clonedEvent = {
         ...event,
-        recurrence: undefined, // Remove the recurrence to make it a single event
-        exceptions: [], // Clear exceptions since it's a new event
+        title: `${event.title} (Clone)`, // Optional: Append "Clone" to the title
+        id: undefined, // Reset the ID to allow Firestore to generate a new one
+        created_at: new Date(), // Update creation timestamp
       };
 
-      setEditingEvent(newEvent);
-      setEditAll(false); // Make sure editAll is false when editing only one occurrence
-      setIsDialogOpen(true);
+      // Save the cloned event to Firestore
+      const eventRef = doc(collection(db, "users", user.uid, "events"));
+      await setDoc(eventRef, clonedEvent);
+
+      // Update local state
+      setEvents((prevEvents) => [
+        ...prevEvents,
+        { ...clonedEvent, id: eventRef.id },
+      ]);
+
+      console.log("Event cloned successfully");
     } catch (error) {
-      console.error("Error preparing the event for editing:", error);
-      alert("An error occurred. Please try again.");
+      console.error("Error cloning event:", error);
     }
   };
-
-  const handleEditAllClick = (event: EventInput) => {
-    // Temporarily disable the Edit All functionality
-    console.log("Edit All is currently disabled until further notice.");
-    // setEditingEvent(event);
-    // setEditAll(true); // Indicate that we are editing the entire series
-    // setIsDialogOpen(true);
-  };
-
-  // const handleSaveEditedEvent = async ({
-  //   title,
-  //   description,
-  //   location,
-  //   isBackgroundEvent,
-  //   date,
-  //   startTime,
-  //   endTime,
-  // }: {
-  //   title: string;
-  //   description: string;
-  //   location: string;
-  //   isBackgroundEvent: boolean;
-  //   date?: string;
-  //   startTime: string;
-  //   endTime: string;
-  // }) => {
-  //   try {
-  //     if (editingEvent) {
-  //       const formattedDate =
-  //         date || editingEvent.startDate.toISOString().split("T")[0];
-  //       const formattedStartTime =
-  //         startTime || editingEvent.start.toTimeString().split(" ")[0];
-  //       const formattedEndTime =
-  //         endTime || editingEvent.end.toTimeString().split(" ")[0];
-
-  //       // Convert start and end time to UTC
-  //       let startDateTime = moment
-  //         .tz(
-  //           `${formattedDate} ${formattedStartTime}`,
-  //           "YYYY-MM-DD HH:mm",
-  //           userTimezone
-  //         )
-  //         .utc()
-  //         .toDate();
-
-  //       let endDateTime = moment
-  //         .tz(
-  //           `${formattedDate} ${formattedEndTime}`,
-  //           "YYYY-MM-DD HH:mm",
-  //           userTimezone
-  //         )
-  //         .utc()
-  //         .toDate();
-
-  //       // Handle the case where end time is before start time
-  //       if (endDateTime <= startDateTime) {
-  //         endDateTime.setUTCDate(endDateTime.getUTCDate() + 1);
-  //       }
-
-  //       // Delete the original occurrence now, before saving the new event
-  //       if (editingEvent.id && !editAll) {
-  //         await deleteOccurrence(editingEvent.id, editingEvent.start);
-  //       }
-
-  //       // Save the edited event as a new single background event
-  //       await handleSave({
-  //         title,
-  //         description,
-  //         location,
-  //         isBackgroundEvent,
-  //         date: formattedDate,
-  //         startTime: formattedStartTime,
-  //         endTime: formattedEndTime,
-  //       });
-
-  //       setEditingEvent(null);
-  //       setIsDialogOpen(false);
-  //     }
-  //   } catch (error) {
-  //     console.error("Error saving edited event:", error);
-  //     alert(
-  //       "An error occurred while saving the event. Please check the console for details."
-  //     );
-  //   }
-  // };
 
   return (
     <div className="w-full relative">
       <h1 className="text-xl font-bold mb-4">My Available Times</h1>
-      <Button onClick={deleteSelectedEvents} disabled={selectedRows.size === 0}>
-        Delete Selected
-      </Button>
+      {/* Add loading spinner here */}
+      {loading && <div className="spinner">Loading...</div>}
+      <hr></hr>
       <Input
         value={search}
-        onChange={handleSearchChange}
+        onChange={(e) => setSearch(e.target.value)}
         placeholder="Search by title or description"
         className="mb-4"
       />
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>
-              <Checkbox
-                checked={selectedRows.size === paginatedEvents.length}
-                onCheckedChange={(checked) => {
-                  if (checked) {
-                    const newSelectedRows = new Set<string>();
-                    paginatedEvents.forEach((event) => {
-                      if (event.id) newSelectedRows.add(event.id);
-                    });
-                    setSelectedRows(newSelectedRows);
-                  } else {
-                    setSelectedRows(new Set());
-                  }
-                }}
-              />
-            </TableHead>
-            <TableHead>
-              <div className="flex items-center">
-                Date
-                <button onClick={() => handleSort("startDate")}>
-                  {sortConfig.key === "startDate" &&
-                  sortConfig.direction === "asc" ? (
-                    <CaretSortIcon className="rotate-180" />
-                  ) : (
-                    <CaretSortIcon />
-                  )}
-                </button>
-              </div>
-            </TableHead>
 
-            <TableHead>Day</TableHead>
-            <TableHead>
-              <div className="flex items-center">
-                Start Time
-                <button onClick={() => handleSort("start")}>
-                  <CaretSortIcon />
-                </button>
-              </div>
-            </TableHead>
-            <TableHead>
-              <div className="flex items-center">
-                End Time
-                <button onClick={() => handleSort("end")}>
-                  <CaretSortIcon />
-                </button>
-              </div>
-            </TableHead>
-            <TableHead>
-              <div className="flex items-center">
-                Title
-                <button onClick={() => handleSort("title")}>
-                  <CaretSortIcon />
-                </button>
-              </div>
-            </TableHead>
-            <TableHead>Notes</TableHead>
-            <TableHead>Actions</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {paginatedEvents.map((event) => (
-            <TableRow
-              key={event.id || ""}
-              className={event.recurrence ? "bg-gray-200 bg-opacity-50" : ""}
-            >
-              <TableCell>
+      <div className="overflow-y-auto max-h-[400px]">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>
                 <Checkbox
-                  checked={selectedRows.has(event.id || "")}
-                  onCheckedChange={() => handleCheckboxChange(event.id)}
+                  checked={selectedRows.size === filteredEvents.length}
+                  onCheckedChange={(checked) =>
+                    handleSelectAllChange(!!checked)
+                  }
                 />
-              </TableCell>
-              <TableCell>
-                {editingCell?.id === event.id &&
-                editingCell?.field === "startDate" ? (
-                  <input
-                    type="date"
-                    value={new Date(editedValue).toISOString().split("T")[0]}
-                    onChange={handleInputChange}
-                    onBlur={handleBlur}
-                    onKeyDown={handleKeyDown}
-                    autoFocus
-                  />
-                ) : (
-                  <div
-                    onClick={() =>
-                      handleCellClick(
-                        event.id ?? "",
-                        "startDate",
-                        event.startDate instanceof Date &&
-                          !isNaN(event.startDate.getTime())
-                          ? event.startDate.toLocaleDateString("en-US", {
-                              year: "numeric",
-                              month: "2-digit",
-                              day: "2-digit",
-                            })
-                          : "Invalid Date",
-                        !!event.recurrence
-                      )
-                    }
-                  >
-                    {event.startDate instanceof Date &&
-                    !isNaN(event.startDate.getTime())
-                      ? event.startDate.toLocaleDateString("en-US", {
-                          year: "numeric",
-                          month: "2-digit",
-                          day: "2-digit",
-                        })
-                      : "Invalid Date"}
-                  </div>
-                )}
-              </TableCell>
-              <TableCell>
-                {editingCell?.id === event.id &&
-                editingCell?.field === "startDay" ? (
-                  <input
-                    value={editedValue}
-                    onChange={handleInputChange}
-                    onBlur={handleBlur}
-                    onKeyDown={handleKeyDown}
-                    autoFocus
-                  />
-                ) : (
-                  <div
-                    onClick={() =>
-                      handleCellClick(
-                        event.id ?? "",
-                        "startDay",
-                        event.startDay,
-                        !!event.recurrence
-                      )
-                    }
-                  >
-                    {event.startDay}
-                  </div>
-                )}
-              </TableCell>
-              <TableCell>
-                {editingCell?.id === event.id &&
-                editingCell?.field === "start" ? (
-                  <input
-                    type="time"
-                    value={editedValue}
-                    step="900"
-                    onChange={handleInputChange}
-                    onBlur={handleBlur}
-                    onKeyDown={handleKeyDown}
-                    autoFocus
-                  />
-                ) : (
-                  <div
-                    onClick={() => {
-                      if (
-                        event.start instanceof Date &&
-                        !isNaN(event.start.getTime())
-                      ) {
-                        const timezoneOffset = getUserTimeZoneOffset();
-                        const localStart = addHoursToDate(
-                          event.start,
-                          timezoneOffset
-                        );
-                        handleCellClick(
-                          event.id ?? "",
-                          "start",
-                          localStart.toLocaleTimeString("en-US", {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                            hour12: true,
-                          }),
-                          !!event.recurrence
-                        );
-                      } else {
-                        console.error("Invalid Date for start:", event.start);
-                      }
-                    }}
-                  >
-                    {event.start instanceof Date &&
-                    !isNaN(event.start.getTime())
-                      ? addHoursToDate(
-                          event.start,
-                          getUserTimeZoneOffset()
-                        ).toLocaleTimeString("en-US", {
-                          hour: "2-digit",
-                          minute: "2-digit",
-                          hour12: true,
-                        })
-                      : "Invalid Date"}
-                  </div>
-                )}
-              </TableCell>
+              </TableHead>
 
-              <TableCell>
-                {editingCell?.id === event.id &&
-                editingCell?.field === "end" ? (
-                  <input
-                    type="time"
-                    value={editedValue}
-                    step="900"
-                    onChange={handleInputChange}
-                    onBlur={handleBlur}
-                    onKeyDown={handleKeyDown}
-                    autoFocus
+              <TableHead>
+                <div className="flex items-center">
+                  Date
+                  <button onClick={() => handleSort("startDate")}>
+                    {sortConfig.key === "startDate" &&
+                    sortConfig.direction === "asc" ? (
+                      <CaretSortIcon className="rotate-180" />
+                    ) : (
+                      <CaretSortIcon />
+                    )}
+                  </button>
+                </div>
+              </TableHead>
+
+              <TableHead>Day</TableHead>
+
+              <TableHead>
+                <div className="flex items-center">
+                  Start Time
+                  <button onClick={() => handleSort("start")}>
+                    {sortConfig.key === "start" &&
+                    sortConfig.direction === "asc" ? (
+                      <CaretSortIcon className="rotate-180" />
+                    ) : (
+                      <CaretSortIcon />
+                    )}
+                  </button>
+                </div>
+              </TableHead>
+
+              <TableHead>
+                <div className="flex items-center">
+                  End Time
+                  <button onClick={() => handleSort("end")}>
+                    {sortConfig.key === "end" &&
+                    sortConfig.direction === "asc" ? (
+                      <CaretSortIcon className="rotate-180" />
+                    ) : (
+                      <CaretSortIcon />
+                    )}
+                  </button>
+                </div>
+              </TableHead>
+
+              <TableHead>Title</TableHead>
+              <TableHead>Notes</TableHead>
+              <TableHead>Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+
+          <TableBody>
+            {filteredEvents.map((event) => (
+              <TableRow key={event.id || ""}>
+                <TableCell>
+                  <Checkbox
+                    checked={selectedRows.has(event.id || "")}
+                    onCheckedChange={() => toggleRowSelection(event.id!)}
                   />
-                ) : (
-                  <div
-                    onClick={() => {
-                      if (
-                        event.end instanceof Date &&
-                        !isNaN(event.end.getTime())
-                      ) {
-                        const timezoneOffset = getUserTimeZoneOffset();
-                        const localEnd = addHoursToDate(
-                          event.end,
-                          timezoneOffset
-                        );
+                </TableCell>
+
+                <TableCell>{event.startDate.toLocaleDateString()}</TableCell>
+                <TableCell>{event.startDay}</TableCell>
+
+                <TableCell>
+                  {editingCell?.id === event.id &&
+                  editingCell?.field === "start" ? (
+                    <input
+                      type="time"
+                      value={editedValue}
+                      onChange={handleInputChange}
+                      onBlur={handleBlur}
+                      step="900"
+                      autoFocus
+                    />
+                  ) : (
+                    <div
+                      onClick={() =>
                         handleCellClick(
-                          event.id ?? "",
-                          "end",
-                          localEnd.toLocaleTimeString("en-US", {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                            hour12: true,
-                          }),
+                          event.id!,
+                          "start",
+                          displayTimeWithOffset(event.start),
                           !!event.recurrence
-                        );
-                      } else {
-                        console.error("Invalid Date for end:", event.end);
+                        )
                       }
-                    }}
-                  >
-                    {event.end instanceof Date && !isNaN(event.end.getTime())
-                      ? addHoursToDate(
-                          event.end,
-                          getUserTimeZoneOffset()
-                        ).toLocaleTimeString("en-US", {
-                          hour: "2-digit",
-                          minute: "2-digit",
-                          hour12: true,
-                        })
-                      : "Invalid Date"}
-                  </div>
-                )}
-              </TableCell>
-              <TableCell>
-                {editingCell?.id === event.id &&
-                editingCell?.field === "title" ? (
-                  <input
-                    value={editedValue}
-                    onChange={handleInputChange}
-                    onBlur={handleBlur}
-                    onKeyDown={handleKeyDown}
-                    autoFocus
-                  />
-                ) : (
-                  <div
-                    onClick={() =>
-                      handleCellClick(
-                        event.id ?? "",
-                        "title",
-                        event.title ?? "",
-                        !!event.recurrence
-                      )
-                    }
-                  >
-                    {event.title || (
-                      <span className="text-gray-500">Enter title</span>
-                    )}
-                  </div>
-                )}
-              </TableCell>
-              <TableCell>
-                {editingCell?.id === event.id &&
-                editingCell?.field === "description" ? (
-                  <input
-                    value={editedValue}
-                    onChange={handleInputChange}
-                    onBlur={handleBlur}
-                    onKeyDown={handleKeyDown}
-                    autoFocus
-                  />
-                ) : (
-                  <div
-                    onClick={() =>
-                      handleCellClick(
-                        event.id ?? "",
-                        "description",
-                        event.description ?? "",
-                        !!event.recurrence
-                      )
-                    }
-                  >
-                    {event.description || (
-                      <span className="text-gray-500">Enter description</span>
-                    )}
-                  </div>
-                )}
-              </TableCell>
-              <TableCell>
-                {event.recurrence ? (
+                    >
+                      {displayTimeWithOffset(event.start)}
+                    </div>
+                  )}
+                </TableCell>
+
+                <TableCell>
+                  {editingCell?.id === event.id &&
+                  editingCell?.field === "end" ? (
+                    <input
+                      type="time"
+                      value={editedValue}
+                      onChange={handleInputChange}
+                      onBlur={handleBlur}
+                      step="900"
+                      autoFocus
+                    />
+                  ) : (
+                    <div
+                      onClick={() =>
+                        handleCellClick(
+                          event.id!,
+                          "end",
+                          displayTimeWithOffset(event.end),
+                          !!event.recurrence
+                        )
+                      }
+                    >
+                      {displayTimeWithOffset(event.end)}
+                    </div>
+                  )}
+                </TableCell>
+
+                <TableCell>
+                  {editingCell?.id === event.id &&
+                  editingCell?.field === "title" ? (
+                    <input
+                      value={editedValue}
+                      onChange={handleInputChange}
+                      onBlur={handleBlur}
+                      autoFocus
+                    />
+                  ) : (
+                    <div
+                      onClick={() =>
+                        handleCellClick(
+                          event.id!,
+                          "title",
+                          event.title || "",
+                          !!event.recurrence
+                        )
+                      }
+                    >
+                      {event.title || "Untitled"}
+                    </div>
+                  )}
+                </TableCell>
+
+                <TableCell>
+                  {editingCell?.id === event.id &&
+                  editingCell?.field === "description" ? (
+                    <input
+                      value={editedValue}
+                      onChange={handleInputChange}
+                      onBlur={handleBlur}
+                      autoFocus
+                    />
+                  ) : (
+                    <div
+                      onClick={() =>
+                        handleCellClick(
+                          event.id!,
+                          "description",
+                          event.description || "",
+                          !!event.recurrence
+                        )
+                      }
+                    >
+                      {event.description || "No description"}
+                    </div>
+                  )}
+                </TableCell>
+
+                <TableCell>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button variant="ghost">
@@ -1164,60 +704,33 @@ export default function Availability() {
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent>
-                      <DropdownMenuItem onClick={() => handleEditClick(event)}>
-                        Edit Occurrence
-                      </DropdownMenuItem>
+                      {/* Clone option
+                      <DropdownMenuItem onClick={() => handleCloneClick(event)}>
+                        Clone
+                      </DropdownMenuItem> */}
+                      {/*  Delete Option */}
                       <DropdownMenuItem
-                        onClick={() => handleEditAllClick(event)}
+                        onClick={() => handleDeleteClick(event.id!)}
                       >
-                        Edit All
-                      </DropdownMenuItem>
-                      <DropdownMenuItem asChild>
-                        <Button
-                          variant="destructive"
-                          onClick={() =>
-                            handleDeleteClick(event.id!, event.start)
-                          }
-                        >
-                          Delete Occurrence
-                        </Button>
+                        Delete
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
-                ) : (
-                  <Button
-                    variant="destructive"
-                    onClick={() => handleDeleteClick(event.id!, event.start)}
-                  >
-                    Delete
-                  </Button>
-                )}
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
 
       <div className="flex justify-between mt-4">
-        <span>{`${selectedRows.size} of ${filteredEvents.length} row(s) selected`}</span>
-
-        <div className="flex items-center  -ml-24">
-          <span className="mx-2">
-            Showing {startItemIndex}-{endItemIndex} of {totalEvents}
-          </span>
-          <Button onClick={handlePreviousPage} disabled={pageIndex === 0}>
-            Previous
-          </Button>
-
-          <Button
-            onClick={handleNextPage}
-            disabled={
-              pageIndex === Math.ceil(filteredEvents.length / pageSize) - 1
-            }
-          >
-            Next
-          </Button>
-        </div>
+        <span>{`${selectedRows.size} of ${events.length} row(s) selected`}</span>
+        <Button
+          onClick={deleteSelectedEvents}
+          disabled={selectedRows.size === 0}
+        >
+          Delete Selected
+        </Button>
       </div>
 
       <div className="fixed bottom-[calc(4rem+30px)] right-4">

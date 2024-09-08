@@ -44,18 +44,18 @@ const useFetchEvents = () => {
         timeZone: "UTC",
       });
 
-      // Handle recurrence data only if it exists
-      const recurrence = data.recurrence
-        ? {
-            daysOfWeek: data.recurrence.daysOfWeek || [],
-            startTime: data.recurrence.startTime || "",
-            endTime: data.recurrence.endTime || "",
-            startRecur: data.recurrence.startRecur || "",
-            endRecur: data.recurrence.endRecur || "",
-            exdate: data.exceptions || [], // Convert exceptions to exdate
-            rrule: data.recurrence.rrule || null,
-          }
-        : undefined;
+      // Handle recurrence data only if it exists (RRULE commented out)
+      // const recurrence = data.recurrence
+      //   ? {
+      //       daysOfWeek: data.recurrence.daysOfWeek || [],
+      //       startTime: data.recurrence.startTime || "",
+      //       endTime: data.recurrence.endTime || "",
+      //       startRecur: data.recurrence.startRecur || "",
+      //       endRecur: data.recurrence.endRecur || "",
+      //       exdate: data.exceptions || [], // Convert exceptions to exdate
+      //       rrule: data.recurrence.rrule || null,
+      //     }
+      //   : undefined;
 
       const event: EventInput = {
         id: doc.id,
@@ -71,7 +71,7 @@ const useFetchEvents = () => {
         display: data.isBackgroundEvent ? "background" : "auto", // Display as background if specified
         isBackgroundEvent: !!data.isBackgroundEvent, // Ensure this is a boolean
         className: data.isBackgroundEvent ? "fc-bg-event" : "", // Additional class based on condition
-        recurrence: recurrence, // Include the recurrence data if available
+        recurrence: undefined, // Use undefined instead of null to match the expected type
         exdate: data.exceptions || [], // Convert exceptions to exdate
       };
 

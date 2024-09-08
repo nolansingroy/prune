@@ -46,52 +46,6 @@ export default function Calendar() {
     };
   }, []);
 
-  // useEffect(() => {
-  //   console.log("Component mounted, fetching events...");
-  //   fetchEvents(); // Fetch events when the component mounts (on load or refresh)
-  // }, [fetchEvents]);
-
-  // useEffect(() => {
-  //   const handleLoad = () => {
-  //     fetchEvents(); // Fetch events after the page has loaded
-  //   };
-
-  //   // Add event listener for load event
-  //   window.addEventListener("load", handleLoad);
-
-  //   // Clean up event listener on unmount
-  //   return () => {
-  //     window.removeEventListener("load", handleLoad);
-  //   };
-  // }, []);
-
-  // useEffect(() => {
-  //   const fetchOnMount = async () => {
-  //     console.log("Fetching events on mount...");
-  //     await fetchEvents();
-  //   };
-
-  //   fetchOnMount();
-  // }, [fetchEvents]);
-
-  // useEffect(() => {
-  //   if (sessionStorage.getItem("isRefreshed")) {
-  //     fetchEvents(); // Fetch events if the page was refreshed
-  //   } else {
-  //     sessionStorage.setItem("isRefreshed", "true");
-  //   }
-  // }, []);
-
-  // useEffect(() => {
-  //   const [navigationEntry] = performance.getEntriesByType(
-  //     "navigation"
-  //   ) as PerformanceNavigationTiming[];
-
-  //   if (navigationEntry?.type === "reload") {
-  //     fetchEvents(); // Fetch events if the page was refreshed
-  //   }
-  // }, [fetchEvents]);
-
   const handleTabChange = (value: string) => {
     if (value === "calendar") {
       fetchEvents(); // Force fetch events when the calendar tab is clicked
