@@ -213,6 +213,7 @@ export default function Calendar() {
     }, {} as any);
   };
 
+  //HandleSave with UTC offset
   // const handleSave = async ({
   //   title,
   //   description,
@@ -305,6 +306,7 @@ export default function Calendar() {
   //   handleDialogClose();
   // };
 
+  // handleSave with cloudfunction only
   const handleSave = async ({
     title,
     description,
