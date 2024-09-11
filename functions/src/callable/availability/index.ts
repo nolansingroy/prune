@@ -47,10 +47,11 @@ export const createRecurringAvailabilityInstances = functions.https.onRequest(
           freq: RRule.WEEKLY,
           byweekday: recurrence.daysOfWeek,
           dtstart: originalStartDate,
-          until: new Date(recurrence.endRecur),
+          until: new Date(recurrence.endRecur + "T23:59:59"),
         });
 
         const allOccurrences = rule.all();
+        console.log("All occurrences:", allOccurrences);
         const instanceMap: { [key: string]: string } = {};
 
         // Set the original event
