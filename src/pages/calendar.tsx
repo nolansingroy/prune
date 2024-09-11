@@ -21,6 +21,7 @@ import { doc, updateDoc } from "firebase/firestore";
 import { collection, query, getDocs } from "firebase/firestore";
 import { EventResizeDoneArg } from "@fullcalendar/interaction";
 import { EventDropArg } from "@fullcalendar/core";
+import axios from "axios";
 
 export default function Calendar() {
   const calendarRef = useRef<FullCalendar>(null);
@@ -28,6 +29,8 @@ export default function Calendar() {
   const [selectInfo, setSelectInfo] = useState<DateSelectArg | null>(null);
   const [editingEvent, setEditingEvent] = useState<EventInput | null>(null);
   const [editAll, setEditAll] = useState(false); // New state to control if we're editing all instances
+  const [loading, setLoading] = useState(false); // New loading state
+
   const {
     events: fetchedEvents,
     loading: eventsLoading,
@@ -210,6 +213,98 @@ export default function Calendar() {
     }, {} as any);
   };
 
+  // const handleSave = async ({
+  //   title,
+  //   description,
+  //   location,
+  //   isBackgroundEvent,
+  //   startTime,
+  //   endTime,
+  //   recurrence,
+  // }: {
+  //   title: string;
+  //   description: string;
+  //   location: string;
+  //   isBackgroundEvent: boolean;
+  //   startTime: string;
+  //   endTime: string;
+  //   recurrence?: {
+  //     daysOfWeek: number[];
+  //     startTime: string;
+  //     endTime: string;
+  //     startRecur: string;
+  //     endRecur: string;
+  //   };
+  // }) => {
+  //   if (!selectInfo) return;
+
+  //   let calendarApi = selectInfo.view.calendar;
+  //   calendarApi.unselect();
+
+  //   let startDateTime = new Date(selectInfo.startStr);
+  //   let endDateTime = new Date(selectInfo.startStr);
+
+  //   if (startTime && endTime) {
+  //     const [startHour, startMinute] = startTime.split(":").map(Number);
+  //     const [endHour, endMinute] = endTime.split(":").map(Number);
+
+  //     startDateTime.setUTCHours(startHour, startMinute, 0, 0);
+  //     endDateTime.setUTCHours(endHour, endMinute, 0, 0);
+
+  //     if (endDateTime <= startDateTime) {
+  //       endDateTime.setUTCDate(endDateTime.getUTCDate() + 1);
+  //     }
+  //   }
+
+  //   let event: EventInput = {
+  //     id: "",
+  //     title,
+  //     location: location || "",
+  //     start: startDateTime,
+  //     end: endDateTime,
+  //     description,
+  //     display: isBackgroundEvent ? "background" : "auto",
+  //     className: isBackgroundEvent ? "custom-bg-event" : "",
+  //     isBackgroundEvent,
+  //     startDate: startDateTime,
+  //     startDay: startDateTime.toLocaleDateString("en-US", {
+  //       weekday: "long",
+  //       timeZone: "UTC",
+  //     }),
+  //     endDate: endDateTime,
+  //     endDay: endDateTime.toLocaleDateString("en-US", {
+  //       weekday: "long",
+  //       timeZone: "UTC",
+  //     }),
+  //     recurrence: recurrence || undefined,
+  //   };
+
+  //   event = removeUndefinedFields(event);
+
+  //   try {
+  //     const user = auth.currentUser;
+  //     if (user) {
+  //       const eventRef = await addDoc(
+  //         collection(db, "users", user.uid, "events"),
+  //         event
+  //       );
+
+  //       const eventId = eventRef.id;
+  //       event.id = eventId;
+
+  //       await updateDoc(eventRef, { id: eventId });
+
+  //       console.log("Event created in Firestore with ID:", event.id);
+
+  //       setEvents((prevEvents) => [...prevEvents, event]);
+  //     }
+  //   } catch (error) {
+  //     console.error("Error creating event in Firestore:", error);
+  //   }
+
+  //   handleDialogClose();
+  // };
+
   const handleSave = async ({
     title,
     description,
@@ -238,67 +333,54 @@ export default function Calendar() {
     let calendarApi = selectInfo.view.calendar;
     calendarApi.unselect();
 
-    let startDateTime = new Date(selectInfo.startStr);
-    let endDateTime = new Date(selectInfo.startStr);
+    // Format the start and end dates based on the event selection
+    const startDate = new Date(selectInfo.startStr).toISOString().split("T")[0];
 
-    if (startTime && endTime) {
-      const [startHour, startMinute] = startTime.split(":").map(Number);
-      const [endHour, endMinute] = endTime.split(":").map(Number);
-
-      startDateTime.setUTCHours(startHour, startMinute, 0, 0);
-      endDateTime.setUTCHours(endHour, endMinute, 0, 0);
-
-      if (endDateTime <= startDateTime) {
-        endDateTime.setUTCDate(endDateTime.getUTCDate() + 1);
-      }
-    }
-
-    let event: EventInput = {
-      id: "",
-      title,
-      location: location || "",
-      start: startDateTime,
-      end: endDateTime,
-      description,
-      display: isBackgroundEvent ? "background" : "auto",
-      className: isBackgroundEvent ? "custom-bg-event" : "",
-      isBackgroundEvent,
-      startDate: startDateTime,
-      startDay: startDateTime.toLocaleDateString("en-US", {
-        weekday: "long",
-        timeZone: "UTC",
-      }),
-      endDate: endDateTime,
-      endDay: endDateTime.toLocaleDateString("en-US", {
-        weekday: "long",
-        timeZone: "UTC",
-      }),
-      recurrence: recurrence || undefined,
-    };
-
-    event = removeUndefinedFields(event);
+    setLoading(true); // Start loading
 
     try {
       const user = auth.currentUser;
-      if (user) {
-        const eventRef = await addDoc(
-          collection(db, "users", user.uid, "events"),
-          event
-        );
-
-        const eventId = eventRef.id;
-        event.id = eventId;
-
-        await updateDoc(eventRef, { id: eventId });
-
-        console.log("Event created in Firestore with ID:", event.id);
-
-        setEvents((prevEvents) => [...prevEvents, event]);
+      if (!user) {
+        throw new Error("User not authenticated");
       }
+
+      // Adjust end recurrence date
+      const endRecur = new Date(recurrence?.endRecur || startDate);
+      endRecur.setDate(endRecur.getDate() + 1);
+
+      // Prepare the event input for the cloud function
+      const eventInput = {
+        title,
+        description,
+        location: location || "",
+        startDate,
+        startTime,
+        endTime,
+        recurrence: {
+          daysOfWeek: recurrence?.daysOfWeek || [],
+          startRecur: recurrence?.startRecur || startDate,
+          endRecur: endRecur.toISOString().split("T")[0], // Adjusted endRecur
+        },
+        userId: user.uid,
+      };
+
+      // Make the axios call to your cloud function
+      const result = await axios.post(
+        "https://us-central1-prune-94ad9.cloudfunctions.net/createRecurringAvailabilityInstances",
+        eventInput
+      );
+
+      console.log("Recurring event instances created:", result.data);
+
+      // Fetch the updated events for the calendar view
+      await fetchEvents();
     } catch (error) {
-      console.error("Error creating event in Firestore:", error);
+      console.error("Error saving event:", error);
+    } finally {
+      setLoading(false); // Stop loading
     }
 
+    // Close the dialog or modal after saving the event
     handleDialogClose();
   };
 
