@@ -790,12 +790,14 @@ export default function Availability() {
 
       <div className="flex justify-between mt-4">
         <span>{`${selectedRows.size} of ${events.length} row(s) selected`}</span>
-        <Button
-          onClick={deleteSelectedEvents}
-          disabled={selectedRows.size === 0}
-        >
-          Delete Selected
-        </Button>
+        <div className="pr-16">
+          <Button
+            onClick={deleteSelectedEvents}
+            disabled={selectedRows.size === 0}
+          >
+            Delete Selected
+          </Button>
+        </div>
       </div>
 
       <div className="fixed bottom-[calc(4rem+30px)] right-4">
