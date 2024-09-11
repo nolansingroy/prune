@@ -462,11 +462,11 @@ export default function Calendar() {
                   rrulePlugin,
                 ]}
                 headerToolbar={{
-                  left: "prev,next today",
+                  left: "prev,next today", // Sticky header elements
                   center: "title",
                   right: "dayGridMonth,timeGridWeek,timeGridDay",
                 }}
-                stickyHeaderDates={true}
+                // stickyHeaderDates={true} // Enables sticky headers for dates
                 slotDuration="00:15:00"
                 slotMinTime="07:00:00"
                 slotLabelFormat={{
@@ -476,7 +476,6 @@ export default function Calendar() {
                   omitZeroMinute: false,
                 }}
                 initialView="timeGridWeek"
-                nowIndicator={true}
                 editable={true}
                 selectable={true}
                 selectMirror={true}
@@ -515,15 +514,15 @@ export default function Calendar() {
                   }
                 })}
                 eventContent={renderEventContent}
-                slotMaxTime="22:00:00"
                 height="auto"
-                aspectRatio={1.35}
                 contentHeight="auto"
+                scrollTime="07:00:00" // Automatically scrolls to 7:00 AM on load
                 views={{
                   dayGridMonth: { nowIndicator: true },
                   timeGridWeek: {
                     nowIndicator: true,
                     scrollTime: "07:00:00",
+                    stickyHeaderDates: true, // Enable sticky headers for dates
                   },
                   timeGridDay: { nowIndicator: true, slotDuration: "00:10:00" },
                 }}

@@ -141,7 +141,8 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent>
+      {/* <div className="modal-backdrop" /> */}
+      <DialogContent className="modal-content">
         <DialogHeader>
           <DialogTitle>
             {editAll ? "Edit All Instances" : "Edit Availability"}

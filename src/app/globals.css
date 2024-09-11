@@ -83,3 +83,32 @@
   width: 75% !important;
   margin-left: auto;
 }
+
+/* Ensure the calendar is scrollable */
+.calendar-container {
+  position: relative;
+  max-height: 80vh; /* Adjust this as needed for your use case */
+  overflow-y: auto; /* Allow vertical scrolling */
+}
+
+/* Make the toolbar sticky */
+.fc-toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 30; /* Keep it on top of other content */
+  background-color: white; /* Ensure it's visible */
+}
+
+/* Ensure the modal backdrop covers the entire viewport */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5); /* 50% transparent black */
+  z-index: 1040; /* Higher than the sticky header */
+  backdrop-filter: blur(4px); /* Optional blur effect */
+}
+
+/* Ensure the modal content appears above the backdrop */
+.modal-content {
+  z-index: 1050;
+}
