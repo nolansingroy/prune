@@ -184,9 +184,80 @@ export default function Calendar() {
     }
   };
 
+  // const handleSelect = (selectInfo: DateSelectArg) => {
+  //   setSelectInfo(selectInfo);
+  //   setEditingEvent(null); // Clear editing event
+  //   setIsDialogOpen(true);
+  // };
+
   const handleSelect = (selectInfo: DateSelectArg) => {
     setSelectInfo(selectInfo);
-    setEditingEvent(null); // Clear editing event
+
+    // FullCalendar provides the date in UTC, so we need to adjust for the local timezone
+    const defaultStartTimeUTC = new Date(selectInfo.startStr);
+    const defaultEndTimeUTC = new Date(defaultStartTimeUTC);
+    defaultEndTimeUTC.setHours(defaultEndTimeUTC.getHours() + 1); // Set end time to 1 hour after the start time
+
+    // Get the timezone offset in hours
+    const timezoneOffsetHours = -(new Date().getTimezoneOffset() / 60); // getTimezoneOffset returns minutes, convert to hours
+
+    // Adjust UTC times to local times by subtracting the timezone offset
+    const defaultStartTimeLocal = new Date(defaultStartTimeUTC);
+    defaultStartTimeLocal.setHours(
+      defaultStartTimeUTC.getHours() - timezoneOffsetHours
+    );
+
+    const defaultEndTimeLocal = new Date(defaultEndTimeUTC);
+    defaultEndTimeLocal.setHours(
+      defaultEndTimeUTC.getHours() - timezoneOffsetHours
+    );
+
+    // Convert times to string format using local time (e.g., "10:00" in local time)
+    const formattedStartTime = defaultStartTimeLocal.toLocaleTimeString([], {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+    }); // Local time
+    const formattedEndTime = defaultEndTimeLocal.toLocaleTimeString([], {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+    }); // Local time
+
+    // Derive the day of the week from startDate
+    const defaultStartDay = defaultStartTimeLocal.toLocaleDateString("en-US", {
+      weekday: "long",
+    });
+
+    setEditingEvent((prevState) => {
+      // Ensure required fields like `title`, `startDate`, and `isBackgroundEvent` are preserved
+      const updatedEvent: EventInput = {
+        ...prevState, // Preserve previous state
+        title: prevState?.title || "", // Ensure title is not undefined
+        isBackgroundEvent: prevState?.isBackgroundEvent ?? false, // Ensure isBackgroundEvent is a boolean (default to false)
+        start:
+          prevState?.start instanceof Date
+            ? prevState.start
+            : defaultStartTimeLocal, // Ensure start is a Date object in local time
+        end:
+          prevState?.end instanceof Date ? prevState.end : defaultEndTimeLocal, // Ensure end is a Date object in local time
+        startDate:
+          prevState?.startDate instanceof Date
+            ? prevState.startDate
+            : defaultStartTimeLocal, // Ensure startDate is a Date object
+        endDate:
+          prevState?.endDate instanceof Date
+            ? prevState.endDate
+            : defaultEndTimeLocal, // Ensure endDate is a Date object
+        startDay: prevState?.startDay || defaultStartDay, // Ensure startDay is derived from startDate if not already present
+        endDay:
+          prevState?.endDay ||
+          defaultEndTimeLocal.toLocaleDateString("en-US", { weekday: "long" }), // Derive endDay from endDate if not present
+        recurrence: undefined, // Set recurrence to undefined to prevent auto-selection
+      };
+      return updatedEvent;
+    });
+
     setIsDialogOpen(true);
   };
 
