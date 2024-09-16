@@ -378,6 +378,85 @@ export default function Calendar() {
   // };
 
   // handleSave with cloudfunction only
+  // const handleSave = async ({
+  //   title,
+  //   description,
+  //   location,
+  //   isBackgroundEvent,
+  //   startTime,
+  //   endTime,
+  //   recurrence,
+  // }: {
+  //   title: string;
+  //   description: string;
+  //   location: string;
+  //   isBackgroundEvent: boolean;
+  //   startTime: string;
+  //   endTime: string;
+  //   recurrence?: {
+  //     daysOfWeek: number[];
+  //     startTime: string;
+  //     endTime: string;
+  //     startRecur: string;
+  //     endRecur: string;
+  //   };
+  // }) => {
+  //   if (!selectInfo) return;
+
+  //   let calendarApi = selectInfo.view.calendar;
+  //   calendarApi.unselect();
+
+  //   // Format the start and end dates based on the event selection
+  //   const startDate = new Date(selectInfo.startStr).toISOString().split("T")[0];
+
+  //   setLoading(true); // Start loading
+
+  //   try {
+  //     const user = auth.currentUser;
+  //     if (!user) {
+  //       throw new Error("User not authenticated");
+  //     }
+
+  //     // Adjust end recurrence date
+  //     const endRecur = new Date(recurrence?.endRecur || startDate);
+  //     endRecur.setDate(endRecur.getDate() + 1);
+
+  //     // Prepare the event input for the cloud function
+  //     const eventInput = {
+  //       title,
+  //       description,
+  //       location: location || "",
+  //       startDate,
+  //       startTime,
+  //       endTime,
+  //       recurrence: {
+  //         daysOfWeek: recurrence?.daysOfWeek || [],
+  //         startRecur: recurrence?.startRecur || startDate,
+  //         endRecur: endRecur.toISOString().split("T")[0], // Adjusted endRecur
+  //       },
+  //       userId: user.uid,
+  //     };
+
+  //     // Make the axios call to your cloud function
+  //     const result = await axios.post(
+  //       "https://us-central1-prune-94ad9.cloudfunctions.net/createRecurringAvailabilityInstances",
+  //       eventInput
+  //     );
+
+  //     console.log("Recurring event instances created:", result.data);
+
+  //     // Fetch the updated events for the calendar view
+  //     await fetchEvents();
+  //   } catch (error) {
+  //     console.error("Error saving event:", error);
+  //   } finally {
+  //     setLoading(false); // Stop loading
+  //   }
+
+  //   // Close the dialog or modal after saving the event
+  //   handleDialogClose();
+  // };
+
   const handleSave = async ({
     title,
     description,
@@ -417,33 +496,102 @@ export default function Calendar() {
         throw new Error("User not authenticated");
       }
 
-      // Adjust end recurrence date
-      const endRecur = new Date(recurrence?.endRecur || startDate);
-      endRecur.setDate(endRecur.getDate() + 1);
+      // If this is a recurring event, handle it using the cloud function
+      if (
+        recurrence &&
+        recurrence.daysOfWeek &&
+        recurrence.daysOfWeek.length > 0
+      ) {
+        // Adjust end recurrence date
+        const endRecur = new Date(recurrence.endRecur || startDate);
+        endRecur.setDate(endRecur.getDate() + 1);
 
-      // Prepare the event input for the cloud function
-      const eventInput = {
-        title,
-        description,
-        location: location || "",
-        startDate,
-        startTime,
-        endTime,
-        recurrence: {
-          daysOfWeek: recurrence?.daysOfWeek || [],
-          startRecur: recurrence?.startRecur || startDate,
-          endRecur: endRecur.toISOString().split("T")[0], // Adjusted endRecur
-        },
-        userId: user.uid,
-      };
+        // Prepare the event input for the cloud function
+        const eventInput = {
+          title,
+          description,
+          location: location || "",
+          startDate,
+          startTime,
+          endTime,
+          recurrence: {
+            daysOfWeek: recurrence.daysOfWeek,
+            startRecur: recurrence.startRecur || startDate,
+            endRecur: endRecur.toISOString().split("T")[0],
+          },
+          userId: user.uid,
+        };
 
-      // Make the axios call to your cloud function
-      const result = await axios.post(
-        "https://us-central1-prune-94ad9.cloudfunctions.net/createRecurringAvailabilityInstances",
-        eventInput
-      );
+        // Make the axios call to your cloud function
+        const result = await axios.post(
+          "https://us-central1-prune-94ad9.cloudfunctions.net/createRecurringAvailabilityInstances",
+          eventInput
+        );
 
-      console.log("Recurring event instances created:", result.data);
+        console.log("Recurring event instances created:", result.data);
+      } else {
+        // Handle single or background event directly on the client side
+        // Parse the start and end times
+        let startDateTime = new Date(selectInfo.startStr);
+        let endDateTime = new Date(selectInfo.startStr);
+
+        if (startTime && endTime) {
+          const [startHour, startMinute] = startTime.split(":").map(Number);
+          const [endHour, endMinute] = endTime.split(":").map(Number);
+
+          // Set the time in UTC
+          startDateTime.setUTCHours(startHour, startMinute, 0, 0);
+          endDateTime.setUTCHours(endHour, endMinute, 0, 0);
+
+          // Ensure end time is after the start time
+          if (endDateTime <= startDateTime) {
+            endDateTime.setUTCDate(endDateTime.getUTCDate() + 1);
+          }
+        }
+
+        // Create the event object for a single or background event
+        let event: EventInput = {
+          id: "",
+          title,
+          location: location || "",
+          start: startDateTime, // Save in UTC
+          end: endDateTime, // Save in UTC
+          description,
+          display: isBackgroundEvent ? "background" : "auto",
+          className: isBackgroundEvent ? "custom-bg-event" : "",
+          isBackgroundEvent,
+          startDate: startDateTime, // Save in UTC
+          startDay: startDateTime.toLocaleDateString("en-US", {
+            weekday: "long",
+            timeZone: "UTC",
+          }),
+          endDate: endDateTime, // Save in UTC
+          endDay: endDateTime.toLocaleDateString("en-US", {
+            weekday: "long",
+            timeZone: "UTC",
+          }),
+        };
+
+        // Remove any undefined fields before saving
+        event = removeUndefinedFields(event);
+
+        // Save single event or background event directly to Firestore
+        const eventRef = await addDoc(
+          collection(db, "users", user.uid, "events"),
+          event
+        );
+
+        const eventId = eventRef.id;
+        event.id = eventId;
+
+        // Update the event with the ID
+        await updateDoc(eventRef, { id: eventId });
+
+        console.log("Single event created in Firestore with ID:", event.id);
+
+        // Add event to local state
+        setEvents((prevEvents) => [...prevEvents, event]);
+      }
 
       // Fetch the updated events for the calendar view
       await fetchEvents();
@@ -453,7 +601,7 @@ export default function Calendar() {
       setLoading(false); // Stop loading
     }
 
-    // Close the dialog or modal after saving the event
+    // Close the dialog after saving
     handleDialogClose();
   };
 

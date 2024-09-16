@@ -31,6 +31,11 @@ export const createRecurringAvailabilityInstances = functions.https.onRequest(
           userId,
         } = req.body;
 
+        // Log the inputs to verify correctness
+        console.log("Received startDate:", startDate, typeof startDate);
+        console.log("Received startTime:", startTime, typeof startTime);
+        console.log("Received recurrence:", recurrence, typeof recurrence);
+
         const batch = db.batch();
         const eventRef = db
           .collection("users")
@@ -40,9 +45,16 @@ export const createRecurringAvailabilityInstances = functions.https.onRequest(
 
         // Combine startDate and startTime into a
         // Date object for the event start
+        // what is the format of startDate and startTime?
+        console.log("startDate:", startDate, typeof startDate);
+        console.log("startTime:", startTime, typeof startTime);
+        console.log("now creating the originalStartDate");
         const originalStartDate = new Date(`${startDate}T${startTime}`);
         const originalEndDate = new Date(`${startDate}T${endTime}`);
 
+        // Log the dtstart to verify the format and type
+        console.log("dtstart (originalStartDate):", originalStartDate,
+          typeof originalStartDate);
         const rule = new RRule({
           freq: RRule.WEEKLY,
           byweekday: recurrence.daysOfWeek,
