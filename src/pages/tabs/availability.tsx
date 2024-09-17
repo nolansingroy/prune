@@ -556,22 +556,26 @@ export default function Availability() {
         throw new Error("User not authenticated");
       }
 
-      // Create a clone of the event with a new ID
-      const clonedEvent = {
+      // Remove any undefined fields from the cloned event (like exceptions)
+      const { id, ...clonedEventData } = {
         ...event,
         title: `${event.title} (Clone)`, // Optional: Append "Clone" to the title
-        id: undefined, // Reset the ID to allow Firestore to generate a new one
         created_at: new Date(), // Update creation timestamp
       };
 
-      // Save the cloned event to Firestore
+      // Remove fields that are undefined
+      const sanitizedEventData = Object.fromEntries(
+        Object.entries(clonedEventData).filter(([_, v]) => v !== undefined)
+      );
+
+      // Save the cloned event to Firestore without the id field
       const eventRef = doc(collection(db, "users", user.uid, "events"));
-      await setDoc(eventRef, clonedEvent);
+      await setDoc(eventRef, sanitizedEventData);
 
       // Update local state
-      setEvents((prevEvents) => [
+      setEvents((prevEvents: EventInput[]) => [
         ...prevEvents,
-        { ...clonedEvent, id: eventRef.id },
+        { ...sanitizedEventData, id: eventRef.id } as EventInput, // Assign the newly generated id
       ]);
 
       console.log("Event cloned successfully");
@@ -781,10 +785,10 @@ export default function Availability() {
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent>
-                      {/* Clone option
+                      {/* Clone Option */}
                       <DropdownMenuItem onClick={() => handleCloneClick(event)}>
                         Clone
-                      </DropdownMenuItem> */}
+                      </DropdownMenuItem>
                       {/*  Delete Option */}
                       <DropdownMenuItem
                         onClick={() => handleDeleteClick(event.id!)}
