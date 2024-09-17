@@ -85,74 +85,15 @@ export default function Availability() {
     }
   };
 
-  const fetchEvents = async () => {
-    if (auth.currentUser) {
-      const eventsRef = collection(db, "users", auth.currentUser.uid, "events");
-      // Fetch events by "start" field in ascending order
-      const q = query(
-        eventsRef,
-        where("isBackgroundEvent", "==", true),
-        orderBy("start", "asc") // Ascending order
-      );
-      const querySnapshot = await getDocs(q);
-      let eventsList: EventInput[] = [];
-
-      querySnapshot.docs.forEach((doc) => {
-        const data = doc.data();
-        const start =
-          data.start instanceof Timestamp
-            ? data.start.toDate()
-            : new Date(data.start);
-        const end =
-          data.end instanceof Timestamp
-            ? data.end.toDate()
-            : new Date(data.end);
-
-        if (data.recurrence) {
-          const dtstart = new Date(start);
-          eventsList.push({
-            id: doc.id,
-            title: data.title,
-            start: dtstart,
-            end: new Date(
-              dtstart.getTime() + (end.getTime() - start.getTime())
-            ), // Calculate end time based on duration
-            description: data.description || "",
-            isBackgroundEvent: data.isBackgroundEvent,
-            startDate: dtstart,
-            startDay: dtstart.toLocaleDateString("en-US", { weekday: "long" }),
-            endDate: new Date(
-              dtstart.getTime() + (end.getTime() - start.getTime())
-            ),
-            endDay: new Date(
-              dtstart.getTime() + (end.getTime() - start.getTime())
-            ).toLocaleDateString("en-US", { weekday: "long" }),
-            recurrence: data.recurrence,
-            exceptions: data.exceptions,
-          });
-        } else {
-          eventsList.push({
-            id: doc.id,
-            title: data.title,
-            start: start,
-            end: end,
-            description: data.description || "",
-            isBackgroundEvent: data.isBackgroundEvent,
-            startDate: start,
-            startDay: start.toLocaleDateString("en-US", { weekday: "long" }),
-            endDate: end,
-            endDay: end.toLocaleDateString("en-US", { weekday: "long" }),
-          });
-        }
-      });
-      setEvents(eventsList);
-    }
-  };
-
   // const fetchEvents = async () => {
   //   if (auth.currentUser) {
   //     const eventsRef = collection(db, "users", auth.currentUser.uid, "events");
-  //     const q = query(eventsRef, where("isBackgroundEvent", "==", true));
+  //     // Fetch events by "start" field in ascending order
+  //     const q = query(
+  //       eventsRef,
+  //       where("isBackgroundEvent", "==", true),
+  //       orderBy("start", "asc") // Ascending order
+  //     );
   //     const querySnapshot = await getDocs(q);
   //     let eventsList: EventInput[] = [];
 
@@ -207,6 +148,77 @@ export default function Availability() {
   //     setEvents(eventsList);
   //   }
   // };
+
+  const fetchEvents = async () => {
+    if (auth.currentUser) {
+      const eventsRef = collection(db, "users", auth.currentUser.uid, "events");
+
+      // Get the current date (from today onwards)
+      const today = new Date();
+      today.setHours(0, 0, 0, 0); // Set time to midnight to match the start of the day
+
+      // Fetch events by "start" field where the date is from today onwards
+      const q = query(
+        eventsRef,
+        where("isBackgroundEvent", "==", true),
+        where("start", ">=", today), // Fetch events starting from today onwards
+        orderBy("start", "asc") // Ascending order
+      );
+
+      const querySnapshot = await getDocs(q);
+      let eventsList: EventInput[] = [];
+
+      querySnapshot.docs.forEach((doc) => {
+        const data = doc.data();
+        const start =
+          data.start instanceof Timestamp
+            ? data.start.toDate()
+            : new Date(data.start);
+        const end =
+          data.end instanceof Timestamp
+            ? data.end.toDate()
+            : new Date(data.end);
+
+        if (data.recurrence) {
+          const dtstart = new Date(start);
+          eventsList.push({
+            id: doc.id,
+            title: data.title,
+            start: dtstart,
+            end: new Date(
+              dtstart.getTime() + (end.getTime() - start.getTime())
+            ), // Calculate end time based on duration
+            description: data.description || "",
+            isBackgroundEvent: data.isBackgroundEvent,
+            startDate: dtstart,
+            startDay: dtstart.toLocaleDateString("en-US", { weekday: "long" }),
+            endDate: new Date(
+              dtstart.getTime() + (end.getTime() - start.getTime())
+            ),
+            endDay: new Date(
+              dtstart.getTime() + (end.getTime() - start.getTime())
+            ).toLocaleDateString("en-US", { weekday: "long" }),
+            recurrence: data.recurrence,
+            exceptions: data.exceptions,
+          });
+        } else {
+          eventsList.push({
+            id: doc.id,
+            title: data.title,
+            start: start,
+            end: end,
+            description: data.description || "",
+            isBackgroundEvent: data.isBackgroundEvent,
+            startDate: start,
+            startDay: start.toLocaleDateString("en-US", { weekday: "long" }),
+            endDate: end,
+            endDay: end.toLocaleDateString("en-US", { weekday: "long" }),
+          });
+        }
+      });
+      setEvents(eventsList);
+    }
+  };
 
   const handleCellClick = (
     id: string,
