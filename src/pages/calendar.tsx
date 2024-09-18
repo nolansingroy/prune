@@ -240,14 +240,8 @@ export default function Calendar() {
             : defaultStartTimeLocal, // Ensure start is a Date object in local time
         end:
           prevState?.end instanceof Date ? prevState.end : defaultEndTimeLocal, // Use the correct end time from selectInfo
-        startDate:
-          prevState?.startDate instanceof Date
-            ? prevState.startDate
-            : defaultStartTimeLocal, // Ensure startDate is a Date object
-        endDate:
-          prevState?.endDate instanceof Date
-            ? prevState.endDate
-            : defaultEndTimeLocal, // Ensure endDate is a Date object
+        startDate: defaultStartTimeLocal, // Store startDate as the local Date object
+        endDate: defaultEndTimeLocal, // Store endDate as the local Date object
         startDay: prevState?.startDay || defaultStartDay, // Ensure startDay is derived from startDate if not already present
         endDay:
           prevState?.endDay ||

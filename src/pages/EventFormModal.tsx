@@ -66,15 +66,50 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
   const [startRecur, setStartRecur] = useState("");
   const [endRecur, setEndRecur] = useState("");
 
+  // useEffect(() => {
+  //   if (event) {
+  //     setTitle(event.title || "");
+  //     setDescription(event.description || "");
+  //     setLocation(event.location || "");
+  //     setIsBackgroundEvent(event.isBackgroundEvent || false);
+  //     setDate(
+  //       event.startDate ? event.startDate.toISOString().split("T")[0] : ""
+  //     );
+  //     setStartTime(
+  //       event.start
+  //         ? event.start
+  //             .toLocaleTimeString("en-US", { hour12: false })
+  //             .substring(0, 5)
+  //         : ""
+  //     );
+  //     setEndTime(
+  //       event.end
+  //         ? event.end
+  //             .toLocaleTimeString("en-US", { hour12: false })
+  //             .substring(0, 5)
+  //         : ""
+  //     );
+  //     if (event.recurrence) {
+  //       setIsRecurring(true);
+  //       setDaysOfWeek(event.recurrence.daysOfWeek || []);
+  //       setStartRecur(event.recurrence.startRecur || "");
+  //       setEndRecur(event.recurrence.endRecur || "");
+  //     }
+  //   }
+  // }, [event, isOpen]);
+
   useEffect(() => {
     if (event) {
       setTitle(event.title || "");
       setDescription(event.description || "");
       setLocation(event.location || "");
       setIsBackgroundEvent(event.isBackgroundEvent || false);
+
+      // Use startDate to populate the date input, format it as YYYY-MM-DD
       setDate(
         event.startDate ? event.startDate.toISOString().split("T")[0] : ""
       );
+
       setStartTime(
         event.start
           ? event.start
@@ -96,7 +131,7 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
         setEndRecur(event.recurrence.endRecur || "");
       }
     }
-  }, [event, isOpen]);
+  }, [event]);
 
   const handleSave = (e: MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
@@ -145,7 +180,7 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
       <DialogContent className="modal-content">
         <DialogHeader>
           <DialogTitle>
-            {editAll ? "Edit All Instances" : "Edit Availability"}
+            {editAll ? "Edit All Instances" : "Create Availability"}
           </DialogTitle>
           <DialogDescription>
             {editAll
@@ -156,7 +191,7 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
         <div className="space-y-4">
           <div>
             <Label className="block text-sm font-medium text-gray-700">
-              Availability Title
+              Title
             </Label>
             <Input
               value={title}
@@ -238,22 +273,47 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
             </div>
           </div>
 
-          {showDateSelector && (
-            <div>
-              <Label className="block text-sm font-medium text-gray-700">
-                Date
+          {/* <div className="flex items-center space-x-6">
+            <div className="flex flex-col">
+              <Label className="text-sm font-medium text-gray-700">
+                Start Time
               </Label>
+              <Input
+                type="time"
+                value={startTime}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  setStartTime(e.target.value)
+                }
+                className="w-32 px-2 py-2 text-center rounded-md border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+              />
+            </div>
+            <div className="flex flex-col">
+              <Label className="text-sm font-medium text-gray-700">
+                End Time
+              </Label>
+              <Input
+                type="time"
+                value={endTime}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  setEndTime(e.target.value)
+                }
+                className="w-32 px-2 py-2 text-center rounded-md border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+              />
+            </div>
+          </div> */}
+
+          <div className="flex items-center space-x-6">
+            <div className="flex flex-col">
+              <Label className="text-sm font-medium text-gray-700">Date</Label>
               <Input
                 type="date"
                 value={date}
                 onChange={(e: ChangeEvent<HTMLInputElement>) =>
                   setDate(e.target.value)
                 }
+                className="px-2 py-2 text-center rounded-md border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
               />
             </div>
-          )}
-
-          <div className="flex items-center space-x-6">
             <div className="flex flex-col">
               <Label className="text-sm font-medium text-gray-700">
                 Start Time
