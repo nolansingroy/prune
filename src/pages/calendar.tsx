@@ -195,8 +195,7 @@ export default function Calendar() {
 
     // FullCalendar provides the date in UTC, so we need to adjust for the local timezone
     const defaultStartTimeUTC = new Date(selectInfo.startStr);
-    const defaultEndTimeUTC = new Date(defaultStartTimeUTC);
-    defaultEndTimeUTC.setHours(defaultEndTimeUTC.getHours() + 1); // Set end time to 1 hour after the start time
+    const defaultEndTimeUTC = new Date(selectInfo.endStr); // Use the correct end time from selectInfo
 
     // Get the timezone offset in hours
     const timezoneOffsetHours = -(new Date().getTimezoneOffset() / 60); // getTimezoneOffset returns minutes, convert to hours
@@ -240,7 +239,7 @@ export default function Calendar() {
             ? prevState.start
             : defaultStartTimeLocal, // Ensure start is a Date object in local time
         end:
-          prevState?.end instanceof Date ? prevState.end : defaultEndTimeLocal, // Ensure end is a Date object in local time
+          prevState?.end instanceof Date ? prevState.end : defaultEndTimeLocal, // Use the correct end time from selectInfo
         startDate:
           prevState?.startDate instanceof Date
             ? prevState.startDate
