@@ -695,6 +695,12 @@ export default function Calendar() {
                 selectMirror={true}
                 select={handleSelect}
                 eventClick={handleEventClick} // Handle event click to open dialog
+                dateClick={(info) => {
+                  // Change view to 'timeGridDay' when a date is clicked
+                  calendarRef.current
+                    ?.getApi()
+                    .changeView("timeGridDay", info.dateStr);
+                }}
                 eventResize={handleEventResize} // Called when resizing an event
                 eventDidMount={handleEventDidMount} // Called after an event is rendered
                 eventDrop={handleEventDrop}
