@@ -695,12 +695,20 @@ export default function Calendar() {
                 selectMirror={true}
                 select={handleSelect}
                 eventClick={handleEventClick} // Handle event click to open dialog
-                dateClick={(info) => {
-                  // Change view to 'timeGridDay' when a date is clicked
+                navLinks={true}
+                navLinkDayClick={(date) => {
+                  console.log("Clicked day:", date);
                   calendarRef.current
                     ?.getApi()
-                    .changeView("timeGridDay", info.dateStr);
+                    .changeView("timeGridDay", date.toISOString());
                 }}
+                navLinkWeekClick={(weekStartDate) => {
+                  console.log("Clicked week:", weekStartDate);
+                  calendarRef.current
+                    ?.getApi()
+                    .changeView("timeGridWeek", weekStartDate.toISOString());
+                }}
+                height="auto"
                 eventResize={handleEventResize} // Called when resizing an event
                 eventDidMount={handleEventDidMount} // Called after an event is rendered
                 eventDrop={handleEventDrop}
@@ -734,7 +742,6 @@ export default function Calendar() {
                   }
                 })}
                 eventContent={renderEventContent}
-                height="auto"
                 contentHeight="auto"
                 scrollTime="07:00:00" // Automatically scrolls to 7:00 AM on load
                 views={{
