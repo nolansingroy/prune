@@ -31,11 +31,6 @@ export const createRecurringAvailabilityInstances = functions.https.onRequest(
           userId,
         } = req.body;
 
-        // Log the inputs to verify correctness
-        console.log("Received startDate:", startDate, typeof startDate);
-        console.log("Received startTime:", startTime, typeof startTime);
-        console.log("Received recurrence:", recurrence, typeof recurrence);
-
         const batch = db.batch();
         const eventRef = db
           .collection("users")
@@ -43,30 +38,38 @@ export const createRecurringAvailabilityInstances = functions.https.onRequest(
           .collection("events")
           .doc();
 
-        // Combine startDate and startTime into a
-        // Date object for the event start
-        // what is the format of startDate and startTime?
-        console.log("startDate:", startDate, typeof startDate);
-        console.log("startTime:", startTime, typeof startTime);
-        console.log("now creating the originalStartDate");
-        const originalStartDate = new Date(`${startDate}T${startTime}`);
-        const originalEndDate = new Date(`${startDate}T${endTime}`);
+        // Combine startDate and startTime into Date objects
+        const originalStartDate = new Date(`${startDate}T${startTime}Z`);
+        const originalEndDate = new Date(`${startDate}T${endTime}Z`);
 
-        // Log the dtstart to verify the format and type
-        console.log("dtstart (originalStartDate):", originalStartDate,
-          typeof originalStartDate);
+        const daysOfWeek = recurrence.daysOfWeek;
+
+        // Check if the recurrence is for every day (contains 0-6)
+        const isEveryday =
+          daysOfWeek.length === 7 && daysOfWeek.every((day:
+            number) => day >= 0 && day <= 6);
+        console.log("isEveryday:", isEveryday);
+
+        // Adjust the endRecur to avoid the bleeding of 1 day
+        const recurrenceEndDate = new Date(recurrence.endRecur + "T23:59:59Z");
+        // If it's an everyday recurrence, adjust
+        // the until date by subtracting 1 day to stop exactly at the end date.
+        if (isEveryday) {
+          recurrenceEndDate.setDate(recurrenceEndDate.getDate() - 1);
+        }
+
+        // Set up the recurrence rule using rrule
         const rule = new RRule({
           freq: RRule.WEEKLY,
-          byweekday: recurrence.daysOfWeek,
+          byweekday: daysOfWeek,
           dtstart: originalStartDate,
-          until: new Date(recurrence.endRecur + "T23:59:59"),
+          until: recurrenceEndDate,
         });
 
         const allOccurrences = rule.all();
-        console.log("All occurrences:", allOccurrences);
         const instanceMap: { [key: string]: string } = {};
 
-        // Set the original event
+        // 1. Create the original event
         batch.set(eventRef, {
           title,
           description,
@@ -83,7 +86,7 @@ export const createRecurringAvailabilityInstances = functions.https.onRequest(
             weekday: "long",
           }),
           recurrence: {
-            daysOfWeek: recurrence.daysOfWeek,
+            daysOfWeek,
             startRecur: recurrence.startRecur,
             endRecur: recurrence.endRecur,
             rrule: rule.toString(),
@@ -93,10 +96,26 @@ export const createRecurringAvailabilityInstances = functions.https.onRequest(
           updated_at: admin.firestore.FieldValue.serverTimestamp(),
         });
 
-        // Skip the first occurrence (index 0)
-        allOccurrences.slice(1).forEach((occurrence) => {
+        // 2. Process occurrences and skip
+        // the first one if it's an everyday recurrence
+        // const occurrencesToProcess = isEveryday ?
+        // allOccurrences.slice(1) : allOccurrences;
+        // 2. Process occurrences and skip the first one
+        const occurrencesToProcess = allOccurrences.slice(1);
+        occurrencesToProcess.forEach((occurrence) => {
           const instanceDate = new Date(occurrence);
-          instanceDate.setDate(instanceDate.getDate() - 1); // Subtract 1 day
+
+          // Conditionally handle date adjustment:
+          // - Subtract 1 day for weekly events (fixes time zone issue).
+          // - Add 1 day for everyday events to fix the duplication issue.
+          if (isEveryday) {
+            // Add 1 day back for everyday
+            // instanceDate.setDate(instanceDate.getDate() + 1);
+            console.log("Everyday instanceDate:", instanceDate);
+          } else {
+            // Subtract 1 day for weekly events
+            instanceDate.setDate(instanceDate.getDate() - 1);
+          }
 
           const instanceStartDate = new Date(
             `${instanceDate.toISOString().split("T")[0]}T${startTime}`
@@ -126,7 +145,7 @@ export const createRecurringAvailabilityInstances = functions.https.onRequest(
             endDay: instanceEndDate.toLocaleDateString("en-US", {
               weekday: "long",
             }),
-            originalEventId: eventRef.id,
+            originalEventId: eventRef.id, // Reference to the original event
             isInstance: true,
             created_at: admin.firestore.FieldValue.serverTimestamp(),
             updated_at: admin.firestore.FieldValue.serverTimestamp(),
@@ -135,6 +154,7 @@ export const createRecurringAvailabilityInstances = functions.https.onRequest(
           instanceMap[instanceStartDate.toISOString()] = instanceRef.id;
         });
 
+        // 3. Commit the batch
         await batch.commit();
 
         res.set("Access-Control-Allow-Origin", "*");
@@ -150,3 +170,5 @@ export const createRecurringAvailabilityInstances = functions.https.onRequest(
     });
   }
 );
+
+
