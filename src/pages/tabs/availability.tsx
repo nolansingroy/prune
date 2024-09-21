@@ -363,6 +363,63 @@ export default function Availability() {
     return newDate;
   };
 
+  // const handleSaveEvent = async (eventData: {
+  //   title: string;
+  //   description: string;
+  //   location: string;
+  //   isBackgroundEvent: boolean;
+  //   date?: string;
+  //   startTime: string;
+  //   endTime: string;
+  //   recurrence?: {
+  //     daysOfWeek: number[];
+  //     startRecur: string; // YYYY-MM-DD
+  //     endRecur: string; // YYYY-MM-DD
+  //   };
+  // }) => {
+  //   setLoading(true); // Start loading
+  //   try {
+  //     const user = auth.currentUser;
+  //     if (!user) {
+  //       throw new Error("User not authenticated");
+  //     }
+
+  //     const startDate =
+  //       eventData.date || new Date().toISOString().split("T")[0];
+
+  //     // Add 1 day to the endRecur date to ensure the last day is included
+  //     const endRecur = new Date(eventData.recurrence?.endRecur || startDate);
+  //     endRecur.setDate(endRecur.getDate() + 1);
+
+  //     const eventInput = {
+  //       title: eventData.title,
+  //       description: eventData.description,
+  //       location: eventData.location || "",
+  //       startDate,
+  //       startTime: eventData.startTime,
+  //       endTime: eventData.endTime,
+  //       recurrence: {
+  //         daysOfWeek: eventData.recurrence?.daysOfWeek || [],
+  //         startRecur: eventData.recurrence?.startRecur || startDate,
+  //         endRecur: endRecur.toISOString().split("T")[0], // Adjusted endRecur
+  //       },
+  //       userId: user.uid,
+  //     };
+
+  //     const result = await axios.post(
+  //       "https://us-central1-prune-94ad9.cloudfunctions.net/createRecurringAvailabilityInstances",
+  //       eventInput
+  //     );
+
+  //     console.log("Recurring event instances created:", result.data);
+  //     await fetchEvents();
+  //   } catch (error) {
+  //     console.error("Error saving event:", error);
+  //   } finally {
+  //     setLoading(false); // Stop loading
+  //   }
+  // };
+
   const handleSaveEvent = async (eventData: {
     title: string;
     description: string;
@@ -387,31 +444,81 @@ export default function Availability() {
       const startDate =
         eventData.date || new Date().toISOString().split("T")[0];
 
-      // Add 1 day to the endRecur date to ensure the last day is included
-      const endRecur = new Date(eventData.recurrence?.endRecur || startDate);
-      endRecur.setDate(endRecur.getDate() + 1);
-
-      const eventInput = {
-        title: eventData.title,
-        description: eventData.description,
-        location: eventData.location || "",
-        startDate,
-        startTime: eventData.startTime,
-        endTime: eventData.endTime,
-        recurrence: {
-          daysOfWeek: eventData.recurrence?.daysOfWeek || [],
-          startRecur: eventData.recurrence?.startRecur || startDate,
-          endRecur: endRecur.toISOString().split("T")[0], // Adjusted endRecur
-        },
-        userId: user.uid,
+      // Helper function to adjust for time zone offset and return UTC date
+      const adjustToUTC = (dateTime: Date) => {
+        const timezoneOffset = dateTime.getTimezoneOffset(); // Timezone offset in minutes
+        return new Date(dateTime.getTime() - timezoneOffset * 60 * 1000); // Adjust to UTC
       };
 
-      const result = await axios.post(
-        "https://us-central1-prune-94ad9.cloudfunctions.net/createRecurringAvailabilityInstances",
-        eventInput
-      );
+      // Check if the event is recurring or a single event
+      if (
+        !eventData.recurrence ||
+        eventData.recurrence.daysOfWeek.length === 0
+      ) {
+        // Client-side single event creation
+        console.log("storing using client side");
+        // Parse the start and end times
+        let startDateTime = new Date(`${startDate}T${eventData.startTime}`);
+        let endDateTime = new Date(`${startDate}T${eventData.endTime}`);
 
-      console.log("Recurring event instances created:", result.data);
+        // Ensure the end time is after the start time
+        if (endDateTime <= startDateTime) {
+          endDateTime.setDate(endDateTime.getDate() + 1);
+        }
+
+        // Adjust the start and end times to UTC
+        startDateTime = adjustToUTC(startDateTime);
+        endDateTime = adjustToUTC(endDateTime);
+
+        // Create a new event object
+        const eventInput = {
+          title: eventData.title,
+          description: eventData.description,
+          location: eventData.location || "",
+          start: startDateTime, // Save in UTC
+          end: endDateTime, // Save in UTC
+          isBackgroundEvent: eventData.isBackgroundEvent,
+          created_at: new Date(), // Timestamp of creation
+          updated_at: new Date(), // Timestamp of last update
+        };
+
+        // Save the event directly to Firestore
+        const eventRef = doc(collection(db, "users", user.uid, "events"));
+        await setDoc(eventRef, eventInput);
+
+        console.log("Single event created in Firestore");
+      } else {
+        // Server-side recurring event creation using the cloud function
+        console.log("storing using server side");
+
+        // Add 2 day to the endRecur date to ensure the last day is included
+        const endRecur = new Date(eventData.recurrence?.endRecur || startDate);
+        endRecur.setDate(endRecur.getDate() + 2);
+
+        const eventInput = {
+          title: eventData.title,
+          description: eventData.description,
+          location: eventData.location || "",
+          startDate,
+          startTime: eventData.startTime,
+          endTime: eventData.endTime,
+          recurrence: {
+            daysOfWeek: eventData.recurrence?.daysOfWeek || [],
+            startRecur: eventData.recurrence?.startRecur || startDate,
+            endRecur: adjustToUTC(endRecur).toISOString().split("T")[0],
+          },
+          userId: user.uid,
+        };
+
+        const result = await axios.post(
+          "https://us-central1-prune-94ad9.cloudfunctions.net/createRecurringAvailabilityInstances",
+          eventInput
+        );
+
+        console.log("Recurring event instances created:", result.data);
+      }
+
+      // Fetch events again to update the list
       await fetchEvents();
     } catch (error) {
       console.error("Error saving event:", error);
