@@ -747,11 +747,14 @@ export default function Calendar() {
                 views={{
                   dayGridMonth: { nowIndicator: true },
                   timeGridWeek: {
-                    nowIndicator: true,
+                    // nowIndicator: true,
                     scrollTime: "07:00:00",
                     stickyHeaderDates: true, // Enable sticky headers for dates
                   },
-                  timeGridDay: { nowIndicator: true, slotDuration: "00:10:00" },
+                  timeGridDay: {
+                    // nowIndicator: true,
+                    slotDuration: "00:10:00",
+                  },
                 }}
               />
             </div>

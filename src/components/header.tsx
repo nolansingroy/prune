@@ -42,6 +42,7 @@ const Header = () => {
     try {
       await authLogout();
       console.log("User logged out, redirecting...");
+      window.location.href = "/";
     } catch (error) {
       console.error("Error during logout process:", error);
     }

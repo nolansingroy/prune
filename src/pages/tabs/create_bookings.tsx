@@ -265,6 +265,18 @@ const CreateBookings: React.FC = () => {
       (event.description ?? "").toLowerCase().includes(search.toLowerCase())
   );
 
+  const displayTimeWithOffset = (date: Date) => {
+    const userTimezoneOffsetInHours = new Date().getTimezoneOffset() / 60;
+    const adjustedDate = new Date(
+      date.getTime() + userTimezoneOffsetInHours * 60 * 60 * 1000
+    );
+    return adjustedDate.toLocaleTimeString("en-US", {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true,
+    });
+  };
+
   return (
     <div className="w-full relative">
       <h1 className="text-xl font-bold mb-4">Bookings</h1>
@@ -339,7 +351,7 @@ const CreateBookings: React.FC = () => {
                   }}
                 />
               </TableCell>
-              <TableCell>
+              {/* <TableCell>
                 {event.startDate instanceof Date &&
                 !isNaN(event.startDate.getTime())
                   ? event.startDate.toLocaleDateString("en-US", {
@@ -368,6 +380,12 @@ const CreateBookings: React.FC = () => {
                     })
                   : "Invalid Date"}
               </TableCell>
+              <TableCell>{event.title}</TableCell>
+              <TableCell>{event.description || "No description"}</TableCell> */}
+              <TableCell>{event.startDate.toLocaleDateString()}</TableCell>
+              <TableCell>{event.startDay}</TableCell>
+              <TableCell>{displayTimeWithOffset(event.start)}</TableCell>
+              <TableCell>{displayTimeWithOffset(event.end)}</TableCell>
               <TableCell>{event.title}</TableCell>
               <TableCell>{event.description || "No description"}</TableCell>
               <TableCell>
