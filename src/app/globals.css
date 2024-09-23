@@ -104,11 +104,15 @@
   position: fixed;
   inset: 0;
   background: rgba(0, 0, 0, 0.5); /* 50% transparent black */
-  z-index: 1040; /* Higher than the sticky header */
+  z-index: 700; /* Higher than the sticky header */
   backdrop-filter: blur(4px); /* Optional blur effect */
 }
 
 /* Ensure the modal content appears above the backdrop */
 .modal-content {
-  z-index: 1050;
+  z-index: 800;
+}
+
+.popover-above-modal {
+  z-index: 900; /* Ensure it appears above the modal content */
 }

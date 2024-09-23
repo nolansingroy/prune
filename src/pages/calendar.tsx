@@ -88,6 +88,7 @@ export default function Calendar() {
     return (
       <>
         <i>{eventInfo.event.title}</i>
+        {location && <div>{location}</div>}
       </>
     );
   };
