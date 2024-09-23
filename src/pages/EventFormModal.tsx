@@ -1,3 +1,4 @@
+"use client";
 import React, { useState, ChangeEvent, MouseEvent, useEffect } from "react";
 import {
   Dialog,
@@ -9,13 +10,20 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { CaretSortIcon, CheckIcon } from "@radix-ui/react-icons";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { EventInput } from "@/interfaces/types";
@@ -44,7 +52,13 @@ interface EventFormDialogProps {
   editAll?: boolean;
 }
 
-const presetLocations = ["Kraken 1", "Kraken 2", "Kraken 3"];
+const presetLocations = [
+  { value: "Kraken 1", label: "Kraken 1" },
+  { value: "Kraken 2", label: "Kraken 2" },
+  { value: "Kraken 3", label: "Kraken 3" },
+  { value: "location4", label: "Location 4" },
+  { value: "location5", label: "Location 5" },
+];
 
 const EventFormDialog: React.FC<EventFormDialogProps> = ({
   isOpen,
@@ -56,7 +70,7 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
 }) => {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [location, setLocation] = useState("");
+  const [location, setLocation] = useState(""); // Default location
   const [date, setDate] = useState("");
   const [isBackgroundEvent, setIsBackgroundEvent] = useState(true);
   const [startTime, setStartTime] = useState("");
@@ -65,38 +79,8 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
   const [daysOfWeek, setDaysOfWeek] = useState<number[]>([]);
   const [startRecur, setStartRecur] = useState("");
   const [endRecur, setEndRecur] = useState("");
-
-  // useEffect(() => {
-  //   if (event) {
-  //     setTitle(event.title || "");
-  //     setDescription(event.description || "");
-  //     setLocation(event.location || "");
-  //     setIsBackgroundEvent(event.isBackgroundEvent || false);
-  //     setDate(
-  //       event.startDate ? event.startDate.toISOString().split("T")[0] : ""
-  //     );
-  //     setStartTime(
-  //       event.start
-  //         ? event.start
-  //             .toLocaleTimeString("en-US", { hour12: false })
-  //             .substring(0, 5)
-  //         : ""
-  //     );
-  //     setEndTime(
-  //       event.end
-  //         ? event.end
-  //             .toLocaleTimeString("en-US", { hour12: false })
-  //             .substring(0, 5)
-  //         : ""
-  //     );
-  //     if (event.recurrence) {
-  //       setIsRecurring(true);
-  //       setDaysOfWeek(event.recurrence.daysOfWeek || []);
-  //       setStartRecur(event.recurrence.startRecur || "");
-  //       setEndRecur(event.recurrence.endRecur || "");
-  //     }
-  //   }
-  // }, [event, isOpen]);
+  const [open, setOpen] = useState(false);
+  const [filteredLocations, setFilteredLocations] = useState(presetLocations);
 
   useEffect(() => {
     if (event) {
@@ -104,12 +88,9 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
       setDescription(event.description || "");
       setLocation(event.location || "");
       setIsBackgroundEvent(event.isBackgroundEvent || false);
-
-      // Use startDate to populate the date input, format it as YYYY-MM-DD
       setDate(
         event.startDate ? event.startDate.toISOString().split("T")[0] : ""
       );
-
       setStartTime(
         event.start
           ? event.start
@@ -162,7 +143,7 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
   const handleClose = () => {
     setTitle("");
     setDescription("");
-    setLocation("");
+    setLocation(""); // Reset to default location when closed
     setDate("");
     setIsBackgroundEvent(true);
     setStartTime("");
@@ -174,9 +155,31 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
     onClose();
   };
 
+  const handleLocationSelect = (currentValue: string) => {
+    setLocation(currentValue);
+    setOpen(false);
+  };
+
+  const handleLocationInputChange = (value: string) => {
+    setLocation(value);
+
+    const filtered = presetLocations.filter((loc) =>
+      loc.label.toLowerCase().includes(value.toLowerCase())
+    );
+    setFilteredLocations(filtered);
+  };
+
+  const handleLocationInputKeyPress = (
+    event: React.KeyboardEvent<HTMLInputElement>
+  ) => {
+    if (event.key === "Enter") {
+      // When the Enter key is pressed, close the popover and save the input
+      setOpen(false);
+    }
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      {/* <div className="modal-backdrop" /> */}
       <DialogContent className="modal-content">
         <DialogHeader>
           <DialogTitle>
@@ -211,23 +214,64 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
               }
             />
           </div>
+
           <div>
             <Label className="block text-sm font-medium text-gray-700">
               Location
             </Label>
-            <Select value={location} onValueChange={setLocation}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select a location" />
-              </SelectTrigger>
-              <SelectContent>
-                {presetLocations.map((loc) => (
-                  <SelectItem key={loc} value={loc}>
-                    {loc}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Popover open={open} onOpenChange={setOpen}>
+              <PopoverTrigger
+                asChild
+                className="w-[200px] p-0 popover-above-modal"
+              >
+                <Button
+                  variant="outline"
+                  role="combobox"
+                  aria-expanded={open}
+                  className="w-[200px] justify-between pl-4"
+                >
+                  {location
+                    ? presetLocations.find((loc) => loc.value === location)
+                        ?.label || location
+                    : "Select location..."}
+                  <CaretSortIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-[200px] p-0 popover-above-modal">
+                <Command>
+                  <CommandInput
+                    placeholder="Search location..."
+                    value={location}
+                    onValueChange={handleLocationInputChange}
+                    onKeyDown={handleLocationInputKeyPress} // Added listener for pressing Enter
+                    className="h-9"
+                  />
+                  <CommandList>
+                    <CommandEmpty>Press Enter to Add.</CommandEmpty>
+                    <CommandGroup>
+                      {filteredLocations.map((loc) => (
+                        <CommandItem
+                          key={loc.value}
+                          value={loc.value}
+                          onSelect={() => handleLocationSelect(loc.value)}
+                        >
+                          {loc.label}
+                          <CheckIcon
+                            className={`ml-auto h-4 w-4 ${
+                              location === loc.value
+                                ? "opacity-100"
+                                : "opacity-0"
+                            }`}
+                          />
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                  </CommandList>
+                </Command>
+              </PopoverContent>
+            </Popover>
           </div>
+
           <div className="space-y-2">
             <Label className="block text-sm font-medium text-gray-700">
               Availability Event
@@ -273,35 +317,6 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
             </div>
           </div>
 
-          {/* <div className="flex items-center space-x-6">
-            <div className="flex flex-col">
-              <Label className="text-sm font-medium text-gray-700">
-                Start Time
-              </Label>
-              <Input
-                type="time"
-                value={startTime}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                  setStartTime(e.target.value)
-                }
-                className="w-32 px-2 py-2 text-center rounded-md border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-              />
-            </div>
-            <div className="flex flex-col">
-              <Label className="text-sm font-medium text-gray-700">
-                End Time
-              </Label>
-              <Input
-                type="time"
-                value={endTime}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                  setEndTime(e.target.value)
-                }
-                className="w-32 px-2 py-2 text-center rounded-md border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-              />
-            </div>
-          </div> */}
-
           <div className="flex items-center space-x-6">
             <div className="flex flex-col">
               <Label className="text-sm font-medium text-gray-700">Date</Label>
@@ -321,7 +336,7 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
               <Input
                 type="time"
                 value={startTime}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                onChange={(e: ChangeEvent<HTMLInputElement>) =>
                   setStartTime(e.target.value)
                 }
                 className="w-32 px-2 py-2 text-center rounded-md border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
@@ -334,68 +349,13 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
               <Input
                 type="time"
                 value={endTime}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                onChange={(e: ChangeEvent<HTMLInputElement>) =>
                   setEndTime(e.target.value)
                 }
                 className="w-32 px-2 py-2 text-center rounded-md border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
               />
             </div>
           </div>
-
-          {isRecurring && (
-            <>
-              <div>
-                <Label className="block text-sm font-medium text-gray-700">
-                  Days of Week
-                </Label>
-                <div className="flex space-x-2">
-                  {[0, 1, 2, 3, 4, 5, 6].map((day) => (
-                    <div key={day} className="flex flex-col items-center">
-                      <Checkbox
-                        checked={daysOfWeek.includes(day)}
-                        onCheckedChange={(checked) =>
-                          setDaysOfWeek((prev) =>
-                            checked
-                              ? [...prev, day]
-                              : prev.filter((d) => d !== day)
-                          )
-                        }
-                      />
-                      <Label className="mt-1">
-                        {["Su", "M", "T", "W", "Th", "F", "Sa"][day]}
-                      </Label>
-                    </div>
-                  ))}
-                </div>
-              </div>
-              <div className="flex space-x-4">
-                <div className="flex flex-col">
-                  <Label className="block text-sm font-medium text-gray-700">
-                    Start Recurrence
-                  </Label>
-                  <Input
-                    type="date"
-                    value={startRecur}
-                    onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                      setStartRecur(e.target.value)
-                    }
-                  />
-                </div>
-                <div className="flex flex-col">
-                  <Label className="block text-sm font-medium text-gray-700">
-                    End Recurrence
-                  </Label>
-                  <Input
-                    type="date"
-                    value={endRecur}
-                    onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                      setEndRecur(e.target.value)
-                    }
-                  />
-                </div>
-              </div>
-            </>
-          )}
         </div>
         <DialogFooter>
           <Button variant="secondary" onClick={handleClose}>
