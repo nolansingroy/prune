@@ -754,7 +754,7 @@ export default function Calendar() {
                   },
                   timeGridDay: {
                     // nowIndicator: true,
-                    slotDuration: "00:10:00",
+                    slotDuration: "00:15:00",
                   },
                 }}
               />
