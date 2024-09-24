@@ -9,10 +9,26 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
+// import { Label } from "@/components/ui/label";
+// import { Checkbox } from "@/components/ui/checkbox";
 import { EventInput } from "@/interfaces/types";
 import { RRule } from "rrule";
+import { CaretSortIcon, CheckIcon } from "@radix-ui/react-icons";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 
 interface AvailabilityDialogProps {
   isOpen: boolean;
@@ -36,7 +52,13 @@ interface AvailabilityDialogProps {
   event?: EventInput | null;
 }
 
-const presetLocations = ["Kraken 1", "Kraken 2", "Kraken 3"];
+const presetLocations = [
+  { value: "Kraken 1", label: "Kraken 1" },
+  { value: "Kraken 2", label: "Kraken 2" },
+  { value: "Kraken 3", label: "Kraken 3" },
+  { value: "location4", label: "Location 4" },
+  { value: "location5", label: "Location 5" },
+];
 
 const AvailabilityDialog: React.FC<AvailabilityDialogProps> = ({
   isOpen,
@@ -55,6 +77,8 @@ const AvailabilityDialog: React.FC<AvailabilityDialogProps> = ({
   const [daysOfWeek, setDaysOfWeek] = useState<number[]>([]);
   const [startRecur, setStartRecur] = useState("");
   const [endRecur, setEndRecur] = useState("");
+  const [open, setOpen] = useState(false);
+  const [filteredLocations, setFilteredLocations] = useState(presetLocations);
 
   useEffect(() => {
     if (event) {
@@ -139,6 +163,29 @@ const AvailabilityDialog: React.FC<AvailabilityDialogProps> = ({
     onClose();
   };
 
+  const handleLocationSelect = (currentValue: string) => {
+    setLocation(currentValue);
+    setOpen(false);
+  };
+
+  const handleLocationInputChange = (value: string) => {
+    setLocation(value);
+
+    const filtered = presetLocations.filter((loc) =>
+      loc.label.toLowerCase().includes(value.toLowerCase())
+    );
+    setFilteredLocations(filtered);
+  };
+
+  const handleLocationInputKeyPress = (
+    event: React.KeyboardEvent<HTMLInputElement>
+  ) => {
+    if (event.key === "Enter") {
+      // When the Enter key is pressed, close the popover and save the input
+      setOpen(false);
+    }
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent>
@@ -175,7 +222,7 @@ const AvailabilityDialog: React.FC<AvailabilityDialogProps> = ({
               }
             />
           </div>
-          <div>
+          {/* <div>
             <Label className="block text-sm font-medium text-gray-700">
               Location
             </Label>
@@ -186,6 +233,63 @@ const AvailabilityDialog: React.FC<AvailabilityDialogProps> = ({
               }
               placeholder="Select a location"
             />
+          </div> */}
+          <div>
+            <Label className="block text-sm font-medium text-gray-700">
+              Location
+            </Label>
+            <Popover open={open} onOpenChange={setOpen}>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  role="combobox"
+                  aria-expanded={open}
+                  className="w-[200px] justify-between"
+                  onClick={() => setOpen(!open)} // Toggle popover on click
+                >
+                  {location
+                    ? presetLocations.find((loc) => loc.value === location)
+                        ?.label || location
+                    : "Select location..."}
+                  <CaretSortIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-[200px] p-0 popover-above-modal">
+                <Command>
+                  <CommandInput
+                    placeholder="Search location..."
+                    value={location}
+                    onValueChange={handleLocationInputChange}
+                    onKeyDown={handleLocationInputKeyPress} // Handle keyboard input
+                    className="h-9"
+                  />
+                  <CommandList>
+                    <CommandEmpty>No locations found.</CommandEmpty>
+                    <CommandGroup>
+                      {filteredLocations.map((loc) => (
+                        <CommandItem
+                          key={loc.value}
+                          value={loc.value}
+                          onSelect={() => {
+                            handleLocationSelect(loc.value); // Set location
+                            setOpen(false); // Close the popover after selection
+                          }}
+                        >
+                          {loc.label}
+                          <CheckIcon
+                            className={`ml-auto h-4 w-4 ${
+                              location === loc.value
+                                ? "opacity-100"
+                                : "opacity-0"
+                            }`}
+                          />
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                  </CommandList>
+                </Command>
+              </PopoverContent>
+            </Popover>
           </div>
           <div className="space-y-2">
             <Label className="block text-sm font-medium text-gray-700">
