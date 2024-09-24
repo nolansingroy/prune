@@ -92,7 +92,7 @@ export default function Calendar() {
       </>
     );
   };
-
+  // add event to firestore
   const handleEventResize = async (resizeInfo: EventResizeDoneArg) => {
     try {
       const user = auth.currentUser;
