@@ -746,7 +746,9 @@ export default function Calendar() {
                 contentHeight="auto"
                 scrollTime="07:00:00" // Automatically scrolls to 7:00 AM on load
                 views={{
-                  dayGridMonth: { nowIndicator: true },
+                  dayGridMonth: {
+                    // nowIndicator: true
+                  },
                   timeGridWeek: {
                     // nowIndicator: true,
                     scrollTime: "07:00:00",
