@@ -102,13 +102,13 @@ const Header = () => {
             <DropdownMenuItem>
               <Link href="/calendar">Calendar</Link>
             </DropdownMenuItem>
-            <DropdownMenuItem disabled>Dashboard</DropdownMenuItem>
-            <DropdownMenuItem>
+            {/* <DropdownMenuItem disabled>Dashboard</DropdownMenuItem> */}
+            {/* <DropdownMenuItem>
               <Link href="/clients">Clients</Link>
-            </DropdownMenuItem>
+            </DropdownMenuItem> */}
             <DropdownMenuSeparator />
             <DropdownMenuItem>
-              <Link href="/settings">Settings</Link>
+              <Link href="/profile">Profile</Link>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={handleLogOut}>Logout</DropdownMenuItem>
