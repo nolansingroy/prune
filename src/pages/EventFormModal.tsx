@@ -215,7 +215,7 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
             />
           </div>
 
-          <div>
+          {/* <div>
             <Label className="block text-sm font-medium text-gray-700">
               Location
             </Label>
@@ -254,6 +254,64 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
                           key={loc.value}
                           value={loc.value}
                           onSelect={() => handleLocationSelect(loc.value)}
+                        >
+                          {loc.label}
+                          <CheckIcon
+                            className={`ml-auto h-4 w-4 ${
+                              location === loc.value
+                                ? "opacity-100"
+                                : "opacity-0"
+                            }`}
+                          />
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                  </CommandList>
+                </Command>
+              </PopoverContent>
+            </Popover>
+          </div> */}
+
+          <div>
+            <Label className="block text-sm font-medium text-gray-700">
+              Location
+            </Label>
+            <Popover open={open} onOpenChange={setOpen}>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  role="combobox"
+                  aria-expanded={open}
+                  className="w-[200px] justify-between"
+                  onClick={() => setOpen(!open)} // Toggle popover on click
+                >
+                  {location
+                    ? presetLocations.find((loc) => loc.value === location)
+                        ?.label || location
+                    : "Select location..."}
+                  <CaretSortIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-[200px] p-0 popover-above-modal">
+                <Command>
+                  <CommandInput
+                    placeholder="Search location..."
+                    value={location}
+                    onValueChange={handleLocationInputChange}
+                    onKeyDown={handleLocationInputKeyPress} // Handle keyboard input
+                    className="h-9"
+                  />
+                  <CommandList>
+                    <CommandEmpty>No locations found.</CommandEmpty>
+                    <CommandGroup>
+                      {filteredLocations.map((loc) => (
+                        <CommandItem
+                          key={loc.value}
+                          value={loc.value}
+                          onSelect={() => {
+                            handleLocationSelect(loc.value); // Set location
+                            setOpen(false); // Close the popover after selection
+                          }}
                         >
                           {loc.label}
                           <CheckIcon
