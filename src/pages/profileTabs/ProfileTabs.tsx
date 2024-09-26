@@ -52,7 +52,7 @@ interface ProfileTabsProps {
   setBookingDuration: (value: number) => void;
   handleAddBookingType: () => void;
   clients: Client[];
-  authUser: { uid: string };
+  authUser: { uid: string } | null; // Nullable authUser to prevent issues
   setClients: React.Dispatch<React.SetStateAction<Client[]>>;
 }
 
@@ -60,13 +60,13 @@ const ProfileTabs: React.FC<ProfileTabsProps> = ({
   userTimezone,
   handleTimezoneChange,
   profileData,
-  bookingTypes,
+  bookingTypes = [], // Provide default value as an empty array
   bookingName,
   setBookingName,
   bookingDuration,
   setBookingDuration,
   handleAddBookingType,
-  clients,
+  clients = [], // Provide default value as an empty array
   authUser,
   setClients,
 }) => {
@@ -90,13 +90,13 @@ const ProfileTabs: React.FC<ProfileTabsProps> = ({
           <h2 className="text-2xl font-semibold">Profile Information</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <p>
-              <strong>First Name:</strong> {profileData.firstName}
+              <strong>First Name:</strong> {profileData?.firstName || "N/A"}
             </p>
             <p>
-              <strong>Last Name:</strong> {profileData.lastName}
+              <strong>Last Name:</strong> {profileData?.lastName || "N/A"}
             </p>
             <p>
-              <strong>Email:</strong> {profileData.email}
+              <strong>Email:</strong> {profileData?.email || "N/A"}
             </p>
           </div>
 
@@ -117,7 +117,7 @@ const ProfileTabs: React.FC<ProfileTabsProps> = ({
               ))}
             </select>
             <p className="text-gray-500 mt-2">
-              Current timezone: {userTimezone}
+              Current timezone: {userTimezone || "N/A"}
             </p>
           </div>
         </div>
@@ -169,12 +169,15 @@ const ProfileTabs: React.FC<ProfileTabsProps> = ({
 
       {/* Clients Section */}
       <TabsContent value="clients">
-        {/* Pass setClients to ClientsTab to update client list */}
-        <ClientsTab
-          clients={clients}
-          authUser={authUser}
-          setClients={setClients}
-        />
+        {authUser ? (
+          <ClientsTab
+            clients={clients}
+            authUser={authUser}
+            setClients={setClients}
+          />
+        ) : (
+          <p>Loading clients...</p>
+        )}
       </TabsContent>
     </Tabs>
   );

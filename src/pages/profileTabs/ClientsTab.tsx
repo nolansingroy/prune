@@ -54,12 +54,13 @@ interface ClientsTabProps {
 }
 
 const ClientsTab: React.FC<ClientsTabProps> = ({
-  clients,
+  clients = [], // Provide a default empty array
   authUser,
   setClients,
 }) => {
   const [newClientData, setNewClientData] = useState(initialClientData); // Form data state
   const [editingClientId, setEditingClientId] = useState<string | null>(null); // Track if editing a client
+  const [loading, setLoading] = useState(true); // Loading state to show while fetching
 
   // Handle form input changes
   const handleInputChange = (
@@ -88,6 +89,7 @@ const ClientsTab: React.FC<ClientsTabProps> = ({
         ...doc.data(),
       })) as Client[];
       setClients(clientList);
+      setLoading(false); // Set loading to false after fetching
     }
   };
 
@@ -143,6 +145,10 @@ const ClientsTab: React.FC<ClientsTabProps> = ({
       fetchClients();
     }
   };
+
+  if (loading) {
+    return <p>Loading clients...</p>; // Display a loading message while fetching
+  }
 
   return (
     <div className="space-y-6 bg-gray-100 p-6 rounded-lg shadow-lg">
@@ -210,41 +216,45 @@ const ClientsTab: React.FC<ClientsTabProps> = ({
       {/* Clients List */}
       <div className="mt-6">
         <h2 className="text-xl font-semibold">Clients</h2>
-        <Table className="mt-4">
-          <TableHeader>
-            <TableRow>
-              <TableCell>First Name</TableCell>
-              <TableCell>Last Name</TableCell>
-              <TableCell>Status</TableCell>
-              <TableCell>Rate</TableCell>
-              <TableCell>Actions</TableCell>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {clients.map((client) => (
-              <TableRow key={client.docId}>
-                <TableCell>{client.firstName}</TableCell>
-                <TableCell>{client.lastName}</TableCell>
-                <TableCell>{client.status}</TableCell>
-                <TableCell>{client.defaultRate || "N/A"}</TableCell>
-                <TableCell>
-                  <Button
-                    className="mr-2"
-                    onClick={() => handleEditClient(client)}
-                  >
-                    Edit
-                  </Button>
-                  <Button
-                    variant="destructive"
-                    onClick={() => handleDeleteClient(client.docId)}
-                  >
-                    Delete
-                  </Button>
-                </TableCell>
+        {clients.length > 0 ? (
+          <Table className="mt-4">
+            <TableHeader>
+              <TableRow>
+                <TableCell>First Name</TableCell>
+                <TableCell>Last Name</TableCell>
+                <TableCell>Status</TableCell>
+                <TableCell>Rate</TableCell>
+                <TableCell>Actions</TableCell>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+            </TableHeader>
+            <TableBody>
+              {clients.map((client) => (
+                <TableRow key={client.docId}>
+                  <TableCell>{client.firstName}</TableCell>
+                  <TableCell>{client.lastName}</TableCell>
+                  <TableCell>{client.status}</TableCell>
+                  <TableCell>{client.defaultRate || "N/A"}</TableCell>
+                  <TableCell>
+                    <Button
+                      className="mr-2"
+                      onClick={() => handleEditClient(client)}
+                    >
+                      Edit
+                    </Button>
+                    <Button
+                      variant="destructive"
+                      onClick={() => handleDeleteClient(client.docId)}
+                    >
+                      Delete
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        ) : (
+          <p>No clients available.</p>
+        )}
       </div>
     </div>
   );
