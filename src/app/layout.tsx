@@ -8,16 +8,6 @@ import "./globals.css";
 import Header from "@/components/header";
 import Footer from "@/components/footer";
 
-const inter = Inter({ subsets: ["latin"] });
-const montserrat = Montserrat({ subsets: ["latin"] });
-
-const sourceSans3 = Source_Sans_3({
-  subsets: ["latin"],
-  weight: "700",
-  style: "normal",
-  display: "swap",
-});
-
 const exo_2 = Exo_2({
   subsets: ["latin"],
   weight: "700",
