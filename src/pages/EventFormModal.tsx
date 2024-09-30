@@ -27,6 +27,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { EventInput } from "@/interfaces/types";
+import { Switch } from "@headlessui/react";
 
 interface EventFormDialogProps {
   isOpen: boolean;
@@ -39,6 +40,7 @@ interface EventFormDialogProps {
     date?: string;
     startTime: string;
     endTime: string;
+    paid: boolean;
     recurrence?: {
       daysOfWeek: number[];
       startTime: string;
@@ -81,6 +83,7 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
   const [endRecur, setEndRecur] = useState("");
   const [open, setOpen] = useState(false);
   const [filteredLocations, setFilteredLocations] = useState(presetLocations);
+  const [paid, setPaid] = useState(false); // Defaults to false (Unpaid)
 
   useEffect(() => {
     if (event) {
@@ -88,6 +91,7 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
       setDescription(event.description || "");
       setLocation(event.location || "");
       setIsBackgroundEvent(event.isBackgroundEvent || false);
+      setPaid(event.paid || false);
       setDate(
         event.startDate ? event.startDate.toISOString().split("T")[0] : ""
       );
@@ -125,6 +129,7 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
       date: showDateSelector ? date : undefined,
       startTime,
       endTime,
+      paid,
       recurrence: isRecurring
         ? {
             daysOfWeek,
@@ -328,6 +333,33 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
                 </Command>
               </PopoverContent>
             </Popover>
+          </div>
+          {/* Payment Status Toggle */}
+          <div className="space-y-2">
+            <Label className="block text-sm font-medium text-gray-700">
+              Payment Status
+            </Label>
+            <div className="flex items-center space-x-2">
+              <span className="text-sm font-medium text-gray-700">
+                {paid ? "Paid" : "Unpaid"}
+              </span>
+              <Switch
+                checked={paid}
+                onChange={setPaid}
+                className={`${
+                  paid ? "bg-blue-600" : "bg-gray-200"
+                } relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none`}
+              >
+                <span
+                  className={`${
+                    paid ? "translate-x-6" : "translate-x-1"
+                  } inline-block h-4 w-4 transform bg-white rounded-full transition-transform`}
+                />
+              </Switch>
+            </div>
+            <p className="mt-2 text-sm text-gray-500">
+              Toggle to set the event as Paid or Unpaid.
+            </p>
           </div>
 
           <div className="space-y-2">

@@ -29,4 +29,5 @@ export interface EventInput {
 
   // New field: Map for tracking references of instance documents
   instanceMap?: { [instanceDate: string]: string }; // Maps instance date to document ID
+  paid?: boolean; // Flag to indicate if the event is paid
 }
