@@ -1,21 +1,11 @@
 // ProfilePage.tsx
 "use client";
-import React, { useEffect, useState, ChangeEvent } from "react";
+import React, { useEffect, useState } from "react";
 import { doc, getDoc, updateDoc } from "firebase/firestore";
 import { db } from "../../firebase";
 import { useFirebaseAuth } from "../services/authService";
 import ProfileTabs from "./profileTabs/ProfileTabs"; // Import ProfileTabs
-
-interface Client {
-  docId: string;
-  stripeId: string;
-  status: string;
-  active: boolean;
-  deprecated: boolean;
-  defaultRate?: number | null;
-  firstName: string;
-  lastName: string;
-}
+import { Client } from "@/interfaces/clients"; // Import the Client interface
 
 const ProfilePage = () => {
   const { authUser } = useFirebaseAuth();
