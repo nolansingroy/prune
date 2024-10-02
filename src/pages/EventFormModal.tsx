@@ -72,7 +72,7 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
 }) => {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [location, setLocation] = useState(""); // Default location
+  const [location, setLocation] = useState("");
   const [date, setDate] = useState("");
   const [isBackgroundEvent, setIsBackgroundEvent] = useState(true);
   const [startTime, setStartTime] = useState("");
@@ -90,7 +90,7 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
       setTitle(event.title || "");
       setDescription(event.description || "");
       setLocation(event.location || "");
-      setIsBackgroundEvent(event.isBackgroundEvent || false);
+      setIsBackgroundEvent(event.isBackgroundEvent || true);
       setPaid(event.paid || false);
       setDate(
         event.startDate ? event.startDate.toISOString().split("T")[0] : ""
@@ -148,7 +148,7 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
   const handleClose = () => {
     setTitle("");
     setDescription("");
-    setLocation(""); // Reset to default location when closed
+    setLocation("");
     setDate("");
     setIsBackgroundEvent(true);
     setStartTime("");
@@ -178,7 +178,6 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
     event: React.KeyboardEvent<HTMLInputElement>
   ) => {
     if (event.key === "Enter") {
-      // When the Enter key is pressed, close the popover and save the input
       setOpen(false);
     }
   };
@@ -188,12 +187,18 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
       <DialogContent className="modal-content">
         <DialogHeader>
           <DialogTitle>
-            {editAll ? "Edit All Instances" : "Create Availability"}
+            {editAll
+              ? "Edit All Instances"
+              : isBackgroundEvent
+              ? "Create Availability"
+              : "Create Booking"}
           </DialogTitle>
           <DialogDescription>
             {editAll
               ? "Edit all instances of this recurring event"
-              : "Edit this availability event"}
+              : isBackgroundEvent
+              ? "Edit this availability event"
+              : "Edit this booking event"}
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4">
@@ -219,64 +224,6 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
               }
             />
           </div>
-
-          {/* <div>
-            <Label className="block text-sm font-medium text-gray-700">
-              Location
-            </Label>
-            <Popover open={open} onOpenChange={setOpen}>
-              <PopoverTrigger
-                asChild
-                className="w-[200px] p-0 popover-above-modal"
-              >
-                <Button
-                  variant="outline"
-                  role="combobox"
-                  aria-expanded={open}
-                  className="w-[200px] justify-between pl-4"
-                >
-                  {location
-                    ? presetLocations.find((loc) => loc.value === location)
-                        ?.label || location
-                    : "Select location..."}
-                  <CaretSortIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-[200px] p-0 popover-above-modal">
-                <Command>
-                  <CommandInput
-                    placeholder="Search location..."
-                    value={location}
-                    onValueChange={handleLocationInputChange}
-                    onKeyDown={handleLocationInputKeyPress} // Added listener for pressing Enter
-                    className="h-9"
-                  />
-                  <CommandList>
-                    <CommandEmpty>Press Enter to Add.</CommandEmpty>
-                    <CommandGroup>
-                      {filteredLocations.map((loc) => (
-                        <CommandItem
-                          key={loc.value}
-                          value={loc.value}
-                          onSelect={() => handleLocationSelect(loc.value)}
-                        >
-                          {loc.label}
-                          <CheckIcon
-                            className={`ml-auto h-4 w-4 ${
-                              location === loc.value
-                                ? "opacity-100"
-                                : "opacity-0"
-                            }`}
-                          />
-                        </CommandItem>
-                      ))}
-                    </CommandGroup>
-                  </CommandList>
-                </Command>
-              </PopoverContent>
-            </Popover>
-          </div> */}
-
           <div>
             <Label className="block text-sm font-medium text-gray-700">
               Location
@@ -334,79 +281,167 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
               </PopoverContent>
             </Popover>
           </div>
-          {/* Payment Status Toggle */}
+
+          {/* Event Type Toggle (Create Availability / Create Booking) */}
           <div className="space-y-2">
             <Label className="block text-sm font-medium text-gray-700">
-              Payment Status
+              Event Type
             </Label>
-            <div className="flex items-center space-x-2">
-              <span className="text-sm font-medium text-gray-700">
-                {paid ? "Paid" : "Unpaid"}
-              </span>
-              <Switch
-                checked={paid}
-                onChange={setPaid}
-                className={`${
-                  paid ? "bg-blue-600" : "bg-gray-200"
-                } relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none`}
-              >
-                <span
-                  className={`${
-                    paid ? "translate-x-6" : "translate-x-1"
-                  } inline-block h-4 w-4 transform bg-white rounded-full transition-transform`}
+            <div className="space-y-2">
+              <div className="flex items-center">
+                <input
+                  type="radio"
+                  name="eventType"
+                  value="availability"
+                  checked={isBackgroundEvent}
+                  onChange={() => setIsBackgroundEvent(true)}
+                  className="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500"
                 />
-              </Switch>
+                <span className="ml-2 text-sm font-medium text-gray-700">
+                  Create Availability
+                </span>
+              </div>
+              <div className="flex items-center">
+                <input
+                  type="radio"
+                  name="eventType"
+                  value="booking"
+                  checked={!isBackgroundEvent}
+                  onChange={() => setIsBackgroundEvent(false)}
+                  className="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                />
+                <span className="ml-2 text-sm font-medium text-gray-700">
+                  Create Booking
+                </span>
+              </div>
             </div>
             <p className="mt-2 text-sm text-gray-500">
-              Toggle to set the event as Paid or Unpaid.
+              Select to set the event as Availability or Booking.
             </p>
           </div>
 
-          <div className="space-y-2">
-            <Label className="block text-sm font-medium text-gray-700">
-              Availability Event
-            </Label>
-            <div className="flex items-center space-x-2">
-              <Checkbox
-                checked={isBackgroundEvent}
-                onCheckedChange={(checked) =>
-                  setIsBackgroundEvent(checked !== "indeterminate" && checked)
-                }
-                id="backgroundEventCheckbox"
-              />
-              <Label
-                htmlFor="backgroundEventCheckbox"
-                className="text-sm font-medium text-gray-700"
-              >
-                Is Availability Event
+          {/* Payment Status Toggle - Conditionally Rendered */}
+          {!isBackgroundEvent && (
+            <div className="space-y-2">
+              <Label className="block text-sm font-medium text-gray-700">
+                Payment Status
               </Label>
+              <div className="flex items-center space-x-2">
+                <span className="text-sm font-medium text-gray-700">
+                  {paid ? "Paid" : "Unpaid"}
+                </span>
+                <Switch
+                  checked={paid}
+                  onChange={setPaid}
+                  className={`${
+                    paid ? "bg-blue-600" : "bg-gray-200"
+                  } relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none`}
+                >
+                  <span
+                    className={`${
+                      paid ? "translate-x-6" : "translate-x-1"
+                    } inline-block h-4 w-4 transform bg-white rounded-full transition-transform`}
+                  />
+                </Switch>
+              </div>
+              <p className="mt-2 text-sm text-gray-500">
+                Toggle to set the event as Paid or Unpaid.
+              </p>
             </div>
-            <p className="mt-2 text-sm text-gray-500">
-              Will show on calendar as background / Available time
-            </p>
-          </div>
+          )}
 
+          {/* Recurring Event Toggle (Single Event / Recurring Event) */}
           <div className="space-y-2">
             <Label className="block text-sm font-medium text-gray-700">
               Recurring Event
             </Label>
-            <div className="flex items-center space-x-2">
-              <Checkbox
-                checked={isRecurring}
-                onCheckedChange={(checked) =>
-                  setIsRecurring(checked !== "indeterminate" && checked)
-                }
-                id="recurringEventCheckbox"
-              />
-              <Label
-                htmlFor="recurringEventCheckbox"
-                className="text-sm font-medium text-gray-700"
-              >
-                Is Recurring
-              </Label>
+            <div className="space-y-2">
+              <div className="flex items-center">
+                <input
+                  type="radio"
+                  name="recurringEvent"
+                  value="single"
+                  checked={!isRecurring}
+                  onChange={() => setIsRecurring(false)}
+                  className="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                />
+                <span className="ml-2 text-sm font-medium text-gray-700">
+                  Single Event
+                </span>
+              </div>
+              <div className="flex items-center">
+                <input
+                  type="radio"
+                  name="recurringEvent"
+                  value="recurring"
+                  checked={isRecurring}
+                  onChange={() => setIsRecurring(true)}
+                  className="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                />
+                <span className="ml-2 text-sm font-medium text-gray-700">
+                  Recurring Event
+                </span>
+              </div>
             </div>
           </div>
 
+          {/* Conditional Rendering for Recurring Event */}
+          {isRecurring && (
+            <>
+              <div>
+                <Label className="block text-sm font-medium text-gray-700">
+                  Days of Week
+                </Label>
+                <div className="flex space-x-2">
+                  {[0, 1, 2, 3, 4, 5, 6].map((day) => (
+                    <div key={day} className="flex flex-col items-center">
+                      <Checkbox
+                        checked={daysOfWeek.includes(day)}
+                        onCheckedChange={(checked) =>
+                          setDaysOfWeek((prev) =>
+                            checked
+                              ? [...prev, day]
+                              : prev.filter((d) => d !== day)
+                          )
+                        }
+                      />
+                      <Label className="mt-1">
+                        {["Su", "M", "T", "W", "Th", "F", "Sa"][day]}
+                      </Label>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div className="flex space-x-4">
+                <div className="flex flex-col">
+                  <Label className="block text-sm font-medium text-gray-700">
+                    Start Recurrence
+                  </Label>
+                  <Input
+                    type="date"
+                    value={startRecur}
+                    onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                      setStartRecur(e.target.value)
+                    }
+                  />
+                </div>
+                <div className="flex flex-col">
+                  <Label className="block text-sm font-medium text-gray-700">
+                    End Recurrence
+                  </Label>
+                  <Input
+                    type="date"
+                    value={endRecur}
+                    onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                      setEndRecur(e.target.value)
+                    }
+                  />
+                </div>
+              </div>
+            </>
+          )}
+
+          {/* Date and Time Inputs */}
           <div className="flex items-center space-x-6">
             <div className="flex flex-col">
               <Label className="text-sm font-medium text-gray-700">Date</Label>
