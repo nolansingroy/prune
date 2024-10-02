@@ -90,7 +90,7 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
       setTitle(event.title || "");
       setDescription(event.description || "");
       setLocation(event.location || "");
-      setIsBackgroundEvent(event.isBackgroundEvent || false);
+      setIsBackgroundEvent(event.isBackgroundEvent || true);
       setPaid(event.paid || false);
       setDate(
         event.startDate ? event.startDate.toISOString().split("T")[0] : ""
@@ -219,64 +219,6 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
               }
             />
           </div>
-
-          {/* <div>
-            <Label className="block text-sm font-medium text-gray-700">
-              Location
-            </Label>
-            <Popover open={open} onOpenChange={setOpen}>
-              <PopoverTrigger
-                asChild
-                className="w-[200px] p-0 popover-above-modal"
-              >
-                <Button
-                  variant="outline"
-                  role="combobox"
-                  aria-expanded={open}
-                  className="w-[200px] justify-between pl-4"
-                >
-                  {location
-                    ? presetLocations.find((loc) => loc.value === location)
-                        ?.label || location
-                    : "Select location..."}
-                  <CaretSortIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-[200px] p-0 popover-above-modal">
-                <Command>
-                  <CommandInput
-                    placeholder="Search location..."
-                    value={location}
-                    onValueChange={handleLocationInputChange}
-                    onKeyDown={handleLocationInputKeyPress} // Added listener for pressing Enter
-                    className="h-9"
-                  />
-                  <CommandList>
-                    <CommandEmpty>Press Enter to Add.</CommandEmpty>
-                    <CommandGroup>
-                      {filteredLocations.map((loc) => (
-                        <CommandItem
-                          key={loc.value}
-                          value={loc.value}
-                          onSelect={() => handleLocationSelect(loc.value)}
-                        >
-                          {loc.label}
-                          <CheckIcon
-                            className={`ml-auto h-4 w-4 ${
-                              location === loc.value
-                                ? "opacity-100"
-                                : "opacity-0"
-                            }`}
-                          />
-                        </CommandItem>
-                      ))}
-                    </CommandGroup>
-                  </CommandList>
-                </Command>
-              </PopoverContent>
-            </Popover>
-          </div> */}
-
           <div>
             <Label className="block text-sm font-medium text-gray-700">
               Location
@@ -334,57 +276,65 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
               </PopoverContent>
             </Popover>
           </div>
-          {/* Payment Status Toggle */}
+
+          {/* Event Type Toggle */}
           <div className="space-y-2">
             <Label className="block text-sm font-medium text-gray-700">
-              Payment Status
+              Event Type
             </Label>
             <div className="flex items-center space-x-2">
-              <span className="text-sm font-medium text-gray-700">
-                {paid ? "Paid" : "Unpaid"}
-              </span>
+              <span className="text-sm font-medium text-gray-700">Booking</span>
               <Switch
-                checked={paid}
-                onChange={setPaid}
+                checked={isBackgroundEvent}
+                onChange={setIsBackgroundEvent}
                 className={`${
-                  paid ? "bg-blue-600" : "bg-gray-200"
+                  isBackgroundEvent ? "bg-blue-600" : "bg-gray-200"
                 } relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none`}
               >
                 <span
                   className={`${
-                    paid ? "translate-x-6" : "translate-x-1"
+                    isBackgroundEvent ? "translate-x-6" : "translate-x-1"
                   } inline-block h-4 w-4 transform bg-white rounded-full transition-transform`}
                 />
               </Switch>
+              <span className="text-sm font-medium text-gray-700">
+                Availability
+              </span>
             </div>
             <p className="mt-2 text-sm text-gray-500">
-              Toggle to set the event as Paid or Unpaid.
+              Toggle to set the event as Booking or Availability.
             </p>
           </div>
 
-          <div className="space-y-2">
-            <Label className="block text-sm font-medium text-gray-700">
-              Availability Event
-            </Label>
-            <div className="flex items-center space-x-2">
-              <Checkbox
-                checked={isBackgroundEvent}
-                onCheckedChange={(checked) =>
-                  setIsBackgroundEvent(checked !== "indeterminate" && checked)
-                }
-                id="backgroundEventCheckbox"
-              />
-              <Label
-                htmlFor="backgroundEventCheckbox"
-                className="text-sm font-medium text-gray-700"
-              >
-                Is Availability Event
+          {/* Payment Status Toggle - Conditionally Rendered */}
+          {!isBackgroundEvent && (
+            <div className="space-y-2">
+              <Label className="block text-sm font-medium text-gray-700">
+                Payment Status
               </Label>
+              <div className="flex items-center space-x-2">
+                <span className="text-sm font-medium text-gray-700">
+                  {paid ? "Paid" : "Unpaid"}
+                </span>
+                <Switch
+                  checked={paid}
+                  onChange={setPaid}
+                  className={`${
+                    paid ? "bg-blue-600" : "bg-gray-200"
+                  } relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none`}
+                >
+                  <span
+                    className={`${
+                      paid ? "translate-x-6" : "translate-x-1"
+                    } inline-block h-4 w-4 transform bg-white rounded-full transition-transform`}
+                  />
+                </Switch>
+              </div>
+              <p className="mt-2 text-sm text-gray-500">
+                Toggle to set the event as Paid or Unpaid.
+              </p>
             </div>
-            <p className="mt-2 text-sm text-gray-500">
-              Will show on calendar as background / Available time
-            </p>
-          </div>
+          )}
 
           <div className="space-y-2">
             <Label className="block text-sm font-medium text-gray-700">
