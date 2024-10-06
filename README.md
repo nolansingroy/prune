@@ -51,13 +51,13 @@ npx shadcn-ui@latest add navigation-menu
 
 # issues identified while reviewing the code :
 
-- why when pressing on the drawer : "profile, calendar" on desktop view, sometimes it navigates and sometimes it does not ?
-- we have a hydration error, most likely caused by renders on sever does not match client content.
-- why do you have a mix between the app router and the pages router ??
-- i recommend to use only the app router and each path has a page.tsx so that we can make the page async and do crud on the server and pass only the result to the client.
-- i noticed that most pages are rendered on client. this can be a limitation as cannot use server inhancements and benefits.
-- using server actions in forms can inhance speed and resources.
-- from where the user can access "My Available time" ??
-- priority is figma design or tickets ?? what is priorety for MVP
-- does UI needs to be changed for release ?? because i normally start with UI to create re-useble components. it wil make the development faster and easier !!
-- noticed that tickets are functional issues .. starts with that ?? whats the priority ??
+# Changelog
+
+- removed the pages router
+- added next-loader to maintain smooth transitions
+- fixed header drawe bug where clicking links does not close the drawer
+- server rendered all pages
+- created paths on app router to organise folder structure
+- fixed footer on viewport in auth pages
+- impove the speed of page renders by server rendering pages to prevent loading unnessesary packeges to the client
+- fixed a bug where calender page had multiple renders in a single session.
