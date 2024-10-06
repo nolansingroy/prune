@@ -3,7 +3,7 @@ import { Inter } from "next/font/google";
 import { Montserrat } from "next/font/google";
 import { Source_Sans_3 } from "next/font/google";
 import { Exo_2 } from "next/font/google";
-import "./globals.css";
+import "../globals.css";
 
 import Header from "@/components/header";
 import Footer from "@/components/footer";

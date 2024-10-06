@@ -4,7 +4,7 @@ import Image from "next/image";
 
 const Footer: React.FC = () => {
   return (
-    <footer className="bg-custom-fade-blue text-custom-cream">
+    <footer className="bg-custom-fade-blue text-custom-cream mt-auto">
       <nav className="flex grid-cols-1 md:flex-row md:gap-16 p-4 justify-between">
         {/* Contact Us with email link on the left */}
         <div className="text-2xl md:col-span-1 flex flex-col md:flex-row items-start md:items-center md:space-x-4">

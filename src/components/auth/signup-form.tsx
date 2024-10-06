@@ -1,18 +1,19 @@
+"use client";
+
+import React from "react";
 import { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/router";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { auth } from "../../firebase";
+import { auth } from "../../../firebase";
 import {
   createUserWithEmailAndPassword,
   GoogleAuthProvider,
   signInWithPopup,
   updateProfile,
 } from "firebase/auth";
-
-import { createUser } from "../services/userService";
+import { createUser } from "@/services/userService";
 import { Timestamp } from "firebase/firestore";
-
 import {
   Card,
   CardContent,
@@ -23,7 +24,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-const SignUpPage = () => {
+export default function SignupForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [firstName, setFirstName] = useState("");
@@ -90,79 +91,75 @@ const SignUpPage = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center text-gray-800">
-      <Card className="mx-auto max-w-sm">
-        <CardHeader>
-          <CardTitle className="text-xl text-black">Sign Up</CardTitle>
-          <CardDescription>
-            Enter your information to create an account
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid gap-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="grid gap-2">
-                <Label htmlFor="first-name">First name</Label>
-                <Input
-                  id="first-name"
-                  placeholder="Max"
-                  required
-                  value={firstName}
-                  onChange={(e) => setFirstName(e.target.value)}
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="last-name">Last name</Label>
-                <Input
-                  id="last-name"
-                  placeholder="Robinson"
-                  required
-                  value={lastName}
-                  onChange={(e) => setLastName(e.target.value)}
-                />
-              </div>
-            </div>
+    <Card className="mx-auto max-w-sm">
+      <CardHeader>
+        <CardTitle className="text-xl text-black">Sign Up</CardTitle>
+        <CardDescription>
+          Enter your information to create an account
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="grid gap-4">
+          <div className="grid grid-cols-2 gap-4">
             <div className="grid gap-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="first-name">First name</Label>
               <Input
-                id="email"
-                type="email"
-                placeholder="m@example.com"
+                id="first-name"
+                placeholder="Max"
                 required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                value={firstName}
+                onChange={(e) => setFirstName(e.target.value)}
               />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="last-name">Last name</Label>
               <Input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                id="last-name"
+                placeholder="Robinson"
+                required
+                value={lastName}
+                onChange={(e) => setLastName(e.target.value)}
               />
             </div>
-            <Button type="submit" className="w-full" onClick={handleSignUp}>
-              Create an account
-            </Button>
-            {/* <Button
-              variant="outline"
-              className="w-full"
-              onClick={handleGoogleSignUp}
-            >
-              Sign up with Google
-            </Button> */}
           </div>
-          <div className="mt-4 text-center text-sm">
-            Already have an account?{" "}
-            <Link href="/login" className="underline">
-              Sign in
-            </Link>
+          <div className="grid gap-2">
+            <Label htmlFor="email">Email</Label>
+            <Input
+              id="email"
+              type="email"
+              placeholder="m@example.com"
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+            />
           </div>
-        </CardContent>
-      </Card>
-    </div>
+          <div className="grid gap-2">
+            <Label htmlFor="password">Password</Label>
+            <Input
+              id="password"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
+          </div>
+          <Button type="submit" className="w-full" onClick={handleSignUp}>
+            Create an account
+          </Button>
+          {/* <Button
+          variant="outline"
+          className="w-full"
+          onClick={handleGoogleSignUp}
+        >
+          Sign up with Google
+        </Button> */}
+        </div>
+        <div className="mt-4 text-center text-sm">
+          Already have an account?{" "}
+          <Link href="/login" className="underline">
+            Sign in
+          </Link>
+        </div>
+      </CardContent>
+    </Card>
   );
-};
-
-export default SignUpPage;
+}
