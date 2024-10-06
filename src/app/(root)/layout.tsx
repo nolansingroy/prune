@@ -7,6 +7,7 @@ import "../globals.css";
 
 import Header from "@/components/header";
 import Footer from "@/components/footer";
+import NextTopLoader from "nextjs-toploader";
 
 const exo_2 = Exo_2({
   subsets: ["latin"],
@@ -28,6 +29,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={exo_2.className}>
+        <NextTopLoader showSpinner={false} color="#fff" />
         <Header /> {/* Include the Header at the top */}
         <main>{children}</main> {/* Main content will be rendered here */}
         <Footer /> {/* Include the Footer at the bottom */}

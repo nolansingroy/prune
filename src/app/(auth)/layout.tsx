@@ -7,6 +7,7 @@ import "../globals.css";
 
 import Header from "@/components/header";
 import Footer from "@/components/footer";
+import NextTopLoader from "nextjs-toploader";
 
 const exo_2 = Exo_2({
   subsets: ["latin"],
@@ -28,6 +29,7 @@ export default function AuthLayout({
   return (
     <html lang="en" className="h-full">
       <body className={`${exo_2.className} min-h-screen flex flex-col h-full`}>
+        <NextTopLoader showSpinner={false} color="#fff" />
         <Header />
         <main className="lex-grow flex flex-col h-full">{children}</main>
         <Footer />
