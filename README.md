@@ -61,3 +61,4 @@ npx shadcn-ui@latest add navigation-menu
 - fixed footer on viewport in auth pages
 - impove the speed of page renders by server rendering pages to prevent loading unnessesary packeges to the client
 - fixed a bug where calender page had multiple renders in a single session.
+- replace fav icon.

@@ -33,6 +33,8 @@
     --ring: 222.2 84% 4.9%;
 
     --radius: 0.5rem;
+
+    /* --fc-today-bg-color: rgba(255, 0, 0, 0); */
   }
 
   .dark {
@@ -116,3 +118,8 @@
 .popover-above-modal {
   z-index: 900; /* Ensure it appears above the modal content */
 }
+
+/* this style is for the month view remove yellow background */
+/* .fc .fc-daygrid-day.fc-day-today {
+  background-color: white;
+} */
