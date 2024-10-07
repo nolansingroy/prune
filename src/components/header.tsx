@@ -76,8 +76,8 @@ const Header = () => {
               <span className="text-sm text-gray-500">{userTimezone}</span>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onSelect={() => router.push("/settings")}>
-              Settings
+            <DropdownMenuItem asChild>
+              <Link href="/settings">Settings</Link>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem onSelect={handleLogOut}>Logout</DropdownMenuItem>
@@ -97,20 +97,20 @@ const Header = () => {
             <HamburgerMenuIcon className="h-8 w-8 cursor-pointer" />
           </DropdownMenuTrigger>
           <DropdownMenuContent className="w-56">
-            <DropdownMenuItem onSelect={() => router.push("/")}>
-              Home
+            <DropdownMenuItem asChild>
+              <Link href="/">Home</Link>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onSelect={() => router.push("/calendar")}>
-              Calendar
+            <DropdownMenuItem asChild>
+              <Link href="/calendar">Calendar</Link>
             </DropdownMenuItem>
             {/* <DropdownMenuItem disabled>Dashboard</DropdownMenuItem> */}
             {/* <DropdownMenuItem>
               <Link href="/clients">Clients</Link>
             </DropdownMenuItem> */}
             <DropdownMenuSeparator />
-            <DropdownMenuItem onSelect={() => router.push("/profile")}>
-              Profile
+            <DropdownMenuItem asChild>
+              <Link href="/profile">Profile</Link>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem onSelect={handleLogOut}>Logout</DropdownMenuItem>
