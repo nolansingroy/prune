@@ -15,11 +15,13 @@ import {
 import { authLogout } from "../services/authService";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "../../firebase"; // Make sure the Firebase instance is correctly imported
+import { useRouter } from "next/navigation";
 
 const Header = () => {
   const { authUser } = useFirebaseAuth();
   const [userName, setUserName] = useState("");
   const [userTimezone, setUserTimezone] = useState("");
+  const router = useRouter();
 
   // Fetch user data from Firestore
   useEffect(() => {
@@ -42,7 +44,7 @@ const Header = () => {
     try {
       await authLogout();
       console.log("User logged out, redirecting...");
-      window.location.href = "/";
+      router.push("/");
     } catch (error) {
       console.error("Error during logout process:", error);
     }
@@ -74,11 +76,11 @@ const Header = () => {
               <span className="text-sm text-gray-500">{userTimezone}</span>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>
-              <Link href="/settings">Settings</Link>
+            <DropdownMenuItem onSelect={() => router.push("/settings")}>
+              Settings
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={handleLogOut}>Logout</DropdownMenuItem>
+            <DropdownMenuItem onSelect={handleLogOut}>Logout</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       );
@@ -95,23 +97,23 @@ const Header = () => {
             <HamburgerMenuIcon className="h-8 w-8 cursor-pointer" />
           </DropdownMenuTrigger>
           <DropdownMenuContent className="w-56">
-            <DropdownMenuItem>
-              <Link href="/">Home</Link>
+            <DropdownMenuItem onSelect={() => router.push("/")}>
+              Home
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>
-              <Link href="/calendar">Calendar</Link>
+            <DropdownMenuItem onSelect={() => router.push("/calendar")}>
+              Calendar
             </DropdownMenuItem>
             {/* <DropdownMenuItem disabled>Dashboard</DropdownMenuItem> */}
             {/* <DropdownMenuItem>
               <Link href="/clients">Clients</Link>
             </DropdownMenuItem> */}
             <DropdownMenuSeparator />
-            <DropdownMenuItem>
-              <Link href="/profile">Profile</Link>
+            <DropdownMenuItem onSelect={() => router.push("/profile")}>
+              Profile
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={handleLogOut}>Logout</DropdownMenuItem>
+            <DropdownMenuItem onSelect={handleLogOut}>Logout</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       );

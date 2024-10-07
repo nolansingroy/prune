@@ -48,3 +48,26 @@ firebase deploy --only functions
 
 https://ui.shadcn.com/docs/components/navigation-menu
 npx shadcn-ui@latest add navigation-menu
+
+# issues identified while reviewing the code :
+
+# Changelog
+
+- removed the pages router
+- added next-loader to maintain smooth transitions
+- fixed header drawe bug where clicking links does not close the drawer
+- server rendered all pages
+- created paths on app router to organise folder structure
+- fixed footer on viewport in auth pages
+- impove the speed of page renders by server rendering pages to prevent loading unnessesary packeges to the client
+- fixed a bug where calender page had multiple renders in a single session.
+- replace fav icon.
+
+# code for making the calendar toolbar sticky
+
+Make the toolbar sticky .fc-toolbar {
+position: sticky;
+top: 0;
+z-index: 30; /_ Keep it on top of other content _/
+background-color: white; /_ Ensure it's visible _/
+}

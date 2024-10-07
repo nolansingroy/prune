@@ -2,9 +2,9 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import { doc, getDoc, updateDoc } from "firebase/firestore";
-import { db } from "../../firebase";
-import { useFirebaseAuth } from "../services/authService";
-import ProfileTabs from "./profileTabs/ProfileTabs"; // Import ProfileTabs
+import { db } from "../../../../firebase";
+import { useFirebaseAuth } from "../../../services/authService";
+import ProfileTabs from "../../../comp/profileTabs/ProfileTabs"; // Import ProfileTabs
 import { Client } from "@/interfaces/clients"; // Import the Client interface
 
 const ProfilePage = () => {

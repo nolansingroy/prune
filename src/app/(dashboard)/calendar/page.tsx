@@ -8,14 +8,14 @@ import interactionPlugin from "@fullcalendar/interaction";
 import timeGridPlugin from "@fullcalendar/timegrid";
 import rrulePlugin from "@fullcalendar/rrule";
 import { DateSelectArg, EventApi, EventContentArg } from "@fullcalendar/core";
-import EventFormDialog from "./EventFormModal";
+import EventFormDialog from "../../../comp/EventFormModal";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import Availability from "../pages/tabs/availability";
-import CreateBookings from "./tabs/create_bookings";
-import { auth, db } from "../../firebase";
-import { createEvent } from "../services/userService";
-import useFetchEvents from "../hooks/useFetchEvents";
-import { EventInput } from "../interfaces/types";
+import Availability from "../../../comp/tabs/availability";
+import CreateBookings from "../../../comp/tabs/create_bookings";
+import { auth, db } from "../../../../firebase";
+import { createEvent } from "../../../services/userService";
+import useFetchEvents from "../../../hooks/useFetchEvents";
+import { EventInput } from "../../../interfaces/types";
 import { addDoc, getDoc, Timestamp } from "firebase/firestore";
 import { doc, updateDoc } from "firebase/firestore";
 import { collection, query, getDocs } from "firebase/firestore";
@@ -512,7 +512,9 @@ export default function Calendar() {
                   center: "title",
                   right: "dayGridMonth,timeGridWeek,timeGridDay",
                 }}
-                // stickyHeaderDates={true} // Enables sticky headers for dates
+                stickyHeaderDates={true} // Enables sticky headers for dates
+                height="auto"
+                contentHeight="150"
                 slotDuration="00:15:00"
                 slotMinTime="07:00:00"
                 slotLabelFormat={{
@@ -540,7 +542,6 @@ export default function Calendar() {
                     ?.getApi()
                     .changeView("timeGridWeek", weekStartDate.toISOString());
                 }}
-                height="auto"
                 eventResize={handleEventResize} // Called when resizing an event
                 eventDidMount={handleEventDidMount} // Called after an event is rendered
                 eventDrop={handleEventDrop}
@@ -574,7 +575,6 @@ export default function Calendar() {
                   }
                 })}
                 eventContent={renderEventContent}
-                contentHeight="auto"
                 scrollTime="07:00:00" // Automatically scrolls to 7:00 AM on load
                 views={{
                   dayGridMonth: {
