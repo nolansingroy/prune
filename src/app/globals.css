@@ -93,14 +93,6 @@
   overflow-y: auto; /* Allow vertical scrolling */
 }
 
-/* Make the toolbar sticky */
-.fc-toolbar {
-  position: sticky;
-  top: 0;
-  z-index: 30; /* Keep it on top of other content */
-  background-color: white; /* Ensure it's visible */
-}
-
 /* Ensure the modal backdrop covers the entire viewport */
 .modal-backdrop {
   position: fixed;
@@ -117,6 +109,10 @@
 
 .popover-above-modal {
   z-index: 900; /* Ensure it appears above the modal content */
+}
+
+.fc-view-container {
+  overflow-y: scroll;
 }
 
 /* this style is for the month view remove yellow background */

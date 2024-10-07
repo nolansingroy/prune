@@ -62,3 +62,12 @@ npx shadcn-ui@latest add navigation-menu
 - impove the speed of page renders by server rendering pages to prevent loading unnessesary packeges to the client
 - fixed a bug where calender page had multiple renders in a single session.
 - replace fav icon.
+
+# code for making the calendar toolbar sticky
+
+Make the toolbar sticky .fc-toolbar {
+position: sticky;
+top: 0;
+z-index: 30; /_ Keep it on top of other content _/
+background-color: white; /_ Ensure it's visible _/
+}

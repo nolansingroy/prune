@@ -512,7 +512,9 @@ export default function Calendar() {
                   center: "title",
                   right: "dayGridMonth,timeGridWeek,timeGridDay",
                 }}
-                // stickyHeaderDates={true} // Enables sticky headers for dates
+                stickyHeaderDates={true} // Enables sticky headers for dates
+                height="auto"
+                contentHeight="150"
                 slotDuration="00:15:00"
                 slotMinTime="07:00:00"
                 slotLabelFormat={{
@@ -540,7 +542,6 @@ export default function Calendar() {
                     ?.getApi()
                     .changeView("timeGridWeek", weekStartDate.toISOString());
                 }}
-                height="auto"
                 eventResize={handleEventResize} // Called when resizing an event
                 eventDidMount={handleEventDidMount} // Called after an event is rendered
                 eventDrop={handleEventDrop}
@@ -574,7 +575,6 @@ export default function Calendar() {
                   }
                 })}
                 eventContent={renderEventContent}
-                contentHeight="auto"
                 scrollTime="07:00:00" // Automatically scrolls to 7:00 AM on load
                 views={{
                   dayGridMonth: {
