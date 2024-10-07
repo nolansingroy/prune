@@ -66,7 +66,7 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
   isOpen,
   onClose,
   onSave,
-  showDateSelector = false,
+  showDateSelector = true,
   event,
   editAll = true,
 }) => {
@@ -141,6 +141,7 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
         : undefined,
     };
 
+    console.log("Event data to passed from dialoge:", eventData);
     onSave(eventData);
     handleClose();
   };
