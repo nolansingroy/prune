@@ -287,6 +287,7 @@ export default function Calendar() {
     endTime,
     paid,
     recurrence,
+    date,
   }: {
     title: string;
     description: string;
@@ -295,6 +296,7 @@ export default function Calendar() {
     startTime: string;
     endTime: string;
     paid: boolean;
+    date?: string;
     recurrence?: {
       daysOfWeek: number[];
       startTime: string;
@@ -309,7 +311,9 @@ export default function Calendar() {
     calendarApi.unselect();
 
     // Format the start and end dates based on the event selection
-    const startDate = new Date(selectInfo.startStr).toISOString().split("T")[0];
+    const startDate = date
+      ? new Date(date).toISOString().split("T")[0]
+      : new Date(selectInfo.startStr).toISOString().split("T")[0];
 
     setLoading(true); // Start loading
 
@@ -346,6 +350,8 @@ export default function Calendar() {
           userId: user.uid,
         };
 
+        console.log("event data ready for cloud function", eventInput);
+
         // Make the axios call to your cloud function
         const result = await axios.post(
           "https://us-central1-prune-94ad9.cloudfunctions.net/createRecurringAvailabilityInstances",
@@ -356,7 +362,9 @@ export default function Calendar() {
       } else {
         // Handle single or background event directly on the client side
         // Parse the start and end times
-        let startDateTime = new Date(selectInfo.startStr);
+        let startDateTime = date
+          ? new Date(date)
+          : new Date(selectInfo.startStr);
         let endDateTime = new Date(selectInfo.startStr);
 
         if (startTime && endTime) {
@@ -396,6 +404,8 @@ export default function Calendar() {
           }),
           paid,
         };
+
+        console.log("Single event data ready for Firestore:", event);
 
         // Remove any undefined fields before saving
         event = removeUndefinedFields(event);
