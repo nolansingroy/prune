@@ -119,3 +119,17 @@
 /* .fc .fc-daygrid-day.fc-day-today {
   background-color: white;
 } */
+
+.fc-day-today {
+  background: transparent !important;
+}
+
+.fc-day-today .fc-daygrid-day-number {
+  color: var(--fc-event-bg-color);
+  text-decoration: underline;
+  font-size: 1.2em;
+}
+
+.fc-col-header-cell.fc-day.fc-day-tue.fc-day-today {
+  background-color: #c7deea !important;
+}
