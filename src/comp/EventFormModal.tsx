@@ -1,3 +1,5 @@
+// dialgog in Calendar Tab
+
 "use client";
 import React, { useState, ChangeEvent, MouseEvent, useEffect } from "react";
 import {
@@ -194,18 +196,87 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
               ? "Create Availability"
               : "Create Booking"}
           </DialogTitle>
-          <DialogDescription>
+          {/* <DialogDescription>
             {editAll
               ? "Edit all instances of this recurring event"
               : isBackgroundEvent
               ? "Edit this availability event"
               : "Edit this booking event"}
-          </DialogDescription>
+          </DialogDescription> */}
         </DialogHeader>
-        <div className="space-y-4">
-          <div>
+
+        {/* Event Type Toggle (Create Availability / Create Booking) */}
+        <div className="space-y-2">
+          <Label className="block text-sm font-medium text-gray-700">
+            Event Type
+          </Label>
+          <div className="space-y-2">
+            {/* <p className="mt-2 text-sm text-gray-500">
+              Select to set the event as Availability or Booking.
+            </p> */}
+            <div className="flex items-center">
+              <input
+                type="radio"
+                name="eventType"
+                value="availability"
+                checked={isBackgroundEvent}
+                onChange={() => setIsBackgroundEvent(true)}
+                className="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+              />
+              <span className="ml-2 text-sm font-medium text-gray-700">
+                Create Availability
+              </span>
+            </div>
+            <div className="flex items-center">
+              <input
+                type="radio"
+                name="eventType"
+                value="booking"
+                checked={!isBackgroundEvent}
+                onChange={() => setIsBackgroundEvent(false)}
+                className="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+              />
+              <span className="ml-2 text-sm font-medium text-gray-700">
+                Create Booking
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Payment Status Toggle - Conditionally Rendered */}
+        {!isBackgroundEvent && (
+          <div className="space-y-2">
             <Label className="block text-sm font-medium text-gray-700">
-              Title
+              Payment Status
+            </Label>
+            {/* <p className="mt-2 text-sm text-gray-500">
+              Toggle to set the event as Paid or Unpaid.
+            </p> */}
+            <div className="flex items-center space-x-2">
+              <span className="text-sm font-medium text-gray-700">
+                {paid ? "Paid" : "Unpaid"}
+              </span>
+              <Switch
+                checked={paid}
+                onChange={setPaid}
+                className={`${
+                  paid ? "bg-blue-600" : "bg-gray-200"
+                } relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none`}
+              >
+                <span
+                  className={`${
+                    paid ? "translate-x-6" : "translate-x-1"
+                  } inline-block h-4 w-4 transform bg-white rounded-full transition-transform`}
+                />
+              </Switch>
+            </div>
+          </div>
+        )}
+
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <Label className="block text-sm font-medium text-gray-700">
+              {isBackgroundEvent ? "Title" : "Type of Booking"}
             </Label>
             <Input
               value={title}
@@ -282,74 +353,6 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
               </PopoverContent>
             </Popover>
           </div>
-
-          {/* Event Type Toggle (Create Availability / Create Booking) */}
-          <div className="space-y-2">
-            <Label className="block text-sm font-medium text-gray-700">
-              Event Type
-            </Label>
-            <div className="space-y-2">
-              <div className="flex items-center">
-                <input
-                  type="radio"
-                  name="eventType"
-                  value="availability"
-                  checked={isBackgroundEvent}
-                  onChange={() => setIsBackgroundEvent(true)}
-                  className="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500"
-                />
-                <span className="ml-2 text-sm font-medium text-gray-700">
-                  Create Availability
-                </span>
-              </div>
-              <div className="flex items-center">
-                <input
-                  type="radio"
-                  name="eventType"
-                  value="booking"
-                  checked={!isBackgroundEvent}
-                  onChange={() => setIsBackgroundEvent(false)}
-                  className="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500"
-                />
-                <span className="ml-2 text-sm font-medium text-gray-700">
-                  Create Booking
-                </span>
-              </div>
-            </div>
-            <p className="mt-2 text-sm text-gray-500">
-              Select to set the event as Availability or Booking.
-            </p>
-          </div>
-
-          {/* Payment Status Toggle - Conditionally Rendered */}
-          {!isBackgroundEvent && (
-            <div className="space-y-2">
-              <Label className="block text-sm font-medium text-gray-700">
-                Payment Status
-              </Label>
-              <div className="flex items-center space-x-2">
-                <span className="text-sm font-medium text-gray-700">
-                  {paid ? "Paid" : "Unpaid"}
-                </span>
-                <Switch
-                  checked={paid}
-                  onChange={setPaid}
-                  className={`${
-                    paid ? "bg-blue-600" : "bg-gray-200"
-                  } relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none`}
-                >
-                  <span
-                    className={`${
-                      paid ? "translate-x-6" : "translate-x-1"
-                    } inline-block h-4 w-4 transform bg-white rounded-full transition-transform`}
-                  />
-                </Switch>
-              </div>
-              <p className="mt-2 text-sm text-gray-500">
-                Toggle to set the event as Paid or Unpaid.
-              </p>
-            </div>
-          )}
 
           {/* Recurring Event Toggle (Single Event / Recurring Event) */}
           <div className="space-y-2">
