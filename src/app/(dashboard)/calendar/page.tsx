@@ -22,6 +22,7 @@ import { collection, query, getDocs } from "firebase/firestore";
 import { EventResizeDoneArg } from "@fullcalendar/interaction";
 import { EventDropArg } from "@fullcalendar/core";
 import axios from "axios";
+import { cl } from "@fullcalendar/core/internal-common";
 
 export default function Calendar() {
   const calendarRef = useRef<FullCalendar>(null);
@@ -56,42 +57,25 @@ export default function Calendar() {
   };
 
   const renderEventContent = (eventInfo: EventContentArg) => {
-    const { isBackgroundEvent, location } = eventInfo.event.extendedProps;
-    const classNames = eventInfo.event.classNames || [];
-
-    if (classNames.includes("bg-event-mirror")) {
-      return (
-        <div className="bg-blue-200 opacity-50 text-black p-1 rounded text-center border border-blue-500">
-          {eventInfo.event.title}
+    const { event, isToday } = eventInfo;
+    const isBackgroundEvent = event.extendedProps.isBackgroundEvent;
+    {
+      !isBackgroundEvent ? (
+        <div>
+          <b>{!isBackgroundEvent && event.title}</b>
         </div>
+      ) : (
+        <div></div>
       );
     }
 
-    if (isBackgroundEvent) {
-      if (eventInfo.view.type === "dayGridMonth") {
-        return (
-          <div className="bg-green-200 opacity-75 text-black p-1 rounded text-center">
-            {eventInfo.event.title}
-            {location && <div>{location}</div>}
-          </div>
-        );
-      } else {
-        return (
-          <div className="bg-green-100 opacity-75 text-black p-1 rounded text-center">
-            {eventInfo.event.title} <br />
-            {location && <div>{location}</div>}
-          </div>
-        );
-      }
-    }
-
     return (
-      <>
-        <i>{eventInfo.event.title}</i>
-        {location && <div>{location}</div>}
-      </>
+      <div>
+        <b>{!isBackgroundEvent && event.title}</b>
+      </div>
     );
   };
+
   // add event to firestore
   const handleEventResize = async (resizeInfo: EventResizeDoneArg) => {
     try {
@@ -389,7 +373,7 @@ export default function Calendar() {
           start: startDateTime, // Save in UTC
           end: endDateTime, // Save in UTC
           description,
-          display: isBackgroundEvent ? "background" : "auto",
+          display: isBackgroundEvent ? "inverse-background" : "auto",
           className: isBackgroundEvent ? "custom-bg-event" : "",
           isBackgroundEvent,
           startDate: startDateTime, // Save in UTC
@@ -576,11 +560,16 @@ export default function Calendar() {
                       },
                       startTime: event.recurrence.startTime,
                       endTime: event.recurrence.endTime,
+                      display: "inverse-background",
+                      groupId: "1234",
                     };
                   } else {
                     return {
                       ...event,
-                      location: event.location,
+                      display: event.isBackgroundEvent
+                        ? "inverse-background"
+                        : "auto",
+                      groupId: "1234",
                     };
                   }
                 })}
