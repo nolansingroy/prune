@@ -22,6 +22,7 @@ import { collection, query, getDocs } from "firebase/firestore";
 import { EventResizeDoneArg } from "@fullcalendar/interaction";
 import { EventDropArg } from "@fullcalendar/core";
 import axios from "axios";
+import { cl } from "@fullcalendar/core/internal-common";
 
 export default function Calendar() {
   const calendarRef = useRef<FullCalendar>(null);
@@ -58,6 +59,7 @@ export default function Calendar() {
   const renderEventContent = (eventInfo: EventContentArg) => {
     const { isBackgroundEvent, location } = eventInfo.event.extendedProps;
     const classNames = eventInfo.event.classNames || [];
+    const view = eventInfo.view.type;
 
     if (classNames.includes("bg-event-mirror")) {
       return (
@@ -67,31 +69,31 @@ export default function Calendar() {
       );
     }
 
-    if (isBackgroundEvent) {
-      if (eventInfo.view.type === "dayGridMonth") {
-        return (
-          <div className="bg-green-200 opacity-75 text-black p-1 rounded text-center">
-            {eventInfo.event.title}
-            {location && <div>{location}</div>}
-          </div>
-        );
-      } else {
-        return (
-          <div className="bg-green-100 opacity-75 text-black p-1 rounded text-center">
-            {eventInfo.event.title} <br />
-            {location && <div>{location}</div>}
-          </div>
-        );
-      }
-    }
-
     return (
-      <>
-        <i>{eventInfo.event.title}</i>
-        {location && <div>{location}</div>}
-      </>
+      <div>
+        {!isBackgroundEvent && (
+          //   <div
+          //     key={eventInfo.event.extendedProps.uniqueId}
+          //     className="flex text-wrap overflow-hidden"
+          //     style={{
+          //       position: "absolute",
+          //       top: -25,
+          //       left: 0,
+          //       right: 0,
+          //       bottom: 0,
+          //     }}
+          //   >
+          //     {location}
+          //   </div>
+          // ) : (
+          <div className="">
+            <div className="">{eventInfo.event.title}</div>
+          </div>
+        )}
+      </div>
     );
   };
+
   // add event to firestore
   const handleEventResize = async (resizeInfo: EventResizeDoneArg) => {
     try {
@@ -389,7 +391,7 @@ export default function Calendar() {
           start: startDateTime, // Save in UTC
           end: endDateTime, // Save in UTC
           description,
-          display: isBackgroundEvent ? "background" : "auto",
+          display: isBackgroundEvent ? "inverse-background" : "auto",
           className: isBackgroundEvent ? "custom-bg-event" : "",
           isBackgroundEvent,
           startDate: startDateTime, // Save in UTC
@@ -555,7 +557,7 @@ export default function Calendar() {
                 eventResize={handleEventResize} // Called when resizing an event
                 eventDidMount={handleEventDidMount} // Called after an event is rendered
                 eventDrop={handleEventDrop}
-                events={events.map((event) => {
+                events={events.map((event, index) => {
                   if (event.recurrence) {
                     return {
                       ...event,
@@ -576,11 +578,18 @@ export default function Calendar() {
                       },
                       startTime: event.recurrence.startTime,
                       endTime: event.recurrence.endTime,
+                      display: "inverse-background",
+                      groupId: event.isBackgroundEvent ? "1234" : event.id,
+                      uniqueId: `${event.id}-${index}`,
                     };
                   } else {
                     return {
                       ...event,
-                      location: event.location,
+                      display: event.isBackgroundEvent
+                        ? "inverse-background"
+                        : "auto",
+                      groupId: event.isBackgroundEvent ? "1234" : event.id,
+                      uniqueId: `${event.id}-${index}`,
                     };
                   }
                 })}
