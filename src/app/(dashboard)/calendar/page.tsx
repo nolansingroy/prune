@@ -57,21 +57,29 @@ export default function Calendar() {
   };
 
   const renderEventContent = (eventInfo: EventContentArg) => {
-    const { event, isToday } = eventInfo;
-    const isBackgroundEvent = event.extendedProps.isBackgroundEvent;
-    {
-      !isBackgroundEvent ? (
-        <div>
-          <b>{!isBackgroundEvent && event.title}</b>
-        </div>
-      ) : (
-        <div></div>
-      );
-    }
+    const { isBackgroundEvent, location } = eventInfo.event.extendedProps;
 
     return (
       <div>
-        <b>{!isBackgroundEvent && event.title}</b>
+        {!isBackgroundEvent && (
+          //   <div
+          //     key={eventInfo.event.extendedProps.uniqueId}
+          //     className="flex text-wrap overflow-hidden"
+          //     style={{
+          //       position: "absolute",
+          //       top: -25,
+          //       left: 0,
+          //       right: 0,
+          //       bottom: 0,
+          //     }}
+          //   >
+          //     {location}
+          //   </div>
+          // ) : (
+          <div className="">
+            <div className="">{eventInfo.event.title}</div>
+          </div>
+        )}
       </div>
     );
   };
@@ -539,7 +547,7 @@ export default function Calendar() {
                 eventResize={handleEventResize} // Called when resizing an event
                 eventDidMount={handleEventDidMount} // Called after an event is rendered
                 eventDrop={handleEventDrop}
-                events={events.map((event) => {
+                events={events.map((event, index) => {
                   if (event.recurrence) {
                     return {
                       ...event,
@@ -561,7 +569,8 @@ export default function Calendar() {
                       startTime: event.recurrence.startTime,
                       endTime: event.recurrence.endTime,
                       display: "inverse-background",
-                      groupId: "1234",
+                      groupId: event.isBackgroundEvent ? "1234" : event.id,
+                      uniqueId: `${event.id}-${index}`,
                     };
                   } else {
                     return {
@@ -569,7 +578,8 @@ export default function Calendar() {
                       display: event.isBackgroundEvent
                         ? "inverse-background"
                         : "auto",
-                      groupId: "1234",
+                      groupId: event.isBackgroundEvent ? "1234" : event.id,
+                      uniqueId: `${event.id}-${index}`,
                     };
                   }
                 })}
