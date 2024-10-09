@@ -58,6 +58,16 @@ export default function Calendar() {
 
   const renderEventContent = (eventInfo: EventContentArg) => {
     const { isBackgroundEvent, location } = eventInfo.event.extendedProps;
+    const classNames = eventInfo.event.classNames || [];
+    const view = eventInfo.view.type;
+
+    if (classNames.includes("bg-event-mirror")) {
+      return (
+        <div className="bg-blue-200 opacity-50 text-black p-1 rounded text-center border border-blue-500">
+          {eventInfo.event.title}
+        </div>
+      );
+    }
 
     return (
       <div>
