@@ -13,6 +13,7 @@ import {
   doc,
   updateDoc,
   deleteDoc,
+  orderBy,
 } from "firebase/firestore";
 import { BookingTypes } from "@/interfaces/bookingTypes";
 
@@ -37,7 +38,7 @@ const bookingTypesConverter: FirestoreDataConverter<BookingTypes> = {
     return {
       id: snapshot.id,
       name: data.name || "No name",
-      duration: data.duration || 30,
+      duration: data.duration || 0,
       fee: data.fee || 0,
       color: data.color || "#000000",
       created_at: data.created_at,
@@ -54,7 +55,7 @@ const bookingTypesRef = (uid: string) =>
 
 // Function to fetch booking types
 export async function fetchBookingTypes(user: string): Promise<BookingTypes[]> {
-  const q = query(bookingTypesRef(user));
+  const q = query(bookingTypesRef(user), orderBy("created_at", "desc"));
   const querySnapshot = await getDocs(q);
 
   const bookingTypesData = querySnapshot.docs.map((doc) => doc.data());

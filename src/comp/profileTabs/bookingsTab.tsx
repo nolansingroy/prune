@@ -21,7 +21,7 @@ import {
 
 const initialBookingData: BookingTypes = {
   name: "",
-  duration: 30,
+  duration: 0,
   fee: 0,
   color: "#000000",
 };
@@ -115,7 +115,7 @@ export default function BookingsTab({ authUser }: BookingTabProps) {
         </Label>
         <Input
           type="number"
-          value={newBookingData.duration}
+          value={newBookingData.duration || ""}
           onChange={(e: ChangeEvent<HTMLInputElement>) =>
             setNewBookingData({
               ...newBookingData,
@@ -130,7 +130,7 @@ export default function BookingsTab({ authUser }: BookingTabProps) {
         </Label>
         <Input
           type="number"
-          value={newBookingData.fee}
+          value={newBookingData.fee || ""}
           onChange={(e: ChangeEvent<HTMLInputElement>) =>
             setNewBookingData({
               ...newBookingData,
@@ -212,8 +212,17 @@ export default function BookingsTab({ authUser }: BookingTabProps) {
                       </div>
                     </TableCell>
                     <TableCell>{type.name}</TableCell>
-                    <TableCell>{type.duration}</TableCell>
-                    <TableCell>{`${type.fee || "N/A"} $`}</TableCell>
+                    <TableCell>{`${type.duration} minutes`}</TableCell>
+                    <TableCell>
+                      {type.fee !== undefined && type.fee !== null
+                        ? new Intl.NumberFormat("en-US", {
+                            style: "currency",
+                            currency: "USD",
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          }).format(type.fee)
+                        : "N/A"}
+                    </TableCell>
                     <TableCell>
                       <Button
                         className="mr-2"
