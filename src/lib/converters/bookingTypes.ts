@@ -71,8 +71,8 @@ export async function addBookingType(
 ): Promise<void> {
   const newBookingType = {
     ...bookingType,
-    created_at: serverTimestamp(), // Add a timestamp field
-    updated_at: serverTimestamp(), // Add a timestamp field
+    created_at: serverTimestamp(),
+    updated_at: serverTimestamp(),
   };
   await addDoc(bookingTypesRef(uid), newBookingType);
 }
