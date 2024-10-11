@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import ClientsTab from "./ClientsTab"; // Ensure you have the correct path to ClientsTab component
+import BookingsTab from "./bookingsTab";
 
 // List of major timezones
 const timezones = [
@@ -125,46 +126,11 @@ const ProfileTabs: React.FC<ProfileTabsProps> = ({
 
       {/* Booking Types Section */}
       <TabsContent value="bookings">
-        <div className="space-y-6 bg-gray-100 p-6 rounded-lg shadow-lg">
-          <h2 className="text-2xl font-semibold">Create Booking Types</h2>
-          <div className="space-y-4">
-            <Label className="block text-lg font-medium text-gray-700">
-              Booking Name
-            </Label>
-            <Input
-              value={bookingName}
-              onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                setBookingName(e.target.value)
-              }
-              placeholder="Enter booking type name"
-            />
-            <Label className="block text-lg font-medium text-gray-700">
-              Duration (minutes)
-            </Label>
-            <Input
-              type="number"
-              value={bookingDuration}
-              onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                setBookingDuration(Number(e.target.value))
-              }
-              placeholder="Enter duration (e.g., 30, 60)"
-            />
-            <Button className="mt-4" onClick={handleAddBookingType}>
-              Add Booking Type
-            </Button>
-
-            <div className="mt-6">
-              <h2 className="text-xl font-semibold">Booking Types</h2>
-              <ul className="list-disc list-inside">
-                {bookingTypes.map((booking, index) => (
-                  <li key={index} className="mt-2">
-                    {booking.name} - {booking.duration} min
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </div>
-        </div>
+        {authUser ? (
+          <BookingsTab authUser={authUser} />
+        ) : (
+          <p>Loading clients...</p>
+        )}
       </TabsContent>
 
       {/* Clients Section */}

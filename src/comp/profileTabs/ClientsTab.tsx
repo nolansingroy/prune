@@ -88,8 +88,10 @@ const ClientsTab: React.FC<ClientsTabProps> = ({
         docId: doc.id,
         ...doc.data(),
       })) as Client[];
+
       setClients(clientList);
-      setLoading(false); // Set loading to false after fetching
+      setLoading(false);
+      console.log("Clients fetched:", clientList); // Set loading to false after fetching
     }
   };
 
