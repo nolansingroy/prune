@@ -23,6 +23,7 @@ import { EventResizeDoneArg } from "@fullcalendar/interaction";
 import { EventDropArg } from "@fullcalendar/core";
 import axios from "axios";
 import { cl } from "@fullcalendar/core/internal-common";
+import { useFirebaseAuth } from "@/services/authService";
 
 export default function Calendar() {
   const calendarRef = useRef<FullCalendar>(null);
