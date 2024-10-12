@@ -12,6 +12,7 @@ export interface EventInput {
   startDay: string; // Day of the week derived from startDate
   endDate: Date; // Use JavaScript Date object as UTC
   endDay: string; // Day of the week derived from endDate
+  fee: number; // Add a fee property to the event
   recurrence?: {
     daysOfWeek?: number[];
     startTime?: string;

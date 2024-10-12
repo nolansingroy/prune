@@ -78,7 +78,7 @@ const CreateBookingsFormDialog: React.FC<CreateBookingsFormDialogProps> = ({
   event,
   editAll = true,
 }) => {
-  const [title, setTitle] = useState("");
+  // const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [location, setLocation] = useState("");
   const [date, setDate] = useState("");
@@ -100,7 +100,7 @@ const CreateBookingsFormDialog: React.FC<CreateBookingsFormDialogProps> = ({
 
   useEffect(() => {
     if (event) {
-      setTitle(event.title || "");
+      // setTitle(event.title || "");
       setDescription(event.description || "");
       setLocation(event.location || "");
       setDate(
@@ -169,7 +169,7 @@ const CreateBookingsFormDialog: React.FC<CreateBookingsFormDialogProps> = ({
     e.preventDefault();
 
     const eventData = {
-      title,
+      title: bookingType,
       description,
       location,
       isBackgroundEvent: false, // Always false for regular bookings
@@ -192,7 +192,7 @@ const CreateBookingsFormDialog: React.FC<CreateBookingsFormDialogProps> = ({
   };
 
   const handleClose = () => {
-    setTitle("");
+    // setTitle("");
     setDescription("");
     setLocation("");
     setDate("");

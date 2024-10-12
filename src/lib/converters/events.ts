@@ -17,6 +17,7 @@ const eventConverter: FirestoreDataConverter<EventInput> = {
     return {
       title: event.title,
       location: event.location,
+      fee: event.fee,
       start: event.start, // Store as Timestamp
       end: event.end, // Store as Timestamp
       description: event.description,
@@ -44,6 +45,7 @@ const eventConverter: FirestoreDataConverter<EventInput> = {
     return {
       id: snapshot.id,
       title: data.title || "No title",
+      fee: data.fee || 0,
       location: data.location || "",
       start: (data.start as Timestamp).toDate(),
       end: (data.end as Timestamp).toDate(),

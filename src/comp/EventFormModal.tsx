@@ -46,6 +46,7 @@ interface EventFormDialogProps {
   onClose: () => void;
   onSave: (eventData: {
     title: string;
+    fee: number;
     description: string;
     location: string;
     isBackgroundEvent: boolean;
@@ -179,7 +180,9 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
     e.preventDefault();
 
     const eventData = {
-      title,
+      title: isBackgroundEvent ? title : bookingType,
+
+      fee: !isBackgroundEvent ? parseInt(bookingFee) : 0,
       description,
       location,
       isBackgroundEvent,

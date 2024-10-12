@@ -185,6 +185,7 @@ export default function CreateBookings() {
           eventsList.push({
             id: doc.id,
             title: data.title,
+            fee: data.fee,
             start: dtstart,
             end: new Date(
               dtstart.getTime() + (end.getTime() - start.getTime())
@@ -208,6 +209,7 @@ export default function CreateBookings() {
             title: data.title,
             start: start,
             end: end,
+            fee: data.fee,
             description: data.description || "",
             isBackgroundEvent: data.isBackgroundEvent,
             startDate: start,
