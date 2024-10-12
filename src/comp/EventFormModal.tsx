@@ -39,6 +39,7 @@ import { Switch } from "@headlessui/react";
 import { BookingTypes } from "@/interfaces/bookingTypes";
 import { fetchBookingTypes } from "@/lib/converters/bookingTypes";
 import { useFirebaseAuth } from "@/services/authService";
+import { B } from "@fullcalendar/core/internal-common";
 
 interface EventFormDialogProps {
   isOpen: boolean;
@@ -97,8 +98,9 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
   const [filteredLocations, setFilteredLocations] = useState(presetLocations);
   const [paid, setPaid] = useState(false); // Defaults to false (Unpaid)
   const [bookingType, setBookingType] = useState<string | null>(null);
+  const [bookingFee, setBookingFee] = useState<string>("");
   const [filteredBookings, setFilteredBookings] = useState<
-    { value: string; label: string }[]
+    { value: string; label: string; fee: number }[]
   >([]);
   const [bookingsPopoverOpen, setBookingsPopoverOpen] = useState(false);
 
@@ -139,9 +141,13 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
     if (authUser) {
       // Fetching booking types from Firestore
       const types = await fetchBookingTypes(authUser.uid);
-      let presetBookings: { value: string; label: string }[] = [];
+      let presetBookings: { value: string; label: string; fee: number }[] = [];
       types.forEach((type) => {
-        presetBookings.push({ value: type.name, label: type.name });
+        presetBookings.push({
+          value: type.name,
+          label: type.name,
+          fee: type.fee,
+        });
       });
       setFilteredBookings(presetBookings);
       console.log("Booking types from firebase:", types);
@@ -213,8 +219,12 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
     setLocationPopoverOpen(false);
   };
 
-  const handleBookingTypeSelect = (currentValue: string) => {
+  const handleBookingTypeSelect = (
+    currentValue: string,
+    currentFee: number
+  ) => {
     setBookingType(currentValue);
+    setBookingFee(currentFee.toString());
     setBookingsPopoverOpen(false);
   };
 
@@ -229,6 +239,7 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
 
   const handelBookingTypeInputChange = (value: string) => {
     setBookingType(value);
+    setBookingFee("");
 
     const filtered = filteredBookings.filter((book) =>
       book.label.toLowerCase().includes(value.toLowerCase())
@@ -250,6 +261,10 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
     if (event.key === "Enter") {
       setBookingsPopoverOpen(false);
     }
+  };
+
+  const handleBookingFeeInputChange = (value: string) => {
+    setBookingFee(value);
   };
 
   return (
@@ -342,66 +357,82 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
 
         {/* Booking type select - Conditionally Rendered */}
         {!isBackgroundEvent && (
-          <div>
-            <Label className="block text-sm font-medium text-gray-700">
-              Select or input booking type
-            </Label>
-            <Popover
-              open={bookingsPopoverOpen}
-              onOpenChange={setBookingsPopoverOpen}
-            >
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  role="combobox"
-                  aria-expanded={bookingsPopoverOpen}
-                  className="w-[200px] justify-between"
-                  onClick={() => setBookingsPopoverOpen(!open)} // Toggle popover on click
-                >
-                  {bookingType
-                    ? filteredBookings.find(
-                        (book) => book.value === bookingType
-                      )?.label || bookingType
-                    : "Select booking type..."}
-                  <CaretSortIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-[200px] p-0 popover-above-modal">
-                <Command>
-                  <CommandInput
-                    placeholder="Search types..."
-                    value={bookingType ?? undefined}
-                    onValueChange={handelBookingTypeInputChange}
-                    onKeyDown={handelBookingTypeInputKeyPress} // Handle keyboard input
-                    className="h-9"
-                  />
-                  <CommandList>
-                    <CommandEmpty>No types found.</CommandEmpty>
-                    <CommandGroup>
-                      {filteredBookings.map((book) => (
-                        <CommandItem
-                          key={book.value}
-                          value={book.value}
-                          onSelect={() => {
-                            handleBookingTypeSelect(book.value); // Set location
-                            setBookingsPopoverOpen(false); // Close the popover after selection
-                          }}
-                        >
-                          {book.label}
-                          <CheckIcon
-                            className={`ml-auto h-4 w-4 ${
-                              location === book.value
-                                ? "opacity-100"
-                                : "opacity-0"
-                            }`}
-                          />
-                        </CommandItem>
-                      ))}
-                    </CommandGroup>
-                  </CommandList>
-                </Command>
-              </PopoverContent>
-            </Popover>
+          <div className="space-y-4">
+            <div className="space-y-1">
+              <Label className="block text-sm font-medium text-gray-700">
+                Select or input booking type
+              </Label>
+              <Popover
+                open={bookingsPopoverOpen}
+                onOpenChange={setBookingsPopoverOpen}
+              >
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    role="combobox"
+                    aria-expanded={bookingsPopoverOpen}
+                    className="w-[200px] justify-between"
+                    onClick={() => setBookingsPopoverOpen(!open)} // Toggle popover on click
+                  >
+                    {bookingType
+                      ? filteredBookings.find(
+                          (book) => book.value === bookingType
+                        )?.label || bookingType
+                      : "Select booking type..."}
+                    <CaretSortIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-[200px] p-0 popover-above-modal">
+                  <Command>
+                    <CommandInput
+                      placeholder="Search types..."
+                      value={bookingType ?? undefined}
+                      onValueChange={handelBookingTypeInputChange}
+                      onKeyDown={handelBookingTypeInputKeyPress} // Handle keyboard input
+                      className="h-9"
+                    />
+                    <CommandList>
+                      <CommandEmpty>No types found.</CommandEmpty>
+                      <CommandGroup>
+                        {filteredBookings.map((book) => (
+                          <CommandItem
+                            key={book.value}
+                            value={book.value}
+                            onSelect={() => {
+                              handleBookingTypeSelect(book.value, book.fee); // Set location
+                              setBookingsPopoverOpen(false); // Close the popover after selection
+                            }}
+                          >
+                            {book.label}
+                            <CheckIcon
+                              className={`ml-auto h-4 w-4 ${
+                                location === book.value
+                                  ? "opacity-100"
+                                  : "opacity-0"
+                              }`}
+                            />
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
+            </div>
+
+            {/* Booking Fee Input */}
+            <div className="space-y-2">
+              <Label className="block text-sm font-medium text-gray-700">
+                Fee
+              </Label>
+              <Input
+                type="number"
+                value={bookingFee || ""}
+                onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                  handleBookingFeeInputChange(e.target.value)
+                }
+              />
+            </div>
           </div>
         )}
 
