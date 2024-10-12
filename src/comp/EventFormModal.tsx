@@ -97,12 +97,15 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
   const [locationPopoverOpen, setLocationPopoverOpen] = useState(false);
   const [filteredLocations, setFilteredLocations] = useState(presetLocations);
   const [paid, setPaid] = useState(false); // Defaults to false (Unpaid)
-  const [bookingType, setBookingType] = useState<string | null>(null);
-  const [bookingFee, setBookingFee] = useState<string>("");
+  const [bookingsPopoverOpen, setBookingsPopoverOpen] = useState(false);
+  const [bookingType, setBookingType] = useState("");
+  const [bookingTypes, setBookingTypes] = useState<
+    { value: string; label: string; fee: number }[]
+  >([]);
   const [filteredBookings, setFilteredBookings] = useState<
     { value: string; label: string; fee: number }[]
   >([]);
-  const [bookingsPopoverOpen, setBookingsPopoverOpen] = useState(false);
+  const [bookingFee, setBookingFee] = useState<string>("");
 
   useEffect(() => {
     if (event) {
@@ -149,27 +152,28 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
           fee: type.fee,
         });
       });
+      setBookingTypes(presetBookings);
       setFilteredBookings(presetBookings);
       console.log("Booking types from firebase:", types);
     }
   }, [authUser]);
 
-  // fetch booking types
   useEffect(() => {
     fetchBookings();
   }, [fetchBookings]);
 
+  // Update filtered bookings when bookingType changes
   useEffect(() => {
     if (bookingType === "") {
-      fetchBookings(); // Reset to full list when input is cleared
+      setFilteredBookings(bookingTypes); // Reset to full list when input is cleared
     } else {
-      setFilteredBookings((prevBookings) =>
-        prevBookings.filter((book) =>
-          book.label.toLowerCase().includes((bookingType ?? "").toLowerCase())
+      setFilteredBookings(
+        bookingTypes.filter((book) =>
+          book.label.toLowerCase().includes(bookingType.toLowerCase())
         )
       );
     }
-  }, [bookingType, fetchBookings]);
+  }, [bookingType, bookingTypes]);
 
   const handleSave = (e: MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
@@ -211,6 +215,8 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
     setDaysOfWeek([]);
     setStartRecur("");
     setEndRecur("");
+    setBookingType("");
+    setBookingFee("");
     onClose();
   };
 
@@ -219,13 +225,10 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
     setLocationPopoverOpen(false);
   };
 
-  const handleBookingTypeSelect = (
-    currentValue: string,
-    currentFee: number
-  ) => {
-    setBookingType(currentValue);
-    setBookingFee(currentFee.toString());
-    setBookingsPopoverOpen(false);
+  const handleBookingTypeSelect = (value: string, fee: number) => {
+    setBookingType(value);
+    setBookingFee(fee.toString());
+    setBookingsPopoverOpen(false); // Close the popover after selection
   };
 
   const handleLocationInputChange = (value: string) => {
@@ -372,7 +375,7 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
                     role="combobox"
                     aria-expanded={bookingsPopoverOpen}
                     className="w-[200px] justify-between"
-                    onClick={() => setBookingsPopoverOpen(!open)} // Toggle popover on click
+                    onClick={() => setBookingsPopoverOpen(!bookingsPopoverOpen)} // Toggle popover on click
                   >
                     {bookingType
                       ? filteredBookings.find(
@@ -386,7 +389,7 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
                   <Command>
                     <CommandInput
                       placeholder="Search types..."
-                      value={bookingType ?? undefined}
+                      value={bookingType}
                       onValueChange={handelBookingTypeInputChange}
                       onKeyDown={handelBookingTypeInputKeyPress} // Handle keyboard input
                       className="h-9"
@@ -406,7 +409,7 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
                             {book.label}
                             <CheckIcon
                               className={`ml-auto h-4 w-4 ${
-                                location === book.value
+                                bookingType === book.value
                                   ? "opacity-100"
                                   : "opacity-0"
                               }`}
