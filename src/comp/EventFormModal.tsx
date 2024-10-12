@@ -1,7 +1,13 @@
 // dialgog in Calendar Tab
 
 "use client";
-import React, { useState, ChangeEvent, MouseEvent, useEffect } from "react";
+import React, {
+  useState,
+  ChangeEvent,
+  MouseEvent,
+  useEffect,
+  useCallback,
+} from "react";
 import {
   Dialog,
   DialogContent,
@@ -30,12 +36,17 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { EventInput } from "@/interfaces/types";
 import { Switch } from "@headlessui/react";
+import { BookingTypes } from "@/interfaces/bookingTypes";
+import { fetchBookingTypes } from "@/lib/converters/bookingTypes";
+import { useFirebaseAuth } from "@/services/authService";
+import { B } from "@fullcalendar/core/internal-common";
 
 interface EventFormDialogProps {
   isOpen: boolean;
   onClose: () => void;
   onSave: (eventData: {
     title: string;
+    fee: number;
     description: string;
     location: string;
     isBackgroundEvent: boolean;
@@ -72,6 +83,7 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
   event,
   editAll = true,
 }) => {
+  const { authUser } = useFirebaseAuth();
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [location, setLocation] = useState("");
@@ -83,9 +95,18 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
   const [daysOfWeek, setDaysOfWeek] = useState<number[]>([]);
   const [startRecur, setStartRecur] = useState("");
   const [endRecur, setEndRecur] = useState("");
-  const [open, setOpen] = useState(false);
+  const [locationPopoverOpen, setLocationPopoverOpen] = useState(false);
   const [filteredLocations, setFilteredLocations] = useState(presetLocations);
   const [paid, setPaid] = useState(false); // Defaults to false (Unpaid)
+  const [bookingsPopoverOpen, setBookingsPopoverOpen] = useState(false);
+  const [bookingType, setBookingType] = useState("");
+  const [bookingTypes, setBookingTypes] = useState<
+    { value: string; label: string; fee: number }[]
+  >([]);
+  const [filteredBookings, setFilteredBookings] = useState<
+    { value: string; label: string; fee: number }[]
+  >([]);
+  const [bookingFee, setBookingFee] = useState<string>("");
 
   useEffect(() => {
     if (event) {
@@ -120,11 +141,48 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
     }
   }, [event]);
 
+  const fetchBookings = useCallback(async () => {
+    if (authUser) {
+      // Fetching booking types from Firestore
+      const types = await fetchBookingTypes(authUser.uid);
+      let presetBookings: { value: string; label: string; fee: number }[] = [];
+      types.forEach((type) => {
+        presetBookings.push({
+          value: type.name,
+          label: type.name,
+          fee: type.fee,
+        });
+      });
+      setBookingTypes(presetBookings);
+      setFilteredBookings(presetBookings);
+      console.log("Booking types from firebase:", types);
+    }
+  }, [authUser]);
+
+  useEffect(() => {
+    fetchBookings();
+  }, [fetchBookings]);
+
+  // Update filtered bookings when bookingType changes
+  useEffect(() => {
+    if (bookingType === "") {
+      setFilteredBookings(bookingTypes); // Reset to full list when input is cleared
+    } else {
+      setFilteredBookings(
+        bookingTypes.filter((book) =>
+          book.label.toLowerCase().includes(bookingType.toLowerCase())
+        )
+      );
+    }
+  }, [bookingType, bookingTypes]);
+
   const handleSave = (e: MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
 
     const eventData = {
-      title,
+      title: isBackgroundEvent ? title : bookingType,
+
+      fee: !isBackgroundEvent ? parseInt(bookingFee) : 0,
       description,
       location,
       isBackgroundEvent,
@@ -160,12 +218,20 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
     setDaysOfWeek([]);
     setStartRecur("");
     setEndRecur("");
+    setBookingType("");
+    setBookingFee("");
     onClose();
   };
 
   const handleLocationSelect = (currentValue: string) => {
     setLocation(currentValue);
-    setOpen(false);
+    setLocationPopoverOpen(false);
+  };
+
+  const handleBookingTypeSelect = (value: string, fee: number) => {
+    setBookingType(value);
+    setBookingFee(fee.toString());
+    setBookingsPopoverOpen(false); // Close the popover after selection
   };
 
   const handleLocationInputChange = (value: string) => {
@@ -177,12 +243,34 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
     setFilteredLocations(filtered);
   };
 
+  const handelBookingTypeInputChange = (value: string) => {
+    setBookingType(value);
+    setBookingFee("");
+
+    const filtered = filteredBookings.filter((book) =>
+      book.label.toLowerCase().includes(value.toLowerCase())
+    );
+    setFilteredBookings(filtered);
+  };
+
   const handleLocationInputKeyPress = (
     event: React.KeyboardEvent<HTMLInputElement>
   ) => {
     if (event.key === "Enter") {
-      setOpen(false);
+      setLocationPopoverOpen(false);
     }
+  };
+
+  const handelBookingTypeInputKeyPress = (
+    event: React.KeyboardEvent<HTMLInputElement>
+  ) => {
+    if (event.key === "Enter") {
+      setBookingsPopoverOpen(false);
+    }
+  };
+
+  const handleBookingFeeInputChange = (value: string) => {
+    setBookingFee(value);
   };
 
   return (
@@ -273,18 +361,102 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
           </div>
         )}
 
-        <div className="space-y-4">
-          <div className="space-y-2">
-            <Label className="block text-sm font-medium text-gray-700">
-              {isBackgroundEvent ? "Title" : "Type of Booking"}
-            </Label>
-            <Input
-              value={title}
-              onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                setTitle(e.target.value)
-              }
-            />
+        {/* Booking type select - Conditionally Rendered */}
+        {!isBackgroundEvent && (
+          <div className="space-y-4">
+            <div className="space-y-1">
+              <Label className="block text-sm font-medium text-gray-700">
+                Select or Create New Booking Type
+              </Label>
+              <Popover
+                open={bookingsPopoverOpen}
+                onOpenChange={setBookingsPopoverOpen}
+              >
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    role="combobox"
+                    aria-expanded={bookingsPopoverOpen}
+                    className="w-[200px] justify-between"
+                    onClick={() => setBookingsPopoverOpen(!bookingsPopoverOpen)} // Toggle popover on click
+                  >
+                    {bookingType
+                      ? filteredBookings.find(
+                          (book) => book.value === bookingType
+                        )?.label || bookingType
+                      : "Select booking type..."}
+                    <CaretSortIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-[200px] p-0 popover-above-modal">
+                  <Command>
+                    <CommandInput
+                      placeholder="Search types..."
+                      value={bookingType}
+                      onValueChange={handelBookingTypeInputChange}
+                      onKeyDown={handelBookingTypeInputKeyPress} // Handle keyboard input
+                      className="h-9"
+                    />
+                    <CommandList>
+                      <CommandEmpty>No types found.</CommandEmpty>
+                      <CommandGroup>
+                        {filteredBookings.map((book) => (
+                          <CommandItem
+                            key={book.value}
+                            value={book.value}
+                            onSelect={() => {
+                              handleBookingTypeSelect(book.value, book.fee); // Set location
+                              setBookingsPopoverOpen(false); // Close the popover after selection
+                            }}
+                          >
+                            {book.label}
+                            <CheckIcon
+                              className={`ml-auto h-4 w-4 ${
+                                bookingType === book.value
+                                  ? "opacity-100"
+                                  : "opacity-0"
+                              }`}
+                            />
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
+            </div>
+
+            {/* Booking Fee Input */}
+            <div className="space-y-2">
+              <Label className="block text-sm font-medium text-gray-700">
+                Fee
+              </Label>
+              <Input
+                type="number"
+                value={bookingFee || ""}
+                onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                  handleBookingFeeInputChange(e.target.value)
+                }
+              />
+            </div>
           </div>
+        )}
+
+        <div className="space-y-4">
+          {/* Title Input */}
+          {isBackgroundEvent && (
+            <div className="space-y-2">
+              <Label className="block text-sm font-medium text-gray-700">
+                Title
+              </Label>
+              <Input
+                value={title}
+                onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                  setTitle(e.target.value)
+                }
+              />
+            </div>
+          )}
           <div>
             <Label className="block text-sm font-medium text-gray-700">
               Notes
@@ -300,14 +472,17 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
             <Label className="block text-sm font-medium text-gray-700">
               Location
             </Label>
-            <Popover open={open} onOpenChange={setOpen}>
+            <Popover
+              open={locationPopoverOpen}
+              onOpenChange={setLocationPopoverOpen}
+            >
               <PopoverTrigger asChild>
                 <Button
                   variant="outline"
                   role="combobox"
-                  aria-expanded={open}
+                  aria-expanded={locationPopoverOpen}
                   className="w-[200px] justify-between"
-                  onClick={() => setOpen(!open)} // Toggle popover on click
+                  onClick={() => setLocationPopoverOpen(!open)} // Toggle popover on click
                 >
                   {location
                     ? presetLocations.find((loc) => loc.value === location)
@@ -334,7 +509,7 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
                           value={loc.value}
                           onSelect={() => {
                             handleLocationSelect(loc.value); // Set location
-                            setOpen(false); // Close the popover after selection
+                            setLocationPopoverOpen(false); // Close the popover after selection
                           }}
                         >
                           {loc.label}

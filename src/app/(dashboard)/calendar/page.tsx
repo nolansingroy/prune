@@ -23,6 +23,7 @@ import { EventResizeDoneArg } from "@fullcalendar/interaction";
 import { EventDropArg } from "@fullcalendar/core";
 import axios from "axios";
 import { cl } from "@fullcalendar/core/internal-common";
+import { useFirebaseAuth } from "@/services/authService";
 
 export default function Calendar() {
   const calendarRef = useRef<FullCalendar>(null);
@@ -235,6 +236,7 @@ export default function Calendar() {
       // Ensure required fields like `title`, `startDate`, and `isBackgroundEvent` are preserved
       const updatedEvent: EventInput = {
         ...prevState, // Preserve previous state
+        fee: prevState?.fee || 0,
         title: prevState?.title || "", // Ensure title is not undefined
         isBackgroundEvent: prevState?.isBackgroundEvent ?? false, // Ensure isBackgroundEvent is a boolean (default to false)
         start:
@@ -290,6 +292,7 @@ export default function Calendar() {
     paid,
     recurrence,
     date,
+    fee,
   }: {
     title: string;
     description: string;
@@ -299,6 +302,7 @@ export default function Calendar() {
     endTime: string;
     paid: boolean;
     date?: string;
+    fee: number;
     recurrence?: {
       daysOfWeek: number[];
       startTime: string;
@@ -339,6 +343,7 @@ export default function Calendar() {
         const eventInput = {
           title,
           description,
+          fee,
           location: location || "",
           startDate,
           startTime,
@@ -387,6 +392,7 @@ export default function Calendar() {
         let event: EventInput = {
           id: "",
           title,
+          fee: fee,
           location: location || "",
           start: startDateTime, // Save in UTC
           end: endDateTime, // Save in UTC

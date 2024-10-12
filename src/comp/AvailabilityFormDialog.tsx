@@ -51,7 +51,7 @@ interface AvailabilityDialogProps {
       endRecur: string;
     };
   }) => void;
-  event?: EventInput | null;
+  event?: Omit<EventInput, "fee"> | null;
 }
 
 const presetLocations = [

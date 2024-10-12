@@ -94,4 +94,4 @@ const resetPassword = async (email: string, auth: Auth) => {
   }
 };
 
-export { useFirebaseAuth, authLogout, resetPassword };
+export { useFirebaseAuth, authLogout, resetPassword, formatAuthUser };

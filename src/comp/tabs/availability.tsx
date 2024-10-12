@@ -54,7 +54,7 @@ import { orderBy } from "firebase/firestore";
 type SortableKeys = "start" | "end" | "title" | "startDate";
 
 export default function Availability() {
-  const [events, setEvents] = useState<EventInput[]>([]);
+  const [events, setEvents] = useState<Omit<EventInput, "fee">[]>([]);
   const [selectedRows, setSelectedRows] = useState<Set<string>>(new Set());
   const [editingCell, setEditingCell] = useState<{
     id: string;
@@ -67,7 +67,10 @@ export default function Availability() {
     direction: "asc" | "desc";
   }>({ key: "startDate", direction: "asc" });
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [editingEvent, setEditingEvent] = useState<EventInput | null>(null);
+  const [editingEvent, setEditingEvent] = useState<Omit<
+    EventInput,
+    "fee"
+  > | null>(null);
   const [userTimezone, setUserTimezone] = useState<string>("UTC");
   const [loading, setLoading] = useState(false); // New loading state
 
@@ -166,7 +169,7 @@ export default function Availability() {
       );
 
       const querySnapshot = await getDocs(q);
-      let eventsList: EventInput[] = [];
+      let eventsList: Omit<EventInput, "fee">[] = [];
 
       querySnapshot.docs.forEach((doc) => {
         const data = doc.data();
@@ -656,7 +659,7 @@ export default function Availability() {
   );
 
   // Function to clone the event
-  const handleCloneClick = async (event: EventInput) => {
+  const handleCloneClick = async (event: Omit<EventInput, "fee">) => {
     try {
       const user = auth.currentUser;
       if (!user) {
@@ -680,7 +683,7 @@ export default function Availability() {
       await setDoc(eventRef, sanitizedEventData);
 
       // Update local state
-      setEvents((prevEvents: EventInput[]) => [
+      setEvents((prevEvents: Omit<EventInput, "fee">[]) => [
         ...prevEvents,
         { ...sanitizedEventData, id: eventRef.id } as EventInput, // Assign the newly generated id
       ]);
