@@ -1,6 +1,7 @@
 // dialgog in Bookings Tab
 
 import React, { useState, ChangeEvent, MouseEvent, useEffect } from "react";
+import { auth } from "../../firebase";
 import {
   Dialog,
   DialogContent,
