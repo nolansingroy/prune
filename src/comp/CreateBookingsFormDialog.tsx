@@ -1,6 +1,12 @@
 // dialgog in Bookings Tab
 
-import React, { useState, ChangeEvent, MouseEvent, useEffect } from "react";
+import React, {
+  useState,
+  ChangeEvent,
+  MouseEvent,
+  useEffect,
+  useCallback,
+} from "react";
 import { auth } from "../../firebase";
 import {
   Dialog,
@@ -19,9 +25,24 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { EventInput } from "@/interfaces/types";
+import { fetchBookingTypes } from "@/lib/converters/bookingTypes";
+import { CaretSortIcon, CheckIcon } from "@radix-ui/react-icons";
 
 interface CreateBookingsFormDialogProps {
   isOpen: boolean;
@@ -67,6 +88,12 @@ const CreateBookingsFormDialog: React.FC<CreateBookingsFormDialogProps> = ({
   const [daysOfWeek, setDaysOfWeek] = useState<number[]>([]);
   const [startRecur, setStartRecur] = useState("");
   const [endRecur, setEndRecur] = useState("");
+  const [bookingType, setBookingType] = useState<string | null>(null);
+  const [bookingFee, setBookingFee] = useState<string>("");
+  const [filteredBookings, setFilteredBookings] = useState<
+    { value: string; label: string; fee: number }[]
+  >([]);
+  const [bookingsPopoverOpen, setBookingsPopoverOpen] = useState(false);
 
   useEffect(() => {
     if (event) {
@@ -98,6 +125,40 @@ const CreateBookingsFormDialog: React.FC<CreateBookingsFormDialogProps> = ({
       }
     }
   }, [event, isOpen]);
+
+  const fetchBookings = useCallback(async () => {
+    if (auth.currentUser) {
+      // Fetching booking types from Firestore
+      const types = await fetchBookingTypes(auth.currentUser.uid);
+      let presetBookings: { value: string; label: string; fee: number }[] = [];
+      types.forEach((type) => {
+        presetBookings.push({
+          value: type.name,
+          label: type.name,
+          fee: type.fee,
+        });
+      });
+      setFilteredBookings(presetBookings);
+      console.log("Booking types from firebase:", types);
+    }
+  }, []);
+
+  // fetch booking types
+  useEffect(() => {
+    fetchBookings();
+  }, [fetchBookings]);
+
+  useEffect(() => {
+    if (bookingType === "") {
+      fetchBookings(); // Reset to full list when input is cleared
+    } else {
+      setFilteredBookings((prevBookings) =>
+        prevBookings.filter((book) =>
+          book.label.toLowerCase().includes((bookingType ?? "").toLowerCase())
+        )
+      );
+    }
+  }, [bookingType, fetchBookings]);
 
   const handleSave = (e: MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
@@ -139,6 +200,37 @@ const CreateBookingsFormDialog: React.FC<CreateBookingsFormDialogProps> = ({
     onClose();
   };
 
+  const handelBookingTypeInputChange = (value: string) => {
+    setBookingType(value);
+    setBookingFee("");
+
+    const filtered = filteredBookings.filter((book) =>
+      book.label.toLowerCase().includes(value.toLowerCase())
+    );
+    setFilteredBookings(filtered);
+  };
+
+  const handelBookingTypeInputKeyPress = (
+    event: React.KeyboardEvent<HTMLInputElement>
+  ) => {
+    if (event.key === "Enter") {
+      setBookingsPopoverOpen(false);
+    }
+  };
+
+  const handleBookingTypeSelect = (
+    currentValue: string,
+    currentFee: number
+  ) => {
+    setBookingType(currentValue);
+    setBookingFee(currentFee.toString());
+    setBookingsPopoverOpen(false);
+  };
+
+  const handleBookingFeeInputChange = (value: string) => {
+    setBookingFee(value);
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent>
@@ -147,15 +239,92 @@ const CreateBookingsFormDialog: React.FC<CreateBookingsFormDialogProps> = ({
             Create New Booking
             {/* {editAll ? "Edit All Instances" : "Edit Booking"} */}
           </DialogTitle>
-          <DialogDescription>
+          {/* <DialogDescription>
             Edit this booking event
-            {/* {editAll
+            {editAll
               ? "Edit all instances of this recurring booking"
-              : "Edit this booking"} */}
-          </DialogDescription>
+              : "Edit this booking"}
+          </DialogDescription> */}
         </DialogHeader>
         <div className="space-y-4">
-          <div>
+          <div className="space-y-4">
+            <div className="space-y-1">
+              <Label className="block text-sm font-medium text-gray-700">
+                Select or Create New Booking Type
+              </Label>
+              <Popover
+                open={bookingsPopoverOpen}
+                onOpenChange={setBookingsPopoverOpen}
+              >
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    role="combobox"
+                    aria-expanded={bookingsPopoverOpen}
+                    className="w-[200px] justify-between"
+                    onClick={() => setBookingsPopoverOpen(!open)} // Toggle popover on click
+                  >
+                    {bookingType
+                      ? filteredBookings.find(
+                          (book) => book.value === bookingType
+                        )?.label || bookingType
+                      : "Select booking type..."}
+                    <CaretSortIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-[200px] p-0 popover-above-modal">
+                  <Command>
+                    <CommandInput
+                      placeholder="Search types..."
+                      value={bookingType ?? undefined}
+                      onValueChange={handelBookingTypeInputChange}
+                      onKeyDown={handelBookingTypeInputKeyPress} // Handle keyboard input
+                      className="h-9"
+                    />
+                    <CommandList>
+                      <CommandEmpty>No types found.</CommandEmpty>
+                      <CommandGroup>
+                        {filteredBookings.map((book) => (
+                          <CommandItem
+                            key={book.value}
+                            value={book.value}
+                            onSelect={() => {
+                              handleBookingTypeSelect(book.value, book.fee); // Set location
+                              setBookingsPopoverOpen(false); // Close the popover after selection
+                            }}
+                          >
+                            {book.label}
+                            <CheckIcon
+                              className={`ml-auto h-4 w-4 ${
+                                location === book.value
+                                  ? "opacity-100"
+                                  : "opacity-0"
+                              }`}
+                            />
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
+            </div>
+
+            {/* Booking Fee Input */}
+            <div className="space-y-2">
+              <Label className="block text-sm font-medium text-gray-700">
+                Fee
+              </Label>
+              <Input
+                type="number"
+                value={bookingFee || ""}
+                onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                  handleBookingFeeInputChange(e.target.value)
+                }
+              />
+            </div>
+          </div>
+          {/* <div>
             <Label className="block text-sm font-medium text-gray-700">
               Booking Title
             </Label>
@@ -165,7 +334,7 @@ const CreateBookingsFormDialog: React.FC<CreateBookingsFormDialogProps> = ({
                 setTitle(e.target.value)
               }
             />
-          </div>
+          </div> */}
           <div>
             <Label className="block text-sm font-medium text-gray-700">
               Notes
