@@ -237,6 +237,8 @@ export default function Calendar() {
       const updatedEvent: EventInput = {
         ...prevState, // Preserve previous state
         fee: prevState?.fee || 0,
+        clientId: prevState?.clientId || "",
+        clientName: prevState?.clientName || "",
         title: prevState?.title || "", // Ensure title is not undefined
         isBackgroundEvent: prevState?.isBackgroundEvent ?? false, // Ensure isBackgroundEvent is a boolean (default to false)
         start:
@@ -284,6 +286,9 @@ export default function Calendar() {
 
   const handleSave = async ({
     title,
+    fee,
+    clientId,
+    clientName,
     description,
     location,
     isBackgroundEvent,
@@ -292,10 +297,11 @@ export default function Calendar() {
     endTime,
     paid,
     recurrence,
-    fee,
   }: {
     title: string;
     description: string;
+    clientId: string;
+    clientName: string;
     location: string;
     isBackgroundEvent: boolean;
     startTime: string;
@@ -342,6 +348,8 @@ export default function Calendar() {
         // Prepare the event input for the cloud function
         const eventInput = {
           title,
+          clientId,
+          clientName,
           description,
           fee,
           location: location || "",
@@ -393,6 +401,8 @@ export default function Calendar() {
           id: "",
           title,
           fee: fee,
+          clientId: clientId,
+          clientName: clientName,
           location: location || "",
           start: startDateTime, // Save in UTC
           end: endDateTime, // Save in UTC

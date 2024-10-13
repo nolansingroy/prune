@@ -186,6 +186,8 @@ export default function CreateBookings() {
             id: doc.id,
             title: data.title,
             fee: data.fee,
+            clientId: data.clientId,
+            clientName: data.clientName,
             start: dtstart,
             end: new Date(
               dtstart.getTime() + (end.getTime() - start.getTime())
@@ -207,9 +209,11 @@ export default function CreateBookings() {
           eventsList.push({
             id: doc.id,
             title: data.title,
+            fee: data.fee,
+            clientId: data.clientId,
+            clientName: data.clientName,
             start: start,
             end: end,
-            fee: data.fee,
             description: data.description || "",
             isBackgroundEvent: data.isBackgroundEvent,
             startDate: start,
@@ -425,6 +429,9 @@ export default function CreateBookings() {
 
   const handleSaveEvent = async (eventData: {
     title: string;
+    fee: number;
+    clientId: string;
+    clientName: string;
     description: string;
     location: string;
     isBackgroundEvent: boolean;
@@ -436,7 +443,6 @@ export default function CreateBookings() {
       startRecur: string; // YYYY-MM-DD
       endRecur: string; // YYYY-MM-DD
     };
-    fee: number;
   }) => {
     setLoading(true); // Start loading
     try {
@@ -477,10 +483,13 @@ export default function CreateBookings() {
         // Create a new event object
         const eventInput = {
           title: eventData.title,
+          fee: eventData.fee,
+          clientId: eventData.clientId,
+          clientName: eventData.clientName,
           description: eventData.description,
           location: eventData.location || "",
           isBackgroundEvent: eventData.isBackgroundEvent,
-          fee: eventData.fee,
+
           start: startDateTime, // Save in UTC
           end: endDateTime, // Save in UTC
 
@@ -503,6 +512,9 @@ export default function CreateBookings() {
 
         const eventInput = {
           title: eventData.title,
+          fee: eventData.fee,
+          clientId: eventData.clientId,
+          clientName: eventData.clientName,
           description: eventData.description,
           location: eventData.location || "",
           startDate,
