@@ -79,20 +79,9 @@ export default function Calendar() {
     return (
       <>
         {!isBackgroundEvent && (
-          // <div className="">
-          <HoverCard>
-            <HoverCardTrigger>
-              <span className="underline">{clientName || "No name"}</span>
-            </HoverCardTrigger>
-            <HoverCardContent>
-              <div className="px-2 py-1">
-                <div className="text-sm font-semibold">
-                  {`Notes : ${description}`}
-                </div>
-                <div className="text-xs">{` Location : ${location}`}</div>
-              </div>
-            </HoverCardContent>
-          </HoverCard>
+          <div className="">
+            <span className="underline">{clientName || "No name"}</span>
+          </div>
         )}
       </>
     );
@@ -648,4 +637,20 @@ export default function Calendar() {
       />
     </div>
   );
+}
+
+{
+  /* <HoverCard>
+            <HoverCardTrigger>
+              <span className="underline">{clientName || "No name"}</span>
+            </HoverCardTrigger>
+            <HoverCardContent>
+              <div className="px-2 py-1">
+                <div className="text-sm font-semibold">
+                  {`Notes : ${description}`}
+                </div>
+                <div className="text-xs">{` Location : ${location}`}</div>
+              </div>
+            </HoverCardContent>
+          </HoverCard> */
 }
