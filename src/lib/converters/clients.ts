@@ -9,6 +9,7 @@ import {
   SnapshotOptions,
   DocumentData,
   orderBy,
+  serverTimestamp,
 } from "firebase/firestore";
 import { Client } from "@/interfaces/clients"; // Adjust the import path as needed
 
@@ -26,8 +27,8 @@ const clientConverter: FirestoreDataConverter<Client> = {
       lastName: client.lastName,
       phoneNumber: client.phoneNumber,
       email: client.email,
-      created_at: client.created_at || Timestamp.now(),
-      updated_at: Timestamp.now(), // Always update the updated_at field
+      created_at: client.created_at || serverTimestamp(),
+      updated_at: serverTimestamp(),
     };
   },
   fromFirestore(
@@ -58,12 +59,17 @@ const clientsRef = (uid: string) =>
 
 // Function to fetch clients
 export async function fetchClients(uid: string): Promise<Client[]> {
-  const q = query(clientsRef(uid), orderBy("created_at", "desc"));
-  const querySnapshot = await getDocs(q);
+  try {
+    const q = query(clientsRef(uid), orderBy("created_at", "desc"));
+    const querySnapshot = await getDocs(q);
 
-  const clientsData = querySnapshot.docs.map((doc) => doc.data());
+    const clientsData = querySnapshot.docs.map((doc) => doc.data());
 
-  console.log("Clients from firebase:", clientsData);
+    console.log("Clients from firebase:", clientsData);
 
-  return clientsData;
+    return clientsData;
+  } catch (error) {
+    console.error("Error fetching clients:", error);
+    return [];
+  }
 }

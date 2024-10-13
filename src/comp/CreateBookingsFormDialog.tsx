@@ -49,6 +49,7 @@ interface CreateBookingsFormDialogProps {
   onClose: () => void;
   onSave: (eventData: {
     title: string;
+    fee: number;
     description: string;
     location: string;
     isBackgroundEvent: boolean; // Automatically false for regular bookings
@@ -171,6 +172,7 @@ const CreateBookingsFormDialog: React.FC<CreateBookingsFormDialogProps> = ({
     const eventData = {
       title: bookingType,
       description,
+      fee: parseFloat(bookingFee),
       location,
       isBackgroundEvent: false, // Always false for regular bookings
       date: showDateSelector ? date : undefined,
