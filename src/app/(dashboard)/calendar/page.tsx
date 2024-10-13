@@ -22,6 +22,11 @@ import { collection, query, getDocs } from "firebase/firestore";
 import { EventResizeDoneArg } from "@fullcalendar/interaction";
 import { EventDropArg } from "@fullcalendar/core";
 import axios from "axios";
+import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from "@/components/ui/hover-card";
 import { cl } from "@fullcalendar/core/internal-common";
 import { useFirebaseAuth } from "@/services/authService";
 
@@ -58,7 +63,7 @@ export default function Calendar() {
   };
 
   const renderEventContent = (eventInfo: EventContentArg) => {
-    const { isBackgroundEvent, location, clientName } =
+    const { isBackgroundEvent, location, clientName, title, description } =
       eventInfo.event.extendedProps;
     const classNames = eventInfo.event.classNames || [];
     const view = eventInfo.view.type;
@@ -72,27 +77,24 @@ export default function Calendar() {
     }
 
     return (
-      <div>
+      <>
         {!isBackgroundEvent && (
-          //   <div
-          //     key={eventInfo.event.extendedProps.uniqueId}
-          //     className="flex text-wrap overflow-hidden"
-          //     style={{
-          //       position: "absolute",
-          //       top: -25,
-          //       left: 0,
-          //       right: 0,
-          //       bottom: 0,
-          //     }}
-          //   >
-          //     {location}
-          //   </div>
-          // ) : (
-          <div className="">
-            <div className="">{clientName}</div>
-          </div>
+          // <div className="">
+          <HoverCard>
+            <HoverCardTrigger>
+              <span className="underline">{clientName || "No name"}</span>
+            </HoverCardTrigger>
+            <HoverCardContent>
+              <div className="px-2 py-1">
+                <div className="text-sm font-semibold">
+                  {`Notes : ${description}`}
+                </div>
+                <div className="text-xs">{` Location : ${location}`}</div>
+              </div>
+            </HoverCardContent>
+          </HoverCard>
         )}
-      </div>
+      </>
     );
   };
 
