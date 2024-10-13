@@ -186,6 +186,9 @@ export default function Availability() {
           const dtstart = new Date(start);
           eventsList.push({
             id: doc.id,
+            clientId: data.clientId || "",
+            clientName: data.clientName || "",
+
             title: data.title,
             start: dtstart,
             end: new Date(
@@ -207,6 +210,8 @@ export default function Availability() {
         } else {
           eventsList.push({
             id: doc.id,
+            clientId: data.clientId || "",
+            clientName: data.clientName || "",
             title: data.title,
             start: start,
             end: end,

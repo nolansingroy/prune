@@ -36,10 +36,10 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { EventInput } from "@/interfaces/types";
 import { Switch } from "@headlessui/react";
-import { BookingTypes } from "@/interfaces/bookingTypes";
 import { fetchBookingTypes } from "@/lib/converters/bookingTypes";
 import { useFirebaseAuth } from "@/services/authService";
 import { B } from "@fullcalendar/core/internal-common";
+import { fetchClients } from "@/lib/converters/clients";
 
 interface EventFormDialogProps {
   isOpen: boolean;
@@ -47,6 +47,8 @@ interface EventFormDialogProps {
   onSave: (eventData: {
     title: string;
     fee: number;
+    clientId: string;
+    clientName: string;
     description: string;
     location: string;
     isBackgroundEvent: boolean;
@@ -86,7 +88,7 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
   const { authUser } = useFirebaseAuth();
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [location, setLocation] = useState("");
+
   const [date, setDate] = useState("");
   const [isBackgroundEvent, setIsBackgroundEvent] = useState(true);
   const [startTime, setStartTime] = useState("");
@@ -95,9 +97,15 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
   const [daysOfWeek, setDaysOfWeek] = useState<number[]>([]);
   const [startRecur, setStartRecur] = useState("");
   const [endRecur, setEndRecur] = useState("");
+  // Location state
+  const [location, setLocation] = useState("");
   const [locationPopoverOpen, setLocationPopoverOpen] = useState(false);
   const [filteredLocations, setFilteredLocations] = useState(presetLocations);
+  // Payment status state
   const [paid, setPaid] = useState(false); // Defaults to false (Unpaid)
+  // booking fee state
+  const [bookingFee, setBookingFee] = useState<string>("");
+
   const [bookingsPopoverOpen, setBookingsPopoverOpen] = useState(false);
   const [bookingType, setBookingType] = useState("");
   const [bookingTypes, setBookingTypes] = useState<
@@ -106,7 +114,17 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
   const [filteredBookings, setFilteredBookings] = useState<
     { value: string; label: string; fee: number }[]
   >([]);
-  const [bookingFee, setBookingFee] = useState<string>("");
+
+  // clients state
+  const [clientsPopoverOpen, setClientsPopoverOpen] = useState(false);
+  const [client, setClient] = useState("");
+  const [clients, setClients] = useState<
+    { value: string; label: string; docId: string }[]
+  >([]);
+  const [filteredClients, setFilteredClients] = useState<
+    { value: string; label: string; docId: string }[]
+  >([]);
+  const [clientId, setClientId] = useState<string>("");
 
   useEffect(() => {
     if (event) {
@@ -159,9 +177,33 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
     }
   }, [authUser]);
 
+  const fetchAllClients = useCallback(async () => {
+    if (authUser) {
+      // Fetching clients from Firestore
+      const clients = await fetchClients(authUser.uid);
+      let presetClients: { value: string; label: string; docId: string }[] = [];
+      clients.forEach((cli) => {
+        presetClients.push({
+          // value: cli.docId,
+          // label: cli.docId,
+          value: cli.firstName + " " + cli.lastName,
+          label: cli.firstName + " " + cli.lastName,
+          docId: cli.docId,
+        });
+      });
+      setClients(presetClients);
+      setFilteredClients(presetClients);
+      console.log("Clients from firebase:", clients);
+    }
+  }, [authUser]);
+
   useEffect(() => {
     fetchBookings();
   }, [fetchBookings]);
+
+  useEffect(() => {
+    fetchAllClients();
+  }, [fetchAllClients]);
 
   // Update filtered bookings when bookingType changes
   useEffect(() => {
@@ -176,13 +218,27 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
     }
   }, [bookingType, bookingTypes]);
 
+  // Update filtered clients when client changes
+  useEffect(() => {
+    if (client === "") {
+      setFilteredClients(clients); // Reset to full list when input is cleared
+    } else {
+      setFilteredClients(
+        clients.filter((cli) =>
+          cli.label.toLowerCase().includes(client.toLowerCase())
+        )
+      );
+    }
+  }, [client, clients]);
+
   const handleSave = (e: MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
 
     const eventData = {
       title: isBackgroundEvent ? title : bookingType,
-
-      fee: !isBackgroundEvent ? parseInt(bookingFee) : 0,
+      fee: !isBackgroundEvent ? parseFloat(bookingFee) : 0,
+      clientId: !isBackgroundEvent ? clientId : "",
+      clientName: !isBackgroundEvent ? client : "",
       description,
       location,
       isBackgroundEvent,
@@ -220,18 +276,16 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
     setEndRecur("");
     setBookingType("");
     setBookingFee("");
+    setClient("");
+    setClientId("");
     onClose();
   };
+
+  // location functions
 
   const handleLocationSelect = (currentValue: string) => {
     setLocation(currentValue);
     setLocationPopoverOpen(false);
-  };
-
-  const handleBookingTypeSelect = (value: string, fee: number) => {
-    setBookingType(value);
-    setBookingFee(fee.toString());
-    setBookingsPopoverOpen(false); // Close the popover after selection
   };
 
   const handleLocationInputChange = (value: string) => {
@@ -241,6 +295,22 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
       loc.label.toLowerCase().includes(value.toLowerCase())
     );
     setFilteredLocations(filtered);
+  };
+
+  const handleLocationInputKeyPress = (
+    event: React.KeyboardEvent<HTMLInputElement>
+  ) => {
+    if (event.key === "Enter") {
+      setLocationPopoverOpen(false);
+    }
+  };
+
+  // booking type functions
+
+  const handleBookingTypeSelect = (value: string, fee: number) => {
+    setBookingType(value);
+    setBookingFee(fee.toString());
+    setBookingsPopoverOpen(false); // Close the popover after selection
   };
 
   const handelBookingTypeInputChange = (value: string) => {
@@ -253,14 +323,6 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
     setFilteredBookings(filtered);
   };
 
-  const handleLocationInputKeyPress = (
-    event: React.KeyboardEvent<HTMLInputElement>
-  ) => {
-    if (event.key === "Enter") {
-      setLocationPopoverOpen(false);
-    }
-  };
-
   const handelBookingTypeInputKeyPress = (
     event: React.KeyboardEvent<HTMLInputElement>
   ) => {
@@ -269,8 +331,48 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
     }
   };
 
+  // Fee input functions
+
   const handleBookingFeeInputChange = (value: string) => {
     setBookingFee(value);
+  };
+
+  // client functions
+
+  const handleClientSelect = (value: string, docId: string) => {
+    console.log("Client id selected:", docId);
+    console.log("Client selected:", value);
+    setClient(value);
+    setClientId(docId);
+    setClientsPopoverOpen(false);
+  };
+
+  const handleClientInputChange = (value: string) => {
+    setClient(value);
+
+    const filtered = clients.filter((cli) =>
+      cli.label.toLowerCase().includes(value.toLowerCase())
+    );
+    setFilteredClients(filtered);
+  };
+
+  const handleClientInputKeyPress = (
+    event: React.KeyboardEvent<HTMLInputElement>
+  ) => {
+    if (event.key === "Enter") {
+      // handle the case where the user presses enter on a client name that is not in the list
+      handleClientSelect(client, "");
+      // close the popover
+      setClientsPopoverOpen(false);
+    }
+  };
+
+  // handle the case where the user clicks outside the popover and typed a client name that is not in the list and clicked outside the popover
+  const handlePopoverClose = () => {
+    if (!filteredClients.find((cli) => cli.value === client)) {
+      handleClientSelect(client, ""); // Set the client with the typed name if it's not in the list
+    }
+    setClientsPopoverOpen(false);
   };
 
   return (
@@ -331,32 +433,98 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
           </div>
         </div>
 
-        {/* Payment Status Toggle - Conditionally Rendered */}
+        {/* Client and Payment Status  - Conditionally Rendered */}
         {!isBackgroundEvent && (
-          <div className="space-y-2">
-            <Label className="block text-sm font-medium text-gray-700">
-              Payment Status
-            </Label>
-            {/* <p className="mt-2 text-sm text-gray-500">
+          <div className="space-y-4">
+            <div className="space-y-1">
+              <Label className="block text-sm font-medium text-gray-700">
+                Select or type in Client
+              </Label>
+              <Popover
+                open={clientsPopoverOpen}
+                onOpenChange={(open) => {
+                  if (!open) handlePopoverClose();
+                  setClientsPopoverOpen(open);
+                }}
+              >
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    role="combobox"
+                    aria-expanded={clientsPopoverOpen}
+                    className="w-[200px] justify-between"
+                    onClick={() => setClientsPopoverOpen(!clientsPopoverOpen)} // Toggle popover on click
+                  >
+                    {client
+                      ? filteredClients.find((cli) => cli.value === client)
+                          ?.label || client
+                      : "Select client..."}
+                    <CaretSortIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-[200px] p-0 popover-above-modal">
+                  <Command>
+                    <CommandInput
+                      placeholder="Search clients..."
+                      value={client}
+                      onValueChange={handleClientInputChange}
+                      onKeyDown={handleClientInputKeyPress} // Handle keyboard input
+                      className="h-9"
+                    />
+                    <CommandList>
+                      <CommandEmpty>No clients found.</CommandEmpty>
+                      <CommandGroup>
+                        {filteredClients.map((cli) => (
+                          <CommandItem
+                            key={cli.value}
+                            value={cli.value}
+                            onSelect={() => {
+                              handleClientSelect(cli.value, cli.docId); // Set location
+                              setClientsPopoverOpen(false);
+                            }}
+                          >
+                            {cli.label}
+                            <CheckIcon
+                              className={`ml-auto h-4 w-4 ${
+                                client === cli.value
+                                  ? "opacity-100"
+                                  : "opacity-0"
+                              }`}
+                            />
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
+            </div>
+
+            <div className="space-y-2">
+              <Label className="block text-sm font-medium text-gray-700">
+                Payment Status
+              </Label>
+              {/* <p className="mt-2 text-sm text-gray-500">
               Toggle to set the event as Paid or Unpaid.
             </p> */}
-            <div className="flex items-center space-x-2">
-              <span className="text-sm font-medium text-gray-700">
-                {paid ? "Paid" : "Unpaid"}
-              </span>
-              <Switch
-                checked={paid}
-                onChange={setPaid}
-                className={`${
-                  paid ? "bg-blue-600" : "bg-gray-200"
-                } relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none`}
-              >
-                <span
+              <div className="flex items-center space-x-2">
+                <span className="text-sm font-medium text-gray-700">
+                  {paid ? "Paid" : "Unpaid"}
+                </span>
+                <Switch
+                  checked={paid}
+                  onChange={setPaid}
                   className={`${
-                    paid ? "translate-x-6" : "translate-x-1"
-                  } inline-block h-4 w-4 transform bg-white rounded-full transition-transform`}
-                />
-              </Switch>
+                    paid ? "bg-blue-600" : "bg-gray-200"
+                  } relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none`}
+                >
+                  <span
+                    className={`${
+                      paid ? "translate-x-6" : "translate-x-1"
+                    } inline-block h-4 w-4 transform bg-white rounded-full transition-transform`}
+                  />
+                </Switch>
+              </div>
             </div>
           </div>
         )}

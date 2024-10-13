@@ -43,12 +43,16 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { EventInput } from "@/interfaces/types";
 import { fetchBookingTypes } from "@/lib/converters/bookingTypes";
 import { CaretSortIcon, CheckIcon } from "@radix-ui/react-icons";
+import { fetchClients } from "@/lib/converters/clients";
 
 interface CreateBookingsFormDialogProps {
   isOpen: boolean;
   onClose: () => void;
   onSave: (eventData: {
     title: string;
+    fee: number;
+    clientId: string;
+    clientName: string;
     description: string;
     location: string;
     isBackgroundEvent: boolean; // Automatically false for regular bookings
@@ -80,7 +84,7 @@ const CreateBookingsFormDialog: React.FC<CreateBookingsFormDialogProps> = ({
 }) => {
   // const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [location, setLocation] = useState("");
+
   const [date, setDate] = useState("");
   const [startTime, setStartTime] = useState("");
   const [endTime, setEndTime] = useState("");
@@ -88,6 +92,9 @@ const CreateBookingsFormDialog: React.FC<CreateBookingsFormDialogProps> = ({
   const [daysOfWeek, setDaysOfWeek] = useState<number[]>([]);
   const [startRecur, setStartRecur] = useState("");
   const [endRecur, setEndRecur] = useState("");
+  // Location state
+  const [location, setLocation] = useState("");
+  // Booking type state
   const [bookingsPopoverOpen, setBookingsPopoverOpen] = useState(false);
   const [bookingType, setBookingType] = useState("");
   const [bookingTypes, setBookingTypes] = useState<
@@ -97,6 +104,17 @@ const CreateBookingsFormDialog: React.FC<CreateBookingsFormDialogProps> = ({
     { value: string; label: string; fee: number }[]
   >([]);
   const [bookingFee, setBookingFee] = useState<string>("");
+
+  // clients state
+  const [clientsPopoverOpen, setClientsPopoverOpen] = useState(false);
+  const [client, setClient] = useState("");
+  const [clients, setClients] = useState<
+    { value: string; label: string; docId: string }[]
+  >([]);
+  const [filteredClients, setFilteredClients] = useState<
+    { value: string; label: string; docId: string }[]
+  >([]);
+  const [clientId, setClientId] = useState<string>("");
 
   useEffect(() => {
     if (event) {
@@ -147,10 +165,34 @@ const CreateBookingsFormDialog: React.FC<CreateBookingsFormDialogProps> = ({
     }
   }, [auth.currentUser]);
 
+  const fetchAllClients = useCallback(async () => {
+    if (auth.currentUser) {
+      // Fetching clients from Firestore
+      const clients = await fetchClients(auth.currentUser.uid);
+      let presetClients: { value: string; label: string; docId: string }[] = [];
+      clients.forEach((cli) => {
+        presetClients.push({
+          // value: cli.docId,
+          // label: cli.docId,
+          value: cli.firstName + " " + cli.lastName,
+          label: cli.firstName + " " + cli.lastName,
+          docId: cli.docId,
+        });
+      });
+      setClients(presetClients);
+      setFilteredClients(presetClients);
+      console.log("Clients from firebase:", clients);
+    }
+  }, [auth.currentUser]);
+
   // fetch booking types
   useEffect(() => {
     fetchBookings();
   }, [fetchBookings]);
+
+  useEffect(() => {
+    fetchAllClients();
+  }, [fetchAllClients]);
 
   // Update filtered bookings when bookingType changes
   useEffect(() => {
@@ -165,11 +207,27 @@ const CreateBookingsFormDialog: React.FC<CreateBookingsFormDialogProps> = ({
     }
   }, [bookingType, bookingTypes]);
 
+  // Update filtered clients when client changes
+  useEffect(() => {
+    if (client === "") {
+      setFilteredClients(clients); // Reset to full list when input is cleared
+    } else {
+      setFilteredClients(
+        clients.filter((cli) =>
+          cli.label.toLowerCase().includes(client.toLowerCase())
+        )
+      );
+    }
+  }, [client, clients]);
+
   const handleSave = (e: MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
 
     const eventData = {
       title: bookingType,
+      fee: parseFloat(bookingFee),
+      clientId: clientId || "",
+      clientName: client || "",
       description,
       location,
       isBackgroundEvent: false, // Always false for regular bookings
@@ -204,7 +262,17 @@ const CreateBookingsFormDialog: React.FC<CreateBookingsFormDialogProps> = ({
     setEndRecur("");
     setBookingType("");
     setBookingFee("");
+    setClient("");
+    setClientId("");
     onClose();
+  };
+
+  // booking type functions
+
+  const handleBookingTypeSelect = (value: string, fee: number) => {
+    setBookingType(value);
+    setBookingFee(fee.toString());
+    setBookingsPopoverOpen(false); // Close the popover after selection
   };
 
   const handelBookingTypeInputChange = (value: string) => {
@@ -225,14 +293,47 @@ const CreateBookingsFormDialog: React.FC<CreateBookingsFormDialogProps> = ({
     }
   };
 
-  const handleBookingTypeSelect = (value: string, fee: number) => {
-    setBookingType(value);
-    setBookingFee(fee.toString());
-    setBookingsPopoverOpen(false); // Close the popover after selection
-  };
-
+  // Fee input functions
   const handleBookingFeeInputChange = (value: string) => {
     setBookingFee(value);
+  };
+
+  // client functions
+
+  const handleClientSelect = (value: string, docId: string) => {
+    console.log("Client id selected:", docId);
+    console.log("Client selected:", value);
+    setClient(value);
+    setClientId(docId);
+    setClientsPopoverOpen(false);
+  };
+
+  const handleClientInputChange = (value: string) => {
+    setClient(value);
+
+    const filtered = clients.filter((cli) =>
+      cli.label.toLowerCase().includes(value.toLowerCase())
+    );
+    setFilteredClients(filtered);
+  };
+
+  const handleClientInputKeyPress = (
+    event: React.KeyboardEvent<HTMLInputElement>
+  ) => {
+    if (event.key === "Enter") {
+      // handle the case where the user presses enter on a client name that is not in the list
+      handleClientSelect(client, "");
+      // close the popover
+      setClientsPopoverOpen(false);
+    }
+  };
+
+  // handle the case where the user clicks outside the popover and typed a client name that is not in the list and clicked outside the popover
+  const handlePopoverClose = () => {
+    if (!filteredClients.find((cli) => cli.value === client)) {
+      handleClientSelect(client, ""); // Set the client with the typed name if it's not in the list
+    }
+    setClientsPopoverOpen(false);
   };
 
   return (
@@ -252,6 +353,69 @@ const CreateBookingsFormDialog: React.FC<CreateBookingsFormDialogProps> = ({
         </DialogHeader>
         <div className="space-y-4">
           <div className="space-y-4">
+            <div className="space-y-1">
+              <Label className="block text-sm font-medium text-gray-700">
+                Select or type in Client
+              </Label>
+              <Popover
+                open={clientsPopoverOpen}
+                onOpenChange={(open) => {
+                  if (!open) handlePopoverClose();
+                  setClientsPopoverOpen(open);
+                }}
+              >
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    role="combobox"
+                    aria-expanded={clientsPopoverOpen}
+                    className="w-[200px] justify-between"
+                    onClick={() => setClientsPopoverOpen(!clientsPopoverOpen)} // Toggle popover on click
+                  >
+                    {client
+                      ? filteredClients.find((cli) => cli.value === client)
+                          ?.label || client
+                      : "Select client..."}
+                    <CaretSortIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-[200px] p-0 popover-above-modal">
+                  <Command>
+                    <CommandInput
+                      placeholder="Search clients..."
+                      value={client}
+                      onValueChange={handleClientInputChange}
+                      onKeyDown={handleClientInputKeyPress} // Handle keyboard input
+                      className="h-9"
+                    />
+                    <CommandList>
+                      <CommandEmpty>No clients found.</CommandEmpty>
+                      <CommandGroup>
+                        {filteredClients.map((cli) => (
+                          <CommandItem
+                            key={cli.value}
+                            value={cli.value}
+                            onSelect={() => {
+                              handleClientSelect(cli.value, cli.docId); // Set location
+                              setClientsPopoverOpen(false);
+                            }}
+                          >
+                            {cli.label}
+                            <CheckIcon
+                              className={`ml-auto h-4 w-4 ${
+                                client === cli.value
+                                  ? "opacity-100"
+                                  : "opacity-0"
+                              }`}
+                            />
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
+            </div>
             <div className="space-y-1">
               <Label className="block text-sm font-medium text-gray-700">
                 Select or type in Custom Booking Type
