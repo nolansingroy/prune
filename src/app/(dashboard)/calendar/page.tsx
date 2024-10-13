@@ -58,7 +58,8 @@ export default function Calendar() {
   };
 
   const renderEventContent = (eventInfo: EventContentArg) => {
-    const { isBackgroundEvent, location } = eventInfo.event.extendedProps;
+    const { isBackgroundEvent, location, clientName } =
+      eventInfo.event.extendedProps;
     const classNames = eventInfo.event.classNames || [];
     const view = eventInfo.view.type;
 
@@ -88,7 +89,7 @@ export default function Calendar() {
           //   </div>
           // ) : (
           <div className="">
-            <div className="">{eventInfo.event.title}</div>
+            <div className="">{clientName}</div>
           </div>
         )}
       </div>
