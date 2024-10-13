@@ -97,12 +97,10 @@ export default function BookingsTab({ authUser }: BookingTabProps) {
   return (
     <div className="space-y-6 bg-gray-100 p-6 rounded-lg shadow-lg">
       <h2 className="text-2xl font-semibold">
-        {editingBookingId ? "Edit Booking type" : "Create Booking types"}
+        {editingBookingId ? "Edit Booking type" : "Create Booking type"}
       </h2>
       <div className="space-y-4">
-        <Label className="block text-lg font-medium text-gray-700">
-          Booking Name
-        </Label>
+        <Label className="block text-lg font-medium text-gray-700">Name</Label>
         <Input
           value={newBookingData.name}
           onChange={(e: ChangeEvent<HTMLInputElement>) =>
@@ -111,7 +109,7 @@ export default function BookingsTab({ authUser }: BookingTabProps) {
           placeholder="Enter booking type name"
         />
         <Label className="block text-lg font-medium text-gray-700">
-          Duration (minutes)
+          Default Duration (minutes)
         </Label>
         <Input
           type="number"
@@ -193,7 +191,7 @@ export default function BookingsTab({ authUser }: BookingTabProps) {
               <TableHeader>
                 <TableRow>
                   <TableCell>Color</TableCell>
-                  <TableCell>Booking name</TableCell>
+                  <TableCell>Name</TableCell>
                   <TableCell>Duration</TableCell>
                   <TableCell>Fee</TableCell>
                   <TableCell>Actions</TableCell>
