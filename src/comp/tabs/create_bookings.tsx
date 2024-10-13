@@ -436,6 +436,7 @@ export default function CreateBookings() {
       startRecur: string; // YYYY-MM-DD
       endRecur: string; // YYYY-MM-DD
     };
+    fee: number;
   }) => {
     setLoading(true); // Start loading
     try {
@@ -478,9 +479,11 @@ export default function CreateBookings() {
           title: eventData.title,
           description: eventData.description,
           location: eventData.location || "",
+          isBackgroundEvent: eventData.isBackgroundEvent,
+          fee: eventData.fee,
           start: startDateTime, // Save in UTC
           end: endDateTime, // Save in UTC
-          isBackgroundEvent: eventData.isBackgroundEvent,
+
           created_at: new Date(), // Timestamp of creation
           updated_at: new Date(), // Timestamp of last update
         };

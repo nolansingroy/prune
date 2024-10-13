@@ -103,7 +103,7 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
   const [paid, setPaid] = useState(false); // Defaults to false (Unpaid)
   // booking fee state
   const [bookingFee, setBookingFee] = useState<string>("");
-  // Booking type state
+
   const [bookingsPopoverOpen, setBookingsPopoverOpen] = useState(false);
   const [bookingType, setBookingType] = useState("");
   const [bookingTypes, setBookingTypes] = useState<
@@ -235,7 +235,7 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
     const eventData = {
       title: isBackgroundEvent ? title : bookingType,
 
-      fee: !isBackgroundEvent ? parseInt(bookingFee) : 0,
+      fee: !isBackgroundEvent ? parseFloat(bookingFee) : 0,
       clientId: !isBackgroundEvent ? clientId : "",
       description,
       location,
@@ -339,6 +339,7 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
 
   const handleClientSelect = (value: string, docId: string) => {
     console.log("Client id selected:", docId);
+    console.log("Client selected:", value);
     setClient(value);
     setClientId(docId);
     setClientsPopoverOpen(false);
@@ -357,8 +358,19 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
     event: React.KeyboardEvent<HTMLInputElement>
   ) => {
     if (event.key === "Enter") {
+      // handle the case where the user presses enter on a client name that is not in the list
+      handleClientSelect(client, "");
+      // close the popover
       setClientsPopoverOpen(false);
     }
+  };
+
+  // handle the case where the user clicks outside the popover and typed a client name that is not in the list and clicked outside the popover
+  const handlePopoverClose = () => {
+    if (!filteredClients.find((cli) => cli.value === client)) {
+      handleClientSelect(client, ""); // Set the client with the typed name if it's not in the list
+    }
+    setClientsPopoverOpen(false);
   };
 
   return (
@@ -428,7 +440,10 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
               </Label>
               <Popover
                 open={clientsPopoverOpen}
-                onOpenChange={setClientsPopoverOpen}
+                onOpenChange={(open) => {
+                  if (!open) handlePopoverClose();
+                  setClientsPopoverOpen(open);
+                }}
               >
                 <PopoverTrigger asChild>
                   <Button

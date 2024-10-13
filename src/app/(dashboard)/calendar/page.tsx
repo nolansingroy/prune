@@ -287,11 +287,11 @@ export default function Calendar() {
     description,
     location,
     isBackgroundEvent,
+    date,
     startTime,
     endTime,
     paid,
     recurrence,
-    date,
     fee,
   }: {
     title: string;
