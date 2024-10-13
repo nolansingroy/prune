@@ -254,7 +254,7 @@ const CreateBookingsFormDialog: React.FC<CreateBookingsFormDialogProps> = ({
           <div className="space-y-4">
             <div className="space-y-1">
               <Label className="block text-sm font-medium text-gray-700">
-                Select or Create New Booking Type
+                Select or type in Custom Booking Type
               </Label>
               <Popover
                 open={bookingsPopoverOpen}
