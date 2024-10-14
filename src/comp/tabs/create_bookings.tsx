@@ -297,6 +297,10 @@ export default function CreateBookings() {
         }
       }
 
+      if (field === "fee") {
+        updates = { [field]: parseFloat(editedValue) };
+      }
+
       const getUserTimeZoneOffset = () => {
         // Returns the time zone offset in hours (e.g., -7 for PDT)
         return new Date().getTimezoneOffset() / 60;
@@ -826,7 +830,8 @@ export default function CreateBookings() {
 
               <TableHead>Client</TableHead>
 
-              <TableHead>Type</TableHead>
+              <TableHead>Booking Type</TableHead>
+              <TableHead>Fee</TableHead>
               <TableHead>Notes</TableHead>
               <TableHead>Actions</TableHead>
             </TableRow>
@@ -946,6 +951,31 @@ export default function CreateBookings() {
                     >
                       {event.title || "Untitled"}
                     </div>
+                  )}
+                </TableCell>
+
+                <TableCell>
+                  {editingCell?.id === event.id &&
+                  editingCell?.field === "fee" ? (
+                    <Input
+                      value={editedValue}
+                      onChange={handleInputChange}
+                      onBlur={handleBlur}
+                      autoFocus
+                    />
+                  ) : (
+                    <span
+                      onClick={() =>
+                        handleCellClick(
+                          event.id!,
+                          "fee",
+                          event.fee.toString(),
+                          !!event.recurrence
+                        )
+                      }
+                    >
+                      {event.fee}
+                    </span>
                   )}
                 </TableCell>
 
