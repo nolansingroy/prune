@@ -828,6 +828,8 @@ export default function CreateBookings() {
                 </div>
               </TableHead>
 
+              <TableHead>Duration</TableHead>
+
               <TableHead>Client</TableHead>
 
               <TableHead>Booking Type</TableHead>
@@ -902,6 +904,29 @@ export default function CreateBookings() {
                       {displayTimeWithOffset(event.end)}
                     </div>
                   )}
+                </TableCell>
+
+                <TableCell>
+                  {(() => {
+                    const duration = moment.duration(
+                      moment(event.end).diff(moment(event.start))
+                    );
+                    const hours = Math.floor(duration.asHours());
+                    const minutes = duration.minutes();
+
+                    let formattedDuration = "";
+                    if (hours > 0) {
+                      formattedDuration += `${hours} h `;
+                    }
+                    if (minutes > 0) {
+                      formattedDuration += `${minutes} m`;
+                    }
+                    if (hours === 0 && minutes === 0) {
+                      formattedDuration = "0 m";
+                    }
+
+                    return formattedDuration.trim();
+                  })()}
                 </TableCell>
 
                 <TableCell>
