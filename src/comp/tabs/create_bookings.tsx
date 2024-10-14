@@ -826,7 +826,7 @@ export default function CreateBookings() {
 
               <TableHead>Client</TableHead>
 
-              <TableHead>Title</TableHead>
+              <TableHead>Type</TableHead>
               <TableHead>Notes</TableHead>
               <TableHead>Actions</TableHead>
             </TableRow>
