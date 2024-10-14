@@ -278,6 +278,7 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
     setBookingFee("");
     setClient("");
     setClientId("");
+    setPaid(false);
     onClose();
   };
 

@@ -202,6 +202,7 @@ export default function CreateBookings() {
             endDay: new Date(
               dtstart.getTime() + (end.getTime() - start.getTime())
             ).toLocaleDateString("en-US", { weekday: "long" }),
+            paid: data.paid,
             recurrence: data.recurrence,
             exceptions: data.exceptions,
           });
@@ -220,6 +221,7 @@ export default function CreateBookings() {
             startDay: start.toLocaleDateString("en-US", { weekday: "long" }),
             endDate: end,
             endDay: end.toLocaleDateString("en-US", { weekday: "long" }),
+            paid: data.paid,
           });
         }
       });
@@ -438,6 +440,7 @@ export default function CreateBookings() {
     date?: string;
     startTime: string;
     endTime: string;
+    paid: boolean;
     recurrence?: {
       daysOfWeek: number[];
       startRecur: string; // YYYY-MM-DD
@@ -492,7 +495,7 @@ export default function CreateBookings() {
 
           start: startDateTime, // Save in UTC
           end: endDateTime, // Save in UTC
-
+          paid: eventData.paid,
           created_at: new Date(), // Timestamp of creation
           updated_at: new Date(), // Timestamp of last update
         };
@@ -520,6 +523,7 @@ export default function CreateBookings() {
           startDate,
           startTime: eventData.startTime,
           endTime: eventData.endTime,
+          paid: eventData.paid,
           recurrence: {
             daysOfWeek: eventData.recurrence?.daysOfWeek || [],
             startRecur: eventData.recurrence?.startRecur || startDate,
