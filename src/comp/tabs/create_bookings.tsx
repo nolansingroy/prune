@@ -256,6 +256,10 @@ export default function CreateBookings() {
       );
       let updates: any = {};
 
+      if (field === "clientName") {
+        updates = { [field]: editedValue };
+      }
+
       const getUserTimeZoneOffset = () => {
         // Returns the time zone offset in hours (e.g., -7 for PDT)
         return new Date().getTimezoneOffset() / 60;
@@ -783,6 +787,8 @@ export default function CreateBookings() {
                 </div>
               </TableHead>
 
+              <TableHead>Client</TableHead>
+
               <TableHead>Title</TableHead>
               <TableHead>Notes</TableHead>
               <TableHead>Actions</TableHead>
@@ -853,6 +859,31 @@ export default function CreateBookings() {
                     >
                       {displayTimeWithOffset(event.end)}
                     </div>
+                  )}
+                </TableCell>
+
+                <TableCell>
+                  {editingCell?.id === event.id &&
+                  editingCell?.field === "clientName" ? (
+                    <Input
+                      value={editedValue}
+                      onChange={handleInputChange}
+                      onBlur={handleBlur}
+                      autoFocus
+                    />
+                  ) : (
+                    <span
+                      onClick={() =>
+                        handleCellClick(
+                          event.id!,
+                          "clientName",
+                          event.clientName,
+                          !!event.recurrence
+                        )
+                      }
+                    >
+                      {event.clientName}
+                    </span>
                   )}
                 </TableCell>
 
