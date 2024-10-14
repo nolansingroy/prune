@@ -1,5 +1,5 @@
 import Image from "next/image";
-import * as React from "react";
+import React, { useCallback } from "react";
 import { useEffect, useState } from "react";
 import {
   collection,
@@ -51,6 +51,8 @@ import moment from "moment-timezone";
 import axios from "axios";
 import { orderBy } from "firebase/firestore";
 import CreateBookingsFormDialog from "../CreateBookingsFormDialog";
+import { fetchBookingTypes } from "@/lib/converters/bookingTypes";
+import { fetchClients } from "@/lib/converters/clients";
 
 type SortableKeys = "start" | "end" | "title" | "startDate";
 
@@ -71,6 +73,9 @@ export default function CreateBookings() {
   const [editingEvent, setEditingEvent] = useState<EventInput | null>(null);
   const [userTimezone, setUserTimezone] = useState<string>("UTC");
   const [loading, setLoading] = useState(false); // New loading state
+  const [clients, setClients] = useState<{ docId: string; fullName: string }[]>(
+    []
+  );
 
   useEffect(() => {
     fetchUserTimezone();
@@ -150,6 +155,26 @@ export default function CreateBookings() {
   //   }
   // };
 
+  const fetchAllClients = useCallback(async () => {
+    if (auth.currentUser) {
+      // Fetching clients from Firestore
+      const clients = await fetchClients(auth.currentUser.uid);
+      //create an array of object with "key": name and value : join firstName field and lastName field
+      const clientsArray = clients.map((client) => {
+        return {
+          docId: client.docId,
+          fullName: client.firstName + " " + client.lastName,
+        };
+      });
+      console.log("Clients fetched:", clientsArray);
+      setClients(clientsArray);
+    }
+  }, [auth.currentUser]);
+
+  useEffect(() => {
+    fetchAllClients();
+  }, [fetchAllClients]);
+
   const fetchEvents = async () => {
     if (auth.currentUser) {
       const eventsRef = collection(db, "users", auth.currentUser.uid, "events");
@@ -202,6 +227,7 @@ export default function CreateBookings() {
             endDay: new Date(
               dtstart.getTime() + (end.getTime() - start.getTime())
             ).toLocaleDateString("en-US", { weekday: "long" }),
+            paid: data.paid,
             recurrence: data.recurrence,
             exceptions: data.exceptions,
           });
@@ -220,6 +246,7 @@ export default function CreateBookings() {
             startDay: start.toLocaleDateString("en-US", { weekday: "long" }),
             endDate: end,
             endDay: end.toLocaleDateString("en-US", { weekday: "long" }),
+            paid: data.paid,
           });
         }
       });
@@ -253,6 +280,26 @@ export default function CreateBookings() {
         id
       );
       let updates: any = {};
+
+      if (field === "clientName") {
+        updates = { [field]: editedValue };
+        // a function to check if the edited clientName matches any name in the clients array, this should not be case sensitive
+        const matchedClient = clients.find(
+          (client) =>
+            client.fullName.toLowerCase() === editedValue.toLowerCase()
+        );
+        if (matchedClient) {
+          console.log("Matched client found:", matchedClient);
+          updates = { clientId: matchedClient.docId, clientName: editedValue };
+        } else {
+          console.log("No matching client found for:", editedValue);
+          updates = { clientId: "", clientName: editedValue };
+        }
+      }
+
+      if (field === "fee") {
+        updates = { [field]: parseFloat(editedValue) };
+      }
 
       const getUserTimeZoneOffset = () => {
         // Returns the time zone offset in hours (e.g., -7 for PDT)
@@ -438,6 +485,7 @@ export default function CreateBookings() {
     date?: string;
     startTime: string;
     endTime: string;
+    paid: boolean;
     recurrence?: {
       daysOfWeek: number[];
       startRecur: string; // YYYY-MM-DD
@@ -492,7 +540,7 @@ export default function CreateBookings() {
 
           start: startDateTime, // Save in UTC
           end: endDateTime, // Save in UTC
-
+          paid: eventData.paid,
           created_at: new Date(), // Timestamp of creation
           updated_at: new Date(), // Timestamp of last update
         };
@@ -520,6 +568,7 @@ export default function CreateBookings() {
           startDate,
           startTime: eventData.startTime,
           endTime: eventData.endTime,
+          paid: eventData.paid,
           recurrence: {
             daysOfWeek: eventData.recurrence?.daysOfWeek || [],
             startRecur: eventData.recurrence?.startRecur || startDate,
@@ -779,7 +828,12 @@ export default function CreateBookings() {
                 </div>
               </TableHead>
 
-              <TableHead>Title</TableHead>
+              <TableHead>Duration</TableHead>
+
+              <TableHead>Client</TableHead>
+
+              <TableHead>Booking Type</TableHead>
+              <TableHead>Fee</TableHead>
               <TableHead>Notes</TableHead>
               <TableHead>Actions</TableHead>
             </TableRow>
@@ -853,6 +907,54 @@ export default function CreateBookings() {
                 </TableCell>
 
                 <TableCell>
+                  {(() => {
+                    const duration = moment.duration(
+                      moment(event.end).diff(moment(event.start))
+                    );
+                    const hours = Math.floor(duration.asHours());
+                    const minutes = duration.minutes();
+
+                    let formattedDuration = "";
+                    if (hours > 0) {
+                      formattedDuration += `${hours} h `;
+                    }
+                    if (minutes > 0) {
+                      formattedDuration += `${minutes} m`;
+                    }
+                    if (hours === 0 && minutes === 0) {
+                      formattedDuration = "0 m";
+                    }
+
+                    return formattedDuration.trim();
+                  })()}
+                </TableCell>
+
+                <TableCell>
+                  {editingCell?.id === event.id &&
+                  editingCell?.field === "clientName" ? (
+                    <Input
+                      value={editedValue}
+                      onChange={handleInputChange}
+                      onBlur={handleBlur}
+                      autoFocus
+                    />
+                  ) : (
+                    <span
+                      onClick={() =>
+                        handleCellClick(
+                          event.id!,
+                          "clientName",
+                          event.clientName,
+                          !!event.recurrence
+                        )
+                      }
+                    >
+                      {event.clientName}
+                    </span>
+                  )}
+                </TableCell>
+
+                <TableCell>
                   {editingCell?.id === event.id &&
                   editingCell?.field === "title" ? (
                     <input
@@ -874,6 +976,31 @@ export default function CreateBookings() {
                     >
                       {event.title || "Untitled"}
                     </div>
+                  )}
+                </TableCell>
+
+                <TableCell>
+                  {editingCell?.id === event.id &&
+                  editingCell?.field === "fee" ? (
+                    <Input
+                      value={editedValue}
+                      onChange={handleInputChange}
+                      onBlur={handleBlur}
+                      autoFocus
+                    />
+                  ) : (
+                    <span
+                      onClick={() =>
+                        handleCellClick(
+                          event.id!,
+                          "fee",
+                          event.fee.toString(),
+                          !!event.recurrence
+                        )
+                      }
+                    >
+                      {event.fee}
+                    </span>
                   )}
                 </TableCell>
 

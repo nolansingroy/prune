@@ -27,6 +27,7 @@ import {
   HoverCardContent,
   HoverCardTrigger,
 } from "@/components/ui/hover-card";
+import { Badge } from "@/components/ui/badge";
 import { cl } from "@fullcalendar/core/internal-common";
 import { useFirebaseAuth } from "@/services/authService";
 
@@ -63,8 +64,14 @@ export default function Calendar() {
   };
 
   const renderEventContent = (eventInfo: EventContentArg) => {
-    const { isBackgroundEvent, location, clientName, title, description } =
-      eventInfo.event.extendedProps;
+    const {
+      isBackgroundEvent,
+      location,
+      clientName,
+      title,
+      description,
+      paid,
+    } = eventInfo.event.extendedProps;
     const classNames = eventInfo.event.classNames || [];
     const view = eventInfo.view.type;
 
@@ -85,10 +92,13 @@ export default function Calendar() {
             </HoverCardTrigger>
             <HoverCardContent>
               <div className="px-2 py-1">
+                <Badge className={paid ? "bg-green-500" : "bg-red-500"}>
+                  {paid ? "Paid" : "unpaid"}
+                </Badge>
+                {/* <div className="text-xs">{`payment status : ${paid}`}</div> */}
                 <div className="text-sm font-semibold">
                   {`Notes : ${description}`}
                 </div>
-                <div className="text-xs">{` Location : ${location}`}</div>
               </div>
             </HoverCardContent>
           </HoverCard>
@@ -508,6 +518,8 @@ export default function Calendar() {
     if (checkOverlap(info.event, allEvents)) {
       info.el.classList.add("overlap-event");
     }
+
+    // add a popOver to the event here
   };
 
   return (
