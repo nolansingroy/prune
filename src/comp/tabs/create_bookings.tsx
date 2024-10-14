@@ -1,5 +1,5 @@
 import Image from "next/image";
-import * as React from "react";
+import React, { useCallback } from "react";
 import { useEffect, useState } from "react";
 import {
   collection,
@@ -51,6 +51,8 @@ import moment from "moment-timezone";
 import axios from "axios";
 import { orderBy } from "firebase/firestore";
 import CreateBookingsFormDialog from "../CreateBookingsFormDialog";
+import { fetchBookingTypes } from "@/lib/converters/bookingTypes";
+import { fetchClients } from "@/lib/converters/clients";
 
 type SortableKeys = "start" | "end" | "title" | "startDate";
 
@@ -71,6 +73,9 @@ export default function CreateBookings() {
   const [editingEvent, setEditingEvent] = useState<EventInput | null>(null);
   const [userTimezone, setUserTimezone] = useState<string>("UTC");
   const [loading, setLoading] = useState(false); // New loading state
+  const [clients, setClients] = useState<{ docId: string; fullName: string }[]>(
+    []
+  );
 
   useEffect(() => {
     fetchUserTimezone();
@@ -149,6 +154,26 @@ export default function CreateBookings() {
   //     setEvents(eventsList);
   //   }
   // };
+
+  const fetchAllClients = useCallback(async () => {
+    if (auth.currentUser) {
+      // Fetching clients from Firestore
+      const clients = await fetchClients(auth.currentUser.uid);
+      //create an array of object with "key": name and value : join firstName field and lastName field
+      const clientsArray = clients.map((client) => {
+        return {
+          docId: client.docId,
+          fullName: client.firstName + " " + client.lastName,
+        };
+      });
+      console.log("Clients fetched:", clientsArray);
+      setClients(clientsArray);
+    }
+  }, [auth.currentUser]);
+
+  useEffect(() => {
+    fetchAllClients();
+  }, [fetchAllClients]);
 
   const fetchEvents = async () => {
     if (auth.currentUser) {
@@ -258,6 +283,18 @@ export default function CreateBookings() {
 
       if (field === "clientName") {
         updates = { [field]: editedValue };
+        // a function to check if the edited clientName matches any name in the clients array, this should not be case sensitive
+        const matchedClient = clients.find(
+          (client) =>
+            client.fullName.toLowerCase() === editedValue.toLowerCase()
+        );
+        if (matchedClient) {
+          console.log("Matched client found:", matchedClient);
+          updates = { clientId: matchedClient.docId, clientName: editedValue };
+        } else {
+          console.log("No matching client found for:", editedValue);
+          updates = { clientId: "", clientName: editedValue };
+        }
       }
 
       const getUserTimeZoneOffset = () => {
