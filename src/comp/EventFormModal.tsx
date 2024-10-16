@@ -244,7 +244,7 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
     e.preventDefault();
 
     const eventData = {
-      title: isBackgroundEvent ? bookingType : title,
+      title: !isBackgroundEvent ? bookingType : title,
       type: !isBackgroundEvent ? bookingType : "",
       typeId: !isBackgroundEvent ? typeId : "",
       fee: !isBackgroundEvent ? parseFloat(bookingFee) : 0,

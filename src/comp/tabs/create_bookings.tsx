@@ -76,6 +76,7 @@ export default function CreateBookings() {
   const [clients, setClients] = useState<{ docId: string; fullName: string }[]>(
     []
   );
+  const [types, setTypes] = useState<{ docId: string; name: string }[]>([]);
 
   useEffect(() => {
     fetchUserTimezone();
@@ -90,70 +91,6 @@ export default function CreateBookings() {
       setUserTimezone(userData?.timezone || "UTC");
     }
   };
-
-  // const fetchEvents = async () => {
-  //   if (auth.currentUser) {
-  //     const eventsRef = collection(db, "users", auth.currentUser.uid, "events");
-  //     // Fetch events by "start" field in ascending order
-  //     const q = query(
-  //       eventsRef,
-  //       where("isBackgroundEvent", "==", true),
-  //       orderBy("start", "asc") // Ascending order
-  //     );
-  //     const querySnapshot = await getDocs(q);
-  //     let eventsList: EventInput[] = [];
-
-  //     querySnapshot.docs.forEach((doc) => {
-  //       const data = doc.data();
-  //       const start =
-  //         data.start instanceof Timestamp
-  //           ? data.start.toDate()
-  //           : new Date(data.start);
-  //       const end =
-  //         data.end instanceof Timestamp
-  //           ? data.end.toDate()
-  //           : new Date(data.end);
-
-  //       if (data.recurrence) {
-  //         const dtstart = new Date(start);
-  //         eventsList.push({
-  //           id: doc.id,
-  //           title: data.title,
-  //           start: dtstart,
-  //           end: new Date(
-  //             dtstart.getTime() + (end.getTime() - start.getTime())
-  //           ), // Calculate end time based on duration
-  //           description: data.description || "",
-  //           isBackgroundEvent: data.isBackgroundEvent,
-  //           startDate: dtstart,
-  //           startDay: dtstart.toLocaleDateString("en-US", { weekday: "long" }),
-  //           endDate: new Date(
-  //             dtstart.getTime() + (end.getTime() - start.getTime())
-  //           ),
-  //           endDay: new Date(
-  //             dtstart.getTime() + (end.getTime() - start.getTime())
-  //           ).toLocaleDateString("en-US", { weekday: "long" }),
-  //           recurrence: data.recurrence,
-  //           exceptions: data.exceptions,
-  //         });
-  //       } else {
-  //         eventsList.push({
-  //           id: doc.id,
-  //           title: data.title,
-  //           start: start,
-  //           end: end,
-  //           description: data.description || "",
-  //           isBackgroundEvent: data.isBackgroundEvent,
-  //           startDate: start,
-  //           startDay: start.toLocaleDateString("en-US", { weekday: "long" }),
-  //           endDate: end,
-  //           endDay: end.toLocaleDateString("en-US", { weekday: "long" }),
-  //         });
-  //       }
-  //     });
-  //     setEvents(eventsList);
-  //   }
-  // };
 
   const fetchAllClients = useCallback(async () => {
     if (auth.currentUser) {
@@ -171,9 +108,28 @@ export default function CreateBookings() {
     }
   }, [auth.currentUser]);
 
+  const fetchAllBookingTypes = useCallback(async () => {
+    if (auth.currentUser) {
+      // Fetching booking types from Firestore
+      const types = await fetchBookingTypes(auth.currentUser.uid);
+      const typesArray = types.map((type) => {
+        return {
+          docId: type.docId!,
+          name: type.name,
+        };
+      });
+      console.log("Booking types fetched:", typesArray);
+      setTypes(typesArray);
+    }
+  }, [auth.currentUser]);
+
   useEffect(() => {
     fetchAllClients();
   }, [fetchAllClients]);
+
+  useEffect(() => {
+    fetchAllBookingTypes();
+  }, [fetchAllBookingTypes]);
 
   const fetchEvents = async () => {
     if (auth.currentUser) {
@@ -298,6 +254,20 @@ export default function CreateBookings() {
         } else {
           console.log("No matching client found for:", editedValue);
           updates = { clientId: "", clientName: editedValue };
+        }
+      }
+
+      if (field === "type") {
+        updates = { [field]: editedValue };
+        const matchedType = types.find(
+          (type) => type.name.toLowerCase() === editedValue.toLowerCase()
+        );
+        if (matchedType) {
+          console.log("Matched type found:", matchedType);
+          updates = { typeId: matchedType.docId, type: editedValue };
+        } else {
+          console.log("No matching type found for:", editedValue);
+          updates = { typeId: "", type: editedValue };
         }
       }
 
@@ -906,26 +876,26 @@ export default function CreateBookings() {
 
                 <TableCell>
                   {editingCell?.id === event.id &&
-                  editingCell?.field === "title" ? (
-                    <input
+                  editingCell?.field === "type" ? (
+                    <Input
                       value={editedValue}
                       onChange={handleInputChange}
                       onBlur={handleBlur}
                       autoFocus
                     />
                   ) : (
-                    <div
+                    <span
                       onClick={() =>
                         handleCellClick(
                           event.id!,
-                          "title",
-                          event.type || "",
+                          "type",
+                          event.type,
                           !!event.recurrence
                         )
                       }
                     >
-                      {event.type || "Untitled"}
-                    </div>
+                      {event.type}
+                    </span>
                   )}
                 </TableCell>
 
