@@ -1,5 +1,6 @@
 export interface EventInput {
   id?: string;
+  title: string;
   type: string;
   typeId: string;
   clientId: string; // Add a clientId property to the event

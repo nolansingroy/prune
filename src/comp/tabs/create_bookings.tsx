@@ -210,6 +210,8 @@ export default function CreateBookings() {
           eventsList.push({
             id: doc.id,
             title: data.title,
+            type: data.type,
+            typeId: data.typeId,
             fee: data.fee,
             clientId: data.clientId,
             clientName: data.clientName,
@@ -235,6 +237,8 @@ export default function CreateBookings() {
           eventsList.push({
             id: doc.id,
             title: data.title,
+            type: data.type,
+            typeId: data.typeId,
             fee: data.fee,
             clientId: data.clientId,
             clientName: data.clientName,
@@ -418,7 +422,8 @@ export default function CreateBookings() {
   };
 
   const handleSaveEvent = async (eventData: {
-    title: string;
+    type: string;
+    typeId: string;
     fee: number;
     clientId: string;
     clientName: string;
@@ -473,7 +478,8 @@ export default function CreateBookings() {
 
         // Create a new event object
         const eventInput = {
-          title: eventData.title,
+          type: eventData.type,
+          typeId: eventData.typeId,
           fee: eventData.fee,
           clientId: eventData.clientId,
           clientName: eventData.clientName,
@@ -502,7 +508,8 @@ export default function CreateBookings() {
         endRecur.setDate(endRecur.getDate() + 2);
 
         const eventInput = {
-          title: eventData.title,
+          type: eventData.type,
+          typeId: eventData.typeId,
           fee: eventData.fee,
           clientId: eventData.clientId,
           clientName: eventData.clientName,
@@ -661,7 +668,7 @@ export default function CreateBookings() {
 
   const filteredEvents = events.filter(
     (event) =>
-      event.title.toLowerCase().includes(search.toLowerCase()) ||
+      event.type.toLowerCase().includes(search.toLowerCase()) ||
       (event.description ?? "").toLowerCase().includes(search.toLowerCase())
   );
 
@@ -676,7 +683,7 @@ export default function CreateBookings() {
       // Remove any undefined fields from the cloned event (like exceptions)
       const { id, ...clonedEventData } = {
         ...event,
-        title: `${event.title} (Clone)`, // Optional: Append "Clone" to the title
+        title: `${event.type} (Clone)`, // Optional: Append "Clone" to the title
         created_at: new Date(), // Update creation timestamp
       };
 
@@ -912,12 +919,12 @@ export default function CreateBookings() {
                         handleCellClick(
                           event.id!,
                           "title",
-                          event.title || "",
+                          event.type || "",
                           !!event.recurrence
                         )
                       }
                     >
-                      {event.title || "Untitled"}
+                      {event.type || "Untitled"}
                     </div>
                   )}
                 </TableCell>

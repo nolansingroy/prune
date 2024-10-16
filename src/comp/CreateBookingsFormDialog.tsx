@@ -50,6 +50,7 @@ interface CreateBookingsFormDialogProps {
   isOpen: boolean;
   onClose: () => void;
   onSave: (eventData: {
+    title: string;
     type: string;
     typeId: string;
     fee: number;
@@ -112,11 +113,12 @@ const CreateBookingsFormDialog: React.FC<CreateBookingsFormDialogProps> = ({
   const [bookingsPopoverOpen, setBookingsPopoverOpen] = useState(false);
   const [bookingType, setBookingType] = useState("");
   const [bookingTypes, setBookingTypes] = useState<
-    { value: string; label: string; fee: number }[]
+    { value: string; label: string; fee: number; docId: string }[]
   >([]);
   const [filteredBookings, setFilteredBookings] = useState<
-    { value: string; label: string; fee: number }[]
+    { value: string; label: string; fee: number; docId: string }[]
   >([]);
+  const [typeId, setTypeId] = useState<string>("");
 
   // clients state
   const [clientsPopoverOpen, setClientsPopoverOpen] = useState(false);
@@ -168,12 +170,18 @@ const CreateBookingsFormDialog: React.FC<CreateBookingsFormDialogProps> = ({
     if (auth.currentUser) {
       // Fetching booking types from Firestore
       const types = await fetchBookingTypes(auth.currentUser.uid);
-      let presetBookings: { value: string; label: string; fee: number }[] = [];
+      let presetBookings: {
+        value: string;
+        label: string;
+        fee: number;
+        docId: string;
+      }[] = [];
       types.forEach((type) => {
         presetBookings.push({
           value: type.name,
           label: type.name,
           fee: type.fee,
+          docId: type.docId!,
         });
       });
       setBookingTypes(presetBookings);
@@ -202,9 +210,9 @@ const CreateBookingsFormDialog: React.FC<CreateBookingsFormDialogProps> = ({
     }
   }, [auth.currentUser]);
 
-  useEffect(() => {
-    console.log("booking type", bookingType);
-  }, [bookingType]);
+  // useEffect(() => {
+  //   console.log("booking type", bookingType);
+  // }, [bookingType]);
 
   // fetch booking types
   useEffect(() => {
@@ -246,6 +254,8 @@ const CreateBookingsFormDialog: React.FC<CreateBookingsFormDialogProps> = ({
 
     const eventData = {
       title: bookingType,
+      type: bookingType,
+      typeId: typeId || "",
       fee: parseFloat(bookingFee),
       clientId: clientId || "",
       clientName: client || "",
@@ -283,6 +293,7 @@ const CreateBookingsFormDialog: React.FC<CreateBookingsFormDialogProps> = ({
     setStartRecur("");
     setEndRecur("");
     setBookingType("");
+    setTypeId("");
     setBookingFee("");
     setClient("");
     setClientId("");
@@ -315,8 +326,15 @@ const CreateBookingsFormDialog: React.FC<CreateBookingsFormDialogProps> = ({
   };
 
   // booking type functions
-  const handleBookingTypeSelect = (value: string, fee: number) => {
+  const handleBookingTypeSelect = (
+    value: string,
+    fee: number,
+    docId: string
+  ) => {
+    console.log("type id selected:", docId);
+    console.log("type selected:", value);
     setBookingType(value);
+    setTypeId(docId);
     setBookingFee(fee.toString());
     setBookingsPopoverOpen(false); // Close the popover after selection
   };
@@ -335,8 +353,18 @@ const CreateBookingsFormDialog: React.FC<CreateBookingsFormDialogProps> = ({
     event: React.KeyboardEvent<HTMLInputElement>
   ) => {
     if (event.key === "Enter") {
+      // handle the case where the user presses enter on a booking type that is not in the list
+      handleBookingTypeSelect(bookingType, 0, "");
       setBookingsPopoverOpen(false);
     }
+  };
+
+  // handle the case where the user clicks outside the popover and typed a client name that is not in the list and clicked outside the popover
+  const handlePopoverCloseBooking = () => {
+    if (!filteredBookings.find((book) => book.value === bookingType)) {
+      handleBookingTypeSelect(bookingType, 0, ""); // Set the client with the typed name if it's not in the list
+    }
+    setClientsPopoverOpen(false);
   };
 
   // Fee input functions
@@ -490,7 +518,10 @@ const CreateBookingsFormDialog: React.FC<CreateBookingsFormDialogProps> = ({
               </Label>
               <Popover
                 open={bookingsPopoverOpen}
-                onOpenChange={setBookingsPopoverOpen}
+                onOpenChange={(open) => {
+                  if (!open) handlePopoverCloseBooking();
+                  setBookingsPopoverOpen(open);
+                }}
               >
                 <PopoverTrigger asChild>
                   <Button
@@ -525,7 +556,11 @@ const CreateBookingsFormDialog: React.FC<CreateBookingsFormDialogProps> = ({
                             key={book.value}
                             value={book.value}
                             onSelect={() => {
-                              handleBookingTypeSelect(book.value, book.fee); // Set location
+                              handleBookingTypeSelect(
+                                book.value,
+                                book.fee,
+                                book.docId
+                              ); // Set location
                               setBookingsPopoverOpen(false); // Close the popover after selection
                             }}
                           >

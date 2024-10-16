@@ -10,11 +10,13 @@ import {
   DocumentData,
 } from "firebase/firestore";
 import { EventInput } from "@/interfaces/types";
+import { title } from "process";
 
 // Event converter
 const eventConverter: FirestoreDataConverter<EventInput> = {
   toFirestore(event: Omit<EventInput, "id">): DocumentData {
     return {
+      title: event.title,
       type: event.type,
       typeId: event.typeId,
       location: event.location,
@@ -46,8 +48,9 @@ const eventConverter: FirestoreDataConverter<EventInput> = {
   ): EventInput {
     const data = snapshot.data(options);
     return {
+      title: data.title || "",
       id: snapshot.id,
-      type: data.title || "No type",
+      type: data.type || "",
       typeId: data.typeId || "",
       fee: data.fee || 0,
       clientId: data.clientId || "",

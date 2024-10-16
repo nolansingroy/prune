@@ -65,8 +65,11 @@ export default function Calendar() {
   };
 
   const renderEventContent = (eventInfo: EventContentArg) => {
-    const { isBackgroundEvent, clientName, description, paid } =
+    const { isBackgroundEvent, clientName, title, description, paid, type } =
       eventInfo.event.extendedProps;
+
+    const eventInformation = eventInfo.event.extendedProps;
+    console.log("eventInformation", eventInformation);
 
     const classNames = eventInfo.event.classNames || [];
     const view = eventInfo.view.type;
@@ -244,6 +247,7 @@ export default function Calendar() {
       // Ensure required fields like `title`, `startDate`, and `isBackgroundEvent` are preserved
       const updatedEvent: EventInput = {
         ...prevState, // Preserve previous state
+        title: prevState?.title || "", // Ensure title is not undefined
         fee: prevState?.fee || 0,
         clientId: prevState?.clientId || "",
         clientName: prevState?.clientName || "",
@@ -295,6 +299,7 @@ export default function Calendar() {
   };
 
   const handleSave = async ({
+    title,
     type,
     typeId,
     fee,
@@ -309,6 +314,7 @@ export default function Calendar() {
     paid,
     recurrence,
   }: {
+    title: string;
     type: string;
     typeId: string;
     description: string;
@@ -359,6 +365,7 @@ export default function Calendar() {
 
         // Prepare the event input for the cloud function
         const eventInput = {
+          title,
           type,
           typeId,
           clientId,
@@ -412,6 +419,7 @@ export default function Calendar() {
         // Create the event object for a single or background event
         let event: EventInput = {
           id: "",
+          title,
           type,
           typeId,
           fee: fee,
@@ -593,6 +601,7 @@ export default function Calendar() {
                   if (event.recurrence) {
                     return {
                       ...event,
+                      // title: event.title,
                       type: event.type,
                       typeId: event.typeId,
                       location: event.location,
@@ -619,6 +628,7 @@ export default function Calendar() {
                   } else {
                     return {
                       ...event,
+                      // title: event.title,
                       type: event.type,
                       typeId: event.typeId,
                       display: event.isBackgroundEvent

@@ -1,7 +1,7 @@
 import { Timestamp } from "firebase/firestore";
 
 export type BookingTypes = {
-  id?: string; // Make id optional
+  docId?: string; // Make docId optional
   name: string;
   duration: number;
   fee: number;
