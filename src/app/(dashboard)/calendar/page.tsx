@@ -7,7 +7,12 @@ import resourceTimelinePlugin from "@fullcalendar/resource-timeline";
 import interactionPlugin from "@fullcalendar/interaction";
 import timeGridPlugin from "@fullcalendar/timegrid";
 import rrulePlugin from "@fullcalendar/rrule";
-import { DateSelectArg, EventApi, EventContentArg } from "@fullcalendar/core";
+import {
+  DateSelectArg,
+  EventApi,
+  EventClickArg,
+  EventContentArg,
+} from "@fullcalendar/core";
 import EventFormDialog from "../../../comp/EventFormModal";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Availability from "../../../comp/tabs/availability";
@@ -31,6 +36,7 @@ import { Badge } from "@/components/ui/badge";
 import { cl } from "@fullcalendar/core/internal-common";
 import { useFirebaseAuth } from "@/services/authService";
 import CreateBookingsFormDialog from "@/comp/CreateBookingsFormDialog";
+import { adjustForLocalTimezone } from "@/utils/functions/timeFunctions";
 
 export default function Calendar() {
   const calendarRef = useRef<FullCalendar>(null);
@@ -274,12 +280,41 @@ export default function Calendar() {
     setIsDialogOpen(true);
   };
 
-  const handleEventClick = (clickInfo: { event: { extendedProps: any } }) => {
-    const event = clickInfo.event.extendedProps;
-    setEditingEvent(event);
-    // setEditAll(!!event.recurrence); // Set editAll based on whether the event is recurring
-    setEditAll(true); // Set editAll to false for now
-    setIsDialogOpen(true);
+  const handleEventClick = (clickInfo: EventClickArg) => {
+    const { event } = clickInfo;
+    const { extendedProps, start, end } = event;
+
+    if (start && end) {
+      const localStart = adjustForLocalTimezone(start);
+      const localEnd = adjustForLocalTimezone(end);
+
+      setEditingEvent({
+        ...event,
+        start: localStart,
+        end: localEnd,
+        title: extendedProps.title || "", // Add other required properties here
+        type: extendedProps.type || "",
+        typeId: extendedProps.typeId || "",
+        clientId: extendedProps.clientId || "",
+        clientName: extendedProps.clientName || "",
+        description: extendedProps.description || "",
+        location: extendedProps.location || "",
+        isBackgroundEvent: extendedProps.isBackgroundEvent || false,
+        fee: extendedProps.fee || 0,
+        paid: extendedProps.paid || false,
+        startDate: localStart,
+        startDay: localStart.toLocaleDateString("en-US", {
+          weekday: "long",
+        }),
+        endDate: localEnd,
+        endDay: localEnd.toLocaleDateString("en-US", {
+          weekday: "long",
+        }),
+        recurrence: extendedProps.recurrence || undefined,
+      });
+      setEditAll(true); // Set editAll to true for now
+      setIsDialogOpen(true);
+    }
   };
 
   const handleDialogClose = () => {
@@ -679,8 +714,8 @@ export default function Calendar() {
           isOpen={isDialogOpen}
           onClose={handleDialogClose}
           onSave={handleSave}
-          event={editingEvent} // Pass the selected event
-          editAll={editAll} // Pass the editAll state
+          event={editingEvent}
+          editAll={editAll}
         />
       )}
     </div>

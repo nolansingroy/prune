@@ -145,10 +145,8 @@ const CreateBookingsFormDialog: React.FC<CreateBookingsFormDialogProps> = ({
       );
       setStartTime(
         event.start
-          ? event.start
-              .toLocaleTimeString("en-US", { hour12: false })
-              .substring(0, 5)
-          : ""
+          .toLocaleTimeString("en-US", { hour12: false })
+          .substring(0, 5)
       );
       setEndTime(
         event.end
