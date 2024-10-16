@@ -360,7 +360,7 @@ export default function CreateBookings() {
             };
           }
         }
-      } else if (field === "title" || field === "description") {
+      } else if (field === "description") {
         updates = { [field]: editedValue };
       }
 
@@ -653,7 +653,7 @@ export default function CreateBookings() {
       // Remove any undefined fields from the cloned event (like exceptions)
       const { id, ...clonedEventData } = {
         ...event,
-        title: `${event.type} (Clone)`, // Optional: Append "Clone" to the title
+        description: `${event.type} (Clone)`, // Optional: Append "Clone" to the title
         created_at: new Date(), // Update creation timestamp
       };
 
