@@ -417,63 +417,6 @@ export default function CreateBookings() {
     return newDate;
   };
 
-  // const handleSaveEvent = async (eventData: {
-  //   title: string;
-  //   description: string;
-  //   location: string;
-  //   isBackgroundEvent: boolean;
-  //   date?: string;
-  //   startTime: string;
-  //   endTime: string;
-  //   recurrence?: {
-  //     daysOfWeek: number[];
-  //     startRecur: string; // YYYY-MM-DD
-  //     endRecur: string; // YYYY-MM-DD
-  //   };
-  // }) => {
-  //   setLoading(true); // Start loading
-  //   try {
-  //     const user = auth.currentUser;
-  //     if (!user) {
-  //       throw new Error("User not authenticated");
-  //     }
-
-  //     const startDate =
-  //       eventData.date || new Date().toISOString().split("T")[0];
-
-  //     // Add 1 day to the endRecur date to ensure the last day is included
-  //     const endRecur = new Date(eventData.recurrence?.endRecur || startDate);
-  //     endRecur.setDate(endRecur.getDate() + 1);
-
-  //     const eventInput = {
-  //       title: eventData.title,
-  //       description: eventData.description,
-  //       location: eventData.location || "",
-  //       startDate,
-  //       startTime: eventData.startTime,
-  //       endTime: eventData.endTime,
-  //       recurrence: {
-  //         daysOfWeek: eventData.recurrence?.daysOfWeek || [],
-  //         startRecur: eventData.recurrence?.startRecur || startDate,
-  //         endRecur: endRecur.toISOString().split("T")[0], // Adjusted endRecur
-  //       },
-  //       userId: user.uid,
-  //     };
-
-  //     const result = await axios.post(
-  //       "https://us-central1-prune-94ad9.cloudfunctions.net/createRecurringAvailabilityInstances",
-  //       eventInput
-  //     );
-
-  //     console.log("Recurring event instances created:", result.data);
-  //     await fetchEvents();
-  //   } catch (error) {
-  //     console.error("Error saving event:", error);
-  //   } finally {
-  //     setLoading(false); // Stop loading
-  //   }
-  // };
-
   const handleSaveEvent = async (eventData: {
     title: string;
     fee: number;

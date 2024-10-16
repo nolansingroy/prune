@@ -50,7 +50,8 @@ interface CreateBookingsFormDialogProps {
   isOpen: boolean;
   onClose: () => void;
   onSave: (eventData: {
-    title: string;
+    type: string;
+    typeId: string;
     fee: number;
     clientId: string;
     clientName: string;
@@ -74,7 +75,13 @@ interface CreateBookingsFormDialogProps {
   editAll?: boolean;
 }
 
-const presetLocations = ["Kraken 1", "Kraken 2", "Kraken 3"];
+const presetLocations = [
+  { value: "Kraken 1", label: "Kraken 1" },
+  { value: "Kraken 2", label: "Kraken 2" },
+  { value: "Kraken 3", label: "Kraken 3" },
+  { value: "location4", label: "Location 4" },
+  { value: "location5", label: "Location 5" },
+];
 
 const CreateBookingsFormDialog: React.FC<CreateBookingsFormDialogProps> = ({
   isOpen,
@@ -82,11 +89,10 @@ const CreateBookingsFormDialog: React.FC<CreateBookingsFormDialogProps> = ({
   onSave,
   showDateSelector = false,
   event,
-  editAll = true,
+  editAll,
 }) => {
-  // const [title, setTitle] = useState("");
+  const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-
   const [date, setDate] = useState("");
   const [startTime, setStartTime] = useState("");
   const [endTime, setEndTime] = useState("");
@@ -94,10 +100,14 @@ const CreateBookingsFormDialog: React.FC<CreateBookingsFormDialogProps> = ({
   const [daysOfWeek, setDaysOfWeek] = useState<number[]>([]);
   const [startRecur, setStartRecur] = useState("");
   const [endRecur, setEndRecur] = useState("");
-  // Payment status state
-  const [paid, setPaid] = useState(false); // Defaults to false (Unpaid)
   // Location state
   const [location, setLocation] = useState("");
+  const [locationPopoverOpen, setLocationPopoverOpen] = useState(false);
+  const [filteredLocations, setFilteredLocations] = useState(presetLocations);
+  // Payment status state
+  const [paid, setPaid] = useState(false); // Defaults to false (Unpaid)
+  // booking fee state
+  const [bookingFee, setBookingFee] = useState<string>("");
   // Booking type state
   const [bookingsPopoverOpen, setBookingsPopoverOpen] = useState(false);
   const [bookingType, setBookingType] = useState("");
@@ -107,7 +117,6 @@ const CreateBookingsFormDialog: React.FC<CreateBookingsFormDialogProps> = ({
   const [filteredBookings, setFilteredBookings] = useState<
     { value: string; label: string; fee: number }[]
   >([]);
-  const [bookingFee, setBookingFee] = useState<string>("");
 
   // clients state
   const [clientsPopoverOpen, setClientsPopoverOpen] = useState(false);
@@ -123,9 +132,12 @@ const CreateBookingsFormDialog: React.FC<CreateBookingsFormDialogProps> = ({
   useEffect(() => {
     if (event) {
       // setTitle(event.title || "");
-      setPaid(event.paid || false);
       setDescription(event.description || "");
       setLocation(event.location || "");
+      setClient(event.clientName || "");
+      setBookingFee(event.fee ? event.fee.toString() : "");
+      setBookingType(event.type || "");
+      setPaid(event.paid || false);
       setDate(
         event.startDate ? event.startDate.toISOString().split("T")[0] : ""
       );
@@ -189,6 +201,10 @@ const CreateBookingsFormDialog: React.FC<CreateBookingsFormDialogProps> = ({
       console.log("Clients from firebase:", clients);
     }
   }, [auth.currentUser]);
+
+  useEffect(() => {
+    console.log("booking type", bookingType);
+  }, [bookingType]);
 
   // fetch booking types
   useEffect(() => {
@@ -274,8 +290,31 @@ const CreateBookingsFormDialog: React.FC<CreateBookingsFormDialogProps> = ({
     onClose();
   };
 
-  // booking type functions
+  // location functions
 
+  const handleLocationSelect = (currentValue: string) => {
+    setLocation(currentValue);
+    setLocationPopoverOpen(false);
+  };
+
+  const handleLocationInputChange = (value: string) => {
+    setLocation(value);
+
+    const filtered = presetLocations.filter((loc) =>
+      loc.label.toLowerCase().includes(value.toLowerCase())
+    );
+    setFilteredLocations(filtered);
+  };
+
+  const handleLocationInputKeyPress = (
+    event: React.KeyboardEvent<HTMLInputElement>
+  ) => {
+    if (event.key === "Enter") {
+      setLocationPopoverOpen(false);
+    }
+  };
+
+  // booking type functions
   const handleBookingTypeSelect = (value: string, fee: number) => {
     setBookingType(value);
     setBookingFee(fee.toString());
@@ -348,15 +387,9 @@ const CreateBookingsFormDialog: React.FC<CreateBookingsFormDialogProps> = ({
       <DialogContent>
         <DialogHeader>
           <DialogTitle>
-            Create New Booking
-            {/* {editAll ? "Edit All Instances" : "Edit Booking"} */}
+            {editAll && "Edit Booking"}
+            {!editAll && "Create Booking"}
           </DialogTitle>
-          {/* <DialogDescription>
-            Edit this booking event
-            {editAll
-              ? "Edit all instances of this recurring booking"
-              : "Edit this booking"}
-          </DialogDescription> */}
         </DialogHeader>
         <div className="space-y-4">
           <div className="space-y-4">
@@ -553,18 +586,61 @@ const CreateBookingsFormDialog: React.FC<CreateBookingsFormDialogProps> = ({
             <Label className="block text-sm font-medium text-gray-700">
               Location
             </Label>
-            <Select value={location} onValueChange={setLocation}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select a location" />
-              </SelectTrigger>
-              <SelectContent>
-                {presetLocations.map((loc) => (
-                  <SelectItem key={loc} value={loc}>
-                    {loc}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Popover
+              open={locationPopoverOpen}
+              onOpenChange={setLocationPopoverOpen}
+            >
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  role="combobox"
+                  aria-expanded={locationPopoverOpen}
+                  className="w-[200px] justify-between"
+                  onClick={() => setLocationPopoverOpen(!open)} // Toggle popover on click
+                >
+                  {location
+                    ? presetLocations.find((loc) => loc.value === location)
+                        ?.label || location
+                    : "Select location..."}
+                  <CaretSortIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-[200px] p-0 popover-above-modal">
+                <Command>
+                  <CommandInput
+                    placeholder="Search location..."
+                    value={location}
+                    onValueChange={handleLocationInputChange}
+                    onKeyDown={handleLocationInputKeyPress} // Handle keyboard input
+                    className="h-9"
+                  />
+                  <CommandList>
+                    <CommandEmpty>No locations found.</CommandEmpty>
+                    <CommandGroup>
+                      {filteredLocations.map((loc) => (
+                        <CommandItem
+                          key={loc.value}
+                          value={loc.value}
+                          onSelect={() => {
+                            handleLocationSelect(loc.value); // Set location
+                            setLocationPopoverOpen(false); // Close the popover after selection
+                          }}
+                        >
+                          {loc.label}
+                          <CheckIcon
+                            className={`ml-auto h-4 w-4 ${
+                              location === loc.value
+                                ? "opacity-100"
+                                : "opacity-0"
+                            }`}
+                          />
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                  </CommandList>
+                </Command>
+              </PopoverContent>
+            </Popover>
           </div>
 
           <div className="space-y-2">
@@ -588,20 +664,18 @@ const CreateBookingsFormDialog: React.FC<CreateBookingsFormDialogProps> = ({
             </div>
           </div>
 
-          {showDateSelector && (
-            <div>
-              <Label className="block text-sm font-medium text-gray-700">
-                Date
-              </Label>
-              <Input
-                type="date"
-                value={date}
-                onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                  setDate(e.target.value)
-                }
-              />
-            </div>
-          )}
+          <div>
+            <Label className="block text-sm font-medium text-gray-700">
+              Date
+            </Label>
+            <Input
+              type="date"
+              value={date}
+              onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                setDate(e.target.value)
+              }
+            />
+          </div>
 
           <div className="flex items-center space-x-6">
             <div className="flex flex-col">

@@ -30,6 +30,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { cl } from "@fullcalendar/core/internal-common";
 import { useFirebaseAuth } from "@/services/authService";
+import CreateBookingsFormDialog from "@/comp/CreateBookingsFormDialog";
 
 export default function Calendar() {
   const calendarRef = useRef<FullCalendar>(null);
@@ -64,14 +65,9 @@ export default function Calendar() {
   };
 
   const renderEventContent = (eventInfo: EventContentArg) => {
-    const {
-      isBackgroundEvent,
-      location,
-      clientName,
-      title,
-      description,
-      paid,
-    } = eventInfo.event.extendedProps;
+    const { isBackgroundEvent, clientName, description, paid } =
+      eventInfo.event.extendedProps;
+
     const classNames = eventInfo.event.classNames || [];
     const view = eventInfo.view.type;
 
@@ -251,7 +247,8 @@ export default function Calendar() {
         fee: prevState?.fee || 0,
         clientId: prevState?.clientId || "",
         clientName: prevState?.clientName || "",
-        title: prevState?.title || "", // Ensure title is not undefined
+        type: prevState?.type || "No type", // Ensure title is not undefined
+        typeId: prevState?.type || "", // Ensure title is not undefined
         isBackgroundEvent: prevState?.isBackgroundEvent ?? false, // Ensure isBackgroundEvent is a boolean (default to false)
         start:
           prevState?.start instanceof Date
@@ -276,7 +273,8 @@ export default function Calendar() {
   const handleEventClick = (clickInfo: { event: { extendedProps: any } }) => {
     const event = clickInfo.event.extendedProps;
     setEditingEvent(event);
-    setEditAll(!!event.recurrence); // Set editAll based on whether the event is recurring
+    // setEditAll(!!event.recurrence); // Set editAll based on whether the event is recurring
+    setEditAll(true); // Set editAll to false for now
     setIsDialogOpen(true);
   };
 
@@ -297,7 +295,8 @@ export default function Calendar() {
   };
 
   const handleSave = async ({
-    title,
+    type,
+    typeId,
     fee,
     clientId,
     clientName,
@@ -310,7 +309,8 @@ export default function Calendar() {
     paid,
     recurrence,
   }: {
-    title: string;
+    type: string;
+    typeId: string;
     description: string;
     clientId: string;
     clientName: string;
@@ -359,7 +359,8 @@ export default function Calendar() {
 
         // Prepare the event input for the cloud function
         const eventInput = {
-          title,
+          type,
+          typeId,
           clientId,
           clientName,
           description,
@@ -411,7 +412,8 @@ export default function Calendar() {
         // Create the event object for a single or background event
         let event: EventInput = {
           id: "",
-          title,
+          type,
+          typeId,
           fee: fee,
           clientId: clientId,
           clientName: clientName,
@@ -591,6 +593,8 @@ export default function Calendar() {
                   if (event.recurrence) {
                     return {
                       ...event,
+                      type: event.type,
+                      typeId: event.typeId,
                       location: event.location,
                       rrule: {
                         freq: "weekly",
@@ -615,6 +619,8 @@ export default function Calendar() {
                   } else {
                     return {
                       ...event,
+                      type: event.type,
+                      typeId: event.typeId,
                       display: event.isBackgroundEvent
                         ? "inverse-background"
                         : "auto",
@@ -650,13 +656,23 @@ export default function Calendar() {
           <CreateBookings />
         </TabsContent>
       </Tabs>
-      <EventFormDialog
-        isOpen={isDialogOpen}
-        onClose={handleDialogClose}
-        onSave={handleSave}
-        event={editingEvent} // Pass the selected event
-        editAll={false} // Pass the editAll state
-      />
+      {editAll ? (
+        <CreateBookingsFormDialog
+          isOpen={isDialogOpen}
+          onClose={handleDialogClose}
+          onSave={handleSave}
+          event={editingEvent}
+          editAll={editAll}
+        />
+      ) : (
+        <EventFormDialog
+          isOpen={isDialogOpen}
+          onClose={handleDialogClose}
+          onSave={handleSave}
+          event={editingEvent} // Pass the selected event
+          editAll={editAll} // Pass the editAll state
+        />
+      )}
     </div>
   );
 }

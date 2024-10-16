@@ -83,7 +83,7 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
   onSave,
   showDateSelector = true,
   event,
-  editAll = true,
+  editAll = false,
 }) => {
   const { authUser } = useFirebaseAuth();
   const [title, setTitle] = useState("");
@@ -126,38 +126,38 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
   >([]);
   const [clientId, setClientId] = useState<string>("");
 
-  useEffect(() => {
-    if (event) {
-      setTitle(event.title || "");
-      setDescription(event.description || "");
-      setLocation(event.location || "");
-      setIsBackgroundEvent(event.isBackgroundEvent || true);
-      setPaid(event.paid || false);
-      setDate(
-        event.startDate ? event.startDate.toISOString().split("T")[0] : ""
-      );
-      setStartTime(
-        event.start
-          ? event.start
-              .toLocaleTimeString("en-US", { hour12: false })
-              .substring(0, 5)
-          : ""
-      );
-      setEndTime(
-        event.end
-          ? event.end
-              .toLocaleTimeString("en-US", { hour12: false })
-              .substring(0, 5)
-          : ""
-      );
-      if (event.recurrence) {
-        setIsRecurring(true);
-        setDaysOfWeek(event.recurrence.daysOfWeek || []);
-        setStartRecur(event.recurrence.startRecur || "");
-        setEndRecur(event.recurrence.endRecur || "");
-      }
-    }
-  }, [event]);
+  // useEffect(() => {
+  //   if (event) {
+  //     setTitle(event.title || "");
+  //     setDescription(event.description || "");
+  //     setLocation(event.location || "");
+  //     setIsBackgroundEvent(event.isBackgroundEvent || true);
+  //     setPaid(event.paid || false);
+  //     setDate(
+  //       event.startDate ? event.startDate.toISOString().split("T")[0] : ""
+  //     );
+  //     setStartTime(
+  //       event.start
+  //         ? event.start
+  //             .toLocaleTimeString("en-US", { hour12: false })
+  //             .substring(0, 5)
+  //         : ""
+  //     );
+  //     setEndTime(
+  //       event.end
+  //         ? event.end
+  //             .toLocaleTimeString("en-US", { hour12: false })
+  //             .substring(0, 5)
+  //         : ""
+  //     );
+  //     if (event.recurrence) {
+  //       setIsRecurring(true);
+  //       setDaysOfWeek(event.recurrence.daysOfWeek || []);
+  //       setStartRecur(event.recurrence.startRecur || "");
+  //       setEndRecur(event.recurrence.endRecur || "");
+  //     }
+  //   }
+  // }, [event]);
 
   const fetchBookings = useCallback(async () => {
     if (authUser) {
