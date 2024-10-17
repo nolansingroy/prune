@@ -391,30 +391,26 @@ export default function CreateBookings() {
     return newDate;
   };
 
-  const handleSaveEvent = async (
-    eventData: {
-      id?: string;
-      type: string;
-      typeId: string;
-      fee: number;
-      clientId: string;
-      clientName: string;
-      description: string;
-      location: string;
-      isBackgroundEvent: boolean;
-      date?: string;
-      startTime: string;
-      endTime: string;
-      paid: boolean;
-      recurrence?: {
-        daysOfWeek: number[];
-        startRecur: string; // YYYY-MM-DD
-        endRecur: string; // YYYY-MM-DD
-      };
-    },
-    isEditing: boolean,
-    eventId?: string
-  ) => {
+  const handleSaveEvent = async (eventData: {
+    id?: string;
+    type: string;
+    typeId: string;
+    fee: number;
+    clientId: string;
+    clientName: string;
+    description: string;
+    location: string;
+    isBackgroundEvent: boolean;
+    date?: string;
+    startTime: string;
+    endTime: string;
+    paid: boolean;
+    recurrence?: {
+      daysOfWeek: number[];
+      startRecur: string; // YYYY-MM-DD
+      endRecur: string; // YYYY-MM-DD
+    };
+  }) => {
     console.log("handleSaveEvent called"); // Add this line
     setLoading(true); // Start loading
     try {
@@ -438,158 +434,78 @@ export default function CreateBookings() {
         !eventData.recurrence ||
         eventData.recurrence.daysOfWeek.length === 0
       ) {
-        if (!isEditing) {
-          // Client-side single event creation
-          console.log("storing using client side single event creation");
-          // Parse the start and end times
-          let startDateTime = new Date(`${startDate}T${eventData.startTime}`);
-          let endDateTime = new Date(`${startDate}T${eventData.endTime}`);
+        // Client-side single event creation
+        console.log("storing using client side single event creation");
+        // Parse the start and end times
+        let startDateTime = new Date(`${startDate}T${eventData.startTime}`);
+        let endDateTime = new Date(`${startDate}T${eventData.endTime}`);
 
-          // Ensure the end time is after the start time
-          if (endDateTime <= startDateTime) {
-            endDateTime.setDate(endDateTime.getDate() + 1);
-          }
-
-          // Adjust the start and end times to UTC
-          startDateTime = adjustToUTC(startDateTime);
-          endDateTime = adjustToUTC(endDateTime);
-
-          // Create a new event object
-          const eventInput = {
-            type: eventData.type,
-            typeId: eventData.typeId,
-            fee: eventData.fee,
-            clientId: eventData.clientId,
-            clientName: eventData.clientName,
-            description: eventData.description,
-            location: eventData.location || "",
-            isBackgroundEvent: eventData.isBackgroundEvent,
-
-            start: startDateTime, // Save in UTC
-            end: endDateTime, // Save in UTC
-            paid: eventData.paid,
-            created_at: new Date(), // Timestamp of creation
-            updated_at: new Date(), // Timestamp of last update
-          };
-
-          // Save the event directly to Firestore
-          const eventRef = doc(collection(db, "users", user.uid, "events"));
-          await setDoc(eventRef, eventInput);
-
-          console.log("Single event created in Firestore");
-        } else {
-          // update the event in firebase instead of creating a new one
-          console.log("updating event in firebase");
-          const eventRef = doc(db, "users", user.uid, "events", eventData.id!);
-
-          // Parse the start and end times
-          let startDateTime = new Date(`${startDate}T${eventData.startTime}`);
-          let endDateTime = new Date(`${startDate}T${eventData.endTime}`);
-
-          // Ensure the end time is after the start time
-          if (endDateTime <= startDateTime) {
-            endDateTime.setDate(endDateTime.getDate() + 1);
-          }
-
-          // Adjust the start and end times to UTC
-          startDateTime = adjustToUTC(startDateTime);
-          endDateTime = adjustToUTC(endDateTime);
-
-          // Create a new event object
-          const eventInput = {
-            type: eventData.type,
-            typeId: eventData.typeId,
-            fee: eventData.fee,
-            clientId: eventData.clientId,
-            clientName: eventData.clientName,
-            description: eventData.description,
-            location: eventData.location || "",
-            isBackgroundEvent: eventData.isBackgroundEvent,
-
-            start: startDateTime, // Save in UTC
-            end: endDateTime, // Save in UTC
-            paid: eventData.paid,
-            updated_at: new Date(), // Timestamp of last update
-          };
-
-          // Save the event directly to Firestore
-          await updateDoc(eventRef, eventInput);
-
-          console.log("Single event updated in Firestore");
+        // Ensure the end time is after the start time
+        if (endDateTime <= startDateTime) {
+          endDateTime.setDate(endDateTime.getDate() + 1);
         }
+
+        // Adjust the start and end times to UTC
+        startDateTime = adjustToUTC(startDateTime);
+        endDateTime = adjustToUTC(endDateTime);
+
+        // Create a new event object
+        const eventInput = {
+          type: eventData.type,
+          typeId: eventData.typeId,
+          fee: eventData.fee,
+          clientId: eventData.clientId,
+          clientName: eventData.clientName,
+          description: eventData.description,
+          location: eventData.location || "",
+          isBackgroundEvent: eventData.isBackgroundEvent,
+
+          start: startDateTime, // Save in UTC
+          end: endDateTime, // Save in UTC
+          paid: eventData.paid,
+          created_at: new Date(), // Timestamp of creation
+          updated_at: new Date(), // Timestamp of last update
+        };
+
+        // Save the event directly to Firestore
+        const eventRef = doc(collection(db, "users", user.uid, "events"));
+        await setDoc(eventRef, eventInput);
+
+        console.log("Single event created in Firestore");
       } else {
-        if (!isEditing) {
-          // Server-side recurring event creation using the cloud function
-          console.log("storing using server side");
+        // Server-side recurring event creation using the cloud function
+        console.log("storing using server side");
 
-          // Add 2 day to the endRecur date to ensure the last day is included
-          const endRecur = new Date(
-            eventData.recurrence?.endRecur || startDate
-          );
-          endRecur.setDate(endRecur.getDate() + 2);
+        // Add 2 day to the endRecur date to ensure the last day is included
+        const endRecur = new Date(eventData.recurrence?.endRecur || startDate);
+        endRecur.setDate(endRecur.getDate() + 2);
 
-          const eventInput = {
-            type: eventData.type,
-            typeId: eventData.typeId,
-            fee: eventData.fee,
-            clientId: eventData.clientId,
-            clientName: eventData.clientName,
-            description: eventData.description,
-            location: eventData.location || "",
-            startDate,
-            startTime: eventData.startTime,
-            endTime: eventData.endTime,
-            paid: eventData.paid,
-            recurrence: {
-              daysOfWeek: eventData.recurrence?.daysOfWeek || [],
-              startRecur: eventData.recurrence?.startRecur || startDate,
-              endRecur: adjustToUTC(endRecur).toISOString().split("T")[0],
-            },
-            userId: user.uid,
-          };
+        const eventInput = {
+          type: eventData.type,
+          typeId: eventData.typeId,
+          fee: eventData.fee,
+          clientId: eventData.clientId,
+          clientName: eventData.clientName,
+          description: eventData.description,
+          location: eventData.location || "",
+          startDate,
+          startTime: eventData.startTime,
+          endTime: eventData.endTime,
+          paid: eventData.paid,
+          recurrence: {
+            daysOfWeek: eventData.recurrence?.daysOfWeek || [],
+            startRecur: eventData.recurrence?.startRecur || startDate,
+            endRecur: adjustToUTC(endRecur).toISOString().split("T")[0],
+          },
+          userId: user.uid,
+        };
 
-          const result = await axios.post(
-            "https://us-central1-prune-94ad9.cloudfunctions.net/createRecurringAvailabilityInstances",
-            eventInput
-          );
+        const result = await axios.post(
+          "https://us-central1-prune-94ad9.cloudfunctions.net/createRecurringAvailabilityInstances",
+          eventInput
+        );
 
-          console.log("Recurring event instances created:", result.data);
-        } else {
-          // update the event in firebase instead of creating a new one
-          console.log("updating event in firebase recurring event");
-          const eventRef = doc(db, "users", user.uid, "events", eventData.id!);
-
-          // Add 2 day to the endRecur date to ensure the last day is included
-          const endRecur = new Date(
-            eventData.recurrence?.endRecur || startDate
-          );
-          endRecur.setDate(endRecur.getDate() + 2);
-
-          const eventInput = {
-            type: eventData.type,
-            typeId: eventData.typeId,
-            fee: eventData.fee,
-            clientId: eventData.clientId,
-            clientName: eventData.clientName,
-            description: eventData.description,
-            location: eventData.location || "",
-            startDate,
-            startTime: eventData.startTime,
-            endTime: eventData.endTime,
-            paid: eventData.paid,
-            recurrence: {
-              daysOfWeek: eventData.recurrence?.daysOfWeek || [],
-              startRecur: eventData.recurrence?.startRecur || startDate,
-              endRecur: adjustToUTC(endRecur).toISOString().split("T")[0],
-            },
-            userId: user.uid,
-          };
-
-          // Save the event directly to Firestore
-          await updateDoc(eventRef, eventInput);
-
-          console.log("Recurring event updated in Firestore");
-        }
+        console.log("Recurring event instances created:", result.data);
       }
 
       // Fetch events again to update the list

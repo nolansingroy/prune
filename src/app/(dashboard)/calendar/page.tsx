@@ -608,8 +608,11 @@ export default function Calendar() {
     } catch (error) {
       console.error("Error saving event:", error);
     } finally {
-      fetchEvents();
+      await fetchEvents();
       setLoading(false); // Stop loading
+      setSelectInfo(null);
+      setEditingEvent(null);
+      setEditAll(false);
     }
   };
 
