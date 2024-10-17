@@ -106,7 +106,7 @@ export default function CreateBookings() {
       console.log("Clients fetched:", clientsArray);
       setClients(clientsArray);
     }
-  }, [auth.currentUser]);
+  }, []);
 
   const fetchAllBookingTypes = useCallback(async () => {
     if (auth.currentUser) {
@@ -121,7 +121,7 @@ export default function CreateBookings() {
       console.log("Booking types fetched:", typesArray);
       setTypes(typesArray);
     }
-  }, [auth.currentUser]);
+  }, []);
 
   useEffect(() => {
     fetchAllClients();
