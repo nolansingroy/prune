@@ -10,7 +10,6 @@ import {
   DocumentData,
 } from "firebase/firestore";
 import { EventInput } from "@/interfaces/types";
-import { title } from "process";
 import { fetchBookingType } from "./bookingTypes";
 
 // Event converter
