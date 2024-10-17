@@ -756,6 +756,7 @@ export default function Calendar() {
           isOpen={isDialogOpen}
           onClose={handleDialogClose}
           onSave={handleEdit}
+          showDateSelector={true}
           event={editingEvent}
           editAll={editAll}
           eventId={editingEvent?.id}
@@ -765,6 +766,7 @@ export default function Calendar() {
           isOpen={isDialogOpen}
           onClose={handleDialogClose}
           onSave={handleSave}
+          showDateSelector={true}
           event={editingEvent}
           editAll={editAll}
         />

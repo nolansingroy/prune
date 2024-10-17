@@ -73,7 +73,6 @@ interface CreateBookingsFormDialogProps {
         endRecur: string;
       };
     },
-    isEditing: boolean,
     eventId?: string
   ) => void;
   showDateSelector?: boolean;
@@ -94,7 +93,7 @@ const CreateBookingsFormDialog: React.FC<CreateBookingsFormDialogProps> = ({
   isOpen,
   onClose,
   onSave,
-  showDateSelector = false,
+  showDateSelector = true,
   event,
   editAll,
   eventId,
@@ -139,13 +138,16 @@ const CreateBookingsFormDialog: React.FC<CreateBookingsFormDialogProps> = ({
   const [clientId, setClientId] = useState<string>("");
 
   useEffect(() => {
+    console.log("Event in CreateBookingsDialog", event);
     if (event) {
-      // setTitle(event.title || "");
+      setTitle(event.title || "");
       setDescription(event.description || "");
       setLocation(event.location || "");
       setClient(event.clientName || "");
+      setClientId(event.clientId || "");
       setBookingFee(event.fee ? event.fee.toString() : "");
       setBookingType(event.type || "");
+      setTypeId(event.typeId || "");
       setPaid(event.paid || false);
       setDate(
         event.startDate ? event.startDate.toISOString().split("T")[0] : ""
@@ -258,7 +260,19 @@ const CreateBookingsFormDialog: React.FC<CreateBookingsFormDialogProps> = ({
     console.log("handle Save triggered...");
     e.preventDefault();
 
-    const eventData = {
+    const originalEvent = event || {}; // Use an empty object if event is null
+
+    const getUpdatedValues = (original: any, updated: any) => {
+      return Object.keys(updated).reduce((acc, key) => {
+        if (updated[key] !== original[key]) {
+          acc[key] = updated[key];
+        }
+        return acc;
+      }, {} as any);
+    };
+
+    // Initial event data
+    let newEventData = {
       id: eventId,
       title: bookingType,
       type: bookingType,
@@ -284,7 +298,32 @@ const CreateBookingsFormDialog: React.FC<CreateBookingsFormDialogProps> = ({
         : undefined,
     };
 
-    onSave(eventData, editAll!, event?.id);
+    // Conditional logic to modify values based on certain fields
+    if (newEventData.type === "special") {
+      // newEventData.fee = 0;
+    }
+
+    if (newEventData.paid) {
+    }
+
+    // if (
+    //   newEventData.recurrence &&
+    //   newEventData.recurrence.daysOfWeek.length > 0
+    // ) {
+    //   newEventData.isBackgroundEvent = true; // Set isBackgroundEvent to true for recurring events
+    // }
+
+    const updatedEventData = getUpdatedValues(originalEvent, newEventData);
+
+    const eventData = eventId
+      ? editAll
+        ? newEventData // Update all fields
+        : updatedEventData // Update only changed fields
+      : newEventData; // Create new event
+
+    console.log("Event data to passed from CreatBookingsDialog", eventData);
+
+    onSave(eventData, event?.id);
     handleClose();
   };
 

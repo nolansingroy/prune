@@ -55,6 +55,18 @@ export const handleUpdatEventFormDialog = async (
       startDateTime = adjustToUTC(startDateTime);
       endDateTime = adjustToUTC(endDateTime);
 
+      // Adjust the start day 
+      const startDay = startDateTime.toLocaleDateString("en-US", {
+        weekday: "long",
+        timeZone: "UTC",
+      });
+
+      //Adjust the end day
+      const endDay = endDateTime.toLocaleDateString("en-US", {
+        weekday: "long",
+        timeZone: "UTC",
+      });
+
       // Create a new event object
       const eventInput = {
         type: eventData.type,
@@ -67,6 +79,10 @@ export const handleUpdatEventFormDialog = async (
         isBackgroundEvent: eventData.isBackgroundEvent,
         start: startDateTime, // Save in UTC
         end: endDateTime, // Save in UTC
+        startDate: startDateTime,
+        endDate: endDateTime,
+        startDay: startDay,
+        endDay: endDay,
         paid: eventData.paid,
         updated_at: new Date(), // Timestamp of last update
       };
