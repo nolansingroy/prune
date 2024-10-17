@@ -37,6 +37,8 @@ import { cl } from "@fullcalendar/core/internal-common";
 import { useFirebaseAuth } from "@/services/authService";
 import CreateBookingsFormDialog from "@/comp/CreateBookingsFormDialog";
 import { adjustForLocalTimezone } from "@/utils/functions/timeFunctions";
+import { handleUpdatEventFormDialog } from "@/utils/functions/eventFunctions";
+import { Auth } from "firebase/auth";
 
 export default function Calendar() {
   const calendarRef = useRef<FullCalendar>(null);
@@ -252,6 +254,7 @@ export default function Calendar() {
     setEditingEvent((prevState) => {
       // Ensure required fields like `title`, `startDate`, and `isBackgroundEvent` are preserved
       const updatedEvent: EventInput = {
+        id: prevState?.id,
         ...prevState, // Preserve previous state
         title: prevState?.title || "", // Ensure title is not undefined
         fee: prevState?.fee || 0,
@@ -290,6 +293,7 @@ export default function Calendar() {
 
       setEditingEvent({
         ...event,
+        id: event.id,
         start: localStart,
         end: localEnd,
         title: extendedProps.title || "", // Add other required properties here
@@ -567,6 +571,48 @@ export default function Calendar() {
     // add a popOver to the event here
   };
 
+  const handleEdit = async (eventData: {
+    id?: string;
+    type: string;
+    typeId: string;
+    fee: number;
+    clientId: string;
+    clientName: string;
+    description: string;
+    location: string;
+    isBackgroundEvent: boolean;
+    date?: string;
+    startTime: string;
+    endTime: string;
+    paid: boolean;
+    recurrence?: {
+      daysOfWeek: number[];
+      startRecur: string; // YYYY-MM-DD
+      endRecur: string; // YYYY-MM-DD
+    };
+  }) => {
+    const user = auth.currentUser;
+    const userId = user?.uid;
+    if (!user) {
+      throw new Error("User not authenticated");
+    }
+    console.log("updating information triggered");
+
+    try {
+      setLoading(true); // Start loading
+      console.log("Event Data:", eventData);
+      console.log("User ID:", userId);
+
+      await handleUpdatEventFormDialog(eventData, userId!);
+      console.log("Event updated successfully");
+    } catch (error) {
+      console.error("Error saving event:", error);
+    } finally {
+      fetchEvents();
+      setLoading(false); // Stop loading
+    }
+  };
+
   return (
     <div className="p-4">
       <Tabs
@@ -705,9 +751,10 @@ export default function Calendar() {
         <CreateBookingsFormDialog
           isOpen={isDialogOpen}
           onClose={handleDialogClose}
-          onSave={handleSave}
+          onSave={handleEdit}
           event={editingEvent}
           editAll={editAll}
+          eventId={editingEvent?.id}
         />
       ) : (
         <EventFormDialog

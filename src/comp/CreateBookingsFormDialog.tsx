@@ -49,31 +49,37 @@ import { Switch } from "@headlessui/react";
 interface CreateBookingsFormDialogProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (eventData: {
-    title: string;
-    type: string;
-    typeId: string;
-    fee: number;
-    clientId: string;
-    clientName: string;
-    description: string;
-    location: string;
-    isBackgroundEvent: boolean; // Automatically false for regular bookings
-    date?: string;
-    startTime: string;
-    endTime: string;
-    paid: boolean;
-    recurrence?: {
-      daysOfWeek: number[];
+  onSave: (
+    eventData: {
+      id?: string;
+      title: string;
+      type: string;
+      typeId: string;
+      fee: number;
+      clientId: string;
+      clientName: string;
+      description: string;
+      location: string;
+      isBackgroundEvent: boolean; // Automatically false for regular bookings
+      date?: string;
       startTime: string;
       endTime: string;
-      startRecur: string;
-      endRecur: string;
-    };
-  }) => void;
+      paid: boolean;
+      recurrence?: {
+        daysOfWeek: number[];
+        startTime: string;
+        endTime: string;
+        startRecur: string;
+        endRecur: string;
+      };
+    },
+    isEditing: boolean,
+    eventId?: string
+  ) => void;
   showDateSelector?: boolean;
   event?: EventInput | null;
   editAll?: boolean;
+  eventId?: string;
 }
 
 const presetLocations = [
@@ -91,6 +97,7 @@ const CreateBookingsFormDialog: React.FC<CreateBookingsFormDialogProps> = ({
   showDateSelector = false,
   event,
   editAll,
+  eventId,
 }) => {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -248,9 +255,11 @@ const CreateBookingsFormDialog: React.FC<CreateBookingsFormDialogProps> = ({
   }, [client, clients]);
 
   const handleSave = (e: MouseEvent<HTMLButtonElement>) => {
+    console.log("handle Save triggered...");
     e.preventDefault();
 
     const eventData = {
+      id: eventId,
       title: bookingType,
       type: bookingType,
       typeId: typeId || "",
@@ -275,7 +284,7 @@ const CreateBookingsFormDialog: React.FC<CreateBookingsFormDialogProps> = ({
         : undefined,
     };
 
-    onSave(eventData);
+    onSave(eventData, editAll!, event?.id);
     handleClose();
   };
 
