@@ -36,8 +36,8 @@ import { Badge } from "@/components/ui/badge";
 import { cl } from "@fullcalendar/core/internal-common";
 import { useFirebaseAuth } from "@/services/authService";
 import CreateBookingsFormDialog from "@/comp/CreateBookingsFormDialog";
-import { adjustForLocalTimezone } from "@/lib/functions/timeFunctions";
-import { handleUpdatEventFormDialog } from "@/lib/functions/eventFunctions";
+import { adjustForLocalTimezone } from "../../../lib/functions/timeFunctions";
+import { handleUpdatEventFormDialog } from "../../../lib/functions/eventFunctions";
 import { Auth } from "firebase/auth";
 
 export default function Calendar() {

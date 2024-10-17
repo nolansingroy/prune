@@ -701,7 +701,7 @@ export default function CreateBookings() {
               <TableHead>
                 <Checkbox
                   checked={selectedRows.size === filteredEvents.length}
-                  onCheckedChange={(checked) =>
+                  onCheckedChange={(checked: any) =>
                     handleSelectAllChange(!!checked)
                   }
                 />
