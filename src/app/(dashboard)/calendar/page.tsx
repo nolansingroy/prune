@@ -7,7 +7,12 @@ import resourceTimelinePlugin from "@fullcalendar/resource-timeline";
 import interactionPlugin from "@fullcalendar/interaction";
 import timeGridPlugin from "@fullcalendar/timegrid";
 import rrulePlugin from "@fullcalendar/rrule";
-import { DateSelectArg, EventApi, EventContentArg } from "@fullcalendar/core";
+import {
+  DateSelectArg,
+  EventApi,
+  EventClickArg,
+  EventContentArg,
+} from "@fullcalendar/core";
 import EventFormDialog from "../../../comp/EventFormModal";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Availability from "../../../comp/tabs/availability";
@@ -30,6 +35,10 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { cl } from "@fullcalendar/core/internal-common";
 import { useFirebaseAuth } from "@/services/authService";
+import CreateBookingsFormDialog from "@/comp/CreateBookingsFormDialog";
+// import { adjustForLocalTimezone } from "@/lib/functions/time-functions";
+// import { handleUpdatEventFormDialog } from "@/lib/functions/event-functions";
+import { Auth } from "firebase/auth";
 
 export default function Calendar() {
   const calendarRef = useRef<FullCalendar>(null);
@@ -64,14 +73,12 @@ export default function Calendar() {
   };
 
   const renderEventContent = (eventInfo: EventContentArg) => {
-    const {
-      isBackgroundEvent,
-      location,
-      clientName,
-      title,
-      description,
-      paid,
-    } = eventInfo.event.extendedProps;
+    const { isBackgroundEvent, clientName, title, description, paid, type } =
+      eventInfo.event.extendedProps;
+
+    const eventInformation = eventInfo.event.extendedProps;
+    // console.log("eventInformation", eventInformation);
+
     const classNames = eventInfo.event.classNames || [];
     const view = eventInfo.view.type;
 
@@ -247,11 +254,14 @@ export default function Calendar() {
     setEditingEvent((prevState) => {
       // Ensure required fields like `title`, `startDate`, and `isBackgroundEvent` are preserved
       const updatedEvent: EventInput = {
+        id: prevState?.id,
         ...prevState, // Preserve previous state
+        title: prevState?.title || "", // Ensure title is not undefined
         fee: prevState?.fee || 0,
         clientId: prevState?.clientId || "",
         clientName: prevState?.clientName || "",
-        title: prevState?.title || "", // Ensure title is not undefined
+        type: prevState?.type || "No type", // Ensure title is not undefined
+        typeId: prevState?.type || "", // Ensure title is not undefined
         isBackgroundEvent: prevState?.isBackgroundEvent ?? false, // Ensure isBackgroundEvent is a boolean (default to false)
         start:
           prevState?.start instanceof Date
@@ -273,11 +283,50 @@ export default function Calendar() {
     setIsDialogOpen(true);
   };
 
-  const handleEventClick = (clickInfo: { event: { extendedProps: any } }) => {
-    const event = clickInfo.event.extendedProps;
-    setEditingEvent(event);
-    setEditAll(!!event.recurrence); // Set editAll based on whether the event is recurring
-    setIsDialogOpen(true);
+  const handleEventClick = (clickInfo: EventClickArg) => {
+    const { event } = clickInfo;
+    const { extendedProps, start, end } = event;
+
+    if (start && end) {
+      // const localStart = adjustForLocalTimezone(start);
+      // const localEnd = adjustForLocalTimezone(end);
+
+      const timezoneOffsetHours = -(new Date().getTimezoneOffset() / 60);
+
+      const localStart = new Date(start);
+      localStart.setHours(start.getHours() - timezoneOffsetHours);
+
+      const localEnd = new Date(end);
+      localEnd.setHours(end.getHours() - timezoneOffsetHours);
+
+      setEditingEvent({
+        ...event,
+        id: event.id,
+        start: localStart,
+        end: localEnd,
+        title: extendedProps.title || "", // Add other required properties here
+        type: extendedProps.type || "",
+        typeId: extendedProps.typeId || "",
+        clientId: extendedProps.clientId || "",
+        clientName: extendedProps.clientName || "",
+        description: extendedProps.description || "",
+        location: extendedProps.location || "",
+        isBackgroundEvent: extendedProps.isBackgroundEvent || false,
+        fee: extendedProps.fee || 0,
+        paid: extendedProps.paid || false,
+        startDate: localStart,
+        startDay: localStart.toLocaleDateString("en-US", {
+          weekday: "long",
+        }),
+        endDate: localEnd,
+        endDay: localEnd.toLocaleDateString("en-US", {
+          weekday: "long",
+        }),
+        recurrence: extendedProps.recurrence || undefined,
+      });
+      setEditAll(true); // Set editAll to true for now
+      setIsDialogOpen(true);
+    }
   };
 
   const handleDialogClose = () => {
@@ -298,6 +347,8 @@ export default function Calendar() {
 
   const handleSave = async ({
     title,
+    type,
+    typeId,
     fee,
     clientId,
     clientName,
@@ -311,6 +362,8 @@ export default function Calendar() {
     recurrence,
   }: {
     title: string;
+    type: string;
+    typeId: string;
     description: string;
     clientId: string;
     clientName: string;
@@ -360,6 +413,8 @@ export default function Calendar() {
         // Prepare the event input for the cloud function
         const eventInput = {
           title,
+          type,
+          typeId,
           clientId,
           clientName,
           description,
@@ -412,6 +467,8 @@ export default function Calendar() {
         let event: EventInput = {
           id: "",
           title,
+          type,
+          typeId,
           fee: fee,
           clientId: clientId,
           clientName: clientName,
@@ -522,6 +579,202 @@ export default function Calendar() {
     // add a popOver to the event here
   };
 
+  const handleUpdatEventFormDialog = async (eventData: {
+    id?: string;
+    type: string;
+    typeId: string;
+    fee: number;
+    clientId: string;
+    clientName: string;
+    description: string;
+    location: string;
+    isBackgroundEvent: boolean;
+    date?: string;
+    startTime: string;
+    endTime: string;
+    paid: boolean;
+    recurrence?: {
+      daysOfWeek: number[];
+      startRecur: string; // YYYY-MM-DD
+      endRecur: string; // YYYY-MM-DD
+    };
+  }) => {
+    const user = auth.currentUser;
+    const userId = user?.uid;
+
+    if (!user) {
+      throw new Error("User not authenticated");
+    }
+    console.log("updating information triggered");
+
+    try {
+      const startDate =
+        eventData.date || new Date().toISOString().split("T")[0];
+
+      // Helper function to adjust for time zone offset and return UTC date
+      const adjustToUTC = (dateTime: Date) => {
+        const timezoneOffset = dateTime.getTimezoneOffset(); // Timezone offset in minutes
+        return new Date(dateTime.getTime() - timezoneOffset * 60 * 1000); // Adjust to UTC
+      };
+
+      // Check if the event is recurring or a single event
+      if (
+        !eventData.recurrence ||
+        eventData.recurrence.daysOfWeek.length === 0
+      ) {
+        // update the event in firebase instead of creating a new one
+        console.log("updating event in firebase");
+        if (!eventData.id) {
+          throw new Error("Event ID is missing");
+        }
+        const eventRef = doc(db, "users", userId!, "events", eventData.id);
+
+        // Parse the start and end times
+        let startDateTime = new Date(`${startDate}T${eventData.startTime}`);
+        let endDateTime = new Date(`${startDate}T${eventData.endTime}`);
+
+        // Ensure the end time is after the start time
+        if (endDateTime <= startDateTime) {
+          endDateTime.setDate(endDateTime.getDate() + 1);
+        }
+
+        // Adjust the start and end times to UTC
+        startDateTime = adjustToUTC(startDateTime);
+        endDateTime = adjustToUTC(endDateTime);
+
+        // Adjust the start day
+        const startDay = startDateTime.toLocaleDateString("en-US", {
+          weekday: "long",
+          timeZone: "UTC",
+        });
+
+        //Adjust the end day
+        const endDay = endDateTime.toLocaleDateString("en-US", {
+          weekday: "long",
+          timeZone: "UTC",
+        });
+
+        // Create a new event object
+        const eventInput = {
+          type: eventData.type,
+          typeId: eventData.typeId,
+          fee: eventData.fee,
+          clientId: eventData.clientId,
+          clientName: eventData.clientName,
+          description: eventData.description,
+          location: eventData.location || "",
+          isBackgroundEvent: eventData.isBackgroundEvent,
+          start: startDateTime, // Save in UTC
+          end: endDateTime, // Save in UTC
+          startDate: startDateTime,
+          endDate: endDateTime,
+          startDay: startDay,
+          endDay: endDay,
+          paid: eventData.paid,
+          updated_at: new Date(), // Timestamp of last update
+        };
+
+        console.log("evenRef", eventRef);
+
+        // Save the event directly to Firestore
+        await updateDoc(eventRef, eventInput);
+
+        console.log("Single event updated in Firestore");
+      } else {
+        // update the event in firebase instead of creating a new one
+        console.log("updating event in firebase recurring event");
+        if (!eventData.id) {
+          throw new Error("Event ID is missing");
+        }
+        const eventRef = doc(db, "users", userId!, "events", eventData.id);
+
+        // Add 2 days to the endRecur date to ensure the last day is included
+        const endRecur = new Date(eventData.recurrence?.endRecur || startDate);
+        endRecur.setDate(endRecur.getDate() + 2);
+
+        const eventInput = {
+          type: eventData.type,
+          typeId: eventData.typeId,
+          fee: eventData.fee,
+          clientId: eventData.clientId,
+          clientName: eventData.clientName,
+          description: eventData.description,
+          location: eventData.location || "",
+          startDate,
+          startTime: eventData.startTime,
+          endTime: eventData.endTime,
+          paid: eventData.paid,
+          recurrence: {
+            daysOfWeek: eventData.recurrence?.daysOfWeek || [],
+            startRecur: eventData.recurrence?.startRecur || startDate,
+            endRecur: adjustToUTC(endRecur).toISOString().split("T")[0],
+          },
+          userId: userId,
+        };
+
+        console.log("evenRef", eventRef);
+
+        // Save the event directly to Firestore
+        await updateDoc(eventRef, eventInput);
+
+        console.log("Recurring event updated in Firestore");
+      }
+    } catch (error) {
+      console.error("Error saving event:", error);
+    } finally {
+      await fetchEvents();
+      setLoading(false); // Stop loading
+      setSelectInfo(null);
+      setEditingEvent(null);
+      setEditAll(false);
+    }
+  };
+
+  // const handleEdit = async (eventData: {
+  //   id?: string;
+  //   type: string;
+  //   typeId: string;
+  //   fee: number;
+  //   clientId: string;
+  //   clientName: string;
+  //   description: string;
+  //   location: string;
+  //   isBackgroundEvent: boolean;
+  //   date?: string;
+  //   startTime: string;
+  //   endTime: string;
+  //   paid: boolean;
+  //   recurrence?: {
+  //     daysOfWeek: number[];
+  //     startRecur: string; // YYYY-MM-DD
+  //     endRecur: string; // YYYY-MM-DD
+  //   };
+  // }) => {
+  //   const user = auth.currentUser;
+  //   const userId = user?.uid;
+  //   if (!user) {
+  //     throw new Error("User not authenticated");
+  //   }
+  //   console.log("updating information triggered");
+
+  //   try {
+  //     setLoading(true); // Start loading
+  //     console.log("Event Data:", eventData);
+  //     console.log("User ID:", userId);
+
+  //     await handleUpdatEventFormDialog(eventData, userId!);
+  //     console.log("Event updated successfully");
+  //   } catch (error) {
+  //     console.error("Error saving event:", error);
+  //   } finally {
+  //     await fetchEvents();
+  //     setLoading(false); // Stop loading
+  //     setSelectInfo(null);
+  //     setEditingEvent(null);
+  //     setEditAll(false);
+  //   }
+  // };
+
   return (
     <div className="p-4">
       <Tabs
@@ -540,6 +793,7 @@ export default function Calendar() {
             <div className="calendar-container overflow-y-scroll h-[600px]">
               <FullCalendar
                 timeZone="UTC"
+                // eventColor="#000"
                 ref={calendarRef}
                 schedulerLicenseKey="0899673068-fcs-1718558974"
                 plugins={[
@@ -591,6 +845,9 @@ export default function Calendar() {
                   if (event.recurrence) {
                     return {
                       ...event,
+                      // title: event.title,
+                      type: event.type,
+                      typeId: event.typeId,
                       location: event.location,
                       rrule: {
                         freq: "weekly",
@@ -615,6 +872,9 @@ export default function Calendar() {
                   } else {
                     return {
                       ...event,
+                      // title: event.title,
+                      type: event.type,
+                      typeId: event.typeId,
                       display: event.isBackgroundEvent
                         ? "inverse-background"
                         : "auto",
@@ -650,13 +910,26 @@ export default function Calendar() {
           <CreateBookings />
         </TabsContent>
       </Tabs>
-      <EventFormDialog
-        isOpen={isDialogOpen}
-        onClose={handleDialogClose}
-        onSave={handleSave}
-        event={editingEvent} // Pass the selected event
-        editAll={false} // Pass the editAll state
-      />
+      {editAll ? (
+        <CreateBookingsFormDialog
+          isOpen={isDialogOpen}
+          onClose={handleDialogClose}
+          onSave={handleUpdatEventFormDialog}
+          showDateSelector={true}
+          event={editingEvent}
+          editAll={editAll}
+          eventId={editingEvent?.id}
+        />
+      ) : (
+        <EventFormDialog
+          isOpen={isDialogOpen}
+          onClose={handleDialogClose}
+          onSave={handleSave}
+          showDateSelector={true}
+          event={editingEvent}
+          editAll={editAll}
+        />
+      )}
     </div>
   );
 }
