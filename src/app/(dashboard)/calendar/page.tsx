@@ -77,7 +77,7 @@ export default function Calendar() {
       eventInfo.event.extendedProps;
 
     const eventInformation = eventInfo.event.extendedProps;
-    console.log("eventInformation", eventInformation);
+    // console.log("eventInformation", eventInformation);
 
     const classNames = eventInfo.event.classNames || [];
     const view = eventInfo.view.type;
@@ -631,6 +631,7 @@ export default function Calendar() {
             <div className="calendar-container overflow-y-scroll h-[600px]">
               <FullCalendar
                 timeZone="UTC"
+                // eventColor="#000"
                 ref={calendarRef}
                 schedulerLicenseKey="0899673068-fcs-1718558974"
                 plugins={[

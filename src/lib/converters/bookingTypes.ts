@@ -16,6 +16,7 @@ import {
   orderBy,
   WithFieldValue,
   FieldValue,
+  getDoc,
 } from "firebase/firestore";
 import { BookingTypes } from "@/interfaces/bookingTypes";
 
@@ -58,6 +59,18 @@ export async function fetchBookingTypes(user: string): Promise<BookingTypes[]> {
   const q = query(bookingTypesRef(user), orderBy("created_at", "desc"));
   const querySnapshot = await getDocs(q);
   return querySnapshot.docs.map((doc) => doc.data()); // Automatically maps to BookingTypes
+}
+
+// fetch a single booking type
+export async function fetchBookingType(
+  uid: string,
+  id: string
+): Promise<BookingTypes | undefined> {
+  const bookingTypeRef = doc(bookingTypesRef(uid), id);
+  const bookingTypeSnapshot = await getDoc(bookingTypeRef);
+  if (bookingTypeSnapshot.exists()) {
+    return bookingTypeSnapshot.data();
+  }
 }
 
 // Function to add a booking type to Firestore

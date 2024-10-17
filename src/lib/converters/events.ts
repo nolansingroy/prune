@@ -11,6 +11,7 @@ import {
 } from "firebase/firestore";
 import { EventInput } from "@/interfaces/types";
 import { title } from "process";
+import { fetchBookingType } from "./bookingTypes";
 
 // Event converter
 const eventConverter: FirestoreDataConverter<EventInput> = {
@@ -88,7 +89,7 @@ const eventConverter: FirestoreDataConverter<EventInput> = {
 export const eventRef = (userId: string) =>
   collection(db, "users", userId, "events").withConverter(eventConverter);
 
-// Server-side function to fetch events
+// Function to fetch events
 export async function converterFetchEvents(
   userUid: User | null
 ): Promise<EventInput[]> {
@@ -104,7 +105,24 @@ export async function converterFetchEvents(
     `Retrieved ${querySnapshot.docs.length} documents from Firestore.`
   );
 
-  const eventsData = querySnapshot.docs.map((doc) => doc.data());
+  const eventsData = await Promise.all(
+    querySnapshot.docs.map(async (doc) => {
+      const data = doc.data();
+      let color = "";
+
+      if (data.typeId) {
+        const bookingType = await fetchBookingType(userUid.uid, data.typeId);
+        if (bookingType) {
+          color = bookingType.color;
+        }
+      }
+
+      return {
+        ...data,
+        color,
+      };
+    })
+  );
 
   console.log("Events fetched:", eventsData);
   return eventsData;
