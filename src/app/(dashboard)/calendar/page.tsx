@@ -47,6 +47,11 @@ export default function Calendar() {
   const [editingEvent, setEditingEvent] = useState<EventInput | null>(null);
   const [editAll, setEditAll] = useState(false); // New state to control if we're editing all instances
   const [loading, setLoading] = useState(false); // New loading state
+  const [calendarKey, setCalendarKey] = useState(0); // a stet variable to check if the calendar is re-rendered
+
+  useEffect(() => {
+    console.log("Calendar re-rendered with key:", calendarKey); // Log calendar re-render
+  }, [calendarKey]);
 
   const {
     events: fetchedEvents,
@@ -154,6 +159,32 @@ export default function Calendar() {
           endDay: endDay,
           updated_at: Timestamp.now(),
         });
+        // Update the local state to reflect the changes
+        setEvents((prevEvents) => {
+          const updatedEvents = prevEvents.map((event) => {
+            if (event.id === resizeInfo.event.id) {
+              return {
+                ...event,
+                start: startDateUTC!,
+                end: endDateUTC!,
+                startDate: startDateUTC!,
+                endDate: endDateUTC!,
+                startDay: startDay!,
+                endDay: endDay,
+              };
+            }
+            return event;
+          });
+          console.log("Updated Events:", updatedEvents); // Log updated events
+          return updatedEvents;
+        });
+
+        // Force calendar re-render by updating a key or state variable
+        // setCalendarKey((prevKey) => {
+        //   const newKey = prevKey + 1;
+        //   console.log("Calendar Key Updated:", newKey); // Log calendar key update
+        //   return newKey;
+        // });
       }
     } catch (error) {
       console.error("Error updating event in Firestore:", error);
@@ -200,6 +231,26 @@ export default function Calendar() {
           startDay: startDay,
           endDay: endDay,
           updated_at: Timestamp.now(),
+        });
+
+        // Update the local state to reflect the changes
+        setEvents((prevEvents) => {
+          const updatedEvents = prevEvents.map((event) => {
+            if (event.id === dropInfo.event.id) {
+              return {
+                ...event,
+                start: startDateUTC!,
+                end: endDateUTC!,
+                startDate: startDateUTC!,
+                endDate: endDateUTC!,
+                startDay: startDay!,
+                endDay: endDay,
+              };
+            }
+            return event;
+          });
+          console.log("Updated Events:", updatedEvents); // Log updated events
+          return updatedEvents;
         });
       }
     } catch (error) {
@@ -793,6 +844,7 @@ export default function Calendar() {
             <div className="calendar-container overflow-y-scroll h-[600px]">
               <FullCalendar
                 timeZone="UTC"
+                key={calendarKey}
                 // eventColor="#000"
                 ref={calendarRef}
                 schedulerLicenseKey="0899673068-fcs-1718558974"
