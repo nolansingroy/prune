@@ -54,6 +54,14 @@ import CreateBookingsFormDialog from "../CreateBookingsFormDialog";
 import { fetchBookingTypes } from "@/lib/converters/bookingTypes";
 import { fetchClients } from "@/lib/converters/clients";
 
+const formatFee = (fee: number): string => {
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    minimumFractionDigits: 2,
+  }).format(fee);
+};
+
 type SortableKeys = "start" | "end" | "title" | "startDate";
 
 export default function CreateBookings() {
@@ -922,7 +930,7 @@ export default function CreateBookings() {
                         )
                       }
                     >
-                      {event.fee}
+                      {formatFee(event.fee)}
                     </span>
                   )}
                 </TableCell>

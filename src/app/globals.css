@@ -133,3 +133,30 @@
 .fc-col-header-cell.fc-day.fc-day-today {
   background-color: #c7deea !important;
 }
+
+/* Tippy.js custom styles */
+.tippy-box {
+  background-color: #333; /* Background color */
+  color: #fff; /* Text color */
+  border-radius: 8px; /* Rounded corners */
+  padding: 0px; /* Padding */
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0); /* Box shadow */
+}
+
+.tippy-content {
+  font-size: 14px; /* Font size */
+}
+
+.tippy-content p {
+  margin: 0; /* Remove default margin */
+}
+
+.tippy-content .paid-status {
+  font-weight: bold; /* Bold text */
+  color: #4caf50; /* Green color for paid status */
+}
+
+.tippy-content .unpaid-status {
+  font-weight: bold; /* Bold text */
+  color: #f44336; /* Red color for unpaid status */
+}

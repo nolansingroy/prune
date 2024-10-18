@@ -36,9 +36,14 @@ import { Badge } from "@/components/ui/badge";
 import { cl } from "@fullcalendar/core/internal-common";
 import { useFirebaseAuth } from "@/services/authService";
 import CreateBookingsFormDialog from "@/comp/CreateBookingsFormDialog";
+import tippy from "tippy.js";
+import "tippy.js/dist/tippy.css";
 // import { adjustForLocalTimezone } from "@/lib/functions/time-functions";
 // import { handleUpdatEventFormDialog } from "@/lib/functions/event-functions";
 import { Auth } from "firebase/auth";
+
+// an instance of the tooltip for each event { this is initialized to track the instances of the tooltip to prevent adding multiple instances of the tooltip to the same event }
+const tippyInstances = new Map<string, any>();
 
 export default function Calendar() {
   const calendarRef = useRef<FullCalendar>(null);
@@ -98,22 +103,43 @@ export default function Calendar() {
     return (
       <>
         {!isBackgroundEvent && (
-          <HoverCard>
-            <HoverCardTrigger>
-              <span className="underline">{clientName || "No name"}</span>
-            </HoverCardTrigger>
-            <HoverCardContent>
-              <div className="px-2 py-1">
-                <Badge className={paid ? "bg-green-500" : "bg-red-500"}>
-                  {paid ? "Paid" : "unpaid"}
-                </Badge>
-                {/* <div className="text-xs">{`payment status : ${paid}`}</div> */}
-                <div className="text-sm font-semibold">
-                  {`Notes : ${description}`}
-                </div>
-              </div>
-            </HoverCardContent>
-          </HoverCard>
+          <div>
+            <span
+              className="underline"
+              ref={(el) => {
+                if (el) {
+                  // Destroy existing tippy instance if it exists
+                  const existingInstance = tippyInstances.get(
+                    eventInfo.event.id
+                  );
+                  if (existingInstance) {
+                    existingInstance.destroy();
+                  }
+
+                  // Create new tippy instance
+                  const tippyInstance = tippy(el, {
+                    trigger: "mouseenter", // Change trigger to 'mouseenter' for hover
+                    touch: "hold",
+                    allowHTML: true,
+                    content: `
+                      <div class="tippy-content">
+                        <p class="${paid ? "paid-status" : "unpaid-status"}">
+                          <strong>Paid:</strong> ${paid ? "Yes" : "No"}
+                        </p>
+                        <p><strong>Notes:</strong> ${description}</p>
+                      </div>
+                    `,
+                    theme: "custom", // Apply custom theme
+                  });
+
+                  // Store the new tippy instance in the Map
+                  tippyInstances.set(eventInfo.event.id, tippyInstance);
+                }
+              }}
+            >
+              {clientName || "No name"}
+            </span>
+          </div>
         )}
       </>
     );
@@ -985,3 +1011,16 @@ export default function Calendar() {
     </div>
   );
 }
+
+// <HoverCardContent>
+//   <div className="px-2 py-1">
+//     <Badge className={paid ? "bg-green-500" : "bg-red-500"}>
+//       {paid ? "Paid" : "unpaid"}
+//     </Badge>
+//     {/* <div className="text-xs">{`payment status : ${paid}`}</div> */}
+//     <div className="text-sm font-semibold">
+//       {`Notes : ${description}`}
+//     </div>
+//   </div>
+// </HoverCardContent>
+// {/* </HoverCard> */}
