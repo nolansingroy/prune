@@ -724,26 +724,28 @@ const CreateBookingsFormDialog: React.FC<CreateBookingsFormDialogProps> = ({
             </Popover>
           </div>
 
-          <div className="space-y-2">
-            <Label className="block text-sm font-medium text-gray-700">
-              Recurring Booking
-            </Label>
-            <div className="flex items-center space-x-2">
-              <Checkbox
-                checked={isRecurring}
-                onCheckedChange={(checked) =>
-                  setIsRecurring(checked !== "indeterminate" && checked)
-                }
-                id="recurringBookingCheckbox"
-              />
-              <Label
-                htmlFor="recurringBookingCheckbox"
-                className="text-sm font-medium text-gray-700"
-              >
-                Is Recurring
+          {!editAll && (
+            <div className="space-y-2">
+              <Label className="block text-sm font-medium text-gray-700">
+                Recurring Booking
               </Label>
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  checked={isRecurring}
+                  onCheckedChange={(checked: any) =>
+                    setIsRecurring(checked !== "indeterminate" && checked)
+                  }
+                  id="recurringBookingCheckbox"
+                />
+                <Label
+                  htmlFor="recurringBookingCheckbox"
+                  className="text-sm font-medium text-gray-700"
+                >
+                  Is Recurring
+                </Label>
+              </div>
             </div>
-          </div>
+          )}
 
           <div>
             <Label className="block text-sm font-medium text-gray-700">
@@ -798,7 +800,7 @@ const CreateBookingsFormDialog: React.FC<CreateBookingsFormDialogProps> = ({
                     <div key={day} className="flex flex-col items-center">
                       <Checkbox
                         checked={daysOfWeek.includes(day)}
-                        onCheckedChange={(checked) =>
+                        onCheckedChange={(checked: any) =>
                           setDaysOfWeek((prev) =>
                             checked
                               ? [...prev, day]
