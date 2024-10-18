@@ -643,7 +643,7 @@ export default function Calendar() {
   const handleEventDidMount = (info: {
     view: { calendar: any };
     event: any;
-    el: HTMLElement;
+    el: { classList: { add: (arg0: string) => void } };
   }) => {
     const calendarApi = info.view.calendar;
     const allEvents = calendarApi.getEvents();
@@ -653,24 +653,7 @@ export default function Calendar() {
       info.el.classList.add("overlap-event");
     }
 
-    // Only add a popover if the event is not a background event
-    // if (!info.event.extendedProps.isBackgroundEvent) {
-    //   tippy(info.el as Element, {
-    //     trigger: "mouseenter", // Change trigger to 'mouseenter' for hover
-    //     touch: "hold",
-    //     allowHTML: true,
-    //     content: `
-    //       <div>
-    //         <p><strong>Paid:</strong> ${
-    //           info.event.extendedProps.paid ? "Yes" : "No"
-    //         }</p>
-    //         <p><strong>Description:</strong> ${
-    //           info.event.extendedProps.description
-    //         }</p>
-    //       </div>
-    //     `,
-    //   });
-    // }
+    // add a popOver to the event here
   };
 
   const handleUpdatEventFormDialog = async (eventData: {
