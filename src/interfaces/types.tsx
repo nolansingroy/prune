@@ -1,9 +1,11 @@
 export interface EventInput {
   id?: string;
   title: string;
-  location?: string;
+  type: string;
+  typeId: string;
   clientId: string; // Add a clientId property to the event
   clientName: string; // Add a clientName property to the event
+  location?: string;
   start: Date; // Use JavaScript Date object
   end: Date; // Use JavaScript Date object
   description?: string;

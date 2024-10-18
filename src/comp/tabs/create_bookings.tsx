@@ -76,6 +76,7 @@ export default function CreateBookings() {
   const [clients, setClients] = useState<{ docId: string; fullName: string }[]>(
     []
   );
+  const [types, setTypes] = useState<{ docId: string; name: string }[]>([]);
 
   useEffect(() => {
     fetchUserTimezone();
@@ -91,70 +92,6 @@ export default function CreateBookings() {
     }
   };
 
-  // const fetchEvents = async () => {
-  //   if (auth.currentUser) {
-  //     const eventsRef = collection(db, "users", auth.currentUser.uid, "events");
-  //     // Fetch events by "start" field in ascending order
-  //     const q = query(
-  //       eventsRef,
-  //       where("isBackgroundEvent", "==", true),
-  //       orderBy("start", "asc") // Ascending order
-  //     );
-  //     const querySnapshot = await getDocs(q);
-  //     let eventsList: EventInput[] = [];
-
-  //     querySnapshot.docs.forEach((doc) => {
-  //       const data = doc.data();
-  //       const start =
-  //         data.start instanceof Timestamp
-  //           ? data.start.toDate()
-  //           : new Date(data.start);
-  //       const end =
-  //         data.end instanceof Timestamp
-  //           ? data.end.toDate()
-  //           : new Date(data.end);
-
-  //       if (data.recurrence) {
-  //         const dtstart = new Date(start);
-  //         eventsList.push({
-  //           id: doc.id,
-  //           title: data.title,
-  //           start: dtstart,
-  //           end: new Date(
-  //             dtstart.getTime() + (end.getTime() - start.getTime())
-  //           ), // Calculate end time based on duration
-  //           description: data.description || "",
-  //           isBackgroundEvent: data.isBackgroundEvent,
-  //           startDate: dtstart,
-  //           startDay: dtstart.toLocaleDateString("en-US", { weekday: "long" }),
-  //           endDate: new Date(
-  //             dtstart.getTime() + (end.getTime() - start.getTime())
-  //           ),
-  //           endDay: new Date(
-  //             dtstart.getTime() + (end.getTime() - start.getTime())
-  //           ).toLocaleDateString("en-US", { weekday: "long" }),
-  //           recurrence: data.recurrence,
-  //           exceptions: data.exceptions,
-  //         });
-  //       } else {
-  //         eventsList.push({
-  //           id: doc.id,
-  //           title: data.title,
-  //           start: start,
-  //           end: end,
-  //           description: data.description || "",
-  //           isBackgroundEvent: data.isBackgroundEvent,
-  //           startDate: start,
-  //           startDay: start.toLocaleDateString("en-US", { weekday: "long" }),
-  //           endDate: end,
-  //           endDay: end.toLocaleDateString("en-US", { weekday: "long" }),
-  //         });
-  //       }
-  //     });
-  //     setEvents(eventsList);
-  //   }
-  // };
-
   const fetchAllClients = useCallback(async () => {
     if (auth.currentUser) {
       // Fetching clients from Firestore
@@ -169,11 +106,30 @@ export default function CreateBookings() {
       console.log("Clients fetched:", clientsArray);
       setClients(clientsArray);
     }
-  }, [auth.currentUser]);
+  }, []);
+
+  const fetchAllBookingTypes = useCallback(async () => {
+    if (auth.currentUser) {
+      // Fetching booking types from Firestore
+      const types = await fetchBookingTypes(auth.currentUser.uid);
+      const typesArray = types.map((type) => {
+        return {
+          docId: type.docId!,
+          name: type.name,
+        };
+      });
+      console.log("Booking types fetched:", typesArray);
+      setTypes(typesArray);
+    }
+  }, []);
 
   useEffect(() => {
     fetchAllClients();
   }, [fetchAllClients]);
+
+  useEffect(() => {
+    fetchAllBookingTypes();
+  }, [fetchAllBookingTypes]);
 
   const fetchEvents = async () => {
     if (auth.currentUser) {
@@ -210,6 +166,8 @@ export default function CreateBookings() {
           eventsList.push({
             id: doc.id,
             title: data.title,
+            type: data.type,
+            typeId: data.typeId,
             fee: data.fee,
             clientId: data.clientId,
             clientName: data.clientName,
@@ -235,6 +193,8 @@ export default function CreateBookings() {
           eventsList.push({
             id: doc.id,
             title: data.title,
+            type: data.type,
+            typeId: data.typeId,
             fee: data.fee,
             clientId: data.clientId,
             clientName: data.clientName,
@@ -294,6 +254,20 @@ export default function CreateBookings() {
         } else {
           console.log("No matching client found for:", editedValue);
           updates = { clientId: "", clientName: editedValue };
+        }
+      }
+
+      if (field === "type") {
+        updates = { [field]: editedValue };
+        const matchedType = types.find(
+          (type) => type.name.toLowerCase() === editedValue.toLowerCase()
+        );
+        if (matchedType) {
+          console.log("Matched type found:", matchedType);
+          updates = { typeId: matchedType.docId, type: editedValue };
+        } else {
+          console.log("No matching type found for:", editedValue);
+          updates = { typeId: "", type: editedValue };
         }
       }
 
@@ -386,7 +360,7 @@ export default function CreateBookings() {
             };
           }
         }
-      } else if (field === "title" || field === "description") {
+      } else if (field === "description") {
         updates = { [field]: editedValue };
       }
 
@@ -417,65 +391,10 @@ export default function CreateBookings() {
     return newDate;
   };
 
-  // const handleSaveEvent = async (eventData: {
-  //   title: string;
-  //   description: string;
-  //   location: string;
-  //   isBackgroundEvent: boolean;
-  //   date?: string;
-  //   startTime: string;
-  //   endTime: string;
-  //   recurrence?: {
-  //     daysOfWeek: number[];
-  //     startRecur: string; // YYYY-MM-DD
-  //     endRecur: string; // YYYY-MM-DD
-  //   };
-  // }) => {
-  //   setLoading(true); // Start loading
-  //   try {
-  //     const user = auth.currentUser;
-  //     if (!user) {
-  //       throw new Error("User not authenticated");
-  //     }
-
-  //     const startDate =
-  //       eventData.date || new Date().toISOString().split("T")[0];
-
-  //     // Add 1 day to the endRecur date to ensure the last day is included
-  //     const endRecur = new Date(eventData.recurrence?.endRecur || startDate);
-  //     endRecur.setDate(endRecur.getDate() + 1);
-
-  //     const eventInput = {
-  //       title: eventData.title,
-  //       description: eventData.description,
-  //       location: eventData.location || "",
-  //       startDate,
-  //       startTime: eventData.startTime,
-  //       endTime: eventData.endTime,
-  //       recurrence: {
-  //         daysOfWeek: eventData.recurrence?.daysOfWeek || [],
-  //         startRecur: eventData.recurrence?.startRecur || startDate,
-  //         endRecur: endRecur.toISOString().split("T")[0], // Adjusted endRecur
-  //       },
-  //       userId: user.uid,
-  //     };
-
-  //     const result = await axios.post(
-  //       "https://us-central1-prune-94ad9.cloudfunctions.net/createRecurringAvailabilityInstances",
-  //       eventInput
-  //     );
-
-  //     console.log("Recurring event instances created:", result.data);
-  //     await fetchEvents();
-  //   } catch (error) {
-  //     console.error("Error saving event:", error);
-  //   } finally {
-  //     setLoading(false); // Stop loading
-  //   }
-  // };
-
   const handleSaveEvent = async (eventData: {
-    title: string;
+    id?: string;
+    type: string;
+    typeId: string;
     fee: number;
     clientId: string;
     clientName: string;
@@ -492,8 +411,10 @@ export default function CreateBookings() {
       endRecur: string; // YYYY-MM-DD
     };
   }) => {
+    console.log("handleSaveEvent called"); // Add this line
     setLoading(true); // Start loading
     try {
+      console.log("onSave event data Triggered");
       const user = auth.currentUser;
       if (!user) {
         throw new Error("User not authenticated");
@@ -514,7 +435,7 @@ export default function CreateBookings() {
         eventData.recurrence.daysOfWeek.length === 0
       ) {
         // Client-side single event creation
-        console.log("storing using client side");
+        console.log("storing using client side single event creation");
         // Parse the start and end times
         let startDateTime = new Date(`${startDate}T${eventData.startTime}`);
         let endDateTime = new Date(`${startDate}T${eventData.endTime}`);
@@ -530,7 +451,8 @@ export default function CreateBookings() {
 
         // Create a new event object
         const eventInput = {
-          title: eventData.title,
+          type: eventData.type,
+          typeId: eventData.typeId,
           fee: eventData.fee,
           clientId: eventData.clientId,
           clientName: eventData.clientName,
@@ -559,7 +481,8 @@ export default function CreateBookings() {
         endRecur.setDate(endRecur.getDate() + 2);
 
         const eventInput = {
-          title: eventData.title,
+          type: eventData.type,
+          typeId: eventData.typeId,
           fee: eventData.fee,
           clientId: eventData.clientId,
           clientName: eventData.clientName,
@@ -718,7 +641,7 @@ export default function CreateBookings() {
 
   const filteredEvents = events.filter(
     (event) =>
-      event.title.toLowerCase().includes(search.toLowerCase()) ||
+      event.type.toLowerCase().includes(search.toLowerCase()) ||
       (event.description ?? "").toLowerCase().includes(search.toLowerCase())
   );
 
@@ -733,7 +656,7 @@ export default function CreateBookings() {
       // Remove any undefined fields from the cloned event (like exceptions)
       const { id, ...clonedEventData } = {
         ...event,
-        title: `${event.title} (Clone)`, // Optional: Append "Clone" to the title
+        description: `${event.type} (Clone)`, // Optional: Append "Clone" to the title
         created_at: new Date(), // Update creation timestamp
       };
 
@@ -778,7 +701,7 @@ export default function CreateBookings() {
               <TableHead>
                 <Checkbox
                   checked={selectedRows.size === filteredEvents.length}
-                  onCheckedChange={(checked) =>
+                  onCheckedChange={(checked: any) =>
                     handleSelectAllChange(!!checked)
                   }
                 />
@@ -956,26 +879,26 @@ export default function CreateBookings() {
 
                 <TableCell>
                   {editingCell?.id === event.id &&
-                  editingCell?.field === "title" ? (
-                    <input
+                  editingCell?.field === "type" ? (
+                    <Input
                       value={editedValue}
                       onChange={handleInputChange}
                       onBlur={handleBlur}
                       autoFocus
                     />
                   ) : (
-                    <div
+                    <span
                       onClick={() =>
                         handleCellClick(
                           event.id!,
-                          "title",
-                          event.title || "",
+                          "type",
+                          event.type,
                           !!event.recurrence
                         )
                       }
                     >
-                      {event.title || "Untitled"}
-                    </div>
+                      {event.type}
+                    </span>
                   )}
                 </TableCell>
 

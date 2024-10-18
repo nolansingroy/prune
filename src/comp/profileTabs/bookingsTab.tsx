@@ -20,6 +20,7 @@ import {
 } from "@/lib/converters/bookingTypes";
 
 const initialBookingData: BookingTypes = {
+  docId: "",
   name: "",
   duration: 0,
   fee: 0,
@@ -60,19 +61,17 @@ export default function BookingsTab({ authUser }: BookingTabProps) {
   const handleSaveBookingType = async () => {
     console.log("actionType:", actionType);
     if (authUser) {
-      const newBookingType: BookingTypes = {
-        ...newBookingData,
-      };
+      const { docId, ...bookingDataWithoutId } = newBookingData;
 
       if (actionType === "add") {
-        await addBookingType(authUser.uid, newBookingType);
+        await addBookingType(authUser.uid, bookingDataWithoutId);
         fetchTypes();
         setNewBookingData(initialBookingData);
       }
 
       if (actionType === "edit") {
         // Update booking type in Firestore
-        await updateBookingType(authUser.uid, newBookingType);
+        await updateBookingType(authUser.uid, newBookingData);
         fetchTypes();
         setNewBookingData(initialBookingData);
         setEditingBookingId(null);
@@ -83,7 +82,7 @@ export default function BookingsTab({ authUser }: BookingTabProps) {
   const handleEditBookingType = (type: BookingTypes) => {
     console.log("Editing booking type:", type);
     setNewBookingData(type);
-    setEditingBookingId(type.id!);
+    setEditingBookingId(type.docId!);
   };
 
   const handleDeleteBookingType = async (id: string) => {
@@ -199,7 +198,7 @@ export default function BookingsTab({ authUser }: BookingTabProps) {
               </TableHeader>
               <TableBody>
                 {bookingTypes.map((type) => (
-                  <TableRow key={type.id}>
+                  <TableRow key={type.docId}>
                     <TableCell>
                       <div className="flex items-center gap-2">
                         <div
@@ -230,7 +229,7 @@ export default function BookingsTab({ authUser }: BookingTabProps) {
                       </Button>
                       <Button
                         variant="destructive"
-                        onClick={() => handleDeleteBookingType(type.id!)}
+                        onClick={() => handleDeleteBookingType(type.docId!)}
                       >
                         Delete
                       </Button>

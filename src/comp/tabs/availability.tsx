@@ -186,10 +186,12 @@ export default function Availability() {
           const dtstart = new Date(start);
           eventsList.push({
             id: doc.id,
+            title: data.title,
+            type: data.type || "",
+            typeId: data.typeId || "",
             clientId: data.clientId || "",
             clientName: data.clientName || "",
 
-            title: data.title,
             start: dtstart,
             end: new Date(
               dtstart.getTime() + (end.getTime() - start.getTime())
@@ -210,9 +212,12 @@ export default function Availability() {
         } else {
           eventsList.push({
             id: doc.id,
+            title: data.title,
+            type: data.type || "",
+            typeId: data.typeId || "",
             clientId: data.clientId || "",
             clientName: data.clientName || "",
-            title: data.title,
+
             start: start,
             end: end,
             description: data.description || "",

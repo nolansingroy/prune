@@ -46,6 +46,8 @@ interface EventFormDialogProps {
   onClose: () => void;
   onSave: (eventData: {
     title: string;
+    type: string;
+    typeId: string;
     fee: number;
     clientId: string;
     clientName: string;
@@ -83,7 +85,7 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
   onSave,
   showDateSelector = true,
   event,
-  editAll = true,
+  editAll = false,
 }) => {
   const { authUser } = useFirebaseAuth();
   const [title, setTitle] = useState("");
@@ -109,11 +111,12 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
   const [bookingsPopoverOpen, setBookingsPopoverOpen] = useState(false);
   const [bookingType, setBookingType] = useState("");
   const [bookingTypes, setBookingTypes] = useState<
-    { value: string; label: string; fee: number }[]
+    { value: string; label: string; fee: number; docId: string }[]
   >([]);
   const [filteredBookings, setFilteredBookings] = useState<
-    { value: string; label: string; fee: number }[]
+    { value: string; label: string; fee: number; docId: string }[]
   >([]);
+  const [typeId, setTypeId] = useState<string>("");
 
   // clients state
   const [clientsPopoverOpen, setClientsPopoverOpen] = useState(false);
@@ -163,17 +166,23 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
     if (authUser) {
       // Fetching booking types from Firestore
       const types = await fetchBookingTypes(authUser.uid);
-      let presetBookings: { value: string; label: string; fee: number }[] = [];
+      let presetBookings: {
+        value: string;
+        label: string;
+        fee: number;
+        docId: string;
+      }[] = [];
       types.forEach((type) => {
         presetBookings.push({
           value: type.name,
           label: type.name,
           fee: type.fee,
+          docId: type.docId!,
         });
       });
       setBookingTypes(presetBookings);
       setFilteredBookings(presetBookings);
-      console.log("Booking types from firebase:", types);
+      // console.log("Booking types from firebase:", types);
     }
   }, [authUser]);
 
@@ -235,7 +244,9 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
     e.preventDefault();
 
     const eventData = {
-      title: isBackgroundEvent ? title : bookingType,
+      title: !isBackgroundEvent ? bookingType : title,
+      type: !isBackgroundEvent ? bookingType : "",
+      typeId: !isBackgroundEvent ? typeId : "",
       fee: !isBackgroundEvent ? parseFloat(bookingFee) : 0,
       clientId: !isBackgroundEvent ? clientId : "",
       clientName: !isBackgroundEvent ? client : "",
@@ -275,6 +286,7 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
     setStartRecur("");
     setEndRecur("");
     setBookingType("");
+    setTypeId("");
     setBookingFee("");
     setClient("");
     setClientId("");
@@ -308,8 +320,15 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
 
   // booking type functions
 
-  const handleBookingTypeSelect = (value: string, fee: number) => {
+  const handleBookingTypeSelect = (
+    value: string,
+    fee: number,
+    docId: string
+  ) => {
+    console.log("type id selected:", docId);
+    console.log("type selected:", value);
     setBookingType(value);
+    setTypeId(docId);
     setBookingFee(fee.toString());
     setBookingsPopoverOpen(false); // Close the popover after selection
   };
@@ -328,8 +347,18 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
     event: React.KeyboardEvent<HTMLInputElement>
   ) => {
     if (event.key === "Enter") {
+      // handle the case where the user presses enter on a booking type that is not in the list
+      handleBookingTypeSelect(bookingType, 0, "");
       setBookingsPopoverOpen(false);
     }
+  };
+
+  // handle the case where the user clicks outside the popover and typed a client name that is not in the list and clicked outside the popover
+  const handlePopoverCloseBooking = () => {
+    if (!filteredBookings.find((book) => book.value === bookingType)) {
+      handleBookingTypeSelect(bookingType, 0, ""); // Set the client with the typed name if it's not in the list
+    }
+    setClientsPopoverOpen(false);
   };
 
   // Fee input functions
@@ -369,7 +398,7 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
   };
 
   // handle the case where the user clicks outside the popover and typed a client name that is not in the list and clicked outside the popover
-  const handlePopoverClose = () => {
+  const handlePopoverCloseClient = () => {
     if (!filteredClients.find((cli) => cli.value === client)) {
       handleClientSelect(client, ""); // Set the client with the typed name if it's not in the list
     }
@@ -444,7 +473,7 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
               <Popover
                 open={clientsPopoverOpen}
                 onOpenChange={(open) => {
-                  if (!open) handlePopoverClose();
+                  if (!open) handlePopoverCloseClient();
                   setClientsPopoverOpen(open);
                 }}
               >
@@ -539,7 +568,10 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
               </Label>
               <Popover
                 open={bookingsPopoverOpen}
-                onOpenChange={setBookingsPopoverOpen}
+                onOpenChange={(open) => {
+                  if (!open) handlePopoverCloseBooking();
+                  setBookingsPopoverOpen(open);
+                }}
               >
                 <PopoverTrigger asChild>
                   <Button
@@ -574,7 +606,11 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
                             key={book.value}
                             value={book.value}
                             onSelect={() => {
-                              handleBookingTypeSelect(book.value, book.fee); // Set location
+                              handleBookingTypeSelect(
+                                book.value,
+                                book.fee,
+                                book.docId
+                              ); // Set location
                               setBookingsPopoverOpen(false); // Close the popover after selection
                             }}
                           >
