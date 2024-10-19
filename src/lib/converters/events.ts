@@ -23,15 +23,19 @@ const eventConverter: FirestoreDataConverter<EventInput> = {
       fee: event.fee,
       clientId: event.clientId,
       clientName: event.clientName,
-      start: event.start, // Store as Timestamp
-      end: event.end, // Store as Timestamp
+      start: event.start ? Timestamp.fromDate(new Date(event.start)) : null, // Convert to Timestamp
+      end: event.end ? Timestamp.fromDate(new Date(event.end)) : null, // Convert to Timestamp
       description: event.description,
       display: event.display,
       className: event.className,
       isBackgroundEvent: event.isBackgroundEvent,
-      startDate: event.startDate, // Store as Timestamp
+      startDate: event.startDate
+        ? Timestamp.fromDate(new Date(event.startDate))
+        : null, // Convert to Timestamp
       startDay: event.startDay,
-      endDate: event.endDate, // Store as Timestamp
+      endDate: event.endDate
+        ? Timestamp.fromDate(new Date(event.endDate))
+        : null, // Convert to Timestamp
       endDay: event.endDay,
       recurrence: event.recurrence,
       exceptions: event.exceptions,
@@ -47,6 +51,16 @@ const eventConverter: FirestoreDataConverter<EventInput> = {
     options: SnapshotOptions
   ): EventInput {
     const data = snapshot.data(options);
+    const startUTC = (data.start as Timestamp)?.toDate();
+    const endUTC = (data.end as Timestamp)?.toDate();
+
+    // Convert UTC dates to local dates
+    const startLocal = new Date(
+      startUTC.getTime() + startUTC.getTimezoneOffset() * 60000
+    );
+    const endLocal = new Date(
+      endUTC.getTime() + endUTC.getTimezoneOffset() * 60000
+    );
     return {
       title: data.title || "",
       id: snapshot.id,
@@ -56,25 +70,23 @@ const eventConverter: FirestoreDataConverter<EventInput> = {
       clientId: data.clientId || "",
       clientName: data.clientName || "",
       location: data.location || "",
-      start: (data.start as Timestamp).toDate(),
-      end: (data.end as Timestamp).toDate(),
-      startDate: (data.start as Timestamp).toDate(),
-      startDay: (data.start as Timestamp).toDate().toLocaleDateString("en-US", {
+      start: startLocal,
+      end: endLocal,
+      startDate: startLocal,
+      startDay: startLocal.toLocaleDateString("en-US", {
         weekday: "long",
-        timeZone: "UTC",
       }),
-      endDate: (data.end as Timestamp).toDate(),
-      endDay: (data.end as Timestamp).toDate().toLocaleDateString("en-US", {
+      endDate: endLocal,
+      endDay: endLocal.toLocaleDateString("en-US", {
         weekday: "long",
-        timeZone: "UTC",
       }),
       description: data.description || "",
       display: data.isBackgroundEvent ? "background" : "auto",
       isBackgroundEvent: !!data.isBackgroundEvent,
       className: data.isBackgroundEvent ? "fc-bg-event" : "",
-      recurrence: data.recurrence || undefined, // in nolan's code it was undefined
+      recurrence: data.recurrence,
       exdate: data.exceptions || [],
-      paid: data.paid || false,
+      paid: data.paid,
       // exceptions: data.exceptions,
       // originalEventId: data.originalEventId,
       // isInstance: data.isInstance,
