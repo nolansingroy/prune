@@ -458,7 +458,7 @@ const CreateBookingsFormDialog: React.FC<CreateBookingsFormDialogProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent>
+      <DialogContent className="overflow-y-scroll max-h-screen overflow-x-clip">
         <DialogHeader>
           <DialogTitle>
             {editAll && "Edit Booking"}
