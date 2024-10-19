@@ -72,9 +72,9 @@ const eventConverter: FirestoreDataConverter<EventInput> = {
       display: data.isBackgroundEvent ? "background" : "auto",
       isBackgroundEvent: !!data.isBackgroundEvent,
       className: data.isBackgroundEvent ? "fc-bg-event" : "",
-      recurrence: data.recurrence, // in nolan's code it was undefined
+      recurrence: data.recurrence || undefined, // in nolan's code it was undefined
       exdate: data.exceptions || [],
-      paid: data.paid,
+      paid: data.paid || false,
       // exceptions: data.exceptions,
       // originalEventId: data.originalEventId,
       // isInstance: data.isInstance,

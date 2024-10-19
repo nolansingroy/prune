@@ -870,6 +870,7 @@ export default function Calendar() {
             <div className="calendar-container overflow-y-scroll h-[600px]">
               <FullCalendar
                 timeZone="UTC"
+                nowIndicator={true}
                 key={calendarKey}
                 // eventColor="#000"
                 ref={calendarRef}
