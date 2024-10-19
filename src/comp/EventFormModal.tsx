@@ -407,7 +407,7 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="modal-content">
+      <DialogContent className="modal-content overflow-y-scroll max-h-screen overflow-x-clip">
         <DialogHeader>
           <DialogTitle>
             {editAll
