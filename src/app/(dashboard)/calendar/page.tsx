@@ -83,8 +83,15 @@ export default function Calendar() {
   };
 
   const renderEventContent = (eventInfo: EventContentArg) => {
-    const { isBackgroundEvent, clientName, title, description, paid, type } =
-      eventInfo.event.extendedProps;
+    const {
+      isBackgroundEvent,
+      clientName,
+      title,
+      description,
+      paid,
+      type,
+      location,
+    } = eventInfo.event.extendedProps;
 
     const eventInformation = eventInfo.event.extendedProps;
     // console.log("eventInformation", eventInformation);
@@ -141,6 +148,7 @@ export default function Calendar() {
             </span>
           </div>
         )}
+        {isBackgroundEvent && <div className="bg-red w-5 h-4">Hello</div>}
       </>
     );
   };
@@ -923,7 +931,7 @@ export default function Calendar() {
                   if (event.recurrence) {
                     return {
                       ...event,
-                      // title: event.title,
+                      title: event.title,
                       type: event.type,
                       typeId: event.typeId,
                       location: event.location,
@@ -950,7 +958,7 @@ export default function Calendar() {
                   } else {
                     return {
                       ...event,
-                      // title: event.title,
+                      title: event.title,
                       type: event.type,
                       typeId: event.typeId,
                       display: event.isBackgroundEvent
