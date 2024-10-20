@@ -8,6 +8,9 @@ import {
   QueryDocumentSnapshot,
   SnapshotOptions,
   DocumentData,
+  doc,
+  addDoc,
+  updateDoc,
 } from "firebase/firestore";
 import { EventInput } from "@/interfaces/types";
 import { fetchBookingType } from "./bookingTypes";
@@ -137,4 +140,24 @@ export async function converterFetchEvents(
 
   console.log("Events fetched:", eventsData);
   return eventsData;
+}
+
+/// Function to create an event
+export async function createEvent(userId: string, event: EventInput) {
+  const newEventRef = await addDoc(eventRef(userId), event);
+  const eventId = newEventRef.id;
+  await updateDoc(newEventRef, { id: eventId });
+  return { ...event, id: eventId };
+}
+
+// Function to update an event
+export async function updateEvent(
+  userId: string,
+  eventId: string,
+  event: Partial<EventInput>
+) {
+  const eventDocRef = doc(db, "users", userId, "events", eventId).withConverter(
+    eventConverter
+  );
+  await updateDoc(eventDocRef, event);
 }
