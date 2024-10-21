@@ -88,7 +88,7 @@ export default function Calendar() {
 
     // console.log("for month view props", eventInfo);
 
-    const backgroundColor = eventInfo.backgroundColor;
+    const backgroundColor = eventInfo.backgroundColor || "#000000";
 
     const monthViw = eventInfo.view.type.includes("dayGridMonth");
 
