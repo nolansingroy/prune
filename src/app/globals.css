@@ -81,6 +81,10 @@
   @apply bg-fc-bg-event;
 }
 
+/* .fc-month-view .fc-day .fc-event-dot {
+  color: var(--fc-event-bg-color);
+} */
+
 .fc-event.overlap-event {
   width: 75% !important;
   margin-left: auto;
