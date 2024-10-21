@@ -83,8 +83,15 @@ export default function Calendar() {
   };
 
   const renderEventContent = (eventInfo: EventContentArg) => {
-    const { isBackgroundEvent, clientName, title, description, paid, type } =
-      eventInfo.event.extendedProps;
+    const {
+      isBackgroundEvent,
+      clientName,
+      title,
+      description,
+      paid,
+      type,
+      location,
+    } = eventInfo.event.extendedProps;
 
     const eventInformation = eventInfo.event.extendedProps;
     // console.log("eventInformation", eventInformation);
@@ -162,20 +169,31 @@ export default function Calendar() {
 
         const startDay = resizeInfo.event.start?.toLocaleDateString("en-US", {
           weekday: "long",
-          timeZone: "UTC",
         });
         const endDay = resizeInfo.event.end
           ? resizeInfo.event.end.toLocaleDateString("en-US", {
               weekday: "long",
-              timeZone: "UTC",
             })
           : "";
 
-        const startDateUTC = resizeInfo.event.start
-          ? new Date(resizeInfo.event.start.toISOString())
+        const startDateLocal = resizeInfo.event.start
+          ? new Date(resizeInfo.event.start)
           : null;
-        const endDateUTC = resizeInfo.event.end
-          ? new Date(resizeInfo.event.end.toISOString())
+        const endDateLocal = resizeInfo.event.end
+          ? new Date(resizeInfo.event.end)
+          : null;
+
+        // Convert local dates to UTC before saving to Firestore
+        const startDateUTC = startDateLocal
+          ? new Date(
+              startDateLocal.getTime() -
+                startDateLocal.getTimezoneOffset() * 60000
+            )
+          : null;
+        const endDateUTC = endDateLocal
+          ? new Date(
+              endDateLocal.getTime() - endDateLocal.getTimezoneOffset() * 60000
+            )
           : null;
 
         await updateDoc(eventRef, {
@@ -187,16 +205,17 @@ export default function Calendar() {
           endDay: endDay,
           updated_at: Timestamp.now(),
         });
+
         // Update the local state to reflect the changes
         setEvents((prevEvents) => {
           const updatedEvents = prevEvents.map((event) => {
             if (event.id === resizeInfo.event.id) {
               return {
                 ...event,
-                start: startDateUTC!,
-                end: endDateUTC!,
-                startDate: startDateUTC!,
-                endDate: endDateUTC!,
+                start: startDateLocal!,
+                end: endDateLocal!,
+                startDate: startDateLocal!,
+                endDate: endDateLocal!,
                 startDay: startDay!,
                 endDay: endDay,
               };
@@ -206,13 +225,6 @@ export default function Calendar() {
           console.log("Updated Events:", updatedEvents); // Log updated events
           return updatedEvents;
         });
-
-        // Force calendar re-render by updating a key or state variable
-        // setCalendarKey((prevKey) => {
-        //   const newKey = prevKey + 1;
-        //   console.log("Calendar Key Updated:", newKey); // Log calendar key update
-        //   return newKey;
-        // });
       }
     } catch (error) {
       console.error("Error updating event in Firestore:", error);
@@ -234,21 +246,32 @@ export default function Calendar() {
         const startDay = dropInfo.event.start
           ? dropInfo.event.start.toLocaleDateString("en-US", {
               weekday: "long",
-              timeZone: "UTC",
             })
           : "";
         const endDay = dropInfo.event.end
           ? dropInfo.event.end.toLocaleDateString("en-US", {
               weekday: "long",
-              timeZone: "UTC",
             })
           : "";
 
-        const startDateUTC = dropInfo.event.start
-          ? new Date(dropInfo.event.start.toISOString())
+        const startDateLocal = dropInfo.event.start
+          ? new Date(dropInfo.event.start)
           : null;
-        const endDateUTC = dropInfo.event.end
-          ? new Date(dropInfo.event.end.toISOString())
+        const endDateLocal = dropInfo.event.end
+          ? new Date(dropInfo.event.end)
+          : null;
+
+        // Convert local dates to UTC before saving to Firestore
+        const startDateUTC = startDateLocal
+          ? new Date(
+              startDateLocal.getTime() -
+                startDateLocal.getTimezoneOffset() * 60000
+            )
+          : null;
+        const endDateUTC = endDateLocal
+          ? new Date(
+              endDateLocal.getTime() - endDateLocal.getTimezoneOffset() * 60000
+            )
           : null;
 
         await updateDoc(eventRef, {
@@ -267,10 +290,10 @@ export default function Calendar() {
             if (event.id === dropInfo.event.id) {
               return {
                 ...event,
-                start: startDateUTC!,
-                end: endDateUTC!,
-                startDate: startDateUTC!,
-                endDate: endDateUTC!,
+                start: startDateLocal!,
+                end: endDateLocal!,
+                startDate: startDateLocal!,
+                endDate: endDateLocal!,
                 startDay: startDay!,
                 endDay: endDay,
               };
@@ -295,23 +318,9 @@ export default function Calendar() {
   const handleSelect = (selectInfo: DateSelectArg) => {
     setSelectInfo(selectInfo);
 
-    // FullCalendar provides the date in UTC, so we need to adjust for the local timezone
-    const defaultStartTimeUTC = new Date(selectInfo.startStr);
-    const defaultEndTimeUTC = new Date(selectInfo.endStr); // Use the correct end time from selectInfo
-
-    // Get the timezone offset in hours
-    const timezoneOffsetHours = -(new Date().getTimezoneOffset() / 60); // getTimezoneOffset returns minutes, convert to hours
-
-    // Adjust UTC times to local times by subtracting the timezone offset
-    const defaultStartTimeLocal = new Date(defaultStartTimeUTC);
-    defaultStartTimeLocal.setHours(
-      defaultStartTimeUTC.getHours() - timezoneOffsetHours
-    );
-
-    const defaultEndTimeLocal = new Date(defaultEndTimeUTC);
-    defaultEndTimeLocal.setHours(
-      defaultEndTimeUTC.getHours() - timezoneOffsetHours
-    );
+    // FullCalendar provides the date in local time
+    const defaultStartTimeLocal = new Date(selectInfo.startStr);
+    const defaultEndTimeLocal = new Date(selectInfo.endStr); // Use the correct end time from selectInfo
 
     // Convert times to string format using local time (e.g., "10:00" in local time)
     const formattedStartTime = defaultStartTimeLocal.toLocaleTimeString([], {
@@ -367,16 +376,9 @@ export default function Calendar() {
     const { extendedProps, start, end } = event;
 
     if (start && end) {
-      // const localStart = adjustForLocalTimezone(start);
-      // const localEnd = adjustForLocalTimezone(end);
-
-      const timezoneOffsetHours = -(new Date().getTimezoneOffset() / 60);
-
+      // FullCalendar provides the date in local time
       const localStart = new Date(start);
-      localStart.setHours(start.getHours() - timezoneOffsetHours);
-
       const localEnd = new Date(end);
-      localEnd.setHours(end.getHours() - timezoneOffsetHours);
 
       setEditingEvent({
         ...event,
@@ -467,9 +469,30 @@ export default function Calendar() {
     calendarApi.unselect();
 
     // Format the start and end dates based on the event selection
-    const startDate = date
-      ? new Date(date).toISOString().split("T")[0]
-      : new Date(selectInfo.startStr).toISOString().split("T")[0];
+    let startDateTime = date ? new Date(date) : new Date(selectInfo.startStr);
+    let endDateTime = new Date(selectInfo.startStr);
+
+    if (startTime && endTime) {
+      const [startHour, startMinute] = startTime.split(":").map(Number);
+      const [endHour, endMinute] = endTime.split(":").map(Number);
+
+      // Set the time in local time
+      startDateTime.setHours(startHour, startMinute, 0, 0);
+      endDateTime.setHours(endHour, endMinute, 0, 0);
+
+      // Ensure end time is after the start time
+      if (endDateTime <= startDateTime) {
+        endDateTime.setDate(endDateTime.getDate() + 1);
+      }
+    }
+
+    // Convert local dates to UTC before saving to Firestore
+    const startDateUTC = new Date(
+      startDateTime.getTime() - startDateTime.getTimezoneOffset() * 60000
+    );
+    const endDateUTC = new Date(
+      endDateTime.getTime() - endDateTime.getTimezoneOffset() * 60000
+    );
 
     setLoading(true); // Start loading
 
@@ -486,7 +509,9 @@ export default function Calendar() {
         recurrence.daysOfWeek.length > 0
       ) {
         // Adjust end recurrence date
-        const endRecur = new Date(recurrence.endRecur || startDate);
+        const endRecur = new Date(
+          recurrence.endRecur || startDateUTC.toISOString().split("T")[0]
+        );
         endRecur.setDate(endRecur.getDate() + 1);
 
         // Prepare the event input for the cloud function
@@ -499,13 +524,14 @@ export default function Calendar() {
           description,
           fee,
           location: location || "",
-          startDate,
+          startDate: startDateUTC.toISOString().split("T")[0],
           startTime,
           endTime,
           paid,
           recurrence: {
             daysOfWeek: recurrence.daysOfWeek,
-            startRecur: recurrence.startRecur || startDate,
+            startRecur:
+              recurrence.startRecur || startDateUTC.toISOString().split("T")[0],
             endRecur: endRecur.toISOString().split("T")[0],
           },
           userId: user.uid,
@@ -522,26 +548,6 @@ export default function Calendar() {
         console.log("Recurring event instances created:", result.data);
       } else {
         // Handle single or background event directly on the client side
-        // Parse the start and end times
-        let startDateTime = date
-          ? new Date(date)
-          : new Date(selectInfo.startStr);
-        let endDateTime = new Date(selectInfo.startStr);
-
-        if (startTime && endTime) {
-          const [startHour, startMinute] = startTime.split(":").map(Number);
-          const [endHour, endMinute] = endTime.split(":").map(Number);
-
-          // Set the time in UTC
-          startDateTime.setUTCHours(startHour, startMinute, 0, 0);
-          endDateTime.setUTCHours(endHour, endMinute, 0, 0);
-
-          // Ensure end time is after the start time
-          if (endDateTime <= startDateTime) {
-            endDateTime.setUTCDate(endDateTime.getUTCDate() + 1);
-          }
-        }
-
         // Create the event object for a single or background event
         let event: EventInput = {
           id: "",
@@ -552,19 +558,19 @@ export default function Calendar() {
           clientId: clientId,
           clientName: clientName,
           location: location || "",
-          start: startDateTime, // Save in UTC
-          end: endDateTime, // Save in UTC
+          start: startDateUTC, // Save in UTC
+          end: endDateUTC, // Save in UTC
           description,
           display: isBackgroundEvent ? "inverse-background" : "auto",
           className: isBackgroundEvent ? "custom-bg-event" : "",
           isBackgroundEvent,
-          startDate: startDateTime, // Save in UTC
-          startDay: startDateTime.toLocaleDateString("en-US", {
+          startDate: startDateUTC, // Save in UTC
+          startDay: startDateUTC.toLocaleDateString("en-US", {
             weekday: "long",
             timeZone: "UTC",
           }),
-          endDate: endDateTime, // Save in UTC
-          endDay: endDateTime.toLocaleDateString("en-US", {
+          endDate: endDateUTC, // Save in UTC
+          endDay: endDateUTC.toLocaleDateString("en-US", {
             weekday: "long",
             timeZone: "UTC",
           }),
@@ -727,7 +733,7 @@ export default function Calendar() {
           timeZone: "UTC",
         });
 
-        //Adjust the end day
+        // Adjust the end day
         const endDay = endDateTime.toLocaleDateString("en-US", {
           weekday: "long",
           timeZone: "UTC",
@@ -871,7 +877,8 @@ export default function Calendar() {
           <div className="overflow-hidden">
             <div className="calendar-container overflow-y-scroll h-[600px]">
               <FullCalendar
-                timeZone="UTC"
+                timeZone="local"
+                nowIndicator={true}
                 key={calendarKey}
                 // eventColor="#000"
                 ref={calendarRef}
@@ -925,7 +932,7 @@ export default function Calendar() {
                   if (event.recurrence) {
                     return {
                       ...event,
-                      // title: event.title,
+                      title: event.title,
                       type: event.type,
                       typeId: event.typeId,
                       location: event.location,
@@ -952,7 +959,7 @@ export default function Calendar() {
                   } else {
                     return {
                       ...event,
-                      // title: event.title,
+                      title: event.title,
                       type: event.type,
                       typeId: event.typeId,
                       display: event.isBackgroundEvent
