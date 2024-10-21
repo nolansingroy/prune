@@ -104,15 +104,23 @@ export default function Calendar() {
     }
 
     if (monthViw) {
-      // create a variable that formats the start time in this format : 10:00 AM
-      const startTime = new Date(eventInfo.event.startStr).toLocaleTimeString(
+      const defaultStartTimeUTC = new Date(eventInfo.event.startStr);
+      const timezoneOffsetHours = -(new Date().getTimezoneOffset() / 60);
+      const defaultStartTimeLocal = new Date(defaultStartTimeUTC);
+      defaultStartTimeLocal.setHours(
+        defaultStartTimeUTC.getHours() - timezoneOffsetHours
+      );
+      // Convert times to string format using local time (e.g., "10:00" in local time)
+      const formattedStartTime = defaultStartTimeLocal.toLocaleTimeString(
         "en-US",
         {
-          hour: "numeric",
+          hour: "2-digit",
           minute: "2-digit",
           hour12: true,
         }
       );
+
+      console.log("startTime", formattedStartTime);
       // return a row with a smale circle which has a color of the type of the event and next to it the start time of the event and next to it the client name
       return (
         <div className="flex gap-1 items-center w-full overflow-hidden">
@@ -121,7 +129,7 @@ export default function Calendar() {
             style={{ backgroundColor: backgroundColor }}
           ></div>
           <div className="flex items-center truncate w-full">
-            <span className="text-xs">{startTime}</span>
+            <span className="text-xs">{formattedStartTime}</span>
             <span className="text-xs truncate ml-2">{clientName}</span>
           </div>
         </div>
