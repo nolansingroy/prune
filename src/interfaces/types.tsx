@@ -1,4 +1,5 @@
 export interface EventInput {
+  color?: any;
   id?: string;
   title: string;
   type: string;
