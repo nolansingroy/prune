@@ -160,7 +160,7 @@ export default function Calendar() {
                     content: `
                       <div class="tippy-content">
                         <p class="${paid ? "paid-status" : "unpaid-status"}">
-                          <strong>Paid:</strong> ${paid ? "Yes" : "No"}
+                          <strong>${paid ? "Paid" : "Unpaid"}</strong>
                         </p>
                         <p><strong>Notes:</strong> ${description}</p>
                       </div>
