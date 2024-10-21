@@ -360,12 +360,45 @@ export default function CreateBookings() {
               startDay: updatedDay,
               start: updatedTime,
             };
+
+            // Update end fields if startDate is changed
+            const endTime = new Date(currentEvent.end);
+            endTime.setUTCFullYear(
+              utcDate.getUTCFullYear(),
+              utcDate.getUTCMonth(),
+              utcDate.getUTCDate()
+            );
+
+            const endDay = endTime.toLocaleDateString("en-US", {
+              weekday: "long",
+              timeZone: "UTC",
+            });
+
+            updates.end = endTime;
+            updates.endDate = endTime;
+            updates.endDay = endDay;
           } else if (field === "endDate") {
             updates = {
               endDate: updatedTime,
               endDay: updatedDay,
               end: updatedTime,
             };
+            // Update start fields if endDate is changed
+            const startTime = new Date(currentEvent.start);
+            startTime.setUTCFullYear(
+              utcDate.getUTCFullYear(),
+              utcDate.getUTCMonth(),
+              utcDate.getUTCDate()
+            );
+
+            const startDay = startTime.toLocaleDateString("en-US", {
+              weekday: "long",
+              timeZone: "UTC",
+            });
+
+            updates.start = startTime;
+            updates.startDate = startTime;
+            updates.startDay = startDay;
           }
         }
       } else if (field === "description") {
@@ -437,6 +470,29 @@ export default function CreateBookings() {
         return new Date(dateTime.getTime() - timezoneOffset * 60 * 1000); // Adjust to UTC
       };
 
+      // Parse the start and end times
+      let startDateTime = new Date(`${startDate}T${eventData.startTime}`);
+      let endDateTime = new Date(`${startDate}T${eventData.endTime}`);
+
+      // Ensure the end time is after the start time
+      if (endDateTime <= startDateTime) {
+        endDateTime.setDate(endDateTime.getDate() + 1);
+      }
+
+      // Adjust the start and end times to UTC
+      startDateTime = adjustToUTC(startDateTime);
+      endDateTime = adjustToUTC(endDateTime);
+
+      // Calculate related fields
+      const startDay = startDateTime.toLocaleDateString("en-US", {
+        weekday: "long",
+        timeZone: "UTC",
+      });
+      const endDay = endDateTime.toLocaleDateString("en-US", {
+        weekday: "long",
+        timeZone: "UTC",
+      });
+
       // Check if the event is recurring or a single event
       if (
         !eventData.recurrence ||
@@ -445,17 +501,17 @@ export default function CreateBookings() {
         // Client-side single event creation
         console.log("storing using client side single event creation");
         // Parse the start and end times
-        let startDateTime = new Date(`${startDate}T${eventData.startTime}`);
-        let endDateTime = new Date(`${startDate}T${eventData.endTime}`);
+        // let startDateTime = new Date(`${startDate}T${eventData.startTime}`);
+        // let endDateTime = new Date(`${startDate}T${eventData.endTime}`);
 
-        // Ensure the end time is after the start time
-        if (endDateTime <= startDateTime) {
-          endDateTime.setDate(endDateTime.getDate() + 1);
-        }
+        // // Ensure the end time is after the start time
+        // if (endDateTime <= startDateTime) {
+        //   endDateTime.setDate(endDateTime.getDate() + 1);
+        // }
 
-        // Adjust the start and end times to UTC
-        startDateTime = adjustToUTC(startDateTime);
-        endDateTime = adjustToUTC(endDateTime);
+        // // Adjust the start and end times to UTC
+        // startDateTime = adjustToUTC(startDateTime);
+        // endDateTime = adjustToUTC(endDateTime);
 
         // Create a new event object
         const eventInput = {
@@ -470,6 +526,10 @@ export default function CreateBookings() {
 
           start: startDateTime, // Save in UTC
           end: endDateTime, // Save in UTC
+          startDate: startDateTime,
+          startDay: startDay,
+          endDate: endDateTime,
+          endDay: endDay,
           paid: eventData.paid,
           created_at: new Date(), // Timestamp of creation
           updated_at: new Date(), // Timestamp of last update
@@ -664,7 +724,7 @@ export default function CreateBookings() {
       // Remove any undefined fields from the cloned event (like exceptions)
       const { id, ...clonedEventData } = {
         ...event,
-        description: `${event.type} (Clone)`, // Optional: Append "Clone" to the title
+        description: `${event.type} (Clone)`, // Optional: Append "Clone" to the description
         created_at: new Date(), // Update creation timestamp
       };
 
@@ -676,6 +736,9 @@ export default function CreateBookings() {
       // Save the cloned event to Firestore without the id field
       const eventRef = doc(collection(db, "users", user.uid, "events"));
       await setDoc(eventRef, sanitizedEventData);
+
+      // Update the event with the ID
+      await updateDoc(eventRef, { id: eventRef.id });
 
       // Update local state
       setEvents((prevEvents: EventInput[]) => [
@@ -780,7 +843,34 @@ export default function CreateBookings() {
                   />
                 </TableCell>
 
-                <TableCell>{event.startDate.toLocaleDateString()}</TableCell>
+                {/* <TableCell>{event.startDate.toLocaleDateString()}</TableCell> */}
+
+                {/* Display the date and make it editable */}
+                <TableCell>
+                  {editingCell?.id === event.id &&
+                  editingCell?.field === "startDate" ? (
+                    <input
+                      type="date"
+                      value={editedValue}
+                      onChange={handleInputChange}
+                      onBlur={handleBlur}
+                      autoFocus
+                    />
+                  ) : (
+                    <div
+                      onClick={() =>
+                        handleCellClick(
+                          event.id!,
+                          "startDate",
+                          event.startDate.toISOString().split("T")[0],
+                          !!event.recurrence
+                        )
+                      }
+                    >
+                      {event.startDate.toLocaleDateString()}
+                    </div>
+                  )}
+                </TableCell>
                 <TableCell>{event.startDay}</TableCell>
 
                 <TableCell>

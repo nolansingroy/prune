@@ -137,7 +137,9 @@ export default function Calendar() {
                 }
               }}
             >
-              {clientName || "No name"}
+              <span className="text-wrap truncate">
+                {clientName || "No name"}
+              </span>
             </span>
           </div>
         )}
