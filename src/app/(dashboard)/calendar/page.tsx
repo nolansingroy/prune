@@ -95,13 +95,13 @@ export default function Calendar() {
     const classNames = eventInfo.event.classNames || [];
     const view = eventInfo.view.type;
 
-    if (classNames.includes("bg-event-mirror")) {
-      return (
-        <div className="bg-blue-200 opacity-50 text-black p-1 rounded text-center border border-blue-500">
-          {eventInfo.event.title}
-        </div>
-      );
-    }
+    // if (classNames.includes("bg-event-mirror")) {
+    //   return (
+    //     <div className="bg-blue-200 opacity-50 text-black p-1 rounded text-center border border-blue-500">
+    //       {eventInfo.event.title}
+    //     </div>
+    //   );
+    // }
 
     if (monthViw) {
       const defaultStartTimeUTC = new Date(eventInfo.event.startStr);
@@ -173,7 +173,7 @@ export default function Calendar() {
                 }
               }}
             >
-              <span className="text-wrap truncate">
+              <span className="flex items-center truncate w-full">
                 {clientName || "No name"}
               </span>
             </span>
@@ -845,51 +845,6 @@ export default function Calendar() {
     }
   };
 
-  // const handleEdit = async (eventData: {
-  //   id?: string;
-  //   type: string;
-  //   typeId: string;
-  //   fee: number;
-  //   clientId: string;
-  //   clientName: string;
-  //   description: string;
-  //   location: string;
-  //   isBackgroundEvent: boolean;
-  //   date?: string;
-  //   startTime: string;
-  //   endTime: string;
-  //   paid: boolean;
-  //   recurrence?: {
-  //     daysOfWeek: number[];
-  //     startRecur: string; // YYYY-MM-DD
-  //     endRecur: string; // YYYY-MM-DD
-  //   };
-  // }) => {
-  //   const user = auth.currentUser;
-  //   const userId = user?.uid;
-  //   if (!user) {
-  //     throw new Error("User not authenticated");
-  //   }
-  //   console.log("updating information triggered");
-
-  //   try {
-  //     setLoading(true); // Start loading
-  //     console.log("Event Data:", eventData);
-  //     console.log("User ID:", userId);
-
-  //     await handleUpdatEventFormDialog(eventData, userId!);
-  //     console.log("Event updated successfully");
-  //   } catch (error) {
-  //     console.error("Error saving event:", error);
-  //   } finally {
-  //     await fetchEvents();
-  //     setLoading(false); // Stop loading
-  //     setSelectInfo(null);
-  //     setEditingEvent(null);
-  //     setEditAll(false);
-  //   }
-  // };
-
   return (
     <div className="p-4">
       <Tabs
@@ -986,6 +941,7 @@ export default function Calendar() {
                       display: "inverse-background",
                       groupId: event.isBackgroundEvent ? "1234" : event.id,
                       uniqueId: `${event.id}-${index}`,
+                      color: event.isBackgroundEvent ? "#c5c5c5" : event.color,
                     };
                   } else {
                     return {
@@ -996,6 +952,7 @@ export default function Calendar() {
                       display: event.isBackgroundEvent
                         ? "inverse-background"
                         : "auto",
+                      color: event.isBackgroundEvent ? "#c5c5c5" : event.color,
                       groupId: event.isBackgroundEvent ? "1234" : event.id,
                       uniqueId: `${event.id}-${index}`,
                     };
