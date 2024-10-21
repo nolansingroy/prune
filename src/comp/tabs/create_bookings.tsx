@@ -664,7 +664,7 @@ export default function CreateBookings() {
       // Remove any undefined fields from the cloned event (like exceptions)
       const { id, ...clonedEventData } = {
         ...event,
-        description: `${event.type} (Clone)`, // Optional: Append "Clone" to the title
+        description: `${event.type} (Clone)`, // Optional: Append "Clone" to the description
         created_at: new Date(), // Update creation timestamp
       };
 
@@ -676,6 +676,9 @@ export default function CreateBookings() {
       // Save the cloned event to Firestore without the id field
       const eventRef = doc(collection(db, "users", user.uid, "events"));
       await setDoc(eventRef, sanitizedEventData);
+
+      // Update the event with the ID
+      await updateDoc(eventRef, { id: eventRef.id });
 
       // Update local state
       setEvents((prevEvents: EventInput[]) => [
