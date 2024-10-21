@@ -148,7 +148,6 @@ export default function Calendar() {
             </span>
           </div>
         )}
-        {isBackgroundEvent && <div className="bg-red w-5 h-4">Hello</div>}
       </>
     );
   };
