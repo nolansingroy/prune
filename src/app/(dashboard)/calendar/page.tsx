@@ -86,8 +86,11 @@ export default function Calendar() {
     const { isBackgroundEvent, clientName, title, description, paid, type } =
       eventInfo.event.extendedProps;
 
-    const eventInformation = eventInfo.event.extendedProps;
-    // console.log("eventInformation", eventInformation);
+    // console.log("for month view props", eventInfo);
+
+    const backgroundColor = eventInfo.backgroundColor;
+
+    const monthViw = eventInfo.view.type.includes("dayGridMonth");
 
     const classNames = eventInfo.event.classNames || [];
     const view = eventInfo.view.type;
@@ -96,6 +99,31 @@ export default function Calendar() {
       return (
         <div className="bg-blue-200 opacity-50 text-black p-1 rounded text-center border border-blue-500">
           {eventInfo.event.title}
+        </div>
+      );
+    }
+
+    if (monthViw) {
+      // create a variable that formats the start time in this format : 10:00 AM
+      const startTime = new Date(eventInfo.event.startStr).toLocaleTimeString(
+        "en-US",
+        {
+          hour: "numeric",
+          minute: "2-digit",
+          hour12: true,
+        }
+      );
+      // return a row with a smale circle which has a color of the type of the event and next to it the start time of the event and next to it the client name
+      return (
+        <div className="flex gap-1 items-center w-full overflow-hidden">
+          <div
+            className="w-2 h-2 rounded-full flex-shrink-0"
+            style={{ backgroundColor: backgroundColor }}
+          ></div>
+          <div className="flex items-center truncate w-full">
+            <span className="text-xs">{startTime}</span>
+            <span className="text-xs truncate ml-2">{clientName}</span>
+          </div>
         </div>
       );
     }
@@ -921,6 +949,8 @@ export default function Calendar() {
                 eventResize={handleEventResize} // Called when resizing an event
                 eventDidMount={handleEventDidMount} // Called after an event is rendered
                 eventDrop={handleEventDrop}
+                // moreLinkClick={(arg) => {
+                // }}
                 events={events.map((event, index) => {
                   if (event.recurrence) {
                     return {
@@ -967,6 +997,8 @@ export default function Calendar() {
                 scrollTime="07:00:00" // Automatically scrolls to 7:00 AM on load
                 views={{
                   dayGridMonth: {
+                    // eventMaxStack: 3,
+                    dayMaxEventRows: 4,
                     // nowIndicator: true
                   },
                   timeGridWeek: {
