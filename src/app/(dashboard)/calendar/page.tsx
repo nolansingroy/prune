@@ -915,47 +915,116 @@ export default function Calendar() {
                 // moreLinkClick={(arg) => {
                 // }}
                 events={events.map((event, index) => {
+                  const start = new Date(event.start);
+                  const end = new Date(event.end);
+                  const durationMs = end.getTime() - start.getTime();
+                  const durationHours = Math.floor(
+                    durationMs / (1000 * 60 * 60)
+                  );
+                  const durationMinutes = Math.floor(
+                    (durationMs % (1000 * 60 * 60)) / (1000 * 60)
+                  );
+                  const formattedDuration = `${String(durationHours).padStart(
+                    2,
+                    "0"
+                  )}:${String(durationMinutes).padStart(2, "0")}`;
+
                   if (event.recurrence) {
-                    return {
-                      ...event,
-                      // title: event.title,
-                      type: event.type,
-                      typeId: event.typeId,
-                      location: event.location,
-                      rrule: {
-                        freq: "weekly",
-                        interval: 1,
-                        byweekday: event.recurrence.daysOfWeek
-                          ? event.recurrence.daysOfWeek.map(
-                              (day) =>
-                                ["SU", "MO", "TU", "WE", "TH", "FR", "SA"][day]
-                            )
-                          : undefined,
-                        dtstart: new Date(event.start).toISOString(),
-                        until: event.recurrence.endRecur
-                          ? new Date(event.recurrence.endRecur).toISOString()
-                          : undefined,
-                      },
-                      startTime: event.recurrence.startTime,
-                      endTime: event.recurrence.endTime,
-                      display: "inverse-background",
-                      groupId: event.isBackgroundEvent ? "1234" : event.id,
-                      uniqueId: `${event.id}-${index}`,
-                      color: event.isBackgroundEvent ? "#c5c5c5" : event.color,
-                    };
+                    if (event.isBackgroundEvent) {
+                      return {
+                        ...event,
+                        // title: event.title,
+                        type: event.type,
+                        typeId: event.typeId,
+                        location: event.location,
+                        rrule: {
+                          freq: "weekly",
+                          interval: 1,
+                          byweekday: event.recurrence.daysOfWeek
+                            ? event.recurrence.daysOfWeek.map(
+                                (day) =>
+                                  ["SU", "MO", "TU", "WE", "TH", "FR", "SA"][
+                                    day
+                                  ]
+                              )
+                            : undefined,
+                          dtstart: new Date(event.start).toISOString(),
+                          until: event.recurrence.endRecur
+                            ? new Date(event.recurrence.endRecur).toISOString()
+                            : undefined,
+                        },
+                        startTime: event.recurrence.startTime,
+                        endTime: event.recurrence.endTime,
+                        display: "inverse-background",
+                        groupId: "1234",
+                        uniqueId: `${event.id}-${index}`,
+                        color: event.isBackgroundEvent
+                          ? "#c5c5c5"
+                          : event.color,
+                        duration: formattedDuration,
+                      };
+                    } else {
+                      return {
+                        ...event,
+                        // title: event.title,
+                        type: event.type,
+                        typeId: event.typeId,
+                        location: event.location,
+                        rrule: {
+                          freq: "weekly",
+                          interval: 1,
+                          byweekday: event.recurrence.daysOfWeek
+                            ? event.recurrence.daysOfWeek.map(
+                                (day) =>
+                                  ["SU", "MO", "TU", "WE", "TH", "FR", "SA"][
+                                    day
+                                  ]
+                              )
+                            : undefined,
+                          dtstart: new Date(event.start).toISOString(),
+                          until: event.recurrence.endRecur
+                            ? new Date(event.recurrence.endRecur).toISOString()
+                            : undefined,
+                        },
+                        startTime: event.recurrence.startTime,
+                        endTime: event.recurrence.endTime,
+                        display: "auto",
+                        groupId: event.id,
+                        uniqueId: `${event.id}-${index}`,
+                        color: event.isBackgroundEvent
+                          ? "#c5c5c5"
+                          : event.color,
+                        duration: formattedDuration,
+                      };
+                    }
                   } else {
-                    return {
-                      ...event,
-                      // title: event.title,
-                      type: event.type,
-                      typeId: event.typeId,
-                      display: event.isBackgroundEvent
-                        ? "inverse-background"
-                        : "auto",
-                      color: event.isBackgroundEvent ? "#c5c5c5" : event.color,
-                      groupId: event.isBackgroundEvent ? "1234" : event.id,
-                      uniqueId: `${event.id}-${index}`,
-                    };
+                    if (event.isBackgroundEvent) {
+                      return {
+                        ...event,
+                        // title: event.title,
+                        type: event.type,
+                        typeId: event.typeId,
+                        location: event.location,
+                        display: "inverse-background",
+                        groupId: "1234",
+                        uniqueId: `${event.id}-${index}`,
+                        color: event.isBackgroundEvent
+                          ? "#c5c5c5"
+                          : event.color,
+                      };
+                    } else {
+                      return {
+                        ...event,
+                        // title: event.title,
+                        type: event.type,
+                        typeId: event.typeId,
+                        location: event.location,
+                        display: "auto",
+                        groupId: event.id,
+                        uniqueId: `${event.id}-${index}`,
+                        color: event.color,
+                      };
+                    }
                   }
                 })}
                 eventContent={renderEventContent}
