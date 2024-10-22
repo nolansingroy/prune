@@ -525,37 +525,73 @@ export default function Calendar() {
         const endRecur = new Date(recurrence.endRecur || startDate);
         endRecur.setDate(endRecur.getDate() + 1);
 
+        //check if its a background event before making the axios call
+
         // Prepare the event input for the cloud function
-        const eventInput = {
-          title,
-          type,
-          typeId,
-          clientId,
-          clientName,
-          description,
-          fee,
-          location: location || "",
-          startDate,
-          startTime,
-          endTime,
-          paid,
-          recurrence: {
-            daysOfWeek: recurrence.daysOfWeek,
-            startRecur: recurrence.startRecur || startDate,
-            endRecur: endRecur.toISOString().split("T")[0],
-          },
-          userId: user.uid,
-        };
 
-        console.log("event data ready for cloud function", eventInput);
+        if (isBackgroundEvent) {
+          const eventInput = {
+            title,
+            description,
+            location: location || "",
+            startDate,
+            startTime,
+            endTime,
+            recurrence: {
+              daysOfWeek: recurrence.daysOfWeek,
+              startRecur: recurrence.startRecur || startDate,
+              endRecur: endRecur.toISOString().split("T")[0],
+            },
+            userId: user.uid,
+          };
 
-        // Make the axios call to your cloud function
-        const result = await axios.post(
-          "https://us-central1-prune-94ad9.cloudfunctions.net/createRecurringAvailabilityInstances",
-          eventInput
-        );
+          console.log(
+            "event data ready for cloud function for background event",
+            eventInput
+          );
+          // Make the axios call to your cloud function
+          const result = await axios.post(
+            "https://us-central1-prune-94ad9.cloudfunctions.net/createRecurringAvailabilityInstances",
+            eventInput
+          );
 
-        console.log("Recurring event instances created:", result.data);
+          console.log("Recurring event instances created:", result.data);
+        } else {
+          const eventInput = {
+            title,
+            type,
+            typeId,
+            clientId,
+            clientName,
+            description,
+            fee,
+            location: location || "",
+            startDate,
+            startTime,
+            endTime,
+            paid,
+            recurrence: {
+              daysOfWeek: recurrence.daysOfWeek,
+              startRecur: recurrence.startRecur || startDate,
+              endRecur: endRecur.toISOString().split("T")[0],
+            },
+            userId: user.uid,
+          };
+
+          console.log(
+            "event data ready for cloud function for recurring bookings",
+            eventInput
+          );
+
+          // Make the axios call to your cloud function
+          // "https://us-central1-prune-94ad9.cloudfunctions.net/createRecurringBookingInstances",
+          const result = await axios.post(
+            "http://127.0.0.1:5001/prune-94ad9/us-central1/createRecurringBookingInstances",
+            eventInput
+          );
+
+          console.log("Recurring event instances created:", result.data);
+        }
       } else {
         // Handle single or background event directly on the client side
         // Parse the start and end times
@@ -645,38 +681,38 @@ export default function Calendar() {
   if (eventsLoading) {
     return <div>Loading...</div>;
   }
-  // test build
-  const checkOverlap = (
-    event: {
-      extendedProps: { isBackgroundEvent: any };
-      start: { getTime: () => any };
-      end: { getTime: () => any };
-      id: any;
-    },
-    allEvents: any[]
-  ) => {
-    const isBackgroundEvent = event.extendedProps.isBackgroundEvent;
-    if (isBackgroundEvent) return false;
+  // // test build
+  // const checkOverlap = (
+  //   event: {
+  //     extendedProps: { isBackgroundEvent: any };
+  //     start: { getTime: () => any };
+  //     end: { getTime: () => any };
+  //     id: any;
+  //   },
+  //   allEvents: any[]
+  // ) => {
+  //   const isBackgroundEvent = event.extendedProps.isBackgroundEvent;
+  //   if (isBackgroundEvent) return false;
 
-    const eventStart = event.start.getTime();
-    // const eventEnd = event.end.getTime();
-    const eventEnd = event.end ? event.end.getTime() : eventStart;
+  //   const eventStart = event.start.getTime();
+  //   // const eventEnd = event.end.getTime();
+  //   const eventEnd = event.end ? event.end.getTime() : eventStart;
 
-    return allEvents.some((e) => {
-      if (e.id !== event.id && e.extendedProps.isBackgroundEvent) {
-        const bgStart = e.start.getTime();
-        // const bgEnd = e.end.getTime();
-        const bgEnd = e.end ? e.end.getTime() : bgStart;
+  //   return allEvents.some((e) => {
+  //     if (e.id !== event.id && e.extendedProps.isBackgroundEvent) {
+  //       const bgStart = e.start.getTime();
+  //       // const bgEnd = e.end.getTime();
+  //       const bgEnd = e.end ? e.end.getTime() : bgStart;
 
-        return (
-          (eventStart >= bgStart && eventStart < bgEnd) ||
-          (eventEnd > bgStart && eventEnd <= bgEnd) ||
-          (eventStart <= bgStart && eventEnd >= bgEnd)
-        );
-      }
-      return false;
-    });
-  };
+  //       return (
+  //         (eventStart >= bgStart && eventStart < bgEnd) ||
+  //         (eventEnd > bgStart && eventEnd <= bgEnd) ||
+  //         (eventStart <= bgStart && eventEnd >= bgEnd)
+  //       );
+  //     }
+  //     return false;
+  //   });
+  // };
 
   const handleEventDidMount = (info: {
     view: { calendar: any };
@@ -687,9 +723,9 @@ export default function Calendar() {
     const allEvents = calendarApi.getEvents();
 
     // Check for overlap with background events
-    if (checkOverlap(info.event, allEvents)) {
-      info.el.classList.add("overlap-event");
-    }
+    // if (checkOverlap(info.event, allEvents)) {
+    //   info.el.classList.add("overlap-event");
+    // }
 
     // add a popOver to the event here
   };
@@ -915,47 +951,116 @@ export default function Calendar() {
                 // moreLinkClick={(arg) => {
                 // }}
                 events={events.map((event, index) => {
+                  const start = new Date(event.start);
+                  const end = new Date(event.end);
+                  const durationMs = end.getTime() - start.getTime();
+                  const durationHours = Math.floor(
+                    durationMs / (1000 * 60 * 60)
+                  );
+                  const durationMinutes = Math.floor(
+                    (durationMs % (1000 * 60 * 60)) / (1000 * 60)
+                  );
+                  const formattedDuration = `${String(durationHours).padStart(
+                    2,
+                    "0"
+                  )}:${String(durationMinutes).padStart(2, "0")}`;
+
                   if (event.recurrence) {
-                    return {
-                      ...event,
-                      // title: event.title,
-                      type: event.type,
-                      typeId: event.typeId,
-                      location: event.location,
-                      rrule: {
-                        freq: "weekly",
-                        interval: 1,
-                        byweekday: event.recurrence.daysOfWeek
-                          ? event.recurrence.daysOfWeek.map(
-                              (day) =>
-                                ["SU", "MO", "TU", "WE", "TH", "FR", "SA"][day]
-                            )
-                          : undefined,
-                        dtstart: new Date(event.start).toISOString(),
-                        until: event.recurrence.endRecur
-                          ? new Date(event.recurrence.endRecur).toISOString()
-                          : undefined,
-                      },
-                      startTime: event.recurrence.startTime,
-                      endTime: event.recurrence.endTime,
-                      display: "inverse-background",
-                      groupId: event.isBackgroundEvent ? "1234" : event.id,
-                      uniqueId: `${event.id}-${index}`,
-                      color: event.isBackgroundEvent ? "#c5c5c5" : event.color,
-                    };
+                    if (event.isBackgroundEvent) {
+                      return {
+                        ...event,
+                        // title: event.title,
+                        type: event.type,
+                        typeId: event.typeId,
+                        location: event.location,
+                        rrule: {
+                          freq: "weekly",
+                          interval: 1,
+                          byweekday: event.recurrence.daysOfWeek
+                            ? event.recurrence.daysOfWeek.map(
+                                (day) =>
+                                  ["SU", "MO", "TU", "WE", "TH", "FR", "SA"][
+                                    day
+                                  ]
+                              )
+                            : undefined,
+                          dtstart: new Date(event.start).toISOString(),
+                          until: event.recurrence.endRecur
+                            ? new Date(event.recurrence.endRecur).toISOString()
+                            : undefined,
+                        },
+                        startTime: event.recurrence.startTime,
+                        endTime: event.recurrence.endTime,
+                        display: "inverse-background",
+                        groupId: "1234",
+                        uniqueId: `${event.id}-${index}`,
+                        color: event.isBackgroundEvent
+                          ? "#c5c5c5"
+                          : event.color,
+                        duration: formattedDuration,
+                      };
+                    } else {
+                      return {
+                        ...event,
+                        // title: event.title,
+                        type: event.type,
+                        typeId: event.typeId,
+                        location: event.location,
+                        rrule: {
+                          freq: "weekly",
+                          interval: 1,
+                          byweekday: event.recurrence.daysOfWeek
+                            ? event.recurrence.daysOfWeek.map(
+                                (day) =>
+                                  ["SU", "MO", "TU", "WE", "TH", "FR", "SA"][
+                                    day
+                                  ]
+                              )
+                            : undefined,
+                          dtstart: new Date(event.start).toISOString(),
+                          until: event.recurrence.endRecur
+                            ? new Date(event.recurrence.endRecur).toISOString()
+                            : undefined,
+                        },
+                        startTime: event.recurrence.startTime,
+                        endTime: event.recurrence.endTime,
+                        display: "auto",
+                        groupId: event.id,
+                        uniqueId: `${event.id}-${index}`,
+                        color: event.isBackgroundEvent
+                          ? "#c5c5c5"
+                          : event.color,
+                        duration: formattedDuration,
+                      };
+                    }
                   } else {
-                    return {
-                      ...event,
-                      // title: event.title,
-                      type: event.type,
-                      typeId: event.typeId,
-                      display: event.isBackgroundEvent
-                        ? "inverse-background"
-                        : "auto",
-                      color: event.isBackgroundEvent ? "#c5c5c5" : event.color,
-                      groupId: event.isBackgroundEvent ? "1234" : event.id,
-                      uniqueId: `${event.id}-${index}`,
-                    };
+                    if (event.isBackgroundEvent) {
+                      return {
+                        ...event,
+                        // title: event.title,
+                        type: event.type,
+                        typeId: event.typeId,
+                        location: event.location,
+                        display: "inverse-background",
+                        groupId: "1234",
+                        uniqueId: `${event.id}-${index}`,
+                        color: event.isBackgroundEvent
+                          ? "#c5c5c5"
+                          : event.color,
+                      };
+                    } else {
+                      return {
+                        ...event,
+                        // title: event.title,
+                        type: event.type,
+                        typeId: event.typeId,
+                        location: event.location,
+                        display: "auto",
+                        groupId: event.id,
+                        uniqueId: `${event.id}-${index}`,
+                        color: event.color,
+                      };
+                    }
                   }
                 })}
                 eventContent={renderEventContent}
