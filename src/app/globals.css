@@ -129,9 +129,17 @@
 }
 
 .fc-day-today .fc-daygrid-day-number {
-  color: var(--fc-event-bg-color);
-  text-decoration: underline;
-  font-size: 1.2em;
+  /* color: var(--fc-event-bg-color); */
+  /* text-decoration: underline; */
+  font-size: 1em;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 2em;
+  height: 2em;
+  border-radius: 50%;
+  background-color: var(--fc-event-bg-color);
+  color: white;
 }
 
 .fc-col-header-cell.fc-day.fc-day-today {
@@ -163,4 +171,9 @@
 .tippy-content .unpaid-status {
   font-weight: bold; /* Bold text */
   color: #f44336; /* Red color for unpaid status */
+}
+
+/* Solving the issue of Today popover is transparat and showing behind events */
+.fc-popover.fc-more-popover.fc-day.fc-day-today {
+  background-color: #fff !important;
 }
