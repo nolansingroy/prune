@@ -7,6 +7,7 @@ import React, {
   MouseEvent,
   useEffect,
   useCallback,
+  use,
 } from "react";
 import {
   Dialog,
@@ -158,9 +159,18 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
         setDaysOfWeek(event.recurrence.daysOfWeek || []);
         setStartRecur(event.recurrence.startRecur || "");
         setEndRecur(event.recurrence.endRecur || "");
+      } else {
+        setStartRecur(
+          event.startDate ? event.startDate.toISOString().split("T")[0] : ""
+        );
       }
     }
   }, [event]);
+
+  // handle startRecur change when date changes
+  useEffect(() => {
+    setStartRecur(date);
+  }, [date]);
 
   const fetchBookings = useCallback(async () => {
     if (authUser) {
@@ -403,6 +413,17 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
       handleClientSelect(client, ""); // Set the client with the typed name if it's not in the list
     }
     setClientsPopoverOpen(false);
+  };
+
+  // handle the date change
+  const handleDateChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const selectedDate = e.target.value;
+    setDate(selectedDate);
+
+    // If the event is recurring, set the start recurrence date to the selected date
+    if (isRecurring) {
+      setStartRecur(selectedDate);
+    }
   };
 
   return (
@@ -807,6 +828,7 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
                     onChange={(e: ChangeEvent<HTMLInputElement>) =>
                       setStartRecur(e.target.value)
                     }
+                    disabled
                   />
                 </div>
                 <div className="flex flex-col">
@@ -832,9 +854,7 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
               <Input
                 type="date"
                 value={date}
-                onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                  setDate(e.target.value)
-                }
+                onChange={handleDateChange}
                 className="px-2 py-2 text-center rounded-md border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
               />
             </div>

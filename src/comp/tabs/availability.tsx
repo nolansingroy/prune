@@ -931,9 +931,9 @@ export default function Availability() {
                     </DropdownMenuTrigger>
                     <DropdownMenuContent>
                       {/* Clone Option */}
-                      <DropdownMenuItem onClick={() => handleCloneClick(event)}>
+                      {/* <DropdownMenuItem onClick={() => handleCloneClick(event)}>
                         Clone
-                      </DropdownMenuItem>
+                      </DropdownMenuItem> */}
                       {/*  Delete Option */}
                       <DropdownMenuItem
                         onClick={() => handleDeleteClick(event.id!)}

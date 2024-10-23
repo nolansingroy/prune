@@ -77,9 +77,13 @@
   }
 }
 
-.fc-bg-event {
-  @apply bg-fc-bg-event;
-}
+/* .fc-event.fc-event-start.fc-event-end.fc-event-today.fc-event-future.fc-bg-event {
+  background-color: #c5c5c5 !important;  */
+/* } */
+
+/* .fc-bg-event {
+  @apply bg-white;
+} */
 
 /* .fc-month-view .fc-day .fc-event-dot {
   color: var(--fc-event-bg-color);
@@ -177,3 +181,23 @@
 .fc-popover.fc-more-popover.fc-day.fc-day-today {
   background-color: #fff !important;
 }
+
+/*greying out only the weekview days*/
+/* .fc-timeGridWeek-view .fc-timegrid-col {
+  background-color: #e9e9e9 !important;
+} */
+
+/*whitening the axis of the weekview*/
+/* .fc-timeGridWeek-view .fc-timegrid-col.fc-timegrid-axis {
+  background-color: #fff !important;
+} */
+
+/*greying the axis of the dayview*/
+/* .fc-timeGridDay-view .fc-timegrid-col {
+  background-color: #e9e9e9 !important;
+} */
+
+/*whitening the axis of the dayview*/
+/* .fc-timeGridDay-view .fc-timegrid-col.fc-timegrid-axis {
+  background-color: #fff !important;
+} */
