@@ -95,10 +95,24 @@ export default function Calendar() {
     const classNames = eventInfo.event.classNames || [];
     const view = eventInfo.view.type;
 
+    // console.log("==================================", eventInfo);
+
+    // i want to remove fc-bg-event from the background events
+    if (isBackgroundEvent) {
+    }
+
+    if (classNames.includes("bg-event-mirror")) {
+      return (
+        <div className="bg-blue-200 opacity-50 text-black p-1 rounded text-center border">
+          {eventInfo.event.title}
+        </div>
+      );
+    }
+
     // if (classNames.includes("bg-event-mirror")) {
     //   return (
-    //     <div className="bg-blue-200 opacity-50 text-black p-1 rounded text-center border border-blue-500">
-    //       {eventInfo.event.title}
+    //     <div className="bg-black opacity-50 text-black p-1 rounded text-center h-max w-max">
+    //       {description}
     //     </div>
     //   );
     // }
@@ -591,7 +605,7 @@ export default function Calendar() {
           start: startDateTime, // Save in UTC
           end: endDateTime, // Save in UTC
           description,
-          display: isBackgroundEvent ? "inverse-background" : "auto",
+          display: isBackgroundEvent ? "background" : "auto",
           className: isBackgroundEvent ? "custom-bg-event" : "",
           isBackgroundEvent,
           startDate: startDateTime, // Save in UTC
@@ -933,40 +947,39 @@ export default function Calendar() {
                     if (event.isBackgroundEvent) {
                       return {
                         ...event,
-                        // title: event.title,
+                        title: event.title,
                         type: event.type,
                         typeId: event.typeId,
                         location: event.location,
-                        rrule: {
-                          freq: "weekly",
-                          interval: 1,
-                          byweekday: event.recurrence.daysOfWeek
-                            ? event.recurrence.daysOfWeek.map(
-                                (day) =>
-                                  ["SU", "MO", "TU", "WE", "TH", "FR", "SA"][
-                                    day
-                                  ]
-                              )
-                            : undefined,
-                          dtstart: new Date(event.start).toISOString(),
-                          until: event.recurrence.endRecur
-                            ? new Date(event.recurrence.endRecur).toISOString()
-                            : undefined,
-                        },
+                        // rrule: {
+                        //   freq: "weekly",
+                        //   interval: 1,
+                        //   byweekday: event.recurrence.daysOfWeek
+                        //     ? event.recurrence.daysOfWeek.map(
+                        //         (day) =>
+                        //           ["SU", "MO", "TU", "WE", "TH", "FR", "SA"][
+                        //             day
+                        //           ]
+                        //       )
+                        //     : undefined,
+                        //   dtstart: new Date(event.start).toISOString(),
+                        //   until: event.recurrence.endRecur
+                        //     ? new Date(event.recurrence.endRecur).toISOString()
+                        //     : undefined,
+                        // },
                         startTime: event.recurrence.startTime,
                         endTime: event.recurrence.endTime,
                         display: "inverse-background",
-                        groupId: "1234",
+                        groupId: `1234`,
                         uniqueId: `${event.id}-${index}`,
-                        color: event.isBackgroundEvent
-                          ? "#c5c5c5"
-                          : event.color,
+                        color: "#C5C5C5",
                         duration: formattedDuration,
+                        // className: "bg-event-mirror",
                       };
                     } else {
                       return {
                         ...event,
-                        // title: event.title,
+                        title: event.title,
                         type: event.type,
                         typeId: event.typeId,
                         location: event.location,
@@ -989,11 +1002,9 @@ export default function Calendar() {
                         startTime: event.recurrence.startTime,
                         endTime: event.recurrence.endTime,
                         display: "auto",
-                        groupId: event.id,
+                        // groupId: event.id,
                         uniqueId: `${event.id}-${index}`,
-                        color: event.isBackgroundEvent
-                          ? "#c5c5c5"
-                          : event.color,
+                        color: event.color,
                         duration: formattedDuration,
                       };
                     }
@@ -1001,26 +1012,25 @@ export default function Calendar() {
                     if (event.isBackgroundEvent) {
                       return {
                         ...event,
-                        // title: event.title,
+                        title: event.title,
                         type: event.type,
                         typeId: event.typeId,
                         location: event.location,
                         display: "inverse-background",
-                        groupId: "1234",
+                        groupId: `1234`,
                         uniqueId: `${event.id}-${index}`,
-                        color: event.isBackgroundEvent
-                          ? "#c5c5c5"
-                          : event.color,
+                        color: "#C5C5C5",
+                        // className: "bg-event-mirror",
                       };
                     } else {
                       return {
                         ...event,
-                        // title: event.title,
+                        title: event.title,
                         type: event.type,
                         typeId: event.typeId,
                         location: event.location,
                         display: "auto",
-                        groupId: event.id,
+                        // groupId: event.id,
                         uniqueId: `${event.id}-${index}`,
                         color: event.color,
                       };
