@@ -1019,22 +1019,22 @@ export default function Calendar() {
                         type: event.type,
                         typeId: event.typeId,
                         location: event.location,
-                        rrule: {
-                          freq: "weekly",
-                          interval: 1,
-                          byweekday: event.recurrence.daysOfWeek
-                            ? event.recurrence.daysOfWeek.map(
-                                (day) =>
-                                  ["SU", "MO", "TU", "WE", "TH", "FR", "SA"][
-                                    day
-                                  ]
-                              )
-                            : undefined,
-                          dtstart: new Date(event.start).toISOString(),
-                          until: event.recurrence.endRecur
-                            ? new Date(event.recurrence.endRecur).toISOString()
-                            : undefined,
-                        },
+                        // rrule: {
+                        //   freq: "weekly",
+                        //   interval: 1,
+                        //   byweekday: event.recurrence.daysOfWeek
+                        //     ? event.recurrence.daysOfWeek.map(
+                        //         (day) =>
+                        //           ["SU", "MO", "TU", "WE", "TH", "FR", "SA"][
+                        //             day
+                        //           ]
+                        //       )
+                        //     : undefined,
+                        //   dtstart: new Date(event.start).toISOString(),
+                        //   until: event.recurrence.endRecur
+                        //     ? new Date(event.recurrence.endRecur).toISOString()
+                        //     : undefined,
+                        // },
                         startTime: event.recurrence.startTime,
                         endTime: event.recurrence.endTime,
                         display: "auto",
