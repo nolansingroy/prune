@@ -1,16 +1,14 @@
 import * as functions from "firebase-functions";
 import * as admin from "firebase-admin";
-import {FieldValue} from "firebase-admin/firestore";
+import { FieldValue } from "firebase-admin/firestore";
 import cors from "cors";
-import {RRule} from "rrule";
+import { RRule, RRuleSet } from "rrule";
 
-// admin.initializeApp();
 const db = admin.firestore();
-// const FieldValue = Firestore.FieldValue;
 
 export const createRecurringBookingInstances = functions.https.onRequest(
   async (req, res) => {
-    cors({origin: true})(req, res, async () => {
+    cors({ origin: true })(req, res, async () => {
       if (req.method === "OPTIONS") {
         res.set("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
         res.set(
@@ -40,6 +38,26 @@ export const createRecurringBookingInstances = functions.https.onRequest(
           userId,
         } = req.body;
 
+
+        console.log("Bookings cloud function triggered");
+
+        console.log("Received request with data:", {
+          title,
+          clientId,
+          clientName,
+          fee,
+          paid,
+          type,
+          typeId,
+          description,
+          location,
+          startDate,
+          startTime,
+          endTime,
+          recurrence,
+          userId,
+        });
+
         const batch = db.batch();
         const eventRef = db
           .collection("users")
@@ -51,23 +69,26 @@ export const createRecurringBookingInstances = functions.https.onRequest(
         const originalStartDate = new Date(`${startDate}T${startTime}Z`);
         const originalEndDate = new Date(`${startDate}T${endTime}Z`);
 
+        console.log("Original start date:", originalStartDate);
+        console.log("Original end date:", originalEndDate);
+
         const daysOfWeek = recurrence.daysOfWeek;
 
         // Check if the recurrence is for every day (contains 0-6)
         const isEveryday =
-          daysOfWeek.length === 7 && daysOfWeek.every((day:
-            number) => day >= 0 && day <= 6);
+          daysOfWeek.length === 7 && daysOfWeek.every((day: number) => day >= 0 && day <= 6);
         console.log("isEveryday:", isEveryday);
 
         // Adjust the endRecur to avoid the bleeding of 1 day
         const recurrenceEndDate = new Date(recurrence.endRecur + "T23:59:59Z");
-        // If it's an everyday recurrence, adjust
-        // the until date by subtracting 1 day to stop exactly at the end date.
         if (isEveryday) {
           recurrenceEndDate.setDate(recurrenceEndDate.getDate() - 1);
         }
 
+        console.log("Recurrence end date:", recurrenceEndDate);
+
         // Set up the recurrence rule using rrule
+        const ruleSet = new RRuleSet();
         const rule = new RRule({
           freq: RRule.WEEKLY,
           byweekday: daysOfWeek,
@@ -75,7 +96,12 @@ export const createRecurringBookingInstances = functions.https.onRequest(
           until: recurrenceEndDate,
         });
 
-        const allOccurrences = rule.all();
+        ruleSet.rrule(rule);
+        ruleSet.exdate(originalStartDate);
+
+        const allOccurrences = ruleSet.all();
+        console.log("All occurrences:", allOccurrences);
+
         const instanceMap: { [key: string]: string } = {};
 
         // 1. Create the original event
@@ -111,24 +137,22 @@ export const createRecurringBookingInstances = functions.https.onRequest(
           updated_at: FieldValue.serverTimestamp(),
         });
 
-        // 2. Process occurrences and skip
-        // the first one if it's an everyday recurrence
-        // const occurrencesToProcess = isEveryday ?
-        // allOccurrences.slice(1) : allOccurrences;
-        // 2. Process occurrences and skip the first one
-        const occurrencesToProcess = allOccurrences.slice(1);
-        occurrencesToProcess.forEach((occurrence) => {
+        console.log("Original event created:", {
+          title,
+          description,
+          location,
+          start: originalStartDate,
+          end: originalEndDate,
+        });
+
+        // 2. Process occurrences
+        allOccurrences.forEach((occurrence) => {
           const instanceDate = new Date(occurrence);
 
           // Conditionally handle date adjustment:
-          // - Subtract 1 day for weekly events (fixes time zone issue).
-          // - Add 1 day for everyday events to fix the duplication issue.
           if (isEveryday) {
-            // Add 1 day back for everyday
-            // instanceDate.setDate(instanceDate.getDate() + 1);
             console.log("Everyday instanceDate:", instanceDate);
           } else {
-            // Subtract 1 day for weekly events
             instanceDate.setDate(instanceDate.getDate() - 1);
           }
 
@@ -139,37 +163,50 @@ export const createRecurringBookingInstances = functions.https.onRequest(
             `${instanceDate.toISOString().split("T")[0]}T${endTime}`
           );
 
+          // Skip creating the instance if it matches the original event date because it's already created and to prevent duplicated events
+          if (instanceStartDate.getTime() === originalStartDate.getTime()) {
+            console.log("Skipping instance creation for original event date:", instanceStartDate);
+            return;
+          }
+
           const instanceRef = db
             .collection("users")
             .doc(userId)
             .collection("events")
             .doc();
 
-          batch.set(instanceRef, {
+            batch.set(instanceRef, {
+              title,
+              clientId,
+              clientName,
+              fee,
+              paid: false,
+              type,
+              typeId,
+              description,
+              location,
+              start: instanceStartDate,
+              end: instanceEndDate,
+              isBackgroundEvent: false,
+              startDate: instanceStartDate,
+              startDay: instanceStartDate.toLocaleDateString("en-US", {
+                weekday: "long",
+              }),
+              endDate: instanceEndDate,
+              endDay: instanceEndDate.toLocaleDateString("en-US", {
+                weekday: "long",
+              }),
+              originalEventId: eventRef.id, // Reference to the original event
+              isInstance: true,
+              created_at: FieldValue.serverTimestamp(),
+              updated_at: FieldValue.serverTimestamp(),
+            });
+          console.log("Instance created:", {
             title,
-            clientId,
-            clientName,
-            fee,
-            paid: false,
-            type,
-            typeId,
             description,
             location,
             start: instanceStartDate,
             end: instanceEndDate,
-            isBackgroundEvent: false,
-            startDate: instanceStartDate,
-            startDay: instanceStartDate.toLocaleDateString("en-US", {
-              weekday: "long",
-            }),
-            endDate: instanceEndDate,
-            endDay: instanceEndDate.toLocaleDateString("en-US", {
-              weekday: "long",
-            }),
-            originalEventId: eventRef.id, // Reference to the original event
-            isInstance: true,
-            created_at: FieldValue.serverTimestamp(),
-            updated_at: FieldValue.serverTimestamp(),
           });
 
           instanceMap[instanceStartDate.toISOString()] = instanceRef.id;
@@ -177,6 +214,7 @@ export const createRecurringBookingInstances = functions.https.onRequest(
 
         // 3. Commit the batch
         await batch.commit();
+        console.log("Batch committed successfully");
 
         res.set("Access-Control-Allow-Origin", "*");
         res.status(200).json({
@@ -191,5 +229,3 @@ export const createRecurringBookingInstances = functions.https.onRequest(
     });
   }
 );
-
-

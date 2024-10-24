@@ -1039,7 +1039,7 @@ export default function Calendar() {
                         startTime: event.recurrence.startTime,
                         endTime: event.recurrence.endTime,
                         display: "auto",
-                        // groupId: event.id,
+                        groupId: event.id,
                         uniqueId: `${event.id}-${index}`,
                         color: event.color,
                         duration: formattedDuration,
@@ -1067,7 +1067,7 @@ export default function Calendar() {
                         typeId: event.typeId,
                         location: event.location,
                         display: "auto",
-                        // groupId: event.id,
+                        groupId: event.id,
                         uniqueId: `${event.id}-${index}`,
                         color: event.color,
                       };
