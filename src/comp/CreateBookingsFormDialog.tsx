@@ -62,6 +62,7 @@ interface CreateBookingsFormDialogProps {
       description: string;
       location: string;
       isBackgroundEvent: boolean; // Automatically false for regular bookings
+      originalEventId: string;
       date?: string;
       startTime: string;
       endTime: string;
@@ -150,11 +151,13 @@ const CreateBookingsFormDialog: React.FC<CreateBookingsFormDialogProps> = ({
     { value: string; label: string; docId: string }[]
   >([]);
   const [clientId, setClientId] = useState<string>("");
+  const [originalEventId, setOriginalEventId] = useState<string>("");
 
   useEffect(() => {
     console.log("Event in CreateBookingsDialog", event);
-    console.log("event color : " + event?.color);
+    console.log("eventId : " + originalEventId);
     if (event) {
+      setOriginalEventId(event._def?.extendedProps?.originalEventId || "");
       setTitle(event.title || "");
       setDescription(event.description || "");
       setLocation(event.location || "");
@@ -486,19 +489,31 @@ const CreateBookingsFormDialog: React.FC<CreateBookingsFormDialogProps> = ({
               {editAll ? "Edit Booking" : "Create Booking"}
             </DialogTitle>
             {editAll && event && (
-              <Badge
-                className="ml-2"
-                style={{
-                  backgroundColor: `${bookingColor}33`, // 33 for 20% opacity
-                  color: bookingColor,
-                }}
-              >
-                {
-                  <span className="text-sm font-bold">
-                    {event.recurrence ? "S" : "R"}
-                  </span>
-                }
-              </Badge>
+              <div>
+                {!originalEventId && <></>}
+                {originalEventId && (
+                  <Badge
+                    className="ml-2"
+                    style={{
+                      backgroundColor: `${bookingColor}33`, // 33 for 20% opacity
+                      color: bookingColor,
+                    }}
+                  >
+                    {<span className="text-sm font-bold">R</span>}
+                  </Badge>
+                )}
+                {event.recurrence && (
+                  <Badge
+                    className="ml-2"
+                    style={{
+                      backgroundColor: `${bookingColor}33`, // 33 for 20% opacity
+                      color: bookingColor,
+                    }}
+                  >
+                    {<span className="text-sm font-bold">S</span>}
+                  </Badge>
+                )}
+              </div>
             )}
           </div>
         </DialogHeader>

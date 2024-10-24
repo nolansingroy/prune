@@ -1011,6 +1011,7 @@ export default function Calendar() {
                         uniqueId: `${event.id}-${index}`,
                         color: "#C5C5C5",
                         duration: formattedDuration,
+                        originalEventId: event.originalEventId,
                         // className: "bg-event-mirror",
                       };
                     } else {
@@ -1043,6 +1044,7 @@ export default function Calendar() {
                         uniqueId: `${event.id}-${index}`,
                         color: event.color,
                         duration: formattedDuration,
+                        originalEventId: event.originalEventId,
                       };
                     }
                   } else {
@@ -1057,6 +1059,7 @@ export default function Calendar() {
                         groupId: `1234`,
                         uniqueId: `${event.id}-${index}`,
                         color: "#C5C5C5",
+                        originalEventId: event.originalEventId,
                         // className: "bg-event-mirror",
                       };
                     } else {
@@ -1070,6 +1073,7 @@ export default function Calendar() {
                         groupId: event.id,
                         uniqueId: `${event.id}-${index}`,
                         color: event.color,
+                        originalEventId: event.originalEventId,
                       };
                     }
                   }

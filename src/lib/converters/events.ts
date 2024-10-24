@@ -75,8 +75,8 @@ const eventConverter: FirestoreDataConverter<EventInput> = {
       recurrence: data.recurrence || undefined, // in nolan's code it was undefined
       exdate: data.exceptions || [],
       paid: data.paid,
+      originalEventId: data.originalEventId || "",
       // exceptions: data.exceptions,
-      // originalEventId: data.originalEventId,
       // isInstance: data.isInstance,
       // instanceMap: data.instanceMap,
       // paid: data.paid,
