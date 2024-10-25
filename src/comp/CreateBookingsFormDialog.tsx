@@ -510,7 +510,7 @@ const CreateBookingsFormDialog: React.FC<CreateBookingsFormDialogProps> = ({
                       color: bookingColor,
                     }}
                   >
-                    {<span className="text-sm font-bold">S</span>}
+                    {<span className="text-sm font-bold">O</span>}
                   </Badge>
                 )}
               </div>
