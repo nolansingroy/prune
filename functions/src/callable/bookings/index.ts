@@ -38,8 +38,7 @@ export const createRecurringBookingInstances = functions.https.onRequest(
           userId,
         } = req.body;
 
-
-        console.log("Bookings cloud function triggered");
+        console.log("Updated new function 7:21");
 
         console.log("Received request with data:", {
           title,
@@ -66,13 +65,24 @@ export const createRecurringBookingInstances = functions.https.onRequest(
           .doc();
 
         // Combine startDate and startTime into Date objects
-        const originalStartDate = new Date(`${startDate}T${startTime}Z`);
-        const originalEndDate = new Date(`${startDate}T${endTime}Z`);
+        let originalStartDate = new Date(`${startDate}T${startTime}Z`);
+        let originalEndDate = new Date(`${startDate}T${endTime}Z`);
 
         console.log("Original start date:", originalStartDate);
         console.log("Original end date:", originalEndDate);
 
         const daysOfWeek = recurrence.daysOfWeek;
+
+        // Check if the original start date is on a recurring day; adjust if not
+        if (!daysOfWeek.includes(originalStartDate.getUTCDay())) {
+          let dayOffset = 1;
+          while (!daysOfWeek.includes((originalStartDate.getUTCDay() + dayOffset) % 7)) {
+            dayOffset++;
+          }
+          // Set the start date and end date to the next valid recurring day
+          originalStartDate.setDate(originalStartDate.getDate() + dayOffset);
+          originalEndDate.setDate(originalEndDate.getDate() + dayOffset);
+        }
 
         // Check if the recurrence is for every day (contains 0-6)
         const isEveryday =
@@ -136,7 +146,6 @@ export const createRecurringBookingInstances = functions.https.onRequest(
           created_at: FieldValue.serverTimestamp(),
           updated_at: FieldValue.serverTimestamp(),
         });
-
         console.log("Original event created:", {
           title,
           description,
@@ -175,32 +184,32 @@ export const createRecurringBookingInstances = functions.https.onRequest(
             .collection("events")
             .doc();
 
-            batch.set(instanceRef, {
-              title,
-              clientId,
-              clientName,
-              fee,
-              paid: false,
-              type,
-              typeId,
-              description,
-              location,
-              start: instanceStartDate,
-              end: instanceEndDate,
-              isBackgroundEvent: false,
-              startDate: instanceStartDate,
-              startDay: instanceStartDate.toLocaleDateString("en-US", {
-                weekday: "long",
-              }),
-              endDate: instanceEndDate,
-              endDay: instanceEndDate.toLocaleDateString("en-US", {
-                weekday: "long",
-              }),
-              originalEventId: eventRef.id, // Reference to the original event
-              isInstance: true,
-              created_at: FieldValue.serverTimestamp(),
-              updated_at: FieldValue.serverTimestamp(),
-            });
+          batch.set(instanceRef, {
+            title,
+            clientId,
+            clientName,
+            fee,
+            paid: false,
+            type,
+            typeId,
+            description,
+            location,
+            start: instanceStartDate,
+            end: instanceEndDate,
+            isBackgroundEvent: false,
+            startDate: instanceStartDate,
+            startDay: instanceStartDate.toLocaleDateString("en-US", {
+              weekday: "long",
+            }),
+            endDate: instanceEndDate,
+            endDay: instanceEndDate.toLocaleDateString("en-US", {
+              weekday: "long",
+            }),
+            originalEventId: eventRef.id, // Reference to the original event
+            isInstance: true,
+            created_at: FieldValue.serverTimestamp(),
+            updated_at: FieldValue.serverTimestamp(),
+          });
           console.log("Instance created:", {
             title,
             description,
