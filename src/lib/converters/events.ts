@@ -47,6 +47,10 @@ const eventConverter: FirestoreDataConverter<EventInput> = {
     options: SnapshotOptions
   ): EventInput {
     const data = snapshot.data(options);
+
+    const startTimestamp = data.start instanceof Timestamp ? data.start : null;
+    const endTimestamp = data.end instanceof Timestamp ? data.end : null;
+
     return {
       title: data.title || "",
       id: snapshot.id,
@@ -56,27 +60,32 @@ const eventConverter: FirestoreDataConverter<EventInput> = {
       clientId: data.clientId || "",
       clientName: data.clientName || "",
       location: data.location || "",
-      start: (data.start as Timestamp).toDate(),
-      end: (data.end as Timestamp).toDate(),
-      startDate: (data.start as Timestamp).toDate(),
-      startDay: (data.start as Timestamp).toDate().toLocaleDateString("en-US", {
-        weekday: "long",
-        timeZone: "UTC",
-      }),
-      endDate: (data.end as Timestamp).toDate(),
-      endDay: (data.end as Timestamp).toDate().toLocaleDateString("en-US", {
-        weekday: "long",
-        timeZone: "UTC",
-      }),
+      start: startTimestamp ? startTimestamp.toDate() : new Date(),
+      end: endTimestamp ? endTimestamp.toDate() : new Date(),
+      startDate: startTimestamp ? startTimestamp.toDate() : new Date(),
+      startDay: startTimestamp
+        ? startTimestamp.toDate().toLocaleDateString("en-US", {
+            weekday: "long",
+            timeZone: "UTC",
+          })
+        : "",
+      endDate: endTimestamp ? endTimestamp.toDate() : new Date(),
+      endDay: endTimestamp
+        ? endTimestamp.toDate().toLocaleDateString("en-US", {
+            weekday: "long",
+            timeZone: "UTC",
+          })
+        : "",
       description: data.description || "",
       display: data.isBackgroundEvent ? "background" : "auto",
       isBackgroundEvent: !!data.isBackgroundEvent,
       className: data.isBackgroundEvent ? "" : "",
-      recurrence: data.recurrence, // in nolan's code it was undefined
+      recurrence: data.recurrence || undefined, // in nolan's code it was undefined
       exdate: data.exceptions || [],
       paid: data.paid,
+      originalEventId: data.originalEventId || "",
       // exceptions: data.exceptions,
-      // originalEventId: data.originalEventId,
+
       // isInstance: data.isInstance,
       // instanceMap: data.instanceMap,
       // paid: data.paid,

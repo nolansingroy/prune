@@ -6,7 +6,7 @@ import {RRule, RRuleSet} from "rrule";
 
 const db = admin.firestore();
 
-export const createRecurringAvailabilityInstances = functions.https.onRequest(
+export const createRecurringBookingInstances = functions.https.onRequest(
   async (req, res) => {
     cors({origin: true})(req, res, async () => {
       if (req.method === "OPTIONS") {
@@ -23,6 +23,12 @@ export const createRecurringAvailabilityInstances = functions.https.onRequest(
       try {
         const {
           title,
+          clientId,
+          clientName,
+          fee,
+          paid,
+          type,
+          typeId,
           description,
           location,
           startDate,
@@ -36,6 +42,12 @@ export const createRecurringAvailabilityInstances = functions.https.onRequest(
 
         console.log("Received request with data:", {
           title,
+          clientId,
+          clientName,
+          fee,
+          paid,
+          type,
+          typeId,
           description,
           location,
           startDate,
@@ -105,11 +117,17 @@ export const createRecurringAvailabilityInstances = functions.https.onRequest(
         // 1. Create the original event
         batch.set(eventRef, {
           title,
+          clientId,
+          clientName,
+          fee,
+          paid,
+          type,
+          typeId,
           description,
           location,
           start: originalStartDate,
           end: originalEndDate,
-          isBackgroundEvent: true,
+          isBackgroundEvent: false,
           startDate: originalStartDate,
           startDay: originalStartDate.toLocaleDateString("en-US", {
             weekday: "long",
@@ -168,11 +186,17 @@ export const createRecurringAvailabilityInstances = functions.https.onRequest(
 
           batch.set(instanceRef, {
             title,
+            clientId,
+            clientName,
+            fee,
+            paid: false,
+            type,
+            typeId,
             description,
             location,
             start: instanceStartDate,
             end: instanceEndDate,
-            isBackgroundEvent: true,
+            isBackgroundEvent: false,
             startDate: instanceStartDate,
             startDay: instanceStartDate.toLocaleDateString("en-US", {
               weekday: "long",

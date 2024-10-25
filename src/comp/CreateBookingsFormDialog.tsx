@@ -45,6 +45,7 @@ import { fetchBookingTypes } from "@/lib/converters/bookingTypes";
 import { CaretSortIcon, CheckIcon } from "@radix-ui/react-icons";
 import { fetchClients } from "@/lib/converters/clients";
 import { Switch } from "@headlessui/react";
+import { Badge } from "@/components/ui/badge";
 
 interface CreateBookingsFormDialogProps {
   isOpen: boolean;
@@ -61,6 +62,7 @@ interface CreateBookingsFormDialogProps {
       description: string;
       location: string;
       isBackgroundEvent: boolean; // Automatically false for regular bookings
+      originalEventId: string;
       date?: string;
       startTime: string;
       endTime: string;
@@ -119,12 +121,25 @@ const CreateBookingsFormDialog: React.FC<CreateBookingsFormDialogProps> = ({
   const [bookingsPopoverOpen, setBookingsPopoverOpen] = useState(false);
   const [bookingType, setBookingType] = useState("");
   const [bookingTypes, setBookingTypes] = useState<
-    { value: string; label: string; fee: number; docId: string }[]
+    {
+      value: string;
+      label: string;
+      fee: number;
+      color: string;
+      docId: string;
+    }[]
   >([]);
   const [filteredBookings, setFilteredBookings] = useState<
-    { value: string; label: string; fee: number; docId: string }[]
+    {
+      value: string;
+      label: string;
+      fee: number;
+      color: string;
+      docId: string;
+    }[]
   >([]);
   const [typeId, setTypeId] = useState<string>("");
+  const [bookingColor, setBookingColor] = useState<string>("");
 
   // clients state
   const [clientsPopoverOpen, setClientsPopoverOpen] = useState(false);
@@ -136,10 +151,13 @@ const CreateBookingsFormDialog: React.FC<CreateBookingsFormDialogProps> = ({
     { value: string; label: string; docId: string }[]
   >([]);
   const [clientId, setClientId] = useState<string>("");
+  const [originalEventId, setOriginalEventId] = useState<string>("");
 
   useEffect(() => {
     console.log("Event in CreateBookingsDialog", event);
+    console.log("eventId : " + originalEventId);
     if (event) {
+      setOriginalEventId(event._def?.extendedProps?.originalEventId || "");
       setTitle(event.title || "");
       setDescription(event.description || "");
       setLocation(event.location || "");
@@ -181,6 +199,7 @@ const CreateBookingsFormDialog: React.FC<CreateBookingsFormDialogProps> = ({
         value: string;
         label: string;
         fee: number;
+        color: string;
         docId: string;
       }[] = [];
       types.forEach((type) => {
@@ -188,6 +207,7 @@ const CreateBookingsFormDialog: React.FC<CreateBookingsFormDialogProps> = ({
           value: type.name,
           label: type.name,
           fee: type.fee,
+          color: type.color,
           docId: type.docId!,
         });
       });
@@ -240,6 +260,8 @@ const CreateBookingsFormDialog: React.FC<CreateBookingsFormDialogProps> = ({
           book.label.toLowerCase().includes(bookingType.toLowerCase())
         )
       );
+      const color = bookingTypes.find((book) => book.value === bookingType);
+      setBookingColor(color?.color || "#000000");
     }
   }, [bookingType, bookingTypes]);
 
@@ -375,6 +397,7 @@ const CreateBookingsFormDialog: React.FC<CreateBookingsFormDialogProps> = ({
   const handleBookingTypeSelect = (
     value: string,
     fee: number,
+    color: string,
     docId: string
   ) => {
     console.log("type id selected:", docId);
@@ -382,6 +405,7 @@ const CreateBookingsFormDialog: React.FC<CreateBookingsFormDialogProps> = ({
     setBookingType(value);
     setTypeId(docId);
     setBookingFee(fee.toString());
+    setBookingColor(color);
     setBookingsPopoverOpen(false); // Close the popover after selection
   };
 
@@ -400,7 +424,7 @@ const CreateBookingsFormDialog: React.FC<CreateBookingsFormDialogProps> = ({
   ) => {
     if (event.key === "Enter") {
       // handle the case where the user presses enter on a booking type that is not in the list
-      handleBookingTypeSelect(bookingType, 0, "");
+      handleBookingTypeSelect(bookingType, 0, "", "");
       setBookingsPopoverOpen(false);
     }
   };
@@ -408,7 +432,7 @@ const CreateBookingsFormDialog: React.FC<CreateBookingsFormDialogProps> = ({
   // handle the case where the user clicks outside the popover and typed a client name that is not in the list and clicked outside the popover
   const handlePopoverCloseBooking = () => {
     if (!filteredBookings.find((book) => book.value === bookingType)) {
-      handleBookingTypeSelect(bookingType, 0, ""); // Set the client with the typed name if it's not in the list
+      handleBookingTypeSelect(bookingType, 0, "", ""); // Set the client with the typed name if it's not in the list
     }
     setClientsPopoverOpen(false);
   };
@@ -460,10 +484,38 @@ const CreateBookingsFormDialog: React.FC<CreateBookingsFormDialogProps> = ({
     <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="overflow-y-scroll max-h-screen overflow-x-clip">
         <DialogHeader>
-          <DialogTitle>
-            {editAll && "Edit Booking"}
-            {!editAll && "Create Booking"}
-          </DialogTitle>
+          <div className="flex items-center gap-4">
+            <DialogTitle>
+              {editAll ? "Edit Booking" : "Create Booking"}
+            </DialogTitle>
+            {editAll && event && (
+              <div>
+                {!originalEventId && <></>}
+                {originalEventId && (
+                  <Badge
+                    className="ml-2"
+                    style={{
+                      backgroundColor: `${bookingColor}33`, // 33 for 20% opacity
+                      color: bookingColor,
+                    }}
+                  >
+                    {<span className="text-sm font-bold">R</span>}
+                  </Badge>
+                )}
+                {event.recurrence && (
+                  <Badge
+                    className="ml-2"
+                    style={{
+                      backgroundColor: `${bookingColor}33`, // 33 for 20% opacity
+                      color: bookingColor,
+                    }}
+                  >
+                    {<span className="text-sm font-bold">O</span>}
+                  </Badge>
+                )}
+              </div>
+            )}
+          </div>
         </DialogHeader>
         <div className="space-y-4">
           <div className="space-y-4">
@@ -605,6 +657,7 @@ const CreateBookingsFormDialog: React.FC<CreateBookingsFormDialogProps> = ({
                               handleBookingTypeSelect(
                                 book.value,
                                 book.fee,
+                                book.color,
                                 book.docId
                               ); // Set location
                               setBookingsPopoverOpen(false); // Close the popover after selection
@@ -789,7 +842,7 @@ const CreateBookingsFormDialog: React.FC<CreateBookingsFormDialogProps> = ({
             </div>
           </div>
 
-          {isRecurring && (
+          {isRecurring && !editAll && (
             <>
               <div>
                 <Label className="block text-sm font-medium text-gray-700">

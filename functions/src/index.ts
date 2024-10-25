@@ -3,5 +3,4 @@ admin.initializeApp();
 
 export {onCreateFunction} from "./firestore/signUps";
 export {createRecurringAvailabilityInstances} from "./callable/availability";
-
-// export {onBackgroundEvents} from "./firestore/backgroundEvents";
+export {createRecurringBookingInstances} from "./callable/bookings";
