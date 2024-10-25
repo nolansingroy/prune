@@ -172,7 +172,8 @@ export const createRecurringBookingInstances = functions.https.onRequest(
             `${instanceDate.toISOString().split("T")[0]}T${endTime}`
           );
 
-          // Skip creating the instance if it matches the original event date because it's already created and to prevent duplicated events
+          // Skip creating the instance if it matches the original event date because it's
+          // already created and to prevent duplicated events
           if (instanceStartDate.getTime() === originalStartDate.getTime()) {
             console.log("Skipping instance creation for original event date:", instanceStartDate);
             return;

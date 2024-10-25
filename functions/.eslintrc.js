@@ -30,5 +30,8 @@ module.exports = {
     "import/no-unresolved": 0,
     "indent": ["error", 2],
     "object-curly-spacing": ["error", "never"],
+    "linebreak-style": ["error", "unix"], // Enforce LF line endings
+    "max-len": ["error", {code: 120}], // Increase max line length to 120 characters
+    "eol-last": ["error", "always"], // Ensure newline at the end of files
   },
 };
