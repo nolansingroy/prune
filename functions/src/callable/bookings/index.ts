@@ -1,14 +1,14 @@
 import * as functions from "firebase-functions";
 import * as admin from "firebase-admin";
-import { FieldValue } from "firebase-admin/firestore";
+import {FieldValue} from "firebase-admin/firestore";
 import cors from "cors";
-import { RRule, RRuleSet } from "rrule";
+import {RRule, RRuleSet} from "rrule";
 
 const db = admin.firestore();
 
 export const createRecurringBookingInstances = functions.https.onRequest(
   async (req, res) => {
-    cors({ origin: true })(req, res, async () => {
+    cors({origin: true})(req, res, async () => {
       if (req.method === "OPTIONS") {
         res.set("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
         res.set(
@@ -65,8 +65,8 @@ export const createRecurringBookingInstances = functions.https.onRequest(
           .doc();
 
         // Combine startDate and startTime into Date objects
-        let originalStartDate = new Date(`${startDate}T${startTime}Z`);
-        let originalEndDate = new Date(`${startDate}T${endTime}Z`);
+        const originalStartDate = new Date(`${startDate}T${startTime}Z`);
+        const originalEndDate = new Date(`${startDate}T${endTime}Z`);
 
         console.log("Original start date:", originalStartDate);
         console.log("Original end date:", originalEndDate);
