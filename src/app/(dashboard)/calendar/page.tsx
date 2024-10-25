@@ -854,6 +854,31 @@ export default function Calendar() {
         }
         const eventRef = doc(db, "users", userId!, "events", eventData.id);
 
+        // Parse the start and end times
+        let startDateTime = new Date(`${startDate}T${eventData.startTime}`);
+        let endDateTime = new Date(`${startDate}T${eventData.endTime}`);
+
+        // Ensure the end time is after the start time
+        if (endDateTime <= startDateTime) {
+          endDateTime.setDate(endDateTime.getDate() + 1);
+        }
+
+        // Adjust the start and end times to UTC
+        startDateTime = adjustToUTC(startDateTime);
+        endDateTime = adjustToUTC(endDateTime);
+
+        // Adjust the start day
+        const startDay = startDateTime.toLocaleDateString("en-US", {
+          weekday: "long",
+          timeZone: "UTC",
+        });
+
+        //Adjust the end day
+        const endDay = endDateTime.toLocaleDateString("en-US", {
+          weekday: "long",
+          timeZone: "UTC",
+        });
+
         // Add 2 days to the endRecur date to ensure the last day is included
         const endRecur = new Date(eventData.recurrence?.endRecur || startDate);
         endRecur.setDate(endRecur.getDate() + 2);
@@ -866,7 +891,13 @@ export default function Calendar() {
           clientName: eventData.clientName,
           description: eventData.description,
           location: eventData.location || "",
-          startDate,
+          isBackgroundEvent: eventData.isBackgroundEvent,
+          start: startDateTime, // Save in UTC
+          end: endDateTime, // Save in UTC
+          startDate: startDateTime,
+          endDate: endDateTime,
+          startDay: startDay,
+          endDay: endDay,
           startTime: eventData.startTime,
           endTime: eventData.endTime,
           paid: eventData.paid,
