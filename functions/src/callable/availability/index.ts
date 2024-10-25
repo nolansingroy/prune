@@ -53,13 +53,24 @@ export const createRecurringAvailabilityInstances = functions.https.onRequest(
           .doc();
 
         // Combine startDate and startTime into Date objects
-        const originalStartDate = new Date(`${startDate}T${startTime}Z`);
-        const originalEndDate = new Date(`${startDate}T${endTime}Z`);
+        let originalStartDate = new Date(`${startDate}T${startTime}Z`);
+        let originalEndDate = new Date(`${startDate}T${endTime}Z`);
 
         console.log("Original start date:", originalStartDate);
         console.log("Original end date:", originalEndDate);
 
         const daysOfWeek = recurrence.daysOfWeek;
+
+        // Check if the original start date is on a recurring day; adjust if not
+        if (!daysOfWeek.includes(originalStartDate.getUTCDay())) {
+          let dayOffset = 1;
+          while (!daysOfWeek.includes((originalStartDate.getUTCDay() + dayOffset) % 7)) {
+            dayOffset++;
+          }
+          // Set the start date to the next valid recurring day
+          originalStartDate.setDate(originalStartDate.getDate() + dayOffset);
+          originalEndDate.setDate(originalEndDate.getDate() + dayOffset);
+        }
 
         // Check if the recurrence is for every day (contains 0-6)
         const isEveryday =
