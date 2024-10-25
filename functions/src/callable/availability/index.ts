@@ -67,7 +67,7 @@ export const createRecurringAvailabilityInstances = functions.https.onRequest(
           while (!daysOfWeek.includes((originalStartDate.getUTCDay() + dayOffset) % 7)) {
             dayOffset++;
           }
-          // Set the start date to the next valid recurring day
+          // Set the start date and end date to the next valid recurring day
           originalStartDate.setDate(originalStartDate.getDate() + dayOffset);
           originalEndDate.setDate(originalEndDate.getDate() + dayOffset);
         }

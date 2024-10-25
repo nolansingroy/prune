@@ -1115,3 +1115,55 @@ Issues? Report them at https://github.com/firebase/firebase-tools/issues and att
 [debug] [2024-10-25T14:09:04.949Z] Finishing up request with event=finish {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-createRecurringAvailabilityInstances"},"extension":{},"message":"Finishing up request with event=finish"}}
 [debug] [2024-10-25T14:09:04.950Z] Finishing up request with event=close {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-createRecurringAvailabilityInstances"},"extension":{},"message":"Finishing up request with event=close"}}
 [debug] [2024-10-25T14:09:04.950Z] [work-queue] {"queuedWork":[],"queueLength":0,"runningWork":[],"workRunningCount":0}
+[debug] [2024-10-25T14:12:45.333Z] File C:\Users\PC\Desktop\webDev\builds\nolan\prune\functions\src\callable\availability\index.ts changed, reloading triggers {"metadata":{"emulator":{"name":"functions"},"message":"File C:\\Users\\PC\\Desktop\\webDev\\builds\\nolan\\prune\\functions\\src\\callable\\availability\\index.ts changed, reloading triggers"}}
+[debug] [2024-10-25T14:12:46.334Z] Validating nodejs source
+[warn] !  functions: package.json indicates an outdated version of firebase-functions. Please upgrade using npm install --save firebase-functions@latest in your functions directory. 
+[warn] !  functions: Please note that there will be breaking changes when you upgrade. 
+[debug] [2024-10-25T14:12:47.055Z] > [functions] package.json contents: {
+  "name": "functions",
+  "scripts": {
+    "lint": "eslint --ext .js,.ts .",
+    "build": "tsc",
+    "build:watch": "tsc --watch",
+    "serve": "npm run build && firebase emulators:start --only functions",
+    "shell": "npm run build && firebase functions:shell",
+    "start": "npm run shell",
+    "deploy": "firebase deploy --only functions",
+    "logs": "firebase functions:log"
+  },
+  "engines": {
+    "node": "18"
+  },
+  "main": "lib/index.js",
+  "dependencies": {
+    "@google-cloud/secret-manager": "^5.6.0",
+    "axios": "^1.7.2",
+    "cors": "^2.8.5",
+    "firebase-admin": "^12.1.0",
+    "firebase-functions": "^5.0.1",
+    "rrule": "^2.8.1"
+  },
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^5.12.0",
+    "@typescript-eslint/parser": "^5.12.0",
+    "eslint": "^8.9.0",
+    "eslint-config-google": "^0.14.0",
+    "eslint-plugin-import": "^2.25.4",
+    "firebase-functions-test": "^3.1.0",
+    "typescript": "^4.9.0"
+  },
+  "private": true
+}
+[debug] [2024-10-25T14:12:47.055Z] Building nodejs source
+[debug] [2024-10-25T14:12:47.055Z] Failed to find version of module node: reached end of search path C:\Users\PC\Desktop\webDev\builds\nolan\prune\functions\node_modules
+[info] +  functions: Using node@18 from host. 
+[debug] [2024-10-25T14:12:47.056Z] Could not find functions.yaml. Must use http discovery
+[debug] [2024-10-25T14:12:47.060Z] Found firebase-functions binary at 'C:\Users\PC\Desktop\webDev\builds\nolan\prune\functions\node_modules\.bin\firebase-functions'
+[info] Serving at port 8483
+
+[debug] [2024-10-25T14:12:47.659Z] Got response from /__/functions.yaml {"endpoints":{"onCreateFunction":{"platform":"gcfv1","availableMemoryMb":null,"timeoutSeconds":null,"minInstances":null,"maxInstances":null,"ingressSettings":null,"serviceAccountEmail":null,"vpc":null,"eventTrigger":{"eventType":"providers/cloud.firestore/eventTypes/document.create","eventFilters":{"resource":"projects/prune-94ad9/databases/(default)/documents/signups/{signupId}"},"retry":false},"labels":{},"entryPoint":"onCreateFunction"},"createRecurringAvailabilityInstances":{"platform":"gcfv1","availableMemoryMb":null,"timeoutSeconds":null,"minInstances":null,"maxInstances":null,"ingressSettings":null,"serviceAccountEmail":null,"vpc":null,"httpsTrigger":{},"entryPoint":"createRecurringAvailabilityInstances"},"createRecurringBookingInstances":{"platform":"gcfv1","availableMemoryMb":null,"timeoutSeconds":null,"minInstances":null,"maxInstances":null,"ingressSettings":null,"serviceAccountEmail":null,"vpc":null,"httpsTrigger":{},"entryPoint":"createRecurringBookingInstances"}},"specVersion":"v1alpha1","requiredAPIs":[],"extensions":{}}
+[info] +  functions: Loaded functions definitions from source: onCreateFunction, createRecurringAvailabilityInstances, createRecurringBookingInstances. {"metadata":{"emulator":{"name":"functions"},"message":"Loaded functions definitions from source: onCreateFunction, createRecurringAvailabilityInstances, createRecurringBookingInstances."}}
+[debug] [2024-10-25T14:12:47.674Z] [worker-pool] Shutting down IDLE worker (us-central1-createRecurringAvailabilityInstances) {"metadata":{"emulator":{"name":"functions"},"message":"[worker-pool] Shutting down IDLE worker (us-central1-createRecurringAvailabilityInstances)"}}
+[debug] [2024-10-25T14:12:47.674Z] [worker-us-central1-createRecurringAvailabilityInstances-ff2eb835-1967-4b86-81d7-a6d3ffddff9c]: FINISHING {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-createRecurringAvailabilityInstances"},"extension":{},"message":"[worker-us-central1-createRecurringAvailabilityInstances-ff2eb835-1967-4b86-81d7-a6d3ffddff9c]: FINISHING"}}
+[debug] [2024-10-25T14:12:47.684Z] [worker-us-central1-createRecurringAvailabilityInstances-ff2eb835-1967-4b86-81d7-a6d3ffddff9c]: exited {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-createRecurringAvailabilityInstances"},"extension":{},"message":"[worker-us-central1-createRecurringAvailabilityInstances-ff2eb835-1967-4b86-81d7-a6d3ffddff9c]: exited"}}
+[debug] [2024-10-25T14:12:47.685Z] [worker-us-central1-createRecurringAvailabilityInstances-ff2eb835-1967-4b86-81d7-a6d3ffddff9c]: FINISHED {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-createRecurringAvailabilityInstances"},"extension":{},"message":"[worker-us-central1-createRecurringAvailabilityInstances-ff2eb835-1967-4b86-81d7-a6d3ffddff9c]: FINISHED"}}
