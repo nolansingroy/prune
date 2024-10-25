@@ -569,7 +569,7 @@ export default function CreateBookings() {
         };
 
         const result = await axios.post(
-          "https://us-central1-prune-94ad9.cloudfunctions.net/createRecurringAvailabilityInstances",
+          "https://us-central1-prune-94ad9.cloudfunctions.net/createRecurringBookingInstances",
           eventInput
         );
 
