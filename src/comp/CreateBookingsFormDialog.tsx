@@ -159,13 +159,13 @@ const CreateBookingsFormDialog: React.FC<CreateBookingsFormDialogProps> = ({
     if (event) {
       setOriginalEventId(event._def?.extendedProps?.originalEventId || "");
       setTitle(event.title || "");
-      setDescription(event.description || "");
-      setLocation(event.location || "");
       setClient(event.clientName || "");
       setClientId(event.clientId || "");
-      setBookingFee(event.fee ? event.fee.toString() : "");
       setBookingType(event.type || "");
       setTypeId(event.typeId || "");
+      setDescription(event.description || "");
+      setBookingFee(event.fee ? event.fee.toString() : "");
+      setLocation(event.location || "");
       setPaid(event.paid || false);
       setDate(
         event.startDate ? event.startDate.toISOString().split("T")[0] : ""
@@ -190,6 +190,11 @@ const CreateBookingsFormDialog: React.FC<CreateBookingsFormDialogProps> = ({
       }
     }
   }, [event, isOpen]);
+
+  // handle startRecur change when date changes
+  useEffect(() => {
+    setStartRecur(date);
+  }, [date]);
 
   const fetchBookings = useCallback(async () => {
     if (auth.currentUser) {
@@ -302,8 +307,8 @@ const CreateBookingsFormDialog: React.FC<CreateBookingsFormDialogProps> = ({
       fee: parseFloat(bookingFee),
       clientId: clientId || "",
       clientName: client || "",
-      description,
-      location,
+      description: description,
+      location: location,
       isBackgroundEvent: false, // Always false for regular bookings
       date: showDateSelector ? date : undefined,
       startTime,
@@ -320,20 +325,7 @@ const CreateBookingsFormDialog: React.FC<CreateBookingsFormDialogProps> = ({
         : undefined,
     };
 
-    // Conditional logic to modify values based on certain fields
-    if (newEventData.type === "special") {
-      // newEventData.fee = 0;
-    }
-
-    if (newEventData.paid) {
-    }
-
-    // if (
-    //   newEventData.recurrence &&
-    //   newEventData.recurrence.daysOfWeek.length > 0
-    // ) {
-    //   newEventData.isBackgroundEvent = true; // Set isBackgroundEvent to true for recurring events
-    // }
+    // here you can handle any update case you want
 
     const updatedEventData = getUpdatedValues(originalEvent, newEventData);
 
@@ -350,7 +342,7 @@ const CreateBookingsFormDialog: React.FC<CreateBookingsFormDialogProps> = ({
   };
 
   const handleClose = () => {
-    // setTitle("");
+    setTitle("");
     setDescription("");
     setLocation("");
     setDate("");
@@ -478,6 +470,17 @@ const CreateBookingsFormDialog: React.FC<CreateBookingsFormDialogProps> = ({
       handleClientSelect(client, ""); // Set the client with the typed name if it's not in the list
     }
     setClientsPopoverOpen(false);
+  };
+
+  // handle the date change
+  const handleDateChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const selectedDate = e.target.value;
+    setDate(selectedDate);
+
+    // If the event is recurring, set the start recurrence date to the selected date
+    if (isRecurring) {
+      setStartRecur(selectedDate);
+    }
   };
 
   return (
@@ -804,13 +807,7 @@ const CreateBookingsFormDialog: React.FC<CreateBookingsFormDialogProps> = ({
             <Label className="block text-sm font-medium text-gray-700">
               Date
             </Label>
-            <Input
-              type="date"
-              value={date}
-              onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                setDate(e.target.value)
-              }
-            />
+            <Input type="date" value={date} onChange={handleDateChange} />
           </div>
 
           <div className="flex items-center space-x-6">
@@ -879,6 +876,7 @@ const CreateBookingsFormDialog: React.FC<CreateBookingsFormDialogProps> = ({
                     onChange={(e: ChangeEvent<HTMLInputElement>) =>
                       setStartRecur(e.target.value)
                     }
+                    disabled
                   />
                 </div>
                 <div className="flex flex-col">
