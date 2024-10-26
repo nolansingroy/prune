@@ -13,6 +13,7 @@ import {
   arrayUnion,
   getDoc,
   setDoc,
+  addDoc,
 } from "firebase/firestore";
 import { auth, db } from "../../../firebase";
 import { EventInput } from "../../interfaces/types";
@@ -432,8 +433,18 @@ export default function CreateBookings() {
     return newDate;
   };
 
+  const removeUndefinedFields = (obj: any) => {
+    return Object.entries(obj).reduce((acc, [key, value]) => {
+      if (value !== undefined) {
+        acc[key] = value;
+      }
+      return acc;
+    }, {} as any);
+  };
+
   const handleSaveEvent = async (eventData: {
     id?: string;
+    title: string;
     type: string;
     typeId: string;
     fee: number;
@@ -448,133 +459,250 @@ export default function CreateBookings() {
     paid: boolean;
     recurrence?: {
       daysOfWeek: number[];
+      startTime: string;
+      endTime: string;
       startRecur: string; // YYYY-MM-DD
       endRecur: string; // YYYY-MM-DD
     };
   }) => {
-    console.log("handleSaveEvent called"); // Add this line
+    console.log("handleSaveEvent called from create bookings"); // Add this line
+
+    //First format the start and end date based on the event selection
+
+    const startDate = eventData.date
+      ? new Date(eventData.date).toISOString().split("T")[0]
+      : new Date().toISOString().split("T")[0];
+
     setLoading(true); // Start loading
+
     try {
-      console.log("onSave event data Triggered");
       const user = auth.currentUser;
       if (!user) {
         throw new Error("User not authenticated");
       }
 
-      const startDate =
-        eventData.date || new Date().toISOString().split("T")[0];
-
-      // Helper function to adjust for time zone offset and return UTC date
-      const adjustToUTC = (dateTime: Date) => {
-        const timezoneOffset = dateTime.getTimezoneOffset(); // Timezone offset in minutes
-        return new Date(dateTime.getTime() - timezoneOffset * 60 * 1000); // Adjust to UTC
-      };
-
-      // Parse the start and end times
-      let startDateTime = new Date(`${startDate}T${eventData.startTime}`);
-      let endDateTime = new Date(`${startDate}T${eventData.endTime}`);
-
-      // Ensure the end time is after the start time
-      if (endDateTime <= startDateTime) {
-        endDateTime.setDate(endDateTime.getDate() + 1);
-      }
-
-      // Adjust the start and end times to UTC
-      startDateTime = adjustToUTC(startDateTime);
-      endDateTime = adjustToUTC(endDateTime);
-
-      // Calculate related fields
-      const startDay = startDateTime.toLocaleDateString("en-US", {
-        weekday: "long",
-        timeZone: "UTC",
-      });
-      const endDay = endDateTime.toLocaleDateString("en-US", {
-        weekday: "long",
-        timeZone: "UTC",
-      });
-
-      // Check if the event is recurring or a single event
+      // If this is a recurring event, handle it using the cloud function
       if (
-        !eventData.recurrence ||
-        eventData.recurrence.daysOfWeek.length === 0
+        eventData.recurrence &&
+        eventData.recurrence.daysOfWeek &&
+        eventData.recurrence.daysOfWeek.length > 0
       ) {
-        // Client-side single event creation
-        console.log("storing using client side single event creation");
-        // Parse the start and end times
-        // let startDateTime = new Date(`${startDate}T${eventData.startTime}`);
-        // let endDateTime = new Date(`${startDate}T${eventData.endTime}`);
+        // Adjust end recurrence date
+        const endRecur = new Date(eventData.recurrence.endRecur || startDate);
+        endRecur.setDate(endRecur.getDate() + 1);
 
-        // // Ensure the end time is after the start time
-        // if (endDateTime <= startDateTime) {
-        //   endDateTime.setDate(endDateTime.getDate() + 1);
-        // }
-
-        // // Adjust the start and end times to UTC
-        // startDateTime = adjustToUTC(startDateTime);
-        // endDateTime = adjustToUTC(endDateTime);
-
-        // Create a new event object
         const eventInput = {
+          title: eventData.title,
           type: eventData.type,
           typeId: eventData.typeId,
-          fee: eventData.fee,
           clientId: eventData.clientId,
           clientName: eventData.clientName,
           description: eventData.description,
-          location: eventData.location || "",
-          isBackgroundEvent: eventData.isBackgroundEvent,
-
-          start: startDateTime, // Save in UTC
-          end: endDateTime, // Save in UTC
-          startDate: startDateTime,
-          startDay: startDay,
-          endDate: endDateTime,
-          endDay: endDay,
-          paid: eventData.paid,
-          created_at: new Date(), // Timestamp of creation
-          updated_at: new Date(), // Timestamp of last update
-        };
-
-        // Save the event directly to Firestore
-        const eventRef = doc(collection(db, "users", user.uid, "events"));
-        await setDoc(eventRef, eventInput);
-
-        console.log("Single event created in Firestore");
-      } else {
-        // Server-side recurring event creation using the cloud function
-        console.log("storing using server side");
-
-        // Add 2 day to the endRecur date to ensure the last day is included
-        const endRecur = new Date(eventData.recurrence?.endRecur || startDate);
-        endRecur.setDate(endRecur.getDate() + 2);
-
-        const eventInput = {
-          type: eventData.type,
-          typeId: eventData.typeId,
           fee: eventData.fee,
-          clientId: eventData.clientId,
-          clientName: eventData.clientName,
-          description: eventData.description,
           location: eventData.location || "",
           startDate,
           startTime: eventData.startTime,
           endTime: eventData.endTime,
           paid: eventData.paid,
           recurrence: {
-            daysOfWeek: eventData.recurrence?.daysOfWeek || [],
-            startRecur: eventData.recurrence?.startRecur || startDate,
-            endRecur: adjustToUTC(endRecur).toISOString().split("T")[0],
+            daysOfWeek: eventData.recurrence.daysOfWeek,
+            startRecur: eventData.recurrence.startRecur || startDate,
+            endRecur: endRecur.toISOString().split("T")[0],
           },
           userId: user.uid,
         };
 
+        console.log(
+          "event data ready for cloud function for recurring bookings",
+          eventInput
+        );
+
+        // Make the axios call to your cloud function
+        // "http://127.0.0.1:5001/prune-94ad9/us-central1/createRecurringBookingInstances",
         const result = await axios.post(
           "https://us-central1-prune-94ad9.cloudfunctions.net/createRecurringBookingInstances",
           eventInput
         );
 
         console.log("Recurring event instances created:", result.data);
+      } else {
+        let startDateTime = new Date(`${startDate}T${eventData.startTime}`);
+        let endDateTime = new Date(`${startDate}T${eventData.endTime}`);
+
+        if (eventData.startTime && eventData.endTime) {
+          const [startHour, startMinute] = eventData.startTime
+            .split(":")
+            .map(Number);
+          const [endHour, endMinute] = eventData.endTime.split(":").map(Number);
+
+          // Set the time in UTC
+          startDateTime.setUTCHours(startHour, startMinute, 0, 0);
+          endDateTime.setUTCHours(endHour, endMinute, 0, 0);
+
+          // Ensure end time is after the start time
+          if (endDateTime <= startDateTime) {
+            endDateTime.setUTCDate(endDateTime.getUTCDate() + 1);
+          }
+        }
+
+        // Create the event object for a single or background event
+        let event: EventInput = {
+          id: "",
+          title: eventData.title,
+          type: eventData.type,
+          typeId: eventData.typeId,
+          fee: eventData.fee,
+          clientId: eventData.clientId,
+          clientName: eventData.clientName,
+          location: eventData.location || "",
+          start: startDateTime, // Save in UTC
+          end: endDateTime, // Save in UTC
+          description: eventData.description,
+          display: "auto",
+          className: "",
+          isBackgroundEvent: false,
+          startDate: startDateTime, // Save in UTC
+          startDay: startDateTime.toLocaleDateString("en-US", {
+            weekday: "long",
+            timeZone: "UTC",
+          }),
+          endDate: endDateTime, // Save in UTC
+          endDay: endDateTime.toLocaleDateString("en-US", {
+            weekday: "long",
+            timeZone: "UTC",
+          }),
+          paid: eventData.paid,
+        };
+
+        console.log("Single event data ready for Firestore:", event);
+        event = removeUndefinedFields(event);
+
+        // Save single event or background event directly to Firestore
+        const eventRef = await addDoc(
+          collection(db, "users", user.uid, "events"),
+          event
+        );
+
+        const eventId = eventRef.id;
+        event.id = eventId;
+
+        // Update the event with the ID
+        await updateDoc(eventRef, { id: eventId });
+
+        console.log("Single event created in Firestore with ID:", event.id);
       }
+
+      // // Helper function to adjust for time zone offset and return UTC date
+      // const adjustToUTC = (dateTime: Date) => {
+      //   const timezoneOffset = dateTime.getTimezoneOffset(); // Timezone offset in minutes
+      //   return new Date(dateTime.getTime() - timezoneOffset * 60 * 1000); // Adjust to UTC
+      // };
+
+      // // Parse the start and end times
+      // let startDateTime = new Date(`${startDate}T${eventData.startTime}`);
+      // let endDateTime = new Date(`${startDate}T${eventData.endTime}`);
+
+      // // Ensure the end time is after the start time
+      // if (endDateTime <= startDateTime) {
+      //   endDateTime.setDate(endDateTime.getDate() + 1);
+      // }
+
+      // // Adjust the start and end times to UTC
+      // startDateTime = adjustToUTC(startDateTime);
+      // endDateTime = adjustToUTC(endDateTime);
+
+      // // Calculate related fields
+      // const startDay = startDateTime.toLocaleDateString("en-US", {
+      //   weekday: "long",
+      //   timeZone: "UTC",
+      // });
+      // const endDay = endDateTime.toLocaleDateString("en-US", {
+      //   weekday: "long",
+      //   timeZone: "UTC",
+      // });
+
+      // // Check if the event is recurring or a single event
+      // if (
+      //   !eventData.recurrence ||
+      //   eventData.recurrence.daysOfWeek.length === 0
+      // ) {
+      //   // Client-side single event creation
+      //   console.log("storing using client side single event creation");
+      //   // Parse the start and end times
+      //   // let startDateTime = new Date(`${startDate}T${eventData.startTime}`);
+      //   // let endDateTime = new Date(`${startDate}T${eventData.endTime}`);
+
+      //   // // Ensure the end time is after the start time
+      //   // if (endDateTime <= startDateTime) {
+      //   //   endDateTime.setDate(endDateTime.getDate() + 1);
+      //   // }
+
+      //   // // Adjust the start and end times to UTC
+      //   // startDateTime = adjustToUTC(startDateTime);
+      //   // endDateTime = adjustToUTC(endDateTime);
+
+      //   // Create a new event object
+      //   const eventInput = {
+      //     type: eventData.type,
+      //     typeId: eventData.typeId,
+      //     fee: eventData.fee,
+      //     clientId: eventData.clientId,
+      //     clientName: eventData.clientName,
+      //     description: eventData.description,
+      //     location: eventData.location || "",
+      //     isBackgroundEvent: eventData.isBackgroundEvent,
+
+      //     start: startDateTime, // Save in UTC
+      //     end: endDateTime, // Save in UTC
+      //     startDate: startDateTime,
+      //     startDay: startDay,
+      //     endDate: endDateTime,
+      //     endDay: endDay,
+      //     paid: eventData.paid,
+      //     created_at: new Date(), // Timestamp of creation
+      //     updated_at: new Date(), // Timestamp of last update
+      //   };
+
+      //   // Save the event directly to Firestore
+      //   const eventRef = doc(collection(db, "users", user.uid, "events"));
+      //   await setDoc(eventRef, eventInput);
+
+      //   console.log("Single event created in Firestore");
+      // } else {
+      //   // Server-side recurring event creation using the cloud function
+      //   console.log("storing using server side");
+
+      //   // Add 2 day to the endRecur date to ensure the last day is included
+      //   const endRecur = new Date(eventData.recurrence?.endRecur || startDate);
+      //   endRecur.setDate(endRecur.getDate() + 2);
+
+      //   const eventInput = {
+      //     type: eventData.type,
+      //     typeId: eventData.typeId,
+      //     fee: eventData.fee,
+      //     clientId: eventData.clientId,
+      //     clientName: eventData.clientName,
+      //     description: eventData.description,
+      //     location: eventData.location || "",
+      //     startDate,
+      //     startTime: eventData.startTime,
+      //     endTime: eventData.endTime,
+      //     paid: eventData.paid,
+      //     recurrence: {
+      //       daysOfWeek: eventData.recurrence?.daysOfWeek || [],
+      //       startRecur: eventData.recurrence?.startRecur || startDate,
+      //       endRecur: adjustToUTC(endRecur).toISOString().split("T")[0],
+      //     },
+      //     userId: user.uid,
+      //   };
+
+      //   const result = await axios.post(
+      //     "https://us-central1-prune-94ad9.cloudfunctions.net/createRecurringBookingInstances",
+      //     eventInput
+      //   );
+
+      //   console.log("Recurring event instances created:", result.data);
+      // }
 
       // Fetch events again to update the list
       await fetchEvents();
