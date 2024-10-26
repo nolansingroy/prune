@@ -266,36 +266,92 @@ export default function Availability() {
       };
 
       if (field === "start" || field === "end") {
-        const [hours, minutes] = editedValue.split(":");
+        const [time, period] = editedValue.split(" ");
+        const [hours, minutes] = time.split(":");
         if (hours !== undefined && minutes !== undefined) {
           const currentEvent = events.find((event) => event.id === id);
           if (currentEvent) {
             const updatedTime = new Date(
               currentEvent[field === "start" ? "start" : "end"]
             );
-            updatedTime.setHours(parseInt(hours, 10) - getUserTimeZoneOffset()); // Subtract time zone offset
-            updatedTime.setMinutes(parseInt(minutes, 10));
-            updatedTime.setSeconds(0);
+            const originalHours = updatedTime.getUTCHours();
+            const originalMinutes = updatedTime.getUTCMinutes();
 
-            // Calculate related fields
-            const updatedDay = updatedTime.toLocaleDateString("en-US", {
-              weekday: "long",
-              timeZone: "UTC",
-            });
-            const updatedDate = updatedTime;
+            // Convert input time to 24-hour format
+            let inputHours = parseInt(hours, 10);
+            if (period) {
+              if (period.toLowerCase() === "pm" && inputHours < 12) {
+                inputHours += 12;
+              } else if (period.toLowerCase() === "am" && inputHours === 12) {
+                inputHours = 0;
+              }
+            }
 
-            if (field === "start") {
-              updates = {
-                start: updatedTime,
-                startDate: updatedDate,
-                startDay: updatedDay,
-              };
-            } else if (field === "end") {
-              updates = {
-                end: updatedTime,
-                endDate: updatedDate,
-                endDay: updatedDay,
-              };
+            // Only update if the time has changed
+            if (
+              inputHours !== originalHours ||
+              parseInt(minutes, 10) !== originalMinutes
+            ) {
+              console.log(`Time changed for ${field}:`);
+              console.log(`Original time: ${originalHours}:${originalMinutes}`);
+              console.log(`New time: ${inputHours}:${minutes}`);
+
+              updatedTime.setUTCHours(inputHours);
+              updatedTime.setUTCMinutes(parseInt(minutes, 10));
+              updatedTime.setUTCSeconds(0);
+
+              const updatedDay = updatedTime.toLocaleDateString("en-US", {
+                weekday: "long",
+                timeZone: "UTC",
+              });
+              const updatedDate = updatedTime;
+
+              if (field === "start") {
+                // Check if start time is after end time
+                const endTime = new Date(currentEvent.end);
+                if (updatedTime > endTime) {
+                  alert("Start time cannot be after end time.");
+                  return;
+                }
+
+                updates = {
+                  start: updatedTime,
+                  startDate: updatedDate,
+                  startDay: updatedDay,
+                };
+
+                // Check if start time is the same as end time
+                if (updatedTime.getTime() === endTime.getTime()) {
+                  alert("Start time cannot be the same as end time.");
+                  return;
+                }
+              } else if (field === "end") {
+                // Check if end time is before start time
+                const startTime = new Date(currentEvent.start);
+                if (updatedTime < startTime) {
+                  alert("End time cannot be before start time.");
+                  return;
+                }
+
+                // Check if end time is the same as start time
+                if (updatedTime.getTime() === startTime.getTime()) {
+                  alert("End time cannot be the same as start time.");
+                  return;
+                }
+
+                updates = {
+                  end: updatedTime,
+                  endDate: updatedDate,
+                  endDay: updatedDay,
+                };
+              }
+
+              console.log(`Updated date: ${updatedDate}`);
+              console.log(`Updated day: ${updatedDay}`);
+            } else {
+              console.log(`Time not changed for ${field}:`);
+              console.log(`Original time: ${originalHours}:${originalMinutes}`);
+              console.log(`New time: ${inputHours}:${minutes}`);
             }
           }
         } else {
@@ -304,45 +360,95 @@ export default function Availability() {
         }
       } else if (field === "startDate" || field === "endDate") {
         const newDate = new Date(editedValue);
-        const utcDate = new Date(
-          Date.UTC(
-            newDate.getUTCFullYear(),
-            newDate.getUTCMonth(),
-            newDate.getUTCDate(),
-            newDate.getUTCHours(),
-            newDate.getUTCMinutes(),
-            newDate.getUTCSeconds()
-          )
-        );
-
         const currentEvent = events.find((event) => event.id === id);
         if (currentEvent) {
-          const updatedDateField = field === "startDate" ? "start" : "end";
-          const updatedTime = new Date(currentEvent[updatedDateField]);
+          const originalDate = new Date(currentEvent[field]);
+          const originalDateString = originalDate.toISOString().split("T")[0];
+          const newDateString = newDate.toISOString().split("T")[0];
 
-          updatedTime.setUTCFullYear(
-            utcDate.getUTCFullYear(),
-            utcDate.getUTCMonth(),
-            utcDate.getUTCDate()
-          );
+          // Only update if the date has changed
+          if (originalDateString !== newDateString) {
+            const utcDate = new Date(
+              Date.UTC(
+                newDate.getUTCFullYear(),
+                newDate.getUTCMonth(),
+                newDate.getUTCDate(),
+                newDate.getUTCHours(),
+                newDate.getUTCMinutes(),
+                newDate.getUTCSeconds()
+              )
+            );
 
-          const updatedDay = updatedTime.toLocaleDateString("en-US", {
-            weekday: "long",
-            timeZone: "UTC",
-          });
+            const updatedDateField = field === "startDate" ? "start" : "end";
+            const updatedTime = new Date(currentEvent[updatedDateField]);
 
-          if (field === "startDate") {
-            updates = {
-              startDate: updatedTime,
-              startDay: updatedDay,
-              start: updatedTime,
-            };
-          } else if (field === "endDate") {
-            updates = {
-              endDate: updatedTime,
-              endDay: updatedDay,
-              end: updatedTime,
-            };
+            updatedTime.setUTCFullYear(
+              utcDate.getUTCFullYear(),
+              utcDate.getUTCMonth(),
+              utcDate.getUTCDate()
+            );
+
+            const updatedDay = updatedTime.toLocaleDateString("en-US", {
+              weekday: "long",
+              timeZone: "UTC",
+            });
+
+            if (field === "startDate") {
+              updates = {
+                startDate: updatedTime,
+                startDay: updatedDay,
+                start: updatedTime,
+              };
+
+              // Update end fields if startDate is changed
+              const endTime = new Date(currentEvent.end);
+              endTime.setUTCFullYear(
+                utcDate.getUTCFullYear(),
+                utcDate.getUTCMonth(),
+                utcDate.getUTCDate()
+              );
+
+              const endDay = endTime.toLocaleDateString("en-US", {
+                weekday: "long",
+                timeZone: "UTC",
+              });
+
+              updates.end = endTime;
+              updates.endDate = endTime;
+              updates.endDay = endDay;
+
+              console.log(`Start date changed: ${updatedTime}`);
+              console.log(`End date adjusted: ${endTime}`);
+            } else if (field === "endDate") {
+              updates = {
+                endDate: updatedTime,
+                endDay: updatedDay,
+                end: updatedTime,
+              };
+              // Update start fields if endDate is changed
+              const startTime = new Date(currentEvent.start);
+              startTime.setUTCFullYear(
+                utcDate.getUTCFullYear(),
+                utcDate.getUTCMonth(),
+                utcDate.getUTCDate()
+              );
+
+              const startDay = startTime.toLocaleDateString("en-US", {
+                weekday: "long",
+                timeZone: "UTC",
+              });
+
+              updates.start = startTime;
+              updates.startDate = startTime;
+              updates.startDay = startDay;
+
+              console.log(`End date changed: ${updatedTime}`);
+              console.log(`Start date adjusted: ${startTime}`);
+            }
+          } else {
+            console.log(`Date not changed for ${field}:`);
+            console.log(`Original date: ${originalDateString}`);
+            console.log(`New date: ${newDateString}`);
           }
         }
       } else if (field === "title" || field === "description") {
