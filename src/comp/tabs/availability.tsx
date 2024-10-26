@@ -553,66 +553,36 @@ export default function Availability() {
       endRecur: string; // YYYY-MM-DD
     };
   }) => {
-    setLoading(true); // Start loading
+    console.log("handleSaveEvent called from create Availability");
+
+    // First format the start date and end date based on the event selection
+    const startDate = eventData.date
+      ? new Date(eventData.date).toISOString().split("T")[0]
+      : new Date().toISOString().split("T")[0];
+
+    setLoading(true);
+
     try {
       const user = auth.currentUser;
       if (!user) {
         throw new Error("User not authenticated");
       }
 
-      const startDate =
-        eventData.date || new Date().toISOString().split("T")[0];
-
-      // Helper function to adjust for time zone offset and return UTC date
-      const adjustToUTC = (dateTime: Date) => {
-        const timezoneOffset = dateTime.getTimezoneOffset(); // Timezone offset in minutes
-        return new Date(dateTime.getTime() - timezoneOffset * 60 * 1000); // Adjust to UTC
-      };
+      // // Helper function to adjust for time zone offset and return UTC date
+      // const adjustToUTC = (dateTime: Date) => {
+      //   const timezoneOffset = dateTime.getTimezoneOffset(); // Timezone offset in minutes
+      //   return new Date(dateTime.getTime() - timezoneOffset * 60 * 1000); // Adjust to UTC
+      // };
 
       // Check if the event is recurring or a single event
       if (
-        !eventData.recurrence ||
-        eventData.recurrence.daysOfWeek.length === 0
+        eventData.recurrence &&
+        eventData.recurrence.daysOfWeek &&
+        eventData.recurrence.daysOfWeek.length > 0
       ) {
-        // Client-side single event creation
-        console.log("storing using client side");
-        // Parse the start and end times
-        let startDateTime = new Date(`${startDate}T${eventData.startTime}`);
-        let endDateTime = new Date(`${startDate}T${eventData.endTime}`);
-
-        // Ensure the end time is after the start time
-        if (endDateTime <= startDateTime) {
-          endDateTime.setDate(endDateTime.getDate() + 1);
-        }
-
-        // Adjust the start and end times to UTC
-        startDateTime = adjustToUTC(startDateTime);
-        endDateTime = adjustToUTC(endDateTime);
-
-        // Create a new event object
-        const eventInput = {
-          title: eventData.title,
-          description: eventData.description,
-          location: eventData.location || "",
-          start: startDateTime, // Save in UTC
-          end: endDateTime, // Save in UTC
-          isBackgroundEvent: eventData.isBackgroundEvent,
-          created_at: new Date(), // Timestamp of creation
-          updated_at: new Date(), // Timestamp of last update
-        };
-
-        // Save the event directly to Firestore
-        const eventRef = doc(collection(db, "users", user.uid, "events"));
-        await setDoc(eventRef, eventInput);
-
-        console.log("Single event created in Firestore");
-      } else {
-        // Server-side recurring event creation using the cloud function
-        console.log("storing using server side");
-
-        // Add 2 day to the endRecur date to ensure the last day is included
-        const endRecur = new Date(eventData.recurrence?.endRecur || startDate);
-        endRecur.setDate(endRecur.getDate() + 2);
+        // Adjust end recurrence date
+        const endRecur = new Date(eventData.recurrence.endRecur || startDate);
+        endRecur.setDate(endRecur.getDate() + 1);
 
         const eventInput = {
           title: eventData.title,
@@ -622,12 +592,17 @@ export default function Availability() {
           startTime: eventData.startTime,
           endTime: eventData.endTime,
           recurrence: {
-            daysOfWeek: eventData.recurrence?.daysOfWeek || [],
-            startRecur: eventData.recurrence?.startRecur || startDate,
-            endRecur: adjustToUTC(endRecur).toISOString().split("T")[0],
+            daysOfWeek: eventData.recurrence.daysOfWeek || [],
+            startRecur: eventData.recurrence.startRecur || startDate,
+            endRecur: endRecur.toISOString().split("T")[0],
           },
           userId: user.uid,
         };
+
+        console.log(
+          "event data ready for cloud function for background event from availabity tab",
+          eventInput
+        );
 
         const result = await axios.post(
           "https://us-central1-prune-94ad9.cloudfunctions.net/createRecurringAvailabilityInstances",
@@ -635,6 +610,59 @@ export default function Availability() {
         );
 
         console.log("Recurring event instances created:", result.data);
+      } else {
+        // Client-side single event creation
+        console.log("storing using client side");
+        // Parse the start and end times
+        let startDateTime = new Date(`${startDate}T${eventData.startTime}`);
+        let endDateTime = new Date(`${startDate}T${eventData.endTime}`);
+
+        if (eventData.startTime && eventData.endTime) {
+          const [startHour, startMinute] = eventData.startTime
+            .split(":")
+            .map(Number);
+          const [endHour, endMinute] = eventData.endTime.split(":").map(Number);
+
+          // Set the time in UTC
+          startDateTime.setUTCHours(startHour, startMinute, 0, 0);
+          endDateTime.setUTCHours(endHour, endMinute, 0, 0);
+
+          // Ensure end time is after the start time
+          if (endDateTime <= startDateTime) {
+            endDateTime.setUTCDate(endDateTime.getUTCDate() + 1);
+          }
+        }
+
+        // Create a new event object
+        const eventInput = {
+          id: "",
+          title: eventData.title,
+          description: eventData.description,
+          location: eventData.location || "",
+          start: startDateTime, // Save in UTC
+          end: endDateTime, // Save in UTC
+          display: "inverse-background",
+          className: "",
+          isBackgroundEvent: true,
+          startDate: startDateTime, // Save in UTC
+          startDay: startDateTime.toLocaleDateString("en-US", {
+            weekday: "long",
+            timeZone: "UTC",
+          }),
+          endDate: endDateTime, // Save in UTC
+          endDay: endDateTime.toLocaleDateString("en-US", {
+            weekday: "long",
+            timeZone: "UTC",
+          }),
+          created_at: new Date(), // Timestamp of creation
+          updated_at: new Date(), // Timestamp of last update
+        };
+
+        // Save the event directly to Firestore
+        const eventRef = doc(collection(db, "users", user.uid, "events"));
+        await setDoc(eventRef, eventInput);
+
+        console.log("Single event created in Firestore");
       }
 
       // Fetch events again to update the list
