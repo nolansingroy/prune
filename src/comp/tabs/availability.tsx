@@ -898,7 +898,31 @@ export default function Availability() {
                   />
                 </TableCell>
 
-                <TableCell>{event.startDate.toLocaleDateString()}</TableCell>
+                <TableCell>
+                  {editingCell?.id === event.id &&
+                  editingCell?.field === "startDate" ? (
+                    <input
+                      type="date"
+                      value={editedValue}
+                      onChange={handleInputChange}
+                      onBlur={handleBlur}
+                      autoFocus
+                    />
+                  ) : (
+                    <div
+                      onClick={() =>
+                        handleCellClick(
+                          event.id!,
+                          "startDate",
+                          event.startDate.toISOString().split("T")[0],
+                          !!event.recurrence
+                        )
+                      }
+                    >
+                      {event.startDate.toLocaleDateString()}
+                    </div>
+                  )}
+                </TableCell>
                 <TableCell>{event.startDay}</TableCell>
 
                 <TableCell>
