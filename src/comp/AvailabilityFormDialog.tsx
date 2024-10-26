@@ -146,6 +146,7 @@ const AvailabilityDialog: React.FC<AvailabilityDialogProps> = ({
         : undefined,
     };
 
+    console.log("Event passed from availability dialog", eventData);
     onSave(eventData);
     handleClose();
   };
