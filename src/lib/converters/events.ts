@@ -8,6 +8,9 @@ import {
   QueryDocumentSnapshot,
   SnapshotOptions,
   DocumentData,
+  addDoc,
+  updateDoc,
+  doc,
 } from "firebase/firestore";
 import { EventInput } from "@/interfaces/types";
 import { fetchBookingType } from "./bookingTypes";
@@ -23,15 +26,19 @@ const eventConverter: FirestoreDataConverter<EventInput> = {
       fee: event.fee,
       clientId: event.clientId,
       clientName: event.clientName,
-      start: event.start, // Store as Timestamp
-      end: event.end, // Store as Timestamp
+      start: event.start ? Timestamp.fromDate(new Date(event.start)) : null, // Convert to Timestamp
+      end: event.end ? Timestamp.fromDate(new Date(event.end)) : null, // Convert to Timestamp
       description: event.description,
       display: event.display,
       className: event.className,
       isBackgroundEvent: event.isBackgroundEvent,
-      startDate: event.startDate, // Store as Timestamp
+      startDate: event.startDate
+        ? Timestamp.fromDate(new Date(event.startDate))
+        : null, // Convert to Timestamp
       startDay: event.startDay,
-      endDate: event.endDate, // Store as Timestamp
+      endDate: event.endDate
+        ? Timestamp.fromDate(new Date(event.endDate))
+        : null, // Convert to Timestamp
       endDay: event.endDay,
       recurrence: event.recurrence,
       exceptions: event.exceptions,
@@ -48,8 +55,15 @@ const eventConverter: FirestoreDataConverter<EventInput> = {
   ): EventInput {
     const data = snapshot.data(options);
 
-    const startTimestamp = data.start instanceof Timestamp ? data.start : null;
-    const endTimestamp = data.end instanceof Timestamp ? data.end : null;
+    const startUTC = (data.start as Timestamp)?.toDate();
+    const endUTC = (data.end as Timestamp)?.toDate();
+
+    const startLocal = new Date(
+      startUTC?.getTime() + startUTC.getTimezoneOffset() * 60000
+    );
+    const endLocal = new Date(
+      endUTC.getTime() + endUTC.getTimezoneOffset() * 60000
+    );
 
     return {
       title: data.title || "",
@@ -60,24 +74,18 @@ const eventConverter: FirestoreDataConverter<EventInput> = {
       clientId: data.clientId || "",
       clientName: data.clientName || "",
       location: data.location || "",
-      start: startTimestamp ? startTimestamp.toDate() : new Date(),
-      end: endTimestamp ? endTimestamp.toDate() : new Date(),
-      startDate: startTimestamp ? startTimestamp.toDate() : new Date(),
-      startDay: startTimestamp
-        ? startTimestamp.toDate().toLocaleDateString("en-US", {
-            weekday: "long",
-            timeZone: "UTC",
-          })
-        : "",
-      endDate: endTimestamp ? endTimestamp.toDate() : new Date(),
-      endDay: endTimestamp
-        ? endTimestamp.toDate().toLocaleDateString("en-US", {
-            weekday: "long",
-            timeZone: "UTC",
-          })
-        : "",
+      start: startLocal,
+      end: endLocal,
+      startDate: startLocal,
+      startDay: startLocal.toLocaleDateString("en-US", {
+        weekday: "long",
+      }),
+      endDate: endLocal,
+      endDay: endLocal.toLocaleDateString("en-US", {
+        weekday: "long",
+      }),
       description: data.description || "",
-      display: data.isBackgroundEvent ? "background" : "auto",
+      display: data.isBackgroundEvent ? "inverse-background" : "auto",
       isBackgroundEvent: !!data.isBackgroundEvent,
       className: data.isBackgroundEvent ? "" : "",
       recurrence: data.recurrence || undefined, // in nolan's code it was undefined
@@ -134,4 +142,24 @@ export async function converterFetchEvents(
 
   console.log("Events fetched:", eventsData);
   return eventsData;
+}
+
+/// Function to create an event
+export async function createEvent(userId: string, event: EventInput) {
+  const newEventRef = await addDoc(eventRef(userId), event);
+  const eventId = newEventRef.id;
+  await updateDoc(newEventRef, { id: eventId });
+  return { ...event, id: eventId };
+}
+
+// Function to update an event
+export async function updateEvent(
+  userId: string,
+  eventId: string,
+  event: Partial<EventInput>
+) {
+  const eventDocRef = doc(db, "users", userId, "events", eventId).withConverter(
+    eventConverter
+  );
+  await updateDoc(eventDocRef, event);
 }

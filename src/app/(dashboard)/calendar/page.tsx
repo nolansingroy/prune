@@ -83,8 +83,15 @@ export default function Calendar() {
   };
 
   const renderEventContent = (eventInfo: EventContentArg) => {
-    const { isBackgroundEvent, clientName, title, description, paid, type } =
-      eventInfo.event.extendedProps;
+    const {
+      isBackgroundEvent,
+      clientName,
+      title,
+      description,
+      paid,
+      type,
+      location,
+    } = eventInfo.event.extendedProps;
 
     // console.log("for month view props", eventInfo);
 
@@ -97,7 +104,6 @@ export default function Calendar() {
 
     // console.log("==================================", eventInfo);
 
-    // i want to remove fc-bg-event from the background events
     if (isBackgroundEvent) {
     }
 
@@ -108,15 +114,6 @@ export default function Calendar() {
         </div>
       );
     }
-
-    // if (classNames.includes("bg-event-mirror")) {
-    //   return (
-    //     <div className="bg-black opacity-50 text-black p-1 rounded text-center h-max w-max">
-    //       {description}
-    //     </div>
-    //   );
-    // }
-
     if (monthViw) {
       const defaultStartTimeUTC = new Date(eventInfo.event.startStr);
       const timezoneOffsetHours = -(new Date().getTimezoneOffset() / 60);
