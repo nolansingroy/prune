@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { auth, db } from "../../firebase";
 import { collection, query, getDocs, Timestamp } from "firebase/firestore";
 import { EventInput } from "../interfaces/types";
-import { converterFetchEvents } from "@/lib/converters/events";
+import { fetchFirestoreEvents } from "@/lib/converters/events";
 
 const useFetchEvents = () => {
   const [events, setEvents] = useState<EventInput[]>([]);
@@ -12,7 +12,7 @@ const useFetchEvents = () => {
     const user = auth.currentUser;
 
     setLoading(true);
-    const eventsData = await converterFetchEvents(user);
+    const eventsData = await fetchFirestoreEvents(user);
 
     setEvents(eventsData);
     console.log("Events set to state:", eventsData);

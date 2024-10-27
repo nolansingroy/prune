@@ -18,19 +18,19 @@ import { fetchBookingType } from "./bookingTypes";
 // Event converter
 const eventConverter: FirestoreDataConverter<EventInput> = {
   toFirestore(event: Omit<EventInput, "id">): DocumentData {
-    return {
-      title: event.title,
-      type: event.type,
-      typeId: event.typeId,
-      location: event.location,
-      fee: event.fee,
-      clientId: event.clientId,
-      clientName: event.clientName,
+    const firestoreEvent: DocumentData = {
+      title: event.title || "",
+      type: event.type || "",
+      typeId: event.typeId || "",
+      location: event.location || "",
+      fee: event.fee || 0,
+      clientId: event.clientId || "",
+      clientName: event.clientName || "",
       start: event.start ? Timestamp.fromDate(new Date(event.start)) : null, // Convert to Timestamp
       end: event.end ? Timestamp.fromDate(new Date(event.end)) : null, // Convert to Timestamp
-      description: event.description,
-      display: event.display,
-      className: event.className,
+      description: event.description || "",
+      display: event.display || "",
+      className: event.className || "",
       isBackgroundEvent: event.isBackgroundEvent,
       startDate: event.startDate
         ? Timestamp.fromDate(new Date(event.startDate))
@@ -40,31 +40,26 @@ const eventConverter: FirestoreDataConverter<EventInput> = {
         ? Timestamp.fromDate(new Date(event.endDate))
         : null, // Convert to Timestamp
       endDay: event.endDay,
-      recurrence: event.recurrence,
-      exceptions: event.exceptions,
-      exdate: event.exdate,
-      originalEventId: event.originalEventId,
-      isInstance: event.isInstance,
-      instanceMap: event.instanceMap,
-      paid: event.paid,
+      exceptions: event.exceptions || [],
+      exdate: event.exdate || [],
+      originalEventId: event.originalEventId || "",
+      isInstance: event.isInstance || false,
+      instanceMap: event.instanceMap || {},
+      paid: event.paid || false,
     };
+
+    // Conditionally include the recurrence field only if it is defined
+    if (event.recurrence) {
+      firestoreEvent.recurrence = event.recurrence;
+    }
+
+    return firestoreEvent;
   },
   fromFirestore(
     snapshot: QueryDocumentSnapshot<DocumentData>,
     options: SnapshotOptions
   ): EventInput {
     const data = snapshot.data(options);
-
-    const startUTC = (data.start as Timestamp)?.toDate();
-    const endUTC = (data.end as Timestamp)?.toDate();
-
-    const startLocal = new Date(
-      startUTC?.getTime() + startUTC.getTimezoneOffset() * 60000
-    );
-    const endLocal = new Date(
-      endUTC.getTime() + endUTC.getTimezoneOffset() * 60000
-    );
-
     return {
       title: data.title || "",
       id: snapshot.id,
@@ -74,14 +69,16 @@ const eventConverter: FirestoreDataConverter<EventInput> = {
       clientId: data.clientId || "",
       clientName: data.clientName || "",
       location: data.location || "",
-      start: startLocal,
-      end: endLocal,
-      startDate: startLocal,
-      startDay: startLocal.toLocaleDateString("en-US", {
-        weekday: "long",
-      }),
-      endDate: endLocal,
-      endDay: endLocal.toLocaleDateString("en-US", {
+      start: (data.start as Timestamp)?.toDate(),
+      end: (data.end as Timestamp)?.toDate(),
+      startDate: (data.start as Timestamp)?.toDate(),
+      startDay: (data.start as Timestamp)
+        ?.toDate()
+        .toLocaleDateString("en-US", {
+          weekday: "long",
+        }),
+      endDate: (data.end as Timestamp)?.toDate(),
+      endDay: (data.end as Timestamp)?.toDate().toLocaleDateString("en-US", {
         weekday: "long",
       }),
       description: data.description || "",
@@ -106,7 +103,7 @@ export const eventRef = (userId: string) =>
   collection(db, "users", userId, "events").withConverter(eventConverter);
 
 // Function to fetch events
-export async function converterFetchEvents(
+export async function fetchFirestoreEvents(
   userUid: User | null
 ): Promise<EventInput[]> {
   if (!userUid) {
@@ -145,7 +142,7 @@ export async function converterFetchEvents(
 }
 
 /// Function to create an event
-export async function createEvent(userId: string, event: EventInput) {
+export async function createFireStoreEvent(userId: string, event: EventInput) {
   const newEventRef = await addDoc(eventRef(userId), event);
   const eventId = newEventRef.id;
   await updateDoc(newEventRef, { id: eventId });
