@@ -46,6 +46,12 @@ const eventConverter: FirestoreDataConverter<EventInput> = {
       isInstance: event.isInstance || false,
       instanceMap: event.instanceMap || {},
       paid: event.paid || false,
+      created_at: event.created_at
+        ? Timestamp.fromDate(new Date(event.created_at))
+        : null,
+      updated_at: event.updated_at
+        ? Timestamp.fromDate(new Date(event.updated_at))
+        : null,
     };
 
     // Conditionally include the recurrence field only if it is defined
@@ -89,6 +95,8 @@ const eventConverter: FirestoreDataConverter<EventInput> = {
       exdate: data.exceptions || [],
       paid: data.paid,
       originalEventId: data.originalEventId || "",
+      created_at: (data.created_at as Timestamp)?.toDate(),
+      updated_at: (data.updated_at as Timestamp)?.toDate(),
       // exceptions: data.exceptions,
 
       // isInstance: data.isInstance,
@@ -143,14 +151,23 @@ export async function fetchFirestoreEvents(
 
 /// Function to create an event
 export async function createFireStoreEvent(userId: string, event: EventInput) {
-  const newEventRef = await addDoc(eventRef(userId), event);
+  const newEvent = {
+    ...event,
+    created_at: Timestamp.now().toDate(),
+    updated_at: Timestamp.now().toDate(),
+  };
+
+  const newEventRef = await addDoc(eventRef(userId), newEvent);
   const eventId = newEventRef.id;
-  await updateDoc(newEventRef, { id: eventId });
-  return { ...event, id: eventId };
+  await updateDoc(newEventRef, {
+    id: eventId,
+    updated_at: Timestamp.now().toDate(),
+  });
+  return { ...newEvent, id: eventId };
 }
 
-// Function to update an event
-export async function updateEvent(
+// Function to update an event by ID
+export async function updateFireStoreEvent(
   userId: string,
   eventId: string,
   event: Partial<EventInput>
@@ -158,5 +175,10 @@ export async function updateEvent(
   const eventDocRef = doc(db, "users", userId, "events", eventId).withConverter(
     eventConverter
   );
-  await updateDoc(eventDocRef, event);
+  const updatedEvent = {
+    ...event,
+    updated_at: Timestamp.now().toDate(), // Use Firestore Timestamp for consistency
+  };
+
+  await updateDoc(eventDocRef, updatedEvent);
 }

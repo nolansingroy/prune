@@ -41,7 +41,10 @@ import "tippy.js/dist/tippy.css";
 // import { adjustForLocalTimezone } from "@/lib/functions/time-functions";
 // import { handleUpdatEventFormDialog } from "@/lib/functions/event-functions";
 import { Auth } from "firebase/auth";
-import { createFireStoreEvent } from "@/lib/converters/events";
+import {
+  createFireStoreEvent,
+  updateFireStoreEvent,
+} from "@/lib/converters/events";
 
 // an instance of the tooltip for each event { this is initialized to track the instances of the tooltip to prevent adding multiple instances of the tooltip to the same event }
 const tippyInstances = new Map<string, any>();
@@ -116,13 +119,7 @@ export default function Calendar() {
       );
     }
     if (monthViw) {
-      // const defaultStartTimeUTC = new Date(eventInfo.event.startStr);
-      // const timezoneOffsetHours = -(new Date().getTimezoneOffset() / 60);
       const defaultStartTimeLocal = new Date(eventInfo.event.startStr);
-      // defaultStartTimeLocal.setHours(
-      //   defaultStartTimeUTC.getHours() - timezoneOffsetHours
-      // );
-      // Convert times to string format using local time (e.g., "10:00" in local time)
       const formattedStartTime = defaultStartTimeLocal.toLocaleTimeString(
         "en-US",
         {
@@ -131,9 +128,6 @@ export default function Calendar() {
           hour12: true,
         }
       );
-
-      console.log("startTime", formattedStartTime);
-      // return a row with a smale circle which has a color of the type of the event and next to it the start time of the event and next to it the client name
       return (
         <div className="flex gap-1 items-center w-full overflow-hidden">
           <div
@@ -200,78 +194,39 @@ export default function Calendar() {
     try {
       const user = auth.currentUser;
       if (user) {
-        const eventRef = doc(
-          db,
-          "users",
-          user.uid,
-          "events",
-          resizeInfo.event.id
-        );
-
-        const startDayUTC = resizeInfo.event.start?.toLocaleDateString(
-          "en-US",
-          {
-            weekday: "long",
-            timeZone: "UTC",
-          }
-        );
-        const endDayUTC = resizeInfo.event.end?.toLocaleDateString("en-US", {
-          weekday: "long",
-          timeZone: "UTC",
-        });
-
-        const startDayLocal = resizeInfo.event.start?.toLocaleDateString(
-          "en-US",
-          {
-            weekday: "long",
-          }
-        );
-
-        const endDayLocal = resizeInfo.event.end?.toLocaleDateString("en-US", {
+        const startDay = resizeInfo.event.start?.toLocaleDateString("en-US", {
           weekday: "long",
         });
 
-        const startDateLocal = resizeInfo.event.start
-          ? new Date(resizeInfo.event.start)
-          : null;
-        const endDateLocal = resizeInfo.event.end
-          ? new Date(resizeInfo.event.end)
-          : null;
-
-        // Convert local dates to UTC before saving to Firestore
-        const startDateUTC = startDateLocal
-          ? new Date(
-              startDateLocal.getTime() -
-                startDateLocal.getTimezoneOffset() * 60000
-            )
-          : null;
-        const endDateUTC = endDateLocal
-          ? new Date(
-              endDateLocal.getTime() - endDateLocal.getTimezoneOffset() * 60000
-            )
-          : null;
-
-        await updateDoc(eventRef, {
-          start: startDateUTC,
-          end: endDateUTC,
-          startDate: startDateUTC,
-          endDate: endDateUTC,
-          startDay: startDayUTC,
-          endDay: endDayUTC,
-          updated_at: Timestamp.now(),
+        const endDay = resizeInfo.event.end?.toLocaleDateString("en-US", {
+          weekday: "long",
         });
-        // Update the local state to reflect the changes
+
+        const startDate = resizeInfo.event.start
+          ? resizeInfo.event.start
+          : null;
+        const endDate = resizeInfo.event.end ? resizeInfo.event.end : null;
+
+        await updateFireStoreEvent(user.uid, resizeInfo.event.id, {
+          start: startDate!,
+          end: endDate!,
+          startDate: startDate!,
+          endDate: endDate!,
+          startDay: startDay,
+          endDay: endDay,
+        });
+
         setEvents((prevEvents) => {
           const updatedEvents = prevEvents.map((event) => {
             if (event.id === resizeInfo.event.id) {
               return {
                 ...event,
-                start: startDateLocal!,
-                end: endDateLocal!,
-                startDate: startDateLocal!,
-                endDate: endDateLocal!,
-                startDay: startDayLocal!,
-                endDay: endDayLocal!,
+                start: startDate!,
+                end: endDate!,
+                startDate: startDate!,
+                endDate: endDate!,
+                startDay: startDay!,
+                endDay: endDay!,
               };
             }
             return event;
@@ -296,53 +251,24 @@ export default function Calendar() {
     try {
       const user = auth.currentUser;
       if (user) {
-        const eventRef = doc(
-          db,
-          "users",
-          user.uid,
-          "events",
-          dropInfo.event.id
-        );
+        const startDay = dropInfo.event.start?.toLocaleDateString("en-US", {
+          weekday: "long",
+        });
 
-        const startDay = dropInfo.event.start
-          ? dropInfo.event.start.toLocaleDateString("en-US", {
-              weekday: "long",
-            })
-          : "";
-        const endDay = dropInfo.event.end
-          ? dropInfo.event.end.toLocaleDateString("en-US", {
-              weekday: "long",
-            })
-          : "";
+        const endDay = dropInfo.event.end?.toLocaleDateString("en-US", {
+          weekday: "long",
+        });
 
-        const startDateLocal = dropInfo.event.start
-          ? new Date(dropInfo.event.start)
-          : null;
-        const endDateLocal = dropInfo.event.end
-          ? new Date(dropInfo.event.end)
-          : null;
+        const startDate = dropInfo.event.start ? dropInfo.event.start : null;
+        const endDate = dropInfo.event.end ? dropInfo.event.end : null;
 
-        // Convert local dates to UTC before saving to Firestore
-        const startDateUTC = startDateLocal
-          ? new Date(
-              startDateLocal.getTime() -
-                startDateLocal.getTimezoneOffset() * 60000
-            )
-          : null;
-        const endDateUTC = endDateLocal
-          ? new Date(
-              endDateLocal.getTime() - endDateLocal.getTimezoneOffset() * 60000
-            )
-          : null;
-
-        await updateDoc(eventRef, {
-          start: startDateUTC,
-          end: endDateUTC,
-          startDate: startDateUTC,
-          endDate: endDateUTC,
+        await updateFireStoreEvent(user.uid, dropInfo.event.id, {
+          start: startDate!,
+          end: endDate!,
+          startDate: startDate!,
+          endDate: endDate!,
           startDay: startDay,
           endDay: endDay,
-          updated_at: Timestamp.now(),
         });
 
         // Update the local state to reflect the changes
@@ -351,12 +277,12 @@ export default function Calendar() {
             if (event.id === dropInfo.event.id) {
               return {
                 ...event,
-                start: startDateLocal!,
-                end: startDateLocal!,
-                startDate: startDateLocal!,
-                endDate: startDateLocal!,
+                start: startDate!,
+                end: endDate!,
+                startDate: startDate!,
+                endDate: endDate!,
                 startDay: startDay!,
-                endDay: endDay,
+                endDay: endDay!,
               };
             }
             return event;
@@ -381,18 +307,6 @@ export default function Calendar() {
 
     const defaultStartTimeLocal = new Date(selectInfo.startStr);
     const defaultEndTimeLocal = new Date(selectInfo.endStr);
-
-    // Convert times to string format using local time (e.g., "10:00" in local time)
-    const formattedStartTime = defaultStartTimeLocal.toLocaleTimeString([], {
-      hour: "2-digit",
-      minute: "2-digit",
-      hour12: false,
-    }); // Local time
-    const formattedEndTime = defaultEndTimeLocal.toLocaleTimeString([], {
-      hour: "2-digit",
-      minute: "2-digit",
-      hour12: false,
-    }); // Local time
 
     // Derive the day of the week from startDate
     const defaultStartDay = defaultStartTimeLocal.toLocaleDateString("en-US", {
@@ -436,23 +350,15 @@ export default function Calendar() {
     const { extendedProps, start, end } = event;
 
     if (start && end) {
-      // const localStart = adjustForLocalTimezone(start);
-      // const localEnd = adjustForLocalTimezone(end);
-
-      // const timezoneOffsetHours = -(new Date().getTimezoneOffset() / 60);
-
-      const localStart = new Date(start);
-      // localStart.setHours(start.getHours() - timezoneOffsetHours);
-
-      const localEnd = new Date(end);
-      // localEnd.setHours(end.getHours() - timezoneOffsetHours);
+      const startDate = new Date(start);
+      const endDate = new Date(end);
 
       setEditingEvent({
         ...event,
         id: event.id,
-        start: localStart,
-        end: localEnd,
-        title: extendedProps.title || "", // Add other required properties here
+        start: startDate,
+        end: endDate,
+        title: extendedProps.title || "",
         type: extendedProps.type || "",
         typeId: extendedProps.typeId || "",
         clientId: extendedProps.clientId || "",
@@ -462,12 +368,12 @@ export default function Calendar() {
         isBackgroundEvent: extendedProps.isBackgroundEvent || false,
         fee: extendedProps.fee || 0,
         paid: extendedProps.paid || false,
-        startDate: localStart,
-        startDay: localStart.toLocaleDateString("en-US", {
+        startDate: startDate,
+        startDay: startDate.toLocaleDateString("en-US", {
           weekday: "long",
         }),
-        endDate: localEnd,
-        endDay: localEnd.toLocaleDateString("en-US", {
+        endDate: endDate,
+        endDay: endDate.toLocaleDateString("en-US", {
           weekday: "long",
         }),
         recurrence: extendedProps.recurrence || undefined,
@@ -671,7 +577,7 @@ export default function Calendar() {
           }
         }
 
-        // Create the event object for a single or background event
+        // Create the event object for a booking or availability event
         let event: EventInput = {
           id: "",
           title,
@@ -681,17 +587,17 @@ export default function Calendar() {
           clientId,
           clientName,
           location,
-          start: startDateTime, // Save in UTC
-          end: endDateTime, // Save in UTC
+          start: startDateTime,
+          end: endDateTime,
           description,
           display: isBackgroundEvent ? "inverse-background" : "auto",
           className: isBackgroundEvent ? "custom-bg-event" : "",
           isBackgroundEvent,
-          startDate: startDateTime, // Save in UTC
+          startDate: startDateTime,
           startDay: startDateTime.toLocaleDateString("en-US", {
             weekday: "long",
           }),
-          endDate: endDateTime, // Save in UTC
+          endDate: endDateTime,
           endDay: endDateTime.toLocaleDateString("en-US", {
             weekday: "long",
           }),
@@ -699,39 +605,18 @@ export default function Calendar() {
         };
 
         console.log("Single event data ready for Firestore:", event);
-
-        // Remove any undefined fields before saving
         event = removeUndefinedFields(event);
 
         await createFireStoreEvent(user.uid, event);
-
-        // // Save single event or background event directly to Firestore
-        // const eventRef = await addDoc(
-        //   collection(db, "users", user.uid, "events"),
-        //   event
-        // );
-
-        // const eventId = eventRef.id;
-        // event.id = eventId;
-
-        // // Update the event with the ID
-        // await updateDoc(eventRef, { id: eventId });
-
-        // console.log("Single event created in Firestore with ID:", event.id);
-
-        // Add event to local state
         setEvents((prevEvents) => [...prevEvents, event]);
       }
-
-      // Fetch the updated events for the calendar view
       await fetchEvents();
     } catch (error) {
       console.error("Error saving event:", error);
     } finally {
-      setLoading(false); // Stop loading
+      setLoading(false);
     }
 
-    // Close the dialog after saving
     handleDialogClose();
   };
 
