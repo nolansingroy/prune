@@ -127,6 +127,9 @@ export async function fetchFirestoreEvents(
     `Retrieved ${querySnapshot.docs.length} documents from Firestore.`
   );
 
+  const checktimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  console.log("Timezone: ", checktimezone);
+
   const eventsData = await Promise.all(
     querySnapshot.docs.map(async (doc) => {
       const data = doc.data();
@@ -208,6 +211,7 @@ export const fetchBookingsListviewEvents = async (
 
   querySnapshot.docs.forEach((doc) => {
     const data = doc.data();
+    console.log("Event data:", data);
     const start =
       data.start instanceof Timestamp
         ? data.start.toDate()

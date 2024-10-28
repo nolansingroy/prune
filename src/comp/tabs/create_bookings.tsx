@@ -54,7 +54,10 @@ import { orderBy } from "firebase/firestore";
 import CreateBookingsFormDialog from "../CreateBookingsFormDialog";
 import { fetchBookingTypes } from "@/lib/converters/bookingTypes";
 import { fetchClients } from "@/lib/converters/clients";
-import { fetchBookingsListviewEvents } from "@/lib/converters/events";
+import {
+  fetchBookingsListviewEvents,
+  updateFireStoreEvent,
+} from "@/lib/converters/events";
 
 const formatFee = (fee: number): string => {
   return new Intl.NumberFormat("en-US", {
@@ -88,19 +91,14 @@ export default function CreateBookings() {
   );
   const [types, setTypes] = useState<{ docId: string; name: string }[]>([]);
 
-  useEffect(() => {
-    // fetchUserTimezone();
-    fetchEvents();
-  }, []);
-
-  // const fetchUserTimezone = async () => {
-  //   if (auth.currentUser) {
-  //     const userRef = doc(db, "users", auth.currentUser.uid);
-  //     const userDoc = await getDoc(userRef);
-  //     const userData = userDoc.data();
-  //     setUserTimezone(userData?.timezone || "UTC");
-  //   }
-  // };
+  const fetchEvents = async () => {
+    if (!auth.currentUser) {
+      return;
+    } else {
+      const eventList = await fetchBookingsListviewEvents(auth.currentUser.uid);
+      setEvents(eventList);
+    }
+  };
 
   const fetchAllClients = useCallback(async () => {
     if (auth.currentUser) {
@@ -133,6 +131,11 @@ export default function CreateBookings() {
   }, []);
 
   useEffect(() => {
+    // fetchUserTimezone();
+    fetchEvents();
+  }, []);
+
+  useEffect(() => {
     fetchAllClients();
   }, [fetchAllClients]);
 
@@ -140,14 +143,14 @@ export default function CreateBookings() {
     fetchAllBookingTypes();
   }, [fetchAllBookingTypes]);
 
-  const fetchEvents = async () => {
-    if (!auth.currentUser) {
-      return;
-    } else {
-      const eventList = await fetchBookingsListviewEvents(auth.currentUser.uid);
-      setEvents(eventList);
-    }
-  };
+  // const fetchUserTimezone = async () => {
+  //   if (auth.currentUser) {
+  //     const userRef = doc(db, "users", auth.currentUser.uid);
+  //     const userDoc = await getDoc(userRef);
+  //     const userData = userDoc.data();
+  //     setUserTimezone(userData?.timezone || "UTC");
+  //   }
+  // };
 
   const handleCellClick = (
     id: string,
@@ -167,13 +170,13 @@ export default function CreateBookings() {
   const handleBlur = async () => {
     if (editingCell) {
       const { id, field } = editingCell;
-      const docRef = doc(
-        db,
-        "users",
-        auth.currentUser?.uid ?? "",
-        "events",
-        id
-      );
+      // const docRef = doc(
+      //   db,
+      //   "users",
+      //   auth.currentUser?.uid ?? "",
+      //   "events",
+      //   id
+      // );
       let updates: any = {};
 
       if (field === "clientName") {
@@ -209,10 +212,6 @@ export default function CreateBookings() {
         updates = { [field]: parseFloat(editedValue) };
       }
 
-      const getUserTimeZoneOffset = () => {
-        return new Date().getTimezoneOffset() / 60;
-      };
-
       if (field === "start" || field === "end") {
         const [time, period] = editedValue.split(" ");
         const [hours, minutes] = time.split(":");
@@ -222,8 +221,8 @@ export default function CreateBookings() {
             const updatedTime = new Date(
               currentEvent[field === "start" ? "start" : "end"]
             );
-            const originalHours = updatedTime.getUTCHours();
-            const originalMinutes = updatedTime.getUTCMinutes();
+            const originalHours = updatedTime.getHours();
+            const originalMinutes = updatedTime.getMinutes();
 
             // Convert input time to 24-hour format
             let inputHours = parseInt(hours, 10);
@@ -244,13 +243,12 @@ export default function CreateBookings() {
               console.log(`Original time: ${originalHours}:${originalMinutes}`);
               console.log(`New time: ${inputHours}:${minutes}`);
 
-              updatedTime.setUTCHours(inputHours);
-              updatedTime.setUTCMinutes(parseInt(minutes, 10));
-              updatedTime.setUTCSeconds(0);
+              updatedTime.setHours(inputHours);
+              updatedTime.setMinutes(parseInt(minutes, 10));
+              updatedTime.setSeconds(0);
 
               const updatedDay = updatedTime.toLocaleDateString("en-US", {
                 weekday: "long",
-                timeZone: "UTC",
               });
               const updatedDate = updatedTime;
 
@@ -316,29 +314,26 @@ export default function CreateBookings() {
 
           // Only update if the date has changed
           if (originalDateString !== newDateString) {
-            const utcDate = new Date(
-              Date.UTC(
-                newDate.getUTCFullYear(),
-                newDate.getUTCMonth(),
-                newDate.getUTCDate(),
-                newDate.getUTCHours(),
-                newDate.getUTCMinutes(),
-                newDate.getUTCSeconds()
-              )
+            const localDate = new Date(
+              newDate.getFullYear(),
+              newDate.getMonth(),
+              newDate.getDate(),
+              newDate.getHours(),
+              newDate.getMinutes(),
+              newDate.getSeconds()
             );
 
             const updatedDateField = field === "startDate" ? "start" : "end";
             const updatedTime = new Date(currentEvent[updatedDateField]);
 
-            updatedTime.setUTCFullYear(
-              utcDate.getUTCFullYear(),
-              utcDate.getUTCMonth(),
-              utcDate.getUTCDate()
+            updatedTime.setFullYear(
+              localDate.getFullYear(),
+              localDate.getMonth(),
+              localDate.getDate()
             );
 
             const updatedDay = updatedTime.toLocaleDateString("en-US", {
               weekday: "long",
-              timeZone: "UTC",
             });
 
             if (field === "startDate") {
@@ -350,15 +345,14 @@ export default function CreateBookings() {
 
               // Update end fields if startDate is changed
               const endTime = new Date(currentEvent.end);
-              endTime.setUTCFullYear(
-                utcDate.getUTCFullYear(),
-                utcDate.getUTCMonth(),
-                utcDate.getUTCDate()
+              endTime.setFullYear(
+                localDate.getFullYear(),
+                localDate.getMonth(),
+                localDate.getDate()
               );
 
               const endDay = endTime.toLocaleDateString("en-US", {
                 weekday: "long",
-                timeZone: "UTC",
               });
 
               updates.end = endTime;
@@ -375,15 +369,14 @@ export default function CreateBookings() {
               };
               // Update start fields if endDate is changed
               const startTime = new Date(currentEvent.start);
-              startTime.setUTCFullYear(
-                utcDate.getUTCFullYear(),
-                utcDate.getUTCMonth(),
-                utcDate.getUTCDate()
+              startTime.setFullYear(
+                localDate.getFullYear(),
+                localDate.getMonth(),
+                localDate.getDate()
               );
 
               const startDay = startTime.toLocaleDateString("en-US", {
                 weekday: "long",
-                timeZone: "UTC",
               });
 
               updates.start = startTime;
@@ -404,7 +397,8 @@ export default function CreateBookings() {
       }
 
       // Save the updates to Firestore
-      await updateDoc(docRef, updates);
+      await updateFireStoreEvent(auth.currentUser?.uid!, id, updates);
+      // await updateDoc(docRef, updates);
 
       // Update local state
       setEvents((prevEvents) =>
@@ -631,11 +625,9 @@ export default function CreateBookings() {
     );
   };
 
-  const displayTimeWithOffset = (date: Date) => {
-    const userTimezoneOffsetInHours = new Date().getTimezoneOffset() / 60;
-    const adjustedDate = new Date(
-      date.getTime() + userTimezoneOffsetInHours * 60 * 60 * 1000
-    );
+  const displayTime = (date: Date) => {
+    // const userTimezoneOffsetInHours = new Date().getTimezoneOffset() / 60;
+    const adjustedDate = new Date(date.getTime());
     return adjustedDate.toLocaleTimeString("en-US", {
       hour: "2-digit",
       minute: "2-digit",
@@ -903,12 +895,12 @@ export default function CreateBookings() {
                         handleCellClick(
                           event.id!,
                           "start",
-                          displayTimeWithOffset(event.start),
+                          displayTime(event.start),
                           !!event.recurrence
                         )
                       }
                     >
-                      {displayTimeWithOffset(event.start)}
+                      {displayTime(event.start)}
                     </div>
                   )}
                 </TableCell>
@@ -930,12 +922,12 @@ export default function CreateBookings() {
                         handleCellClick(
                           event.id!,
                           "end",
-                          displayTimeWithOffset(event.end),
+                          displayTime(event.end),
                           !!event.recurrence
                         )
                       }
                     >
-                      {displayTimeWithOffset(event.end)}
+                      {displayTime(event.end)}
                     </div>
                   )}
                 </TableCell>

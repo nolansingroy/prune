@@ -445,27 +445,27 @@ export default function Calendar() {
     let calendarApi = selectInfo.view.calendar;
     calendarApi.unselect();
 
-    // Format the start and end dates based on the event selection
-    let startDateTime = date ? new Date(date) : new Date(selectInfo.startStr);
-    let endDateTime = new Date(selectInfo.startStr);
+    // // Format the start and end dates based on the event selection
+    // let startDateTime = date ? new Date(date) : new Date(selectInfo.startStr);
+    // let endDateTime = new Date(selectInfo.startStr);
 
-    if (startTime && endTime) {
-      const [startHour, startMinute] = startTime.split(":").map(Number);
-      const [endHour, endMinute] = endTime.split(":").map(Number);
+    // if (startTime && endTime) {
+    //   const [startHour, startMinute] = startTime.split(":").map(Number);
+    //   const [endHour, endMinute] = endTime.split(":").map(Number);
 
-      // Set the time in local time
-      startDateTime.setHours(startHour, startMinute, 0, 0);
-      endDateTime.setHours(endHour, endMinute, 0, 0);
+    //   // Set the time in local time
+    //   startDateTime.setHours(startHour, startMinute, 0, 0);
+    //   endDateTime.setHours(endHour, endMinute, 0, 0);
 
-      // Ensure end time is after the start time
-      if (endDateTime <= startDateTime) {
-        endDateTime.setDate(endDateTime.getDate() + 1);
-      }
-    }
+    //   // Ensure end time is after the start time
+    //   if (endDateTime <= startDateTime) {
+    //     endDateTime.setDate(endDateTime.getDate() + 1);
+    //   }
+    // }
 
-    // Convert local dates to UTC before saving to Firestore
-    const startDateUTC = convertToUTC(startDateTime);
-    const endDateUTC = convertToUTC(endDateTime);
+    // // Convert local dates to UTC before saving to Firestore
+    // const startDateUTC = convertToUTC(startDateTime);
+    // const endDateUTC = convertToUTC(endDateTime);
 
     setLoading(true); // Start loading
 
@@ -558,21 +558,21 @@ export default function Calendar() {
       } else {
         // Handle single or background event directly on the client side
         // Parse the start and end times
-        let startDateTime = date
-          ? new Date(date)
-          : new Date(selectInfo.startStr);
+
+        let startDateTime = new Date(selectInfo.startStr);
         let endDateTime = new Date(selectInfo.startStr);
 
         if (startTime && endTime) {
           const [startHour, startMinute] = startTime.split(":").map(Number);
           const [endHour, endMinute] = endTime.split(":").map(Number);
 
-          // Set the time in local time
+          // Set the time in UTC
           startDateTime.setHours(startHour, startMinute, 0, 0);
           endDateTime.setHours(endHour, endMinute, 0, 0);
 
           // Ensure end time is after the start time
           if (endDateTime <= startDateTime) {
+            console.log("true", endDateTime);
             endDateTime.setDate(endDateTime.getDate() + 1);
           }
         }
@@ -610,6 +610,8 @@ export default function Calendar() {
 
         console.log("Single event data ready for Firestore:", event);
         event = removeUndefinedFields(event);
+
+        console.log("Event data before submitting to firebase:", event);
 
         await createFireStoreEvent(user.uid, event);
         setEvents((prevEvents) => [...prevEvents, event]);
