@@ -54,7 +54,6 @@ const eventConverter: FirestoreDataConverter<EventInput> = {
         : null,
     };
 
-    // Conditionally include the recurrence field only if it is defined
     if (event.recurrence) {
       firestoreEvent.recurrence = event.recurrence;
     }

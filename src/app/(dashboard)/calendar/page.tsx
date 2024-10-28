@@ -577,6 +577,14 @@ export default function Calendar() {
           }
         }
 
+        const startDay = startDateTime.toLocaleDateString("en-US", {
+          weekday: "long",
+        });
+
+        const endDay = endDateTime.toLocaleDateString("en-US", {
+          weekday: "long",
+        });
+
         // Create the event object for a booking or availability event
         let event: EventInput = {
           id: "",
@@ -594,13 +602,9 @@ export default function Calendar() {
           className: isBackgroundEvent ? "custom-bg-event" : "",
           isBackgroundEvent,
           startDate: startDateTime,
-          startDay: startDateTime.toLocaleDateString("en-US", {
-            weekday: "long",
-          }),
+          startDay: startDay,
           endDate: endDateTime,
-          endDay: endDateTime.toLocaleDateString("en-US", {
-            weekday: "long",
-          }),
+          endDay: endDay,
           paid,
         };
 
@@ -624,37 +628,37 @@ export default function Calendar() {
     return <div>Loading...</div>;
   }
   // // test build
-  // const checkOverlap = (
-  //   event: {
-  //     extendedProps: { isBackgroundEvent: any };
-  //     start: { getTime: () => any };
-  //     end: { getTime: () => any };
-  //     id: any;
-  //   },
-  //   allEvents: any[]
-  // ) => {
-  //   const isBackgroundEvent = event.extendedProps.isBackgroundEvent;
-  //   if (isBackgroundEvent) return false;
+  const checkOverlap = (
+    event: {
+      extendedProps: { isBackgroundEvent: any };
+      start: { getTime: () => any };
+      end: { getTime: () => any };
+      id: any;
+    },
+    allEvents: any[]
+  ) => {
+    const isBackgroundEvent = event.extendedProps.isBackgroundEvent;
+    if (isBackgroundEvent) return false;
 
-  //   const eventStart = event.start.getTime();
-  //   // const eventEnd = event.end.getTime();
-  //   const eventEnd = event.end ? event.end.getTime() : eventStart;
+    const eventStart = event.start.getTime();
+    // const eventEnd = event.end.getTime();
+    const eventEnd = event.end ? event.end.getTime() : eventStart;
 
-  //   return allEvents.some((e) => {
-  //     if (e.id !== event.id && e.extendedProps.isBackgroundEvent) {
-  //       const bgStart = e.start.getTime();
-  //       // const bgEnd = e.end.getTime();
-  //       const bgEnd = e.end ? e.end.getTime() : bgStart;
+    return allEvents.some((e) => {
+      if (e.id !== event.id && e.extendedProps.isBackgroundEvent) {
+        const bgStart = e.start.getTime();
+        // const bgEnd = e.end.getTime();
+        const bgEnd = e.end ? e.end.getTime() : bgStart;
 
-  //       return (
-  //         (eventStart >= bgStart && eventStart < bgEnd) ||
-  //         (eventEnd > bgStart && eventEnd <= bgEnd) ||
-  //         (eventStart <= bgStart && eventEnd >= bgEnd)
-  //       );
-  //     }
-  //     return false;
-  //   });
-  // };
+        return (
+          (eventStart >= bgStart && eventStart < bgEnd) ||
+          (eventEnd > bgStart && eventEnd <= bgEnd) ||
+          (eventStart <= bgStart && eventEnd >= bgEnd)
+        );
+      }
+      return false;
+    });
+  };
 
   const handleEventDidMount = (info: {
     view: { calendar: any };
@@ -665,9 +669,9 @@ export default function Calendar() {
     const allEvents = calendarApi.getEvents();
 
     // Check for overlap with background events
-    // if (checkOverlap(info.event, allEvents)) {
-    //   info.el.classList.add("overlap-event");
-    // }
+    if (checkOverlap(info.event, allEvents)) {
+      info.el.classList.add("overlap-event");
+    }
 
     // add a popOver to the event here
   };
@@ -700,48 +704,44 @@ export default function Calendar() {
     }
     console.log("updating information triggered");
 
-    try {
-      const startDate =
-        eventData.date || new Date().toISOString().split("T")[0];
+    let startDateTime = new Date(`${eventData.date}T${eventData.startTime}`);
+    let endDateTime = new Date(`${eventData.date}T${eventData.endTime}`);
 
-      // Check if the event is recurring or a single event
+    if (eventData.startTime && eventData.endTime) {
+      const [startHour, startMinute] = eventData.startTime
+        .split(":")
+        .map(Number);
+      const [endHour, endMinute] = eventData.endTime.split(":").map(Number);
+
+      // Set the time in local time
+      startDateTime.setHours(startHour, startMinute, 0, 0);
+      endDateTime.setHours(endHour, endMinute, 0, 0);
+
+      // Ensure end time is after the start time
+      if (endDateTime <= startDateTime) {
+        endDateTime.setDate(endDateTime.getDate() + 1);
+      }
+    }
+
+    const startDay = startDateTime.toLocaleDateString("en-US", {
+      weekday: "long",
+    });
+
+    const endDay = endDateTime.toLocaleDateString("en-US", {
+      weekday: "long",
+    });
+
+    setLoading(true); // Start loading
+
+    try {
       if (
         !eventData.recurrence ||
         eventData.recurrence.daysOfWeek.length === 0
       ) {
-        // update the event in firebase instead of creating a new one
         console.log("updating event in firebase");
         if (!eventData.id) {
           throw new Error("Event ID is missing");
         }
-        const eventRef = doc(db, "users", userId!, "events", eventData.id);
-
-        // Parse the start and end times
-        let startDateTime = new Date(`${startDate}T${eventData.startTime}`);
-        let endDateTime = new Date(`${startDate}T${eventData.endTime}`);
-
-        // Ensure the end time is after the start time
-        if (endDateTime <= startDateTime) {
-          endDateTime.setDate(endDateTime.getDate() + 1);
-        }
-
-        // Adjust the start and end times to UTC
-        startDateTime = convertToUTC(startDateTime);
-        endDateTime = convertToUTC(endDateTime);
-
-        // Adjust the start day
-        const startDay = startDateTime.toLocaleDateString("en-US", {
-          weekday: "long",
-          timeZone: "UTC",
-        });
-
-        // Adjust the end day
-        const endDay = endDateTime.toLocaleDateString("en-US", {
-          weekday: "long",
-          timeZone: "UTC",
-        });
-
-        // Create a new event object
         const eventInput = {
           type: eventData.type,
           typeId: eventData.typeId,
@@ -751,20 +751,16 @@ export default function Calendar() {
           description: eventData.description,
           location: eventData.location || "",
           isBackgroundEvent: eventData.isBackgroundEvent,
-          start: startDateTime, // Save in UTC
-          end: endDateTime, // Save in UTC
+          start: startDateTime,
+          end: endDateTime,
           startDate: startDateTime,
           endDate: endDateTime,
           startDay: startDay,
           endDay: endDay,
           paid: eventData.paid,
-          updated_at: new Date(), // Timestamp of last update
         };
 
-        console.log("evenRef", eventRef);
-
-        // Save the event directly to Firestore
-        await updateDoc(eventRef, eventInput);
+        await updateFireStoreEvent(userId!, eventData.id, eventInput);
 
         console.log("Single event updated in Firestore");
       } else {
@@ -773,42 +769,14 @@ export default function Calendar() {
         if (!eventData.id) {
           throw new Error("Event ID is missing");
         }
-        const eventRef = doc(db, "users", userId!, "events", eventData.id);
 
-        // Parse the start and end times
-        let startDateTime = new Date(`${startDate}T${eventData.startTime}`);
-        let endDateTime = new Date(`${startDate}T${eventData.endTime}`);
+        const startRecur = new Date(eventData.recurrence?.startRecur);
+        const endRecur = new Date(eventData.recurrence?.endRecur);
+        endRecur.setDate(endRecur.getDate() + 1);
 
-        // Ensure the end time is after the start time
-        if (endDateTime <= startDateTime) {
-          endDateTime.setDate(endDateTime.getDate() + 1);
-        }
-
-        // Adjust the start and end times to UTC
-        startDateTime = convertToUTC(startDateTime);
-        endDateTime = convertToUTC(endDateTime);
-
-        // Adjust the start day
-        const startDay = startDateTime.toLocaleDateString("en-US", {
-          weekday: "long",
-          timeZone: "UTC",
-        });
-
-        // Adjust the end day
-        const endDay = endDateTime.toLocaleDateString("en-US", {
-          weekday: "long",
-          timeZone: "UTC",
-        });
-
-        // Add 2 days to the endRecur date to ensure the last day is included
-        const endRecur = new Date(eventData.recurrence?.endRecur || startDate);
-        endRecur.setDate(endRecur.getDate() + 2);
-
-        // Convert recurrence dates to UTC
-        const startRecurUTC = convertToUTC(
-          new Date(eventData.recurrence?.startRecur || startDate)
-        );
-        const endRecurUTC = convertToUTC(endRecur);
+        // convert startRecur and endRecur to strings
+        const startRecurString = startRecur.toISOString().split("T")[0];
+        const endRecurString = endRecur.toISOString().split("T")[0];
 
         const eventInput = {
           type: eventData.type,
@@ -819,8 +787,8 @@ export default function Calendar() {
           description: eventData.description,
           location: eventData.location || "",
           isBackgroundEvent: eventData.isBackgroundEvent,
-          start: startDateTime, // Save in UTC
-          end: endDateTime, // Save in UTC
+          start: startDateTime,
+          end: endDateTime,
           startDate: startDateTime,
           endDate: endDateTime,
           startDay: startDay,
@@ -830,16 +798,13 @@ export default function Calendar() {
           paid: eventData.paid,
           recurrence: {
             daysOfWeek: eventData.recurrence?.daysOfWeek || [],
-            startRecur: startRecurUTC.toISOString().split("T")[0] || startDate,
-            endRecur: endRecurUTC.toISOString().split("T")[0],
+            startRecur: startRecurString,
+            endRecur: endRecurString,
           },
-          userId: userId,
+          userId: userId!,
         };
 
-        console.log("evenRef", eventRef);
-
-        // Save the event directly to Firestore
-        await updateDoc(eventRef, eventInput);
+        await updateFireStoreEvent(userId!, eventData.id, eventInput);
 
         console.log("Recurring event updated in Firestore");
       }
