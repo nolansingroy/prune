@@ -177,46 +177,59 @@ export default function CreateBookings() {
       //   "events",
       //   id
       // );
+      const currentEvent = events.find((event) => event.id === id);
+      if (!currentEvent) {
+        setEditingCell(null);
+        return;
+      }
       let updates: any = {};
 
       if (field === "clientName") {
-        updates = { [field]: editedValue };
-        const matchedClient = clients.find(
-          (client) =>
-            client.fullName.toLowerCase() === editedValue.toLowerCase()
-        );
-        if (matchedClient) {
-          updates = { clientId: matchedClient.docId, clientName: editedValue };
-          console.log("Matched client:", matchedClient);
-        } else {
-          updates = { clientId: "", clientName: editedValue };
-          console.log("Client not found:", editedValue);
+        if (currentEvent.clientName !== editedValue) {
+          updates = { [field]: editedValue };
+          const matchedClient = clients.find(
+            (client) =>
+              client.fullName.toLowerCase() === editedValue.toLowerCase()
+          );
+          if (matchedClient) {
+            updates = {
+              clientId: matchedClient.docId,
+              clientName: editedValue,
+            };
+            console.log("Matched client:", matchedClient);
+          } else {
+            updates = { clientId: "", clientName: editedValue };
+            console.log("Client not found:", editedValue);
+          }
         }
       }
 
       if (field === "type") {
-        updates = { [field]: editedValue };
-        const matchedType = types.find(
-          (type) => type.name.toLowerCase() === editedValue.toLowerCase()
-        );
-        if (matchedType) {
-          updates = { typeId: matchedType.docId, type: editedValue };
-          console.log("Matched type:", matchedType);
-        } else {
-          updates = { typeId: "", type: editedValue };
-          console.log("Type not found:", editedValue);
+        if (currentEvent.type !== editedValue) {
+          updates = { [field]: editedValue };
+          const matchedType = types.find(
+            (type) => type.name.toLowerCase() === editedValue.toLowerCase()
+          );
+          if (matchedType) {
+            updates = { typeId: matchedType.docId, type: editedValue };
+            console.log("Matched type:", matchedType);
+          } else {
+            updates = { typeId: "", type: editedValue };
+            console.log("Type not found:", editedValue);
+          }
         }
       }
 
       if (field === "fee") {
-        updates = { [field]: parseFloat(editedValue) };
+        if (currentEvent.fee !== parseFloat(editedValue)) {
+          updates = { [field]: parseFloat(editedValue) };
+        }
       }
 
       if (field === "start" || field === "end") {
         const [time, period] = editedValue.split(" ");
         const [hours, minutes] = time.split(":");
         if (hours !== undefined && minutes !== undefined) {
-          const currentEvent = events.find((event) => event.id === id);
           if (currentEvent) {
             const updatedTime = new Date(
               currentEvent[field === "start" ? "start" : "end"]
@@ -373,7 +386,9 @@ export default function CreateBookings() {
           }
         }
       } else if (field === "description") {
-        updates = { [field]: editedValue };
+        if (currentEvent.description !== editedValue) {
+          updates = { [field]: editedValue };
+        }
       }
 
       if (Object.keys(updates).length === 0) {

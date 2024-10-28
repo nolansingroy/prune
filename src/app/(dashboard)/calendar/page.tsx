@@ -448,24 +448,30 @@ export default function Calendar() {
     // // Format the start and end dates based on the event selection
     // let startDateTime = date ? new Date(date) : new Date(selectInfo.startStr);
     // let endDateTime = new Date(selectInfo.startStr);
+    let startDateTime = new Date(selectInfo.startStr);
+    let endDateTime = new Date(selectInfo.startStr);
 
-    // if (startTime && endTime) {
-    //   const [startHour, startMinute] = startTime.split(":").map(Number);
-    //   const [endHour, endMinute] = endTime.split(":").map(Number);
+    if (startTime && endTime) {
+      const [startHour, startMinute] = startTime.split(":").map(Number);
+      const [endHour, endMinute] = endTime.split(":").map(Number);
 
-    //   // Set the time in local time
-    //   startDateTime.setHours(startHour, startMinute, 0, 0);
-    //   endDateTime.setHours(endHour, endMinute, 0, 0);
+      // Set the time in UTC
+      startDateTime.setHours(startHour, startMinute, 0, 0);
+      endDateTime.setHours(endHour, endMinute, 0, 0);
 
-    //   // Ensure end time is after the start time
-    //   if (endDateTime <= startDateTime) {
-    //     endDateTime.setDate(endDateTime.getDate() + 1);
-    //   }
-    // }
+      // Ensure end time is after the start time
+      if (endDateTime <= startDateTime) {
+        endDateTime.setDate(endDateTime.getDate() + 1);
+      }
+    }
 
-    // // Convert local dates to UTC before saving to Firestore
-    // const startDateUTC = convertToUTC(startDateTime);
-    // const endDateUTC = convertToUTC(endDateTime);
+    const startDay = startDateTime.toLocaleDateString("en-US", {
+      weekday: "long",
+    });
+
+    const endDay = endDateTime.toLocaleDateString("en-US", {
+      weekday: "long",
+    });
 
     setLoading(true); // Start loading
 
@@ -481,13 +487,11 @@ export default function Calendar() {
         recurrence.daysOfWeek &&
         recurrence.daysOfWeek.length > 0
       ) {
+        // Convert recurrence dates to UTC
+        const startRecur = new Date(recurrence.startRecur);
         // Adjust end recurrence date
         const endRecur = new Date(recurrence.endRecur);
         endRecur.setDate(endRecur.getDate() + 1);
-
-        // Convert recurrence dates to UTC
-        const startRecurUTC = convertToUTC(new Date(recurrence.startRecur));
-        const endRecurUTC = convertToUTC(endRecur);
 
         // Prepare the event input for the cloud function
 
@@ -496,13 +500,13 @@ export default function Calendar() {
             title,
             description,
             location: location || "",
-            startDate: startDateUTC,
+            startDate: startDateTime,
             startTime,
             endTime,
             recurrence: {
               daysOfWeek: recurrence.daysOfWeek,
-              startRecur: startRecurUTC || startDateUTC,
-              endRecur: endRecurUTC,
+              startRecur: startRecur,
+              endRecur: endRecur,
             },
             userId: user.uid,
           };
@@ -529,14 +533,14 @@ export default function Calendar() {
             description,
             fee,
             location: location || "",
-            startDate: startDateUTC,
+            startDate: startDateTime,
             startTime,
             endTime,
             paid,
             recurrence: {
               daysOfWeek: recurrence.daysOfWeek,
-              startRecur: startRecurUTC || startDateUTC,
-              endRecur: endRecurUTC.toISOString().split("T")[0],
+              startRecur: startRecur,
+              endRecur: endRecur,
             },
             userId: user.uid,
           };
@@ -559,31 +563,31 @@ export default function Calendar() {
         // Handle single or background event directly on the client side
         // Parse the start and end times
 
-        let startDateTime = new Date(selectInfo.startStr);
-        let endDateTime = new Date(selectInfo.startStr);
+        // let startDateTime = new Date(selectInfo.startStr);
+        // let endDateTime = new Date(selectInfo.startStr);
 
-        if (startTime && endTime) {
-          const [startHour, startMinute] = startTime.split(":").map(Number);
-          const [endHour, endMinute] = endTime.split(":").map(Number);
+        // if (startTime && endTime) {
+        //   const [startHour, startMinute] = startTime.split(":").map(Number);
+        //   const [endHour, endMinute] = endTime.split(":").map(Number);
 
-          // Set the time in UTC
-          startDateTime.setHours(startHour, startMinute, 0, 0);
-          endDateTime.setHours(endHour, endMinute, 0, 0);
+        //   // Set the time in UTC
+        //   startDateTime.setHours(startHour, startMinute, 0, 0);
+        //   endDateTime.setHours(endHour, endMinute, 0, 0);
 
-          // Ensure end time is after the start time
-          if (endDateTime <= startDateTime) {
-            console.log("true", endDateTime);
-            endDateTime.setDate(endDateTime.getDate() + 1);
-          }
-        }
+        //   // Ensure end time is after the start time
+        //   if (endDateTime <= startDateTime) {
+        //     console.log("true", endDateTime);
+        //     endDateTime.setDate(endDateTime.getDate() + 1);
+        //   }
+        // }
 
-        const startDay = startDateTime.toLocaleDateString("en-US", {
-          weekday: "long",
-        });
+        // const startDay = startDateTime.toLocaleDateString("en-US", {
+        //   weekday: "long",
+        // });
 
-        const endDay = endDateTime.toLocaleDateString("en-US", {
-          weekday: "long",
-        });
+        // const endDay = endDateTime.toLocaleDateString("en-US", {
+        //   weekday: "long",
+        // });
 
         // Create the event object for a booking or availability event
         let event: EventInput = {
