@@ -26,19 +26,19 @@ const eventConverter: FirestoreDataConverter<EventInput> = {
       fee: event.fee || 0,
       clientId: event.clientId || "",
       clientName: event.clientName || "",
-      start: event.start ? Timestamp.fromDate(new Date(event.start)) : null, // Convert to Timestamp
-      end: event.end ? Timestamp.fromDate(new Date(event.end)) : null, // Convert to Timestamp
+      start: event.start ? Timestamp.fromDate(new Date(event.start)) : null,
+      end: event.end ? Timestamp.fromDate(new Date(event.end)) : null,
       description: event.description || "",
       display: event.display || "",
       className: event.className || "",
       isBackgroundEvent: event.isBackgroundEvent,
       startDate: event.startDate
         ? Timestamp.fromDate(new Date(event.startDate))
-        : null, // Convert to Timestamp
+        : null,
       startDay: event.startDay,
       endDate: event.endDate
         ? Timestamp.fromDate(new Date(event.endDate))
-        : null, // Convert to Timestamp
+        : null,
       endDay: event.endDay,
       exceptions: event.exceptions || [],
       exdate: event.exdate || [],
@@ -176,7 +176,7 @@ export async function updateFireStoreEvent(
   );
   const updatedEvent = {
     ...event,
-    updated_at: Timestamp.now().toDate(), // Use Firestore Timestamp for consistency
+    updated_at: Timestamp.now().toDate(),
   };
 
   await updateDoc(eventDocRef, updatedEvent);

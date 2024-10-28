@@ -713,7 +713,6 @@ export default function Calendar() {
         .map(Number);
       const [endHour, endMinute] = eventData.endTime.split(":").map(Number);
 
-      // Set the time in local time
       startDateTime.setHours(startHour, startMinute, 0, 0);
       endDateTime.setHours(endHour, endMinute, 0, 0);
 
