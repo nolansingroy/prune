@@ -305,86 +305,66 @@ export default function CreateBookings() {
           return;
         }
       } else if (field === "startDate" || field === "endDate") {
-        const newDate = new Date(editedValue);
+        const newDate = moment(editedValue).startOf("day");
         const currentEvent = events.find((event) => event.id === id);
         if (currentEvent) {
-          const originalDate = new Date(currentEvent[field]);
-          const originalDateString = originalDate.toISOString().split("T")[0];
-          const newDateString = newDate.toISOString().split("T")[0];
+          const originalDate = moment(currentEvent[field]).startOf("day");
+          const originalDateString = originalDate.format("YYYY-MM-DD");
+          const newDateString = newDate.format("YYYY-MM-DD");
 
           // Only update if the date has changed
           if (originalDateString !== newDateString) {
-            const localDate = new Date(
-              newDate.getFullYear(),
-              newDate.getMonth(),
-              newDate.getDate(),
-              newDate.getHours(),
-              newDate.getMinutes(),
-              newDate.getSeconds()
-            );
-
             const updatedDateField = field === "startDate" ? "start" : "end";
-            const updatedTime = new Date(currentEvent[updatedDateField]);
+            const updatedTime = moment(currentEvent[updatedDateField]);
 
-            updatedTime.setFullYear(
-              localDate.getFullYear(),
-              localDate.getMonth(),
-              localDate.getDate()
-            );
+            // Preserve the time components and set the new date
+            updatedTime.year(newDate.year());
+            updatedTime.month(newDate.month());
+            updatedTime.date(newDate.date());
 
-            const updatedDay = updatedTime.toLocaleDateString("en-US", {
-              weekday: "long",
-            });
+            const updatedDay = updatedTime.format("dddd");
 
             if (field === "startDate") {
               updates = {
-                startDate: updatedTime,
+                startDate: updatedTime.toDate(),
                 startDay: updatedDay,
-                start: updatedTime,
+                start: updatedTime.toDate(),
               };
 
               // Update end fields if startDate is changed
-              const endTime = new Date(currentEvent.end);
-              endTime.setFullYear(
-                localDate.getFullYear(),
-                localDate.getMonth(),
-                localDate.getDate()
-              );
+              const endTime = moment(currentEvent.end);
+              endTime.year(newDate.year());
+              endTime.month(newDate.month());
+              endTime.date(newDate.date());
 
-              const endDay = endTime.toLocaleDateString("en-US", {
-                weekday: "long",
-              });
+              const endDay = endTime.format("dddd");
 
-              updates.end = endTime;
-              updates.endDate = endTime;
+              updates.end = endTime.toDate();
+              updates.endDate = endTime.toDate();
               updates.endDay = endDay;
 
-              console.log(`Start date changed: ${updatedTime}`);
-              console.log(`End date adjusted: ${endTime}`);
+              console.log(`Start date changed: ${updatedTime.toDate()}`);
+              console.log(`End date adjusted: ${endTime.toDate()}`);
             } else if (field === "endDate") {
               updates = {
-                endDate: updatedTime,
+                endDate: updatedTime.toDate(),
                 endDay: updatedDay,
-                end: updatedTime,
+                end: updatedTime.toDate(),
               };
               // Update start fields if endDate is changed
-              const startTime = new Date(currentEvent.start);
-              startTime.setFullYear(
-                localDate.getFullYear(),
-                localDate.getMonth(),
-                localDate.getDate()
-              );
+              const startTime = moment(currentEvent.start);
+              startTime.year(newDate.year());
+              startTime.month(newDate.month());
+              startTime.date(newDate.date());
 
-              const startDay = startTime.toLocaleDateString("en-US", {
-                weekday: "long",
-              });
+              const startDay = startTime.format("dddd");
 
-              updates.start = startTime;
-              updates.startDate = startTime;
+              updates.start = startTime.toDate();
+              updates.startDate = startTime.toDate();
               updates.startDay = startDay;
 
-              console.log(`End date changed: ${updatedTime}`);
-              console.log(`Start date adjusted: ${startTime}`);
+              console.log(`End date changed: ${updatedTime.toDate()}`);
+              console.log(`Start date adjusted: ${startTime.toDate()}`);
             }
           } else {
             console.log(`Date not changed for ${field}:`);
@@ -394,6 +374,11 @@ export default function CreateBookings() {
         }
       } else if (field === "description") {
         updates = { [field]: editedValue };
+      }
+
+      if (Object.keys(updates).length === 0) {
+        setEditingCell(null);
+        return;
       }
 
       // Save the updates to Firestore
