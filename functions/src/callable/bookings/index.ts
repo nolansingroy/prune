@@ -38,7 +38,7 @@ export const createRecurringBookingInstances = functions.https.onRequest(
           userId,
         } = req.body;
 
-        console.log("Updated new function 7:21");
+        console.log("Updated new function 6:58 utc-7");
 
         console.log("Received request with data:", {
           title,
@@ -68,15 +68,16 @@ export const createRecurringBookingInstances = functions.https.onRequest(
         const originalStartDate = new Date(`${startDate}T${startTime}Z`);
         const originalEndDate = new Date(`${startDate}T${endTime}Z`);
 
+        
         console.log("Original start date:", originalStartDate);
         console.log("Original end date:", originalEndDate);
 
         const daysOfWeek = recurrence.daysOfWeek;
 
         // Check if the original start date is on a recurring day; adjust if not
-        if (!daysOfWeek.includes(originalStartDate.getUTCDay())) {
+        if (!daysOfWeek.includes(originalStartDate.getDay())) {
           let dayOffset = 1;
-          while (!daysOfWeek.includes((originalStartDate.getUTCDay() + dayOffset) % 7)) {
+          while (!daysOfWeek.includes((originalStartDate.getDay() + dayOffset) % 7)) {
             dayOffset++;
           }
           // Set the start date and end date to the next valid recurring day
@@ -113,6 +114,7 @@ export const createRecurringBookingInstances = functions.https.onRequest(
         console.log("All occurrences:", allOccurrences);
 
         const instanceMap: { [key: string]: string } = {};
+        
 
         // 1. Create the original event
         batch.set(eventRef, {

@@ -445,33 +445,9 @@ export default function Calendar() {
     let calendarApi = selectInfo.view.calendar;
     calendarApi.unselect();
 
-    // // Format the start and end dates based on the event selection
-    // let startDateTime = date ? new Date(date) : new Date(selectInfo.startStr);
-    // let endDateTime = new Date(selectInfo.startStr);
-    let startDateTime = new Date(selectInfo.startStr);
-    let endDateTime = new Date(selectInfo.startStr);
-
-    if (startTime && endTime) {
-      const [startHour, startMinute] = startTime.split(":").map(Number);
-      const [endHour, endMinute] = endTime.split(":").map(Number);
-
-      // Set the time in UTC
-      startDateTime.setHours(startHour, startMinute, 0, 0);
-      endDateTime.setHours(endHour, endMinute, 0, 0);
-
-      // Ensure end time is after the start time
-      if (endDateTime <= startDateTime) {
-        endDateTime.setDate(endDateTime.getDate() + 1);
-      }
-    }
-
-    const startDay = startDateTime.toLocaleDateString("en-US", {
-      weekday: "long",
-    });
-
-    const endDay = endDateTime.toLocaleDateString("en-US", {
-      weekday: "long",
-    });
+    let startDate = date
+      ? new Date(date).toISOString().split("T")[0]
+      : new Date(selectInfo.startStr).toISOString().split("T")[0];
 
     setLoading(true); // Start loading
 
@@ -487,10 +463,9 @@ export default function Calendar() {
         recurrence.daysOfWeek &&
         recurrence.daysOfWeek.length > 0
       ) {
-        // Convert recurrence dates to UTC
         const startRecur = new Date(recurrence.startRecur);
-        // Adjust end recurrence date
-        const endRecur = new Date(recurrence.endRecur);
+
+        const endRecur = new Date(recurrence.endRecur || startDate);
         endRecur.setDate(endRecur.getDate() + 1);
 
         // Prepare the event input for the cloud function
@@ -500,13 +475,13 @@ export default function Calendar() {
             title,
             description,
             location: location || "",
-            startDate: startDateTime,
+            startDate,
             startTime,
             endTime,
             recurrence: {
               daysOfWeek: recurrence.daysOfWeek,
-              startRecur: startRecur,
-              endRecur: endRecur,
+              startRecur: startRecur.toISOString().split("T")[0] || startDate,
+              endRecur: endRecur.toISOString().split("T")[0],
             },
             userId: user.uid,
           };
@@ -533,14 +508,14 @@ export default function Calendar() {
             description,
             fee,
             location: location || "",
-            startDate: startDateTime,
+            startDate,
             startTime,
             endTime,
             paid,
             recurrence: {
               daysOfWeek: recurrence.daysOfWeek,
-              startRecur: startRecur,
-              endRecur: endRecur,
+              startRecur: startRecur.toISOString().split("T")[0] || startDate,
+              endRecur: endRecur.toISOString().split("T")[0],
             },
             userId: user.uid,
           };
@@ -551,9 +526,10 @@ export default function Calendar() {
           );
 
           // Make the axios call to your cloud function
-          // "http://127.0.0.1:5001/prune-94ad9/us-central1/createRecurringBookingInstances",
+          //"https://us-central1-prune-94ad9.cloudfunctions.net/createRecurringBookingInstances"
+
           const result = await axios.post(
-            "https://us-central1-prune-94ad9.cloudfunctions.net/createRecurringBookingInstances",
+            "http://127.0.0.1:5001/prune-94ad9/us-central1/createRecurringBookingInstances",
             eventInput
           );
 
@@ -563,31 +539,28 @@ export default function Calendar() {
         // Handle single or background event directly on the client side
         // Parse the start and end times
 
-        // let startDateTime = new Date(selectInfo.startStr);
-        // let endDateTime = new Date(selectInfo.startStr);
+        let startDateTime = new Date(selectInfo.startStr);
+        let endDateTime = new Date(selectInfo.startStr);
 
-        // if (startTime && endTime) {
-        //   const [startHour, startMinute] = startTime.split(":").map(Number);
-        //   const [endHour, endMinute] = endTime.split(":").map(Number);
+        if (startTime && endTime) {
+          const [startHour, startMinute] = startTime.split(":").map(Number);
+          const [endHour, endMinute] = endTime.split(":").map(Number);
 
-        //   // Set the time in UTC
-        //   startDateTime.setHours(startHour, startMinute, 0, 0);
-        //   endDateTime.setHours(endHour, endMinute, 0, 0);
+          startDateTime.setHours(startHour, startMinute, 0, 0);
+          endDateTime.setHours(endHour, endMinute, 0, 0);
 
-        //   // Ensure end time is after the start time
-        //   if (endDateTime <= startDateTime) {
-        //     console.log("true", endDateTime);
-        //     endDateTime.setDate(endDateTime.getDate() + 1);
-        //   }
-        // }
+          if (endDateTime <= startDateTime) {
+            endDateTime.setDate(endDateTime.getDate() + 1);
+          }
+        }
 
-        // const startDay = startDateTime.toLocaleDateString("en-US", {
-        //   weekday: "long",
-        // });
+        const startDay = startDateTime.toLocaleDateString("en-US", {
+          weekday: "long",
+        });
 
-        // const endDay = endDateTime.toLocaleDateString("en-US", {
-        //   weekday: "long",
-        // });
+        const endDay = endDateTime.toLocaleDateString("en-US", {
+          weekday: "long",
+        });
 
         // Create the event object for a booking or availability event
         let event: EventInput = {
