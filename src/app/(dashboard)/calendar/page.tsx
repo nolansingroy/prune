@@ -457,12 +457,22 @@ export default function Calendar() {
         throw new Error("User not authenticated");
       }
 
+      // Get the user's time zone
+      const userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
       // If this is a recurring event, handle it using the cloud function
       if (
         recurrence &&
         recurrence.daysOfWeek &&
         recurrence.daysOfWeek.length > 0
       ) {
+        // Calculate the time zone offsets for start time and end time
+        const startDateTime = new Date(`${startDate}T${startTime}`);
+        const endDateTime = new Date(`${startDate}T${endTime}`);
+
+        const startTimeZoneOffset = -startDateTime.getTimezoneOffset() / 60; // Offset in hours
+        const endTimeZoneOffset = -endDateTime.getTimezoneOffset() / 60; // Offset in hours
+
         const startRecur = new Date(recurrence.startRecur);
 
         const endRecur = new Date(recurrence.endRecur || startDate);
@@ -484,6 +494,7 @@ export default function Calendar() {
               endRecur: endRecur.toISOString().split("T")[0],
             },
             userId: user.uid,
+            userTimeZone,
           };
 
           console.log(
@@ -518,6 +529,7 @@ export default function Calendar() {
               endRecur: endRecur.toISOString().split("T")[0],
             },
             userId: user.uid,
+            userTimeZone,
           };
 
           console.log(
