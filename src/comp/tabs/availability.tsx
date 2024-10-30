@@ -42,6 +42,7 @@ import moment from "moment-timezone";
 import axios from "axios";
 import { orderBy } from "firebase/firestore";
 import {
+  createFireStoreEvent,
   fetchAvailabilitiesListviewEvents,
   updateFireStoreEvent,
 } from "@/lib/converters/events";
@@ -346,13 +347,19 @@ export default function Availability() {
       if (!user) {
         throw new Error("User not authenticated");
       }
+
+      // Get the user's time zone
+      const userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
       // Check if the event is recurring or a single event
       if (
         eventData.recurrence &&
         eventData.recurrence.daysOfWeek &&
         eventData.recurrence.daysOfWeek.length > 0
       ) {
-        // Adjust end recurrence date
+        // Calculate the time zone offsets for start time and end time
+        const startDateTime = new Date(`${startDate}T${eventData.startTime}`);
+        const endDateTime = new Date(`${startDate}T${eventData.endTime}`);
+        const startRecur = new Date(eventData.recurrence.startRecur);
         const endRecur = new Date(eventData.recurrence.endRecur || startDate);
         endRecur.setDate(endRecur.getDate() + 1);
 
@@ -365,10 +372,11 @@ export default function Availability() {
           endTime: eventData.endTime,
           recurrence: {
             daysOfWeek: eventData.recurrence.daysOfWeek || [],
-            startRecur: eventData.recurrence.startRecur || startDate,
+            startRecur: startRecur.toISOString().split("T")[0] || startDate,
             endRecur: endRecur.toISOString().split("T")[0],
           },
           userId: user.uid,
+          userTimeZone,
         };
 
         console.log(
@@ -383,9 +391,6 @@ export default function Availability() {
 
         console.log("Recurring event instances created:", result.data);
       } else {
-        // Client-side single event creation
-        console.log("storing using client side");
-        // Parse the start and end times
         let startDateTime = new Date(`${startDate}T${eventData.startTime}`);
         let endDateTime = new Date(`${startDate}T${eventData.endTime}`);
 
@@ -396,45 +401,55 @@ export default function Availability() {
           const [endHour, endMinute] = eventData.endTime.split(":").map(Number);
 
           // Set the time in UTC
-          startDateTime.setUTCHours(startHour, startMinute, 0, 0);
-          endDateTime.setUTCHours(endHour, endMinute, 0, 0);
+          startDateTime.setHours(startHour, startMinute, 0, 0);
+          endDateTime.setHours(endHour, endMinute, 0, 0);
 
           // Ensure end time is after the start time
           if (endDateTime <= startDateTime) {
-            endDateTime.setUTCDate(endDateTime.getUTCDate() + 1);
+            endDateTime.setDate(endDateTime.getDate() + 1);
           }
         }
+
+        const startDay = startDateTime.toLocaleDateString("en-US", {
+          weekday: "long",
+        });
+
+        const endDay = endDateTime.toLocaleDateString("en-US", {
+          weekday: "long",
+        });
 
         // Create a new event object
         const eventInput = {
           id: "",
           title: eventData.title,
-          description: eventData.description,
+          type: "",
+          typeId: "",
+          fee: 0,
+          clientId: "",
+          clientName: "",
           location: eventData.location || "",
-          start: startDateTime, // Save in UTC
-          end: endDateTime, // Save in UTC
+          start: startDateTime,
+          end: endDateTime,
+          description: eventData.description,
           display: "inverse-background",
           className: "",
           isBackgroundEvent: true,
-          startDate: startDateTime, // Save in UTC
-          startDay: startDateTime.toLocaleDateString("en-US", {
-            weekday: "long",
-            timeZone: "UTC",
-          }),
-          endDate: endDateTime, // Save in UTC
-          endDay: endDateTime.toLocaleDateString("en-US", {
-            weekday: "long",
-            timeZone: "UTC",
-          }),
-          created_at: new Date(), // Timestamp of creation
-          updated_at: new Date(), // Timestamp of last update
+          startDate: startDateTime,
+          startDay: startDay,
+          endDate: endDateTime,
+          endDay: endDay,
+          paid: false,
         };
+        console.log("Single event data ready for Firestore:", eventInput);
 
-        // Save the event directly to Firestore
-        const eventRef = doc(collection(db, "users", user.uid, "events"));
-        await setDoc(eventRef, eventInput);
+        console.log("Event data before submitting to firebase:", eventInput);
 
-        console.log("Single event created in Firestore");
+        await createFireStoreEvent(user.uid, eventInput);
+
+        console.log(
+          "Single event created in Firestore with ID:",
+          eventInput.id
+        );
       }
 
       // Fetch events again to update the list
