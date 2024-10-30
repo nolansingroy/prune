@@ -168,7 +168,9 @@ const CreateBookingsFormDialog: React.FC<CreateBookingsFormDialogProps> = ({
       setLocation(event.location || "");
       setPaid(event.paid || false);
       setDate(
-        event.startDate ? event.startDate.toISOString().split("T")[0] : ""
+        event.startDate
+          ? event.startDate.toLocaleDateString("en-CA") // Formats date as YYYY-MM-DD in local time
+          : ""
       );
       setStartTime(
         event.start
@@ -496,24 +498,24 @@ const CreateBookingsFormDialog: React.FC<CreateBookingsFormDialogProps> = ({
                 {!originalEventId && <></>}
                 {originalEventId && (
                   <Badge
-                    className="ml-2"
+                    className="ml-2 py-0 px-1"
                     style={{
                       backgroundColor: `${bookingColor}33`, // 33 for 20% opacity
                       color: bookingColor,
                     }}
                   >
-                    {<span className="text-sm font-bold">R</span>}
+                    {<span className="text-sm font-bold">recurring</span>}
                   </Badge>
                 )}
                 {event.recurrence && (
                   <Badge
-                    className="ml-2"
+                    className="ml-2 py-0 px-1"
                     style={{
                       backgroundColor: `${bookingColor}33`, // 33 for 20% opacity
                       color: bookingColor,
                     }}
                   >
-                    {<span className="text-sm font-bold">O</span>}
+                    {<span className="text-sm font-bold">original</span>}
                   </Badge>
                 )}
               </div>

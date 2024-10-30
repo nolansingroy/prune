@@ -41,6 +41,10 @@ import "tippy.js/dist/tippy.css";
 // import { adjustForLocalTimezone } from "@/lib/functions/time-functions";
 // import { handleUpdatEventFormDialog } from "@/lib/functions/event-functions";
 import { Auth } from "firebase/auth";
+import {
+  createFireStoreEvent,
+  updateFireStoreEvent,
+} from "@/lib/converters/events";
 
 // an instance of the tooltip for each event { this is initialized to track the instances of the tooltip to prevent adding multiple instances of the tooltip to the same event }
 const tippyInstances = new Map<string, any>();
@@ -83,8 +87,15 @@ export default function Calendar() {
   };
 
   const renderEventContent = (eventInfo: EventContentArg) => {
-    const { isBackgroundEvent, clientName, title, description, paid, type } =
-      eventInfo.event.extendedProps;
+    const {
+      isBackgroundEvent,
+      clientName,
+      title,
+      description,
+      paid,
+      type,
+      location,
+    } = eventInfo.event.extendedProps;
 
     // console.log("for month view props", eventInfo);
 
@@ -97,7 +108,6 @@ export default function Calendar() {
 
     // console.log("==================================", eventInfo);
 
-    // i want to remove fc-bg-event from the background events
     if (isBackgroundEvent) {
     }
 
@@ -108,23 +118,8 @@ export default function Calendar() {
         </div>
       );
     }
-
-    // if (classNames.includes("bg-event-mirror")) {
-    //   return (
-    //     <div className="bg-black opacity-50 text-black p-1 rounded text-center h-max w-max">
-    //       {description}
-    //     </div>
-    //   );
-    // }
-
     if (monthViw) {
-      const defaultStartTimeUTC = new Date(eventInfo.event.startStr);
-      const timezoneOffsetHours = -(new Date().getTimezoneOffset() / 60);
-      const defaultStartTimeLocal = new Date(defaultStartTimeUTC);
-      defaultStartTimeLocal.setHours(
-        defaultStartTimeUTC.getHours() - timezoneOffsetHours
-      );
-      // Convert times to string format using local time (e.g., "10:00" in local time)
+      const defaultStartTimeLocal = new Date(eventInfo.event.startStr);
       const formattedStartTime = defaultStartTimeLocal.toLocaleTimeString(
         "en-US",
         {
@@ -133,9 +128,6 @@ export default function Calendar() {
           hour12: true,
         }
       );
-
-      console.log("startTime", formattedStartTime);
-      // return a row with a smale circle which has a color of the type of the event and next to it the start time of the event and next to it the client name
       return (
         <div className="flex gap-1 items-center w-full overflow-hidden">
           <div
@@ -202,53 +194,39 @@ export default function Calendar() {
     try {
       const user = auth.currentUser;
       if (user) {
-        const eventRef = doc(
-          db,
-          "users",
-          user.uid,
-          "events",
-          resizeInfo.event.id
-        );
-
         const startDay = resizeInfo.event.start?.toLocaleDateString("en-US", {
           weekday: "long",
-          timeZone: "UTC",
         });
-        const endDay = resizeInfo.event.end
-          ? resizeInfo.event.end.toLocaleDateString("en-US", {
-              weekday: "long",
-              timeZone: "UTC",
-            })
-          : "";
 
-        const startDateUTC = resizeInfo.event.start
-          ? new Date(resizeInfo.event.start.toISOString())
-          : null;
-        const endDateUTC = resizeInfo.event.end
-          ? new Date(resizeInfo.event.end.toISOString())
-          : null;
+        const endDay = resizeInfo.event.end?.toLocaleDateString("en-US", {
+          weekday: "long",
+        });
 
-        await updateDoc(eventRef, {
-          start: startDateUTC,
-          end: endDateUTC,
-          startDate: startDateUTC,
-          endDate: endDateUTC,
+        const startDate = resizeInfo.event.start
+          ? resizeInfo.event.start
+          : null;
+        const endDate = resizeInfo.event.end ? resizeInfo.event.end : null;
+
+        await updateFireStoreEvent(user.uid, resizeInfo.event.id, {
+          start: startDate!,
+          end: endDate!,
+          startDate: startDate!,
+          endDate: endDate!,
           startDay: startDay,
           endDay: endDay,
-          updated_at: Timestamp.now(),
         });
-        // Update the local state to reflect the changes
+
         setEvents((prevEvents) => {
           const updatedEvents = prevEvents.map((event) => {
             if (event.id === resizeInfo.event.id) {
               return {
                 ...event,
-                start: startDateUTC!,
-                end: endDateUTC!,
-                startDate: startDateUTC!,
-                endDate: endDateUTC!,
+                start: startDate!,
+                end: endDate!,
+                startDate: startDate!,
+                endDate: endDate!,
                 startDay: startDay!,
-                endDay: endDay,
+                endDay: endDay!,
               };
             }
             return event;
@@ -273,42 +251,24 @@ export default function Calendar() {
     try {
       const user = auth.currentUser;
       if (user) {
-        const eventRef = doc(
-          db,
-          "users",
-          user.uid,
-          "events",
-          dropInfo.event.id
-        );
+        const startDay = dropInfo.event.start?.toLocaleDateString("en-US", {
+          weekday: "long",
+        });
 
-        const startDay = dropInfo.event.start
-          ? dropInfo.event.start.toLocaleDateString("en-US", {
-              weekday: "long",
-              timeZone: "UTC",
-            })
-          : "";
-        const endDay = dropInfo.event.end
-          ? dropInfo.event.end.toLocaleDateString("en-US", {
-              weekday: "long",
-              timeZone: "UTC",
-            })
-          : "";
+        const endDay = dropInfo.event.end?.toLocaleDateString("en-US", {
+          weekday: "long",
+        });
 
-        const startDateUTC = dropInfo.event.start
-          ? new Date(dropInfo.event.start.toISOString())
-          : null;
-        const endDateUTC = dropInfo.event.end
-          ? new Date(dropInfo.event.end.toISOString())
-          : null;
+        const startDate = dropInfo.event.start ? dropInfo.event.start : null;
+        const endDate = dropInfo.event.end ? dropInfo.event.end : null;
 
-        await updateDoc(eventRef, {
-          start: startDateUTC,
-          end: endDateUTC,
-          startDate: startDateUTC,
-          endDate: endDateUTC,
+        await updateFireStoreEvent(user.uid, dropInfo.event.id, {
+          start: startDate!,
+          end: endDate!,
+          startDate: startDate!,
+          endDate: endDate!,
           startDay: startDay,
           endDay: endDay,
-          updated_at: Timestamp.now(),
         });
 
         // Update the local state to reflect the changes
@@ -317,12 +277,12 @@ export default function Calendar() {
             if (event.id === dropInfo.event.id) {
               return {
                 ...event,
-                start: startDateUTC!,
-                end: endDateUTC!,
-                startDate: startDateUTC!,
-                endDate: endDateUTC!,
+                start: startDate!,
+                end: endDate!,
+                startDate: startDate!,
+                endDate: endDate!,
                 startDay: startDay!,
-                endDay: endDay,
+                endDay: endDay!,
               };
             }
             return event;
@@ -345,35 +305,10 @@ export default function Calendar() {
   const handleSelect = (selectInfo: DateSelectArg) => {
     setSelectInfo(selectInfo);
 
-    // FullCalendar provides the date in UTC, so we need to adjust for the local timezone
-    const defaultStartTimeUTC = new Date(selectInfo.startStr);
-    const defaultEndTimeUTC = new Date(selectInfo.endStr); // Use the correct end time from selectInfo
+    const defaultStartTimeLocal = new Date(selectInfo.startStr);
+    const defaultEndTimeLocal = new Date(selectInfo.endStr);
 
-    // Get the timezone offset in hours
-    const timezoneOffsetHours = -(new Date().getTimezoneOffset() / 60); // getTimezoneOffset returns minutes, convert to hours
-
-    // Adjust UTC times to local times by subtracting the timezone offset
-    const defaultStartTimeLocal = new Date(defaultStartTimeUTC);
-    defaultStartTimeLocal.setHours(
-      defaultStartTimeUTC.getHours() - timezoneOffsetHours
-    );
-
-    const defaultEndTimeLocal = new Date(defaultEndTimeUTC);
-    defaultEndTimeLocal.setHours(
-      defaultEndTimeUTC.getHours() - timezoneOffsetHours
-    );
-
-    // Convert times to string format using local time (e.g., "10:00" in local time)
-    const formattedStartTime = defaultStartTimeLocal.toLocaleTimeString([], {
-      hour: "2-digit",
-      minute: "2-digit",
-      hour12: false,
-    }); // Local time
-    const formattedEndTime = defaultEndTimeLocal.toLocaleTimeString([], {
-      hour: "2-digit",
-      minute: "2-digit",
-      hour12: false,
-    }); // Local time
+    console.log("Select Info start date:", defaultStartTimeLocal);
 
     // Derive the day of the week from startDate
     const defaultStartDay = defaultStartTimeLocal.toLocaleDateString("en-US", {
@@ -381,30 +316,29 @@ export default function Calendar() {
     });
 
     setEditingEvent((prevState) => {
-      // Ensure required fields like `title`, `startDate`, and `isBackgroundEvent` are preserved
       const updatedEvent: EventInput = {
         id: prevState?.id,
-        ...prevState, // Preserve previous state
-        title: prevState?.title || "", // Ensure title is not undefined
+        ...prevState,
+        title: prevState?.title || "",
         fee: prevState?.fee || 0,
         clientId: prevState?.clientId || "",
         clientName: prevState?.clientName || "",
-        type: prevState?.type || "No type", // Ensure title is not undefined
-        typeId: prevState?.type || "", // Ensure title is not undefined
-        isBackgroundEvent: prevState?.isBackgroundEvent ?? false, // Ensure isBackgroundEvent is a boolean (default to false)
+        type: prevState?.type || "No type",
+        typeId: prevState?.typeId || "",
+        isBackgroundEvent: prevState?.isBackgroundEvent ?? false,
         start:
           prevState?.start instanceof Date
             ? prevState.start
-            : defaultStartTimeLocal, // Ensure start is a Date object in local time
+            : defaultStartTimeLocal,
         end:
-          prevState?.end instanceof Date ? prevState.end : defaultEndTimeLocal, // Use the correct end time from selectInfo
-        startDate: defaultStartTimeLocal, // Store startDate as the local Date object
-        endDate: defaultEndTimeLocal, // Store endDate as the local Date object
-        startDay: prevState?.startDay || defaultStartDay, // Ensure startDay is derived from startDate if not already present
+          prevState?.end instanceof Date ? prevState.end : defaultEndTimeLocal,
+        startDate: defaultStartTimeLocal,
+        endDate: defaultEndTimeLocal,
+        startDay: prevState?.startDay || defaultStartDay,
         endDay:
           prevState?.endDay ||
-          defaultEndTimeLocal.toLocaleDateString("en-US", { weekday: "long" }), // Derive endDay from endDate if not present
-        recurrence: undefined, // Set recurrence to undefined to prevent auto-selection
+          defaultEndTimeLocal.toLocaleDateString("en-US", { weekday: "long" }),
+        recurrence: undefined,
       };
       return updatedEvent;
     });
@@ -417,23 +351,15 @@ export default function Calendar() {
     const { extendedProps, start, end } = event;
 
     if (start && end) {
-      // const localStart = adjustForLocalTimezone(start);
-      // const localEnd = adjustForLocalTimezone(end);
-
-      const timezoneOffsetHours = -(new Date().getTimezoneOffset() / 60);
-
-      const localStart = new Date(start);
-      localStart.setHours(start.getHours() - timezoneOffsetHours);
-
-      const localEnd = new Date(end);
-      localEnd.setHours(end.getHours() - timezoneOffsetHours);
+      const startDate = new Date(start);
+      const endDate = new Date(end);
 
       setEditingEvent({
         ...event,
         id: event.id,
-        start: localStart,
-        end: localEnd,
-        title: extendedProps.title || "", // Add other required properties here
+        start: startDate,
+        end: endDate,
+        title: extendedProps.title || "",
         type: extendedProps.type || "",
         typeId: extendedProps.typeId || "",
         clientId: extendedProps.clientId || "",
@@ -443,12 +369,12 @@ export default function Calendar() {
         isBackgroundEvent: extendedProps.isBackgroundEvent || false,
         fee: extendedProps.fee || 0,
         paid: extendedProps.paid || false,
-        startDate: localStart,
-        startDay: localStart.toLocaleDateString("en-US", {
+        startDate: startDate,
+        startDay: startDate.toLocaleDateString("en-US", {
           weekday: "long",
         }),
-        endDate: localEnd,
-        endDay: localEnd.toLocaleDateString("en-US", {
+        endDate: endDate,
+        endDay: endDate.toLocaleDateString("en-US", {
           weekday: "long",
         }),
         recurrence: extendedProps.recurrence || undefined,
@@ -472,6 +398,10 @@ export default function Calendar() {
       }
       return acc;
     }, {} as any);
+  };
+
+  const convertToUTC = (date: Date): Date => {
+    return new Date(date.getTime() - date.getTimezoneOffset() * 60000);
   };
 
   const handleSave = async ({
@@ -516,8 +446,7 @@ export default function Calendar() {
     let calendarApi = selectInfo.view.calendar;
     calendarApi.unselect();
 
-    // Format the start and end dates based on the event selection
-    const startDate = date
+    let startDate = date
       ? new Date(date).toISOString().split("T")[0]
       : new Date(selectInfo.startStr).toISOString().split("T")[0];
 
@@ -529,17 +458,21 @@ export default function Calendar() {
         throw new Error("User not authenticated");
       }
 
+      // Get the user's time zone
+      const userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
       // If this is a recurring event, handle it using the cloud function
       if (
         recurrence &&
         recurrence.daysOfWeek &&
         recurrence.daysOfWeek.length > 0
       ) {
-        // Adjust end recurrence date
+        // Calculate the time zone offsets for start time and end time
+        const startDateTime = new Date(`${startDate}T${startTime}`);
+        const endDateTime = new Date(`${startDate}T${endTime}`);
+        const startRecur = new Date(recurrence.startRecur);
         const endRecur = new Date(recurrence.endRecur || startDate);
         endRecur.setDate(endRecur.getDate() + 1);
-
-        //check if its a background event before making the axios call
 
         // Prepare the event input for the cloud function
 
@@ -553,20 +486,22 @@ export default function Calendar() {
             endTime,
             recurrence: {
               daysOfWeek: recurrence.daysOfWeek,
-              startRecur: recurrence.startRecur || startDate,
+              startRecur: startRecur.toISOString().split("T")[0] || startDate,
               endRecur: endRecur.toISOString().split("T")[0],
             },
             userId: user.uid,
+            userTimeZone,
           };
 
           console.log(
             "event data ready for cloud function for background event",
             eventInput
           );
-          // Make the axios call to your cloud function
-          // "http://127.0.0.1:5001/prune-94ad9/us-central1/createRecurringAvailabilityInstances"
+
+          //"http://127.0.0.1:5001/prune-94ad9/us-central1/createRecurringAvailabilityInstances"
+
           const result = await axios.post(
-            "https://us-central1-prune-94ad9.cloudfunctions.net/createRecurringAvailabilityInstances",
+            " https://us-central1-prune-94ad9.cloudfunctions.net/createRecurringAvailabilityInstances",
             eventInput
           );
 
@@ -587,10 +522,11 @@ export default function Calendar() {
             paid,
             recurrence: {
               daysOfWeek: recurrence.daysOfWeek,
-              startRecur: recurrence.startRecur || startDate,
+              startRecur: startRecur.toISOString().split("T")[0] || startDate,
               endRecur: endRecur.toISOString().split("T")[0],
             },
             userId: user.uid,
+            userTimeZone,
           };
 
           console.log(
@@ -598,8 +534,8 @@ export default function Calendar() {
             eventInput
           );
 
-          // Make the axios call to your cloud function
-          // "http://127.0.0.1:5001/prune-94ad9/us-central1/createRecurringBookingInstances",
+          // "http://127.0.0.1:5001/prune-94ad9/us-central1/createRecurringBookingInstances"
+
           const result = await axios.post(
             "https://us-central1-prune-94ad9.cloudfunctions.net/createRecurringBookingInstances",
             eventInput
@@ -610,86 +546,68 @@ export default function Calendar() {
       } else {
         // Handle single or background event directly on the client side
         // Parse the start and end times
-        let startDateTime = date
-          ? new Date(date)
-          : new Date(selectInfo.startStr);
+
+        let startDateTime = new Date(selectInfo.startStr);
         let endDateTime = new Date(selectInfo.startStr);
 
         if (startTime && endTime) {
           const [startHour, startMinute] = startTime.split(":").map(Number);
           const [endHour, endMinute] = endTime.split(":").map(Number);
 
-          // Set the time in UTC
-          startDateTime.setUTCHours(startHour, startMinute, 0, 0);
-          endDateTime.setUTCHours(endHour, endMinute, 0, 0);
+          startDateTime.setHours(startHour, startMinute, 0, 0);
+          endDateTime.setHours(endHour, endMinute, 0, 0);
 
-          // Ensure end time is after the start time
           if (endDateTime <= startDateTime) {
-            endDateTime.setUTCDate(endDateTime.getUTCDate() + 1);
+            endDateTime.setDate(endDateTime.getDate() + 1);
           }
         }
 
-        // Create the event object for a single or background event
+        const startDay = startDateTime.toLocaleDateString("en-US", {
+          weekday: "long",
+        });
+
+        const endDay = endDateTime.toLocaleDateString("en-US", {
+          weekday: "long",
+        });
+
+        // Create the event object for a booking or availability event
         let event: EventInput = {
           id: "",
           title,
           type,
           typeId,
-          fee: fee,
-          clientId: clientId,
-          clientName: clientName,
-          location: location || "",
-          start: startDateTime, // Save in UTC
-          end: endDateTime, // Save in UTC
+          fee,
+          clientId,
+          clientName,
+          location,
+          start: startDateTime,
+          end: endDateTime,
           description,
-          display: isBackgroundEvent ? "background" : "auto",
+          display: isBackgroundEvent ? "inverse-background" : "auto",
           className: isBackgroundEvent ? "custom-bg-event" : "",
           isBackgroundEvent,
-          startDate: startDateTime, // Save in UTC
-          startDay: startDateTime.toLocaleDateString("en-US", {
-            weekday: "long",
-            timeZone: "UTC",
-          }),
-          endDate: endDateTime, // Save in UTC
-          endDay: endDateTime.toLocaleDateString("en-US", {
-            weekday: "long",
-            timeZone: "UTC",
-          }),
+          startDate: startDateTime,
+          startDay: startDay,
+          endDate: endDateTime,
+          endDay: endDay,
           paid,
         };
 
         console.log("Single event data ready for Firestore:", event);
-
-        // Remove any undefined fields before saving
         event = removeUndefinedFields(event);
 
-        // Save single event or background event directly to Firestore
-        const eventRef = await addDoc(
-          collection(db, "users", user.uid, "events"),
-          event
-        );
+        console.log("Event data before submitting to firebase:", event);
 
-        const eventId = eventRef.id;
-        event.id = eventId;
-
-        // Update the event with the ID
-        await updateDoc(eventRef, { id: eventId });
-
-        console.log("Single event created in Firestore with ID:", event.id);
-
-        // Add event to local state
+        await createFireStoreEvent(user.uid, event);
         setEvents((prevEvents) => [...prevEvents, event]);
       }
-
-      // Fetch the updated events for the calendar view
       await fetchEvents();
     } catch (error) {
       console.error("Error saving event:", error);
     } finally {
-      setLoading(false); // Stop loading
+      setLoading(false);
     }
 
-    // Close the dialog after saving
     handleDialogClose();
   };
 
@@ -697,37 +615,37 @@ export default function Calendar() {
     return <div>Loading...</div>;
   }
   // // test build
-  // const checkOverlap = (
-  //   event: {
-  //     extendedProps: { isBackgroundEvent: any };
-  //     start: { getTime: () => any };
-  //     end: { getTime: () => any };
-  //     id: any;
-  //   },
-  //   allEvents: any[]
-  // ) => {
-  //   const isBackgroundEvent = event.extendedProps.isBackgroundEvent;
-  //   if (isBackgroundEvent) return false;
+  const checkOverlap = (
+    event: {
+      extendedProps: { isBackgroundEvent: any };
+      start: { getTime: () => any };
+      end: { getTime: () => any };
+      id: any;
+    },
+    allEvents: any[]
+  ) => {
+    const isBackgroundEvent = event.extendedProps.isBackgroundEvent;
+    if (isBackgroundEvent) return false;
 
-  //   const eventStart = event.start.getTime();
-  //   // const eventEnd = event.end.getTime();
-  //   const eventEnd = event.end ? event.end.getTime() : eventStart;
+    const eventStart = event.start.getTime();
+    // const eventEnd = event.end.getTime();
+    const eventEnd = event.end ? event.end.getTime() : eventStart;
 
-  //   return allEvents.some((e) => {
-  //     if (e.id !== event.id && e.extendedProps.isBackgroundEvent) {
-  //       const bgStart = e.start.getTime();
-  //       // const bgEnd = e.end.getTime();
-  //       const bgEnd = e.end ? e.end.getTime() : bgStart;
+    return allEvents.some((e) => {
+      if (e.id !== event.id && e.extendedProps.isBackgroundEvent) {
+        const bgStart = e.start.getTime();
+        // const bgEnd = e.end.getTime();
+        const bgEnd = e.end ? e.end.getTime() : bgStart;
 
-  //       return (
-  //         (eventStart >= bgStart && eventStart < bgEnd) ||
-  //         (eventEnd > bgStart && eventEnd <= bgEnd) ||
-  //         (eventStart <= bgStart && eventEnd >= bgEnd)
-  //       );
-  //     }
-  //     return false;
-  //   });
-  // };
+        return (
+          (eventStart >= bgStart && eventStart < bgEnd) ||
+          (eventEnd > bgStart && eventEnd <= bgEnd) ||
+          (eventStart <= bgStart && eventEnd >= bgEnd)
+        );
+      }
+      return false;
+    });
+  };
 
   const handleEventDidMount = (info: {
     view: { calendar: any };
@@ -738,9 +656,9 @@ export default function Calendar() {
     const allEvents = calendarApi.getEvents();
 
     // Check for overlap with background events
-    // if (checkOverlap(info.event, allEvents)) {
-    //   info.el.classList.add("overlap-event");
-    // }
+    if (checkOverlap(info.event, allEvents)) {
+      info.el.classList.add("overlap-event");
+    }
 
     // add a popOver to the event here
   };
@@ -773,54 +691,43 @@ export default function Calendar() {
     }
     console.log("updating information triggered");
 
+    let startDateTime = new Date(`${eventData.date}T${eventData.startTime}`);
+    let endDateTime = new Date(`${eventData.date}T${eventData.endTime}`);
+
+    if (eventData.startTime && eventData.endTime) {
+      const [startHour, startMinute] = eventData.startTime
+        .split(":")
+        .map(Number);
+      const [endHour, endMinute] = eventData.endTime.split(":").map(Number);
+
+      startDateTime.setHours(startHour, startMinute, 0, 0);
+      endDateTime.setHours(endHour, endMinute, 0, 0);
+
+      // Ensure end time is after the start time
+      if (endDateTime <= startDateTime) {
+        endDateTime.setDate(endDateTime.getDate() + 1);
+      }
+    }
+
+    const startDay = startDateTime.toLocaleDateString("en-US", {
+      weekday: "long",
+    });
+
+    const endDay = endDateTime.toLocaleDateString("en-US", {
+      weekday: "long",
+    });
+
+    setLoading(true); // Start loading
+
     try {
-      const startDate =
-        eventData.date || new Date().toISOString().split("T")[0];
-
-      // Helper function to adjust for time zone offset and return UTC date
-      const adjustToUTC = (dateTime: Date) => {
-        const timezoneOffset = dateTime.getTimezoneOffset(); // Timezone offset in minutes
-        return new Date(dateTime.getTime() - timezoneOffset * 60 * 1000); // Adjust to UTC
-      };
-
-      // Check if the event is recurring or a single event
       if (
         !eventData.recurrence ||
         eventData.recurrence.daysOfWeek.length === 0
       ) {
-        // update the event in firebase instead of creating a new one
         console.log("updating event in firebase");
         if (!eventData.id) {
           throw new Error("Event ID is missing");
         }
-        const eventRef = doc(db, "users", userId!, "events", eventData.id);
-
-        // Parse the start and end times
-        let startDateTime = new Date(`${startDate}T${eventData.startTime}`);
-        let endDateTime = new Date(`${startDate}T${eventData.endTime}`);
-
-        // Ensure the end time is after the start time
-        if (endDateTime <= startDateTime) {
-          endDateTime.setDate(endDateTime.getDate() + 1);
-        }
-
-        // Adjust the start and end times to UTC
-        startDateTime = adjustToUTC(startDateTime);
-        endDateTime = adjustToUTC(endDateTime);
-
-        // Adjust the start day
-        const startDay = startDateTime.toLocaleDateString("en-US", {
-          weekday: "long",
-          timeZone: "UTC",
-        });
-
-        //Adjust the end day
-        const endDay = endDateTime.toLocaleDateString("en-US", {
-          weekday: "long",
-          timeZone: "UTC",
-        });
-
-        // Create a new event object
         const eventInput = {
           type: eventData.type,
           typeId: eventData.typeId,
@@ -830,20 +737,16 @@ export default function Calendar() {
           description: eventData.description,
           location: eventData.location || "",
           isBackgroundEvent: eventData.isBackgroundEvent,
-          start: startDateTime, // Save in UTC
-          end: endDateTime, // Save in UTC
+          start: startDateTime,
+          end: endDateTime,
           startDate: startDateTime,
           endDate: endDateTime,
           startDay: startDay,
           endDay: endDay,
           paid: eventData.paid,
-          updated_at: new Date(), // Timestamp of last update
         };
 
-        console.log("evenRef", eventRef);
-
-        // Save the event directly to Firestore
-        await updateDoc(eventRef, eventInput);
+        await updateFireStoreEvent(userId!, eventData.id, eventInput);
 
         console.log("Single event updated in Firestore");
       } else {
@@ -852,36 +755,14 @@ export default function Calendar() {
         if (!eventData.id) {
           throw new Error("Event ID is missing");
         }
-        const eventRef = doc(db, "users", userId!, "events", eventData.id);
 
-        // Parse the start and end times
-        let startDateTime = new Date(`${startDate}T${eventData.startTime}`);
-        let endDateTime = new Date(`${startDate}T${eventData.endTime}`);
+        const startRecur = new Date(eventData.recurrence?.startRecur);
+        const endRecur = new Date(eventData.recurrence?.endRecur);
+        endRecur.setDate(endRecur.getDate() + 1);
 
-        // Ensure the end time is after the start time
-        if (endDateTime <= startDateTime) {
-          endDateTime.setDate(endDateTime.getDate() + 1);
-        }
-
-        // Adjust the start and end times to UTC
-        startDateTime = adjustToUTC(startDateTime);
-        endDateTime = adjustToUTC(endDateTime);
-
-        // Adjust the start day
-        const startDay = startDateTime.toLocaleDateString("en-US", {
-          weekday: "long",
-          timeZone: "UTC",
-        });
-
-        //Adjust the end day
-        const endDay = endDateTime.toLocaleDateString("en-US", {
-          weekday: "long",
-          timeZone: "UTC",
-        });
-
-        // Add 2 days to the endRecur date to ensure the last day is included
-        const endRecur = new Date(eventData.recurrence?.endRecur || startDate);
-        endRecur.setDate(endRecur.getDate() + 2);
+        // convert startRecur and endRecur to strings
+        const startRecurString = startRecur.toISOString().split("T")[0];
+        const endRecurString = endRecur.toISOString().split("T")[0];
 
         const eventInput = {
           type: eventData.type,
@@ -892,8 +773,8 @@ export default function Calendar() {
           description: eventData.description,
           location: eventData.location || "",
           isBackgroundEvent: eventData.isBackgroundEvent,
-          start: startDateTime, // Save in UTC
-          end: endDateTime, // Save in UTC
+          start: startDateTime,
+          end: endDateTime,
           startDate: startDateTime,
           endDate: endDateTime,
           startDay: startDay,
@@ -903,16 +784,13 @@ export default function Calendar() {
           paid: eventData.paid,
           recurrence: {
             daysOfWeek: eventData.recurrence?.daysOfWeek || [],
-            startRecur: eventData.recurrence?.startRecur || startDate,
-            endRecur: adjustToUTC(endRecur).toISOString().split("T")[0],
+            startRecur: startRecurString,
+            endRecur: endRecurString,
           },
-          userId: userId,
+          userId: userId!,
         };
 
-        console.log("evenRef", eventRef);
-
-        // Save the event directly to Firestore
-        await updateDoc(eventRef, eventInput);
+        await updateFireStoreEvent(userId!, eventData.id, eventInput);
 
         console.log("Recurring event updated in Firestore");
       }
@@ -944,7 +822,7 @@ export default function Calendar() {
           <div className="overflow-hidden">
             <div className="calendar-container overflow-y-scroll h-[600px]">
               <FullCalendar
-                timeZone="UTC"
+                timeZone="local"
                 key={calendarKey}
                 // eventColor="#000"
                 ref={calendarRef}
@@ -1109,6 +987,7 @@ export default function Calendar() {
                     }
                   }
                 })}
+                nowIndicator={true}
                 eventContent={renderEventContent}
                 scrollTime="07:00:00" // Automatically scrolls to 7:00 AM on load
                 views={{

@@ -138,8 +138,11 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
       setIsBackgroundEvent(event.isBackgroundEvent || true);
       setPaid(event.paid || false);
       setDate(
-        event.startDate ? event.startDate.toISOString().split("T")[0] : ""
+        event.startDate
+          ? event.startDate.toLocaleDateString("en-CA") // Formats date as YYYY-MM-DD in local time
+          : ""
       );
+      console.log("Event start date:", event.startDate);
       setStartTime(
         event.start
           ? event.start

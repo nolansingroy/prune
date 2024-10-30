@@ -1,8 +1,9 @@
 import * as functions from "firebase-functions";
 import * as admin from "firebase-admin";
-import {FieldValue} from "firebase-admin/firestore";
+import {FieldValue, Timestamp} from "firebase-admin/firestore";
 import cors from "cors";
 import {RRule, RRuleSet} from "rrule";
+import {toDate} from "date-fns-tz";
 
 const db = admin.firestore();
 
@@ -30,9 +31,10 @@ export const createRecurringAvailabilityInstances = functions.https.onRequest(
           endTime,
           recurrence,
           userId,
+          userTimeZone,
         } = req.body;
 
-        console.log("Updated new function 7:21");
+        console.log("availabilities");
 
         console.log("Received request with data:", {
           title,
@@ -53,8 +55,8 @@ export const createRecurringAvailabilityInstances = functions.https.onRequest(
           .doc();
 
         // Combine startDate and startTime into Date objects
-        const originalStartDate = new Date(`${startDate}T${startTime}Z`);
-        const originalEndDate = new Date(`${startDate}T${endTime}Z`);
+        const originalStartDate = toDate(`${startDate}T${startTime}`, {timeZone: userTimeZone});
+        const originalEndDate = toDate(`${startDate}T${endTime}`, {timeZone: userTimeZone});
 
         console.log("Original start date:", originalStartDate);
         console.log("Original end date:", originalEndDate);
@@ -62,9 +64,9 @@ export const createRecurringAvailabilityInstances = functions.https.onRequest(
         const daysOfWeek = recurrence.daysOfWeek;
 
         // Check if the original start date is on a recurring day; adjust if not
-        if (!daysOfWeek.includes(originalStartDate.getUTCDay())) {
+        if (!daysOfWeek.includes(originalStartDate.getDay())) {
           let dayOffset = 1;
-          while (!daysOfWeek.includes((originalStartDate.getUTCDay() + dayOffset) % 7)) {
+          while (!daysOfWeek.includes((originalStartDate.getDay() + dayOffset) % 7)) {
             dayOffset++;
           }
           // Set the start date and end date to the next valid recurring day
@@ -78,7 +80,7 @@ export const createRecurringAvailabilityInstances = functions.https.onRequest(
         console.log("isEveryday:", isEveryday);
 
         // Adjust the endRecur to avoid the bleeding of 1 day
-        const recurrenceEndDate = new Date(recurrence.endRecur + "T23:59:59Z");
+        const recurrenceEndDate = toDate(`${recurrence.endRecur}T23:59:59`, {timeZone: userTimeZone});
         if (isEveryday) {
           recurrenceEndDate.setDate(recurrenceEndDate.getDate() - 1);
         }
@@ -102,19 +104,25 @@ export const createRecurringAvailabilityInstances = functions.https.onRequest(
 
         const instanceMap: { [key: string]: string } = {};
 
+        const timestampStartDate = Timestamp.fromDate(originalStartDate);
+        const timestampEndDate = Timestamp.fromDate(originalEndDate);
+
+        console.log("Timestamp start date:", timestampStartDate);
+        console.log("Timestamp end date:", timestampEndDate);
+
         // 1. Create the original event
         batch.set(eventRef, {
           title,
           description,
           location,
-          start: originalStartDate,
-          end: originalEndDate,
+          start: timestampStartDate,
+          end: timestampEndDate,
           isBackgroundEvent: true,
-          startDate: originalStartDate,
+          startDate: timestampStartDate,
           startDay: originalStartDate.toLocaleDateString("en-US", {
             weekday: "long",
           }),
-          endDate: originalEndDate,
+          endDate: timestampEndDate,
           endDay: originalEndDate.toLocaleDateString("en-US", {
             weekday: "long",
           }),
@@ -138,7 +146,7 @@ export const createRecurringAvailabilityInstances = functions.https.onRequest(
 
         // 2. Process occurrences
         allOccurrences.forEach((occurrence) => {
-          const instanceDate = new Date(occurrence);
+          const instanceDate = toDate(occurrence, {timeZone: userTimeZone});
 
           // Conditionally handle date adjustment:
           if (isEveryday) {
@@ -147,11 +155,13 @@ export const createRecurringAvailabilityInstances = functions.https.onRequest(
             instanceDate.setDate(instanceDate.getDate() - 1);
           }
 
-          const instanceStartDate = new Date(
-            `${instanceDate.toISOString().split("T")[0]}T${startTime}`
+          const instanceStartDate = toDate(
+            `${instanceDate.toISOString().split("T")[0]}T${startTime}`,
+            {timeZone: userTimeZone}
           );
-          const instanceEndDate = new Date(
-            `${instanceDate.toISOString().split("T")[0]}T${endTime}`
+          const instanceEndDate = toDate(
+            `${instanceDate.toISOString().split("T")[0]}T${endTime}`,
+            {timeZone: userTimeZone}
           );
 
           // Skip creating the instance if it matches the original event date because it's
@@ -167,18 +177,25 @@ export const createRecurringAvailabilityInstances = functions.https.onRequest(
             .collection("events")
             .doc();
 
+          const timestampInstanceStartDate = Timestamp.fromDate(instanceStartDate);
+          const timestampInstanceEndDate = Timestamp.fromDate(instanceEndDate);
+
+          console.log("Timestamp instance start date:", timestampInstanceStartDate);
+          console.log("Timestamp instance end date:", timestampInstanceEndDate);
+
+
           batch.set(instanceRef, {
             title,
             description,
             location,
-            start: instanceStartDate,
-            end: instanceEndDate,
+            start: timestampInstanceStartDate,
+            end: timestampInstanceEndDate,
             isBackgroundEvent: true,
-            startDate: instanceStartDate,
+            startDate: timestampInstanceStartDate,
             startDay: instanceStartDate.toLocaleDateString("en-US", {
               weekday: "long",
             }),
-            endDate: instanceEndDate,
+            endDate: timestampInstanceEndDate,
             endDay: instanceEndDate.toLocaleDateString("en-US", {
               weekday: "long",
             }),

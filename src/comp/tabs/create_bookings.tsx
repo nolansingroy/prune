@@ -54,6 +54,11 @@ import { orderBy } from "firebase/firestore";
 import CreateBookingsFormDialog from "../CreateBookingsFormDialog";
 import { fetchBookingTypes } from "@/lib/converters/bookingTypes";
 import { fetchClients } from "@/lib/converters/clients";
+import {
+  createFireStoreEvent,
+  fetchBookingsListviewEvents,
+  updateFireStoreEvent,
+} from "@/lib/converters/events";
 
 const formatFee = (fee: number): string => {
   return new Intl.NumberFormat("en-US", {
@@ -87,17 +92,12 @@ export default function CreateBookings() {
   );
   const [types, setTypes] = useState<{ docId: string; name: string }[]>([]);
 
-  useEffect(() => {
-    fetchUserTimezone();
-    fetchEvents();
-  }, []);
-
-  const fetchUserTimezone = async () => {
-    if (auth.currentUser) {
-      const userRef = doc(db, "users", auth.currentUser.uid);
-      const userDoc = await getDoc(userRef);
-      const userData = userDoc.data();
-      setUserTimezone(userData?.timezone || "UTC");
+  const fetchEvents = async () => {
+    if (!auth.currentUser) {
+      return;
+    } else {
+      const eventList = await fetchBookingsListviewEvents(auth.currentUser.uid);
+      setEvents(eventList);
     }
   };
 
@@ -112,7 +112,6 @@ export default function CreateBookings() {
           fullName: client.firstName + " " + client.lastName,
         };
       });
-      console.log("Clients fetched:", clientsArray);
       setClients(clientsArray);
     }
   }, []);
@@ -133,6 +132,11 @@ export default function CreateBookings() {
   }, []);
 
   useEffect(() => {
+    // fetchUserTimezone();
+    fetchEvents();
+  }, []);
+
+  useEffect(() => {
     fetchAllClients();
   }, [fetchAllClients]);
 
@@ -140,88 +144,14 @@ export default function CreateBookings() {
     fetchAllBookingTypes();
   }, [fetchAllBookingTypes]);
 
-  const fetchEvents = async () => {
-    if (auth.currentUser) {
-      const eventsRef = collection(db, "users", auth.currentUser.uid, "events");
-
-      // Get the current date (from today onwards)
-      const today = new Date();
-      today.setHours(0, 0, 0, 0); // Set time to midnight to match the start of the day
-
-      // Fetch events by "start" field where the date is from today onwards
-      const q = query(
-        eventsRef,
-        where("isBackgroundEvent", "==", false),
-        where("start", ">=", today), // Fetch events starting from today onwards
-        orderBy("start", "asc") // Ascending order
-      );
-
-      const querySnapshot = await getDocs(q);
-      let eventsList: EventInput[] = [];
-
-      querySnapshot.docs.forEach((doc) => {
-        const data = doc.data();
-        const start =
-          data.start instanceof Timestamp
-            ? data.start.toDate()
-            : new Date(data.start);
-        const end =
-          data.end instanceof Timestamp
-            ? data.end.toDate()
-            : new Date(data.end);
-
-        if (data.recurrence) {
-          const dtstart = new Date(start);
-          eventsList.push({
-            id: doc.id,
-            title: data.title,
-            type: data.type,
-            typeId: data.typeId,
-            fee: data.fee,
-            clientId: data.clientId,
-            clientName: data.clientName,
-            start: dtstart,
-            end: new Date(
-              dtstart.getTime() + (end.getTime() - start.getTime())
-            ), // Calculate end time based on duration
-            description: data.description || "",
-            isBackgroundEvent: data.isBackgroundEvent,
-            startDate: dtstart,
-            startDay: dtstart.toLocaleDateString("en-US", { weekday: "long" }),
-            endDate: new Date(
-              dtstart.getTime() + (end.getTime() - start.getTime())
-            ),
-            endDay: new Date(
-              dtstart.getTime() + (end.getTime() - start.getTime())
-            ).toLocaleDateString("en-US", { weekday: "long" }),
-            paid: data.paid,
-            recurrence: data.recurrence,
-            exceptions: data.exceptions,
-          });
-        } else {
-          eventsList.push({
-            id: doc.id,
-            title: data.title,
-            type: data.type,
-            typeId: data.typeId,
-            fee: data.fee,
-            clientId: data.clientId,
-            clientName: data.clientName,
-            start: start,
-            end: end,
-            description: data.description || "",
-            isBackgroundEvent: data.isBackgroundEvent,
-            startDate: start,
-            startDay: start.toLocaleDateString("en-US", { weekday: "long" }),
-            endDate: end,
-            endDay: end.toLocaleDateString("en-US", { weekday: "long" }),
-            paid: data.paid,
-          });
-        }
-      });
-      setEvents(eventsList);
-    }
-  };
+  // const fetchUserTimezone = async () => {
+  //   if (auth.currentUser) {
+  //     const userRef = doc(db, "users", auth.currentUser.uid);
+  //     const userDoc = await getDoc(userRef);
+  //     const userData = userDoc.data();
+  //     setUserTimezone(userData?.timezone || "UTC");
+  //   }
+  // };
 
   const handleCellClick = (
     id: string,
@@ -241,63 +171,72 @@ export default function CreateBookings() {
   const handleBlur = async () => {
     if (editingCell) {
       const { id, field } = editingCell;
-      const docRef = doc(
-        db,
-        "users",
-        auth.currentUser?.uid ?? "",
-        "events",
-        id
-      );
+      // const docRef = doc(
+      //   db,
+      //   "users",
+      //   auth.currentUser?.uid ?? "",
+      //   "events",
+      //   id
+      // );
+      const currentEvent = events.find((event) => event.id === id);
+      if (!currentEvent) {
+        setEditingCell(null);
+        return;
+      }
       let updates: any = {};
 
       if (field === "clientName") {
-        updates = { [field]: editedValue };
-        const matchedClient = clients.find(
-          (client) =>
-            client.fullName.toLowerCase() === editedValue.toLowerCase()
-        );
-        if (matchedClient) {
-          updates = { clientId: matchedClient.docId, clientName: editedValue };
-          console.log("Matched client:", matchedClient);
-        } else {
-          updates = { clientId: "", clientName: editedValue };
-          console.log("Client not found:", editedValue);
+        if (currentEvent.clientName !== editedValue) {
+          updates = { [field]: editedValue };
+          const matchedClient = clients.find(
+            (client) =>
+              client.fullName.toLowerCase() === editedValue.toLowerCase()
+          );
+          if (matchedClient) {
+            updates = {
+              clientId: matchedClient.docId,
+              clientName: editedValue,
+            };
+            console.log("Matched client:", matchedClient);
+          } else {
+            updates = { clientId: "", clientName: editedValue };
+            console.log("Client not found:", editedValue);
+          }
         }
       }
 
       if (field === "type") {
-        updates = { [field]: editedValue };
-        const matchedType = types.find(
-          (type) => type.name.toLowerCase() === editedValue.toLowerCase()
-        );
-        if (matchedType) {
-          updates = { typeId: matchedType.docId, type: editedValue };
-          console.log("Matched type:", matchedType);
-        } else {
-          updates = { typeId: "", type: editedValue };
-          console.log("Type not found:", editedValue);
+        if (currentEvent.type !== editedValue) {
+          updates = { [field]: editedValue };
+          const matchedType = types.find(
+            (type) => type.name.toLowerCase() === editedValue.toLowerCase()
+          );
+          if (matchedType) {
+            updates = { typeId: matchedType.docId, type: editedValue };
+            console.log("Matched type:", matchedType);
+          } else {
+            updates = { typeId: "", type: editedValue };
+            console.log("Type not found:", editedValue);
+          }
         }
       }
 
       if (field === "fee") {
-        updates = { [field]: parseFloat(editedValue) };
+        if (currentEvent.fee !== parseFloat(editedValue)) {
+          updates = { [field]: parseFloat(editedValue) };
+        }
       }
-
-      const getUserTimeZoneOffset = () => {
-        return new Date().getTimezoneOffset() / 60;
-      };
 
       if (field === "start" || field === "end") {
         const [time, period] = editedValue.split(" ");
         const [hours, minutes] = time.split(":");
         if (hours !== undefined && minutes !== undefined) {
-          const currentEvent = events.find((event) => event.id === id);
           if (currentEvent) {
             const updatedTime = new Date(
               currentEvent[field === "start" ? "start" : "end"]
             );
-            const originalHours = updatedTime.getUTCHours();
-            const originalMinutes = updatedTime.getUTCMinutes();
+            const originalHours = updatedTime.getHours();
+            const originalMinutes = updatedTime.getMinutes();
 
             // Convert input time to 24-hour format
             let inputHours = parseInt(hours, 10);
@@ -318,13 +257,12 @@ export default function CreateBookings() {
               console.log(`Original time: ${originalHours}:${originalMinutes}`);
               console.log(`New time: ${inputHours}:${minutes}`);
 
-              updatedTime.setUTCHours(inputHours);
-              updatedTime.setUTCMinutes(parseInt(minutes, 10));
-              updatedTime.setUTCSeconds(0);
+              updatedTime.setHours(inputHours);
+              updatedTime.setMinutes(parseInt(minutes, 10));
+              updatedTime.setSeconds(0);
 
               const updatedDay = updatedTime.toLocaleDateString("en-US", {
                 weekday: "long",
-                timeZone: "UTC",
               });
               const updatedDate = updatedTime;
 
@@ -381,91 +319,66 @@ export default function CreateBookings() {
           return;
         }
       } else if (field === "startDate" || field === "endDate") {
-        const newDate = new Date(editedValue);
+        const newDate = moment(editedValue).startOf("day");
         const currentEvent = events.find((event) => event.id === id);
         if (currentEvent) {
-          const originalDate = new Date(currentEvent[field]);
-          const originalDateString = originalDate.toISOString().split("T")[0];
-          const newDateString = newDate.toISOString().split("T")[0];
+          const originalDate = moment(currentEvent[field]).startOf("day");
+          const originalDateString = originalDate.format("YYYY-MM-DD");
+          const newDateString = newDate.format("YYYY-MM-DD");
 
           // Only update if the date has changed
           if (originalDateString !== newDateString) {
-            const utcDate = new Date(
-              Date.UTC(
-                newDate.getUTCFullYear(),
-                newDate.getUTCMonth(),
-                newDate.getUTCDate(),
-                newDate.getUTCHours(),
-                newDate.getUTCMinutes(),
-                newDate.getUTCSeconds()
-              )
-            );
-
             const updatedDateField = field === "startDate" ? "start" : "end";
-            const updatedTime = new Date(currentEvent[updatedDateField]);
+            const updatedTime = moment(currentEvent[updatedDateField]);
 
-            updatedTime.setUTCFullYear(
-              utcDate.getUTCFullYear(),
-              utcDate.getUTCMonth(),
-              utcDate.getUTCDate()
-            );
+            // Preserve the time components and set the new date
+            updatedTime.year(newDate.year());
+            updatedTime.month(newDate.month());
+            updatedTime.date(newDate.date());
 
-            const updatedDay = updatedTime.toLocaleDateString("en-US", {
-              weekday: "long",
-              timeZone: "UTC",
-            });
+            const updatedDay = updatedTime.format("dddd");
 
             if (field === "startDate") {
               updates = {
-                startDate: updatedTime,
+                startDate: updatedTime.toDate(),
                 startDay: updatedDay,
-                start: updatedTime,
+                start: updatedTime.toDate(),
               };
 
               // Update end fields if startDate is changed
-              const endTime = new Date(currentEvent.end);
-              endTime.setUTCFullYear(
-                utcDate.getUTCFullYear(),
-                utcDate.getUTCMonth(),
-                utcDate.getUTCDate()
-              );
+              const endTime = moment(currentEvent.end);
+              endTime.year(newDate.year());
+              endTime.month(newDate.month());
+              endTime.date(newDate.date());
 
-              const endDay = endTime.toLocaleDateString("en-US", {
-                weekday: "long",
-                timeZone: "UTC",
-              });
+              const endDay = endTime.format("dddd");
 
-              updates.end = endTime;
-              updates.endDate = endTime;
+              updates.end = endTime.toDate();
+              updates.endDate = endTime.toDate();
               updates.endDay = endDay;
 
-              console.log(`Start date changed: ${updatedTime}`);
-              console.log(`End date adjusted: ${endTime}`);
+              console.log(`Start date changed: ${updatedTime.toDate()}`);
+              console.log(`End date adjusted: ${endTime.toDate()}`);
             } else if (field === "endDate") {
               updates = {
-                endDate: updatedTime,
+                endDate: updatedTime.toDate(),
                 endDay: updatedDay,
-                end: updatedTime,
+                end: updatedTime.toDate(),
               };
               // Update start fields if endDate is changed
-              const startTime = new Date(currentEvent.start);
-              startTime.setUTCFullYear(
-                utcDate.getUTCFullYear(),
-                utcDate.getUTCMonth(),
-                utcDate.getUTCDate()
-              );
+              const startTime = moment(currentEvent.start);
+              startTime.year(newDate.year());
+              startTime.month(newDate.month());
+              startTime.date(newDate.date());
 
-              const startDay = startTime.toLocaleDateString("en-US", {
-                weekday: "long",
-                timeZone: "UTC",
-              });
+              const startDay = startTime.format("dddd");
 
-              updates.start = startTime;
-              updates.startDate = startTime;
+              updates.start = startTime.toDate();
+              updates.startDate = startTime.toDate();
               updates.startDay = startDay;
 
-              console.log(`End date changed: ${updatedTime}`);
-              console.log(`Start date adjusted: ${startTime}`);
+              console.log(`End date changed: ${updatedTime.toDate()}`);
+              console.log(`Start date adjusted: ${startTime.toDate()}`);
             }
           } else {
             console.log(`Date not changed for ${field}:`);
@@ -474,11 +387,19 @@ export default function CreateBookings() {
           }
         }
       } else if (field === "description") {
-        updates = { [field]: editedValue };
+        if (currentEvent.description !== editedValue) {
+          updates = { [field]: editedValue };
+        }
+      }
+
+      if (Object.keys(updates).length === 0) {
+        setEditingCell(null);
+        return;
       }
 
       // Save the updates to Firestore
-      await updateDoc(docRef, updates);
+      await updateFireStoreEvent(auth.currentUser?.uid!, id, updates);
+      // await updateDoc(docRef, updates);
 
       // Update local state
       setEvents((prevEvents) =>
@@ -552,13 +473,19 @@ export default function CreateBookings() {
         throw new Error("User not authenticated");
       }
 
+      // Get the user's time zone
+      const userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
       // If this is a recurring event, handle it using the cloud function
       if (
         eventData.recurrence &&
         eventData.recurrence.daysOfWeek &&
         eventData.recurrence.daysOfWeek.length > 0
       ) {
-        // Adjust end recurrence date
+        // Calculate the time zone offsets for start time and end time
+        const startDateTime = new Date(`${startDate}T${eventData.startTime}`);
+        const endDateTime = new Date(`${startDate}T${eventData.endTime}`);
+        const startRecur = new Date(eventData.recurrence.startRecur);
         const endRecur = new Date(eventData.recurrence.endRecur || startDate);
         endRecur.setDate(endRecur.getDate() + 1);
 
@@ -577,10 +504,11 @@ export default function CreateBookings() {
           paid: eventData.paid,
           recurrence: {
             daysOfWeek: eventData.recurrence.daysOfWeek,
-            startRecur: eventData.recurrence.startRecur || startDate,
+            startRecur: startRecur.toISOString().split("T")[0] || startDate,
             endRecur: endRecur.toISOString().split("T")[0],
           },
           userId: user.uid,
+          userTimeZone,
         };
 
         console.log(
@@ -607,14 +535,22 @@ export default function CreateBookings() {
           const [endHour, endMinute] = eventData.endTime.split(":").map(Number);
 
           // Set the time in UTC
-          startDateTime.setUTCHours(startHour, startMinute, 0, 0);
-          endDateTime.setUTCHours(endHour, endMinute, 0, 0);
+          startDateTime.setHours(startHour, startMinute, 0, 0);
+          endDateTime.setHours(endHour, endMinute, 0, 0);
 
           // Ensure end time is after the start time
           if (endDateTime <= startDateTime) {
-            endDateTime.setUTCDate(endDateTime.getUTCDate() + 1);
+            endDateTime.setDate(endDateTime.getDate() + 1);
           }
         }
+
+        const startDay = startDateTime.toLocaleDateString("en-US", {
+          weekday: "long",
+        });
+
+        const endDay = endDateTime.toLocaleDateString("en-US", {
+          weekday: "long",
+        });
 
         // Create the event object for a single or background event
         let event: EventInput = {
@@ -626,155 +562,28 @@ export default function CreateBookings() {
           clientId: eventData.clientId,
           clientName: eventData.clientName,
           location: eventData.location || "",
-          start: startDateTime, // Save in UTC
-          end: endDateTime, // Save in UTC
+          start: startDateTime,
+          end: endDateTime,
           description: eventData.description,
           display: "auto",
           className: "",
           isBackgroundEvent: false,
-          startDate: startDateTime, // Save in UTC
-          startDay: startDateTime.toLocaleDateString("en-US", {
-            weekday: "long",
-            timeZone: "UTC",
-          }),
-          endDate: endDateTime, // Save in UTC
-          endDay: endDateTime.toLocaleDateString("en-US", {
-            weekday: "long",
-            timeZone: "UTC",
-          }),
+          startDate: startDateTime,
+          startDay: startDay,
+          endDate: endDateTime,
+          endDay: endDay,
           paid: eventData.paid,
         };
 
         console.log("Single event data ready for Firestore:", event);
         event = removeUndefinedFields(event);
 
-        // Save single event or background event directly to Firestore
-        const eventRef = await addDoc(
-          collection(db, "users", user.uid, "events"),
-          event
-        );
+        console.log("Event data before submitting to firebase:", event);
 
-        const eventId = eventRef.id;
-        event.id = eventId;
-
-        // Update the event with the ID
-        await updateDoc(eventRef, { id: eventId });
+        await createFireStoreEvent(user.uid, event);
 
         console.log("Single event created in Firestore with ID:", event.id);
       }
-
-      // // Helper function to adjust for time zone offset and return UTC date
-      // const adjustToUTC = (dateTime: Date) => {
-      //   const timezoneOffset = dateTime.getTimezoneOffset(); // Timezone offset in minutes
-      //   return new Date(dateTime.getTime() - timezoneOffset * 60 * 1000); // Adjust to UTC
-      // };
-
-      // // Parse the start and end times
-      // let startDateTime = new Date(`${startDate}T${eventData.startTime}`);
-      // let endDateTime = new Date(`${startDate}T${eventData.endTime}`);
-
-      // // Ensure the end time is after the start time
-      // if (endDateTime <= startDateTime) {
-      //   endDateTime.setDate(endDateTime.getDate() + 1);
-      // }
-
-      // // Adjust the start and end times to UTC
-      // startDateTime = adjustToUTC(startDateTime);
-      // endDateTime = adjustToUTC(endDateTime);
-
-      // // Calculate related fields
-      // const startDay = startDateTime.toLocaleDateString("en-US", {
-      //   weekday: "long",
-      //   timeZone: "UTC",
-      // });
-      // const endDay = endDateTime.toLocaleDateString("en-US", {
-      //   weekday: "long",
-      //   timeZone: "UTC",
-      // });
-
-      // // Check if the event is recurring or a single event
-      // if (
-      //   !eventData.recurrence ||
-      //   eventData.recurrence.daysOfWeek.length === 0
-      // ) {
-      //   // Client-side single event creation
-      //   console.log("storing using client side single event creation");
-      //   // Parse the start and end times
-      //   // let startDateTime = new Date(`${startDate}T${eventData.startTime}`);
-      //   // let endDateTime = new Date(`${startDate}T${eventData.endTime}`);
-
-      //   // // Ensure the end time is after the start time
-      //   // if (endDateTime <= startDateTime) {
-      //   //   endDateTime.setDate(endDateTime.getDate() + 1);
-      //   // }
-
-      //   // // Adjust the start and end times to UTC
-      //   // startDateTime = adjustToUTC(startDateTime);
-      //   // endDateTime = adjustToUTC(endDateTime);
-
-      //   // Create a new event object
-      //   const eventInput = {
-      //     type: eventData.type,
-      //     typeId: eventData.typeId,
-      //     fee: eventData.fee,
-      //     clientId: eventData.clientId,
-      //     clientName: eventData.clientName,
-      //     description: eventData.description,
-      //     location: eventData.location || "",
-      //     isBackgroundEvent: eventData.isBackgroundEvent,
-
-      //     start: startDateTime, // Save in UTC
-      //     end: endDateTime, // Save in UTC
-      //     startDate: startDateTime,
-      //     startDay: startDay,
-      //     endDate: endDateTime,
-      //     endDay: endDay,
-      //     paid: eventData.paid,
-      //     created_at: new Date(), // Timestamp of creation
-      //     updated_at: new Date(), // Timestamp of last update
-      //   };
-
-      //   // Save the event directly to Firestore
-      //   const eventRef = doc(collection(db, "users", user.uid, "events"));
-      //   await setDoc(eventRef, eventInput);
-
-      //   console.log("Single event created in Firestore");
-      // } else {
-      //   // Server-side recurring event creation using the cloud function
-      //   console.log("storing using server side");
-
-      //   // Add 2 day to the endRecur date to ensure the last day is included
-      //   const endRecur = new Date(eventData.recurrence?.endRecur || startDate);
-      //   endRecur.setDate(endRecur.getDate() + 2);
-
-      //   const eventInput = {
-      //     type: eventData.type,
-      //     typeId: eventData.typeId,
-      //     fee: eventData.fee,
-      //     clientId: eventData.clientId,
-      //     clientName: eventData.clientName,
-      //     description: eventData.description,
-      //     location: eventData.location || "",
-      //     startDate,
-      //     startTime: eventData.startTime,
-      //     endTime: eventData.endTime,
-      //     paid: eventData.paid,
-      //     recurrence: {
-      //       daysOfWeek: eventData.recurrence?.daysOfWeek || [],
-      //       startRecur: eventData.recurrence?.startRecur || startDate,
-      //       endRecur: adjustToUTC(endRecur).toISOString().split("T")[0],
-      //     },
-      //     userId: user.uid,
-      //   };
-
-      //   const result = await axios.post(
-      //     "https://us-central1-prune-94ad9.cloudfunctions.net/createRecurringBookingInstances",
-      //     eventInput
-      //   );
-
-      //   console.log("Recurring event instances created:", result.data);
-      // }
-
       // Fetch events again to update the list
       await fetchEvents();
     } catch (error) {
@@ -817,11 +626,9 @@ export default function CreateBookings() {
     );
   };
 
-  const displayTimeWithOffset = (date: Date) => {
-    const userTimezoneOffsetInHours = new Date().getTimezoneOffset() / 60;
-    const adjustedDate = new Date(
-      date.getTime() + userTimezoneOffsetInHours * 60 * 60 * 1000
-    );
+  const displayTime = (date: Date) => {
+    // const userTimezoneOffsetInHours = new Date().getTimezoneOffset() / 60;
+    const adjustedDate = new Date(date.getTime());
     return adjustedDate.toLocaleTimeString("en-US", {
       hour: "2-digit",
       minute: "2-digit",
@@ -1089,12 +896,12 @@ export default function CreateBookings() {
                         handleCellClick(
                           event.id!,
                           "start",
-                          displayTimeWithOffset(event.start),
+                          displayTime(event.start),
                           !!event.recurrence
                         )
                       }
                     >
-                      {displayTimeWithOffset(event.start)}
+                      {displayTime(event.start)}
                     </div>
                   )}
                 </TableCell>
@@ -1116,12 +923,12 @@ export default function CreateBookings() {
                         handleCellClick(
                           event.id!,
                           "end",
-                          displayTimeWithOffset(event.end),
+                          displayTime(event.end),
                           !!event.recurrence
                         )
                       }
                     >
-                      {displayTimeWithOffset(event.end)}
+                      {displayTime(event.end)}
                     </div>
                   )}
                 </TableCell>

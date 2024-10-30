@@ -8,6 +8,11 @@ import {
   QueryDocumentSnapshot,
   SnapshotOptions,
   DocumentData,
+  addDoc,
+  updateDoc,
+  doc,
+  where,
+  orderBy,
 } from "firebase/firestore";
 import { EventInput } from "@/interfaces/types";
 import { fetchBookingType } from "./bookingTypes";
@@ -15,42 +20,53 @@ import { fetchBookingType } from "./bookingTypes";
 // Event converter
 const eventConverter: FirestoreDataConverter<EventInput> = {
   toFirestore(event: Omit<EventInput, "id">): DocumentData {
-    return {
-      title: event.title,
-      type: event.type,
-      typeId: event.typeId,
-      location: event.location,
-      fee: event.fee,
-      clientId: event.clientId,
-      clientName: event.clientName,
-      start: event.start, // Store as Timestamp
-      end: event.end, // Store as Timestamp
-      description: event.description,
-      display: event.display,
-      className: event.className,
+    const firestoreEvent: DocumentData = {
+      title: event.title || "",
+      type: event.type || "",
+      typeId: event.typeId || "",
+      location: event.location || "",
+      fee: event.fee || 0,
+      clientId: event.clientId || "",
+      clientName: event.clientName || "",
+      start: event.start ? Timestamp.fromDate(new Date(event.start)) : null,
+      end: event.end ? Timestamp.fromDate(new Date(event.end)) : null,
+      description: event.description || "",
+      display: event.display || "",
+      className: event.className || "",
       isBackgroundEvent: event.isBackgroundEvent,
-      startDate: event.startDate, // Store as Timestamp
+      startDate: event.startDate
+        ? Timestamp.fromDate(new Date(event.startDate))
+        : null,
       startDay: event.startDay,
-      endDate: event.endDate, // Store as Timestamp
+      endDate: event.endDate
+        ? Timestamp.fromDate(new Date(event.endDate))
+        : null,
       endDay: event.endDay,
-      recurrence: event.recurrence,
-      exceptions: event.exceptions,
-      exdate: event.exdate,
-      originalEventId: event.originalEventId,
-      isInstance: event.isInstance,
-      instanceMap: event.instanceMap,
-      paid: event.paid,
+      exceptions: event.exceptions || [],
+      exdate: event.exdate || [],
+      originalEventId: event.originalEventId || "",
+      isInstance: event.isInstance || false,
+      instanceMap: event.instanceMap || {},
+      paid: event.paid || false,
+      created_at: event.created_at
+        ? Timestamp.fromDate(new Date(event.created_at))
+        : null,
+      updated_at: event.updated_at
+        ? Timestamp.fromDate(new Date(event.updated_at))
+        : null,
     };
+
+    if (event.recurrence) {
+      firestoreEvent.recurrence = event.recurrence;
+    }
+
+    return firestoreEvent;
   },
   fromFirestore(
     snapshot: QueryDocumentSnapshot<DocumentData>,
     options: SnapshotOptions
   ): EventInput {
     const data = snapshot.data(options);
-
-    const startTimestamp = data.start instanceof Timestamp ? data.start : null;
-    const endTimestamp = data.end instanceof Timestamp ? data.end : null;
-
     return {
       title: data.title || "",
       id: snapshot.id,
@@ -60,30 +76,28 @@ const eventConverter: FirestoreDataConverter<EventInput> = {
       clientId: data.clientId || "",
       clientName: data.clientName || "",
       location: data.location || "",
-      start: startTimestamp ? startTimestamp.toDate() : new Date(),
-      end: endTimestamp ? endTimestamp.toDate() : new Date(),
-      startDate: startTimestamp ? startTimestamp.toDate() : new Date(),
-      startDay: startTimestamp
-        ? startTimestamp.toDate().toLocaleDateString("en-US", {
-            weekday: "long",
-            timeZone: "UTC",
-          })
-        : "",
-      endDate: endTimestamp ? endTimestamp.toDate() : new Date(),
-      endDay: endTimestamp
-        ? endTimestamp.toDate().toLocaleDateString("en-US", {
-            weekday: "long",
-            timeZone: "UTC",
-          })
-        : "",
+      start: (data.start as Timestamp)?.toDate(),
+      end: (data.end as Timestamp)?.toDate(),
+      startDate: (data.start as Timestamp)?.toDate(),
+      startDay: (data.start as Timestamp)
+        ?.toDate()
+        .toLocaleDateString("en-US", {
+          weekday: "long",
+        }),
+      endDate: (data.end as Timestamp)?.toDate(),
+      endDay: (data.end as Timestamp)?.toDate().toLocaleDateString("en-US", {
+        weekday: "long",
+      }),
       description: data.description || "",
-      display: data.isBackgroundEvent ? "background" : "auto",
+      display: data.isBackgroundEvent ? "inverse-background" : "auto",
       isBackgroundEvent: !!data.isBackgroundEvent,
       className: data.isBackgroundEvent ? "" : "",
       recurrence: data.recurrence || undefined, // in nolan's code it was undefined
       exdate: data.exceptions || [],
       paid: data.paid,
       originalEventId: data.originalEventId || "",
+      created_at: (data.created_at as Timestamp)?.toDate(),
+      updated_at: (data.updated_at as Timestamp)?.toDate(),
       // exceptions: data.exceptions,
 
       // isInstance: data.isInstance,
@@ -98,7 +112,7 @@ export const eventRef = (userId: string) =>
   collection(db, "users", userId, "events").withConverter(eventConverter);
 
 // Function to fetch events
-export async function converterFetchEvents(
+export async function fetchFirestoreEvents(
   userUid: User | null
 ): Promise<EventInput[]> {
   if (!userUid) {
@@ -112,6 +126,9 @@ export async function converterFetchEvents(
   console.log(
     `Retrieved ${querySnapshot.docs.length} documents from Firestore.`
   );
+
+  const checktimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  console.log("Timezone: ", checktimezone);
 
   const eventsData = await Promise.all(
     querySnapshot.docs.map(async (doc) => {
@@ -135,3 +152,197 @@ export async function converterFetchEvents(
   console.log("Events fetched:", eventsData);
   return eventsData;
 }
+
+/// Function to create an event
+export async function createFireStoreEvent(userId: string, event: EventInput) {
+  const newEvent = {
+    ...event,
+    created_at: Timestamp.now().toDate(),
+    updated_at: Timestamp.now().toDate(),
+  };
+
+  const newEventRef = await addDoc(eventRef(userId), newEvent);
+  const eventId = newEventRef.id;
+  await updateDoc(newEventRef, {
+    id: eventId,
+    updated_at: Timestamp.now().toDate(),
+  });
+  return { ...newEvent, id: eventId };
+}
+
+// Function to update an event by ID
+export async function updateFireStoreEvent(
+  userId: string,
+  eventId: string,
+  event: Partial<EventInput>
+) {
+  const eventDocRef = doc(db, "users", userId, "events", eventId).withConverter(
+    eventConverter
+  );
+  const updatedEvent = {
+    ...event,
+    updated_at: Timestamp.now().toDate(),
+  };
+
+  await updateDoc(eventDocRef, updatedEvent);
+}
+
+// Function to fetch events from today onwards
+export const fetchBookingsListviewEvents = async (
+  userId: string
+): Promise<EventInput[]> => {
+  if (!userId) {
+    console.warn("No user ID provided.");
+    return [];
+  }
+  const today = new Date();
+  today.setHours(0, 0, 0, 0); // Set time to midnight to match the start of the day
+
+  // Fetch events by "start" field where the date is from today onwards
+  const q = query(
+    eventRef(userId),
+    where("isBackgroundEvent", "==", false),
+    where("start", ">=", today), // Fetch events starting from today onwards
+    orderBy("start", "asc") // Ascending order
+  );
+
+  const querySnapshot = await getDocs(q);
+  let eventsList: EventInput[] = [];
+
+  querySnapshot.docs.forEach((doc) => {
+    const data = doc.data();
+    console.log("Event data:", data);
+    const start =
+      data.start instanceof Timestamp
+        ? data.start.toDate()
+        : new Date(data.start);
+    const end =
+      data.end instanceof Timestamp ? data.end.toDate() : new Date(data.end);
+
+    if (data.recurrence) {
+      const dtstart = new Date(start);
+      eventsList.push({
+        id: doc.id,
+        title: data.title,
+        type: data.type,
+        typeId: data.typeId,
+        fee: data.fee,
+        clientId: data.clientId,
+        clientName: data.clientName,
+        start: dtstart,
+        end: new Date(dtstart.getTime() + (end.getTime() - start.getTime())), // Calculate end time based on duration
+        description: data.description || "",
+        isBackgroundEvent: data.isBackgroundEvent,
+        startDate: dtstart,
+        startDay: dtstart.toLocaleDateString("en-US", { weekday: "long" }),
+        endDate: new Date(
+          dtstart.getTime() + (end.getTime() - start.getTime())
+        ),
+        endDay: new Date(
+          dtstart.getTime() + (end.getTime() - start.getTime())
+        ).toLocaleDateString("en-US", { weekday: "long" }),
+        paid: data.paid,
+        recurrence: data.recurrence,
+        exceptions: data.exceptions,
+      });
+    } else {
+      eventsList.push({
+        id: doc.id,
+        title: data.title,
+        type: data.type,
+        typeId: data.typeId,
+        fee: data.fee,
+        clientId: data.clientId,
+        clientName: data.clientName,
+        start: start,
+        end: end,
+        description: data.description || "",
+        isBackgroundEvent: data.isBackgroundEvent,
+        startDate: start,
+        startDay: start.toLocaleDateString("en-US", { weekday: "long" }),
+        endDate: end,
+        endDay: end.toLocaleDateString("en-US", { weekday: "long" }),
+        paid: data.paid,
+      });
+    }
+  });
+  return eventsList;
+};
+
+// Function to fetch availabilities from today onwards
+export const fetchAvailabilitiesListviewEvents = async (
+  userId: string
+): Promise<Omit<EventInput, "fee">[]> => {
+  if (!userId) {
+    console.warn("No user ID provided.");
+    return [];
+  }
+  const today = new Date();
+  today.setHours(0, 0, 0, 0); // Set time to midnight to match the start of the day
+
+  // Fetch events by "start" field where the date is from today onwards
+  const q = query(
+    eventRef(userId),
+    where("isBackgroundEvent", "==", true),
+    where("start", ">=", today), // Fetch events starting from today onwards
+    orderBy("start", "asc") // Ascending order
+  );
+
+  const querySnapshot = await getDocs(q);
+  let eventsList: Omit<EventInput, "fee">[] = [];
+
+  querySnapshot.docs.forEach((doc) => {
+    const data = doc.data();
+    console.log("Event data:", data);
+    const start =
+      data.start instanceof Timestamp
+        ? data.start.toDate()
+        : new Date(data.start);
+    const end =
+      data.end instanceof Timestamp ? data.end.toDate() : new Date(data.end);
+
+    if (data.recurrence) {
+      const dtstart = new Date(start);
+      eventsList.push({
+        id: doc.id,
+        title: data.title,
+        type: data.type || "",
+        typeId: data.typeId || "",
+        clientId: data.clientId || "",
+        clientName: data.clientName || "",
+        start: dtstart,
+        end: new Date(dtstart.getTime() + (end.getTime() - start.getTime())), // Calculate end time based on duration
+        description: data.description || "",
+        isBackgroundEvent: data.isBackgroundEvent,
+        startDate: dtstart,
+        startDay: dtstart.toLocaleDateString("en-US", { weekday: "long" }),
+        endDate: new Date(
+          dtstart.getTime() + (end.getTime() - start.getTime())
+        ),
+        endDay: new Date(
+          dtstart.getTime() + (end.getTime() - start.getTime())
+        ).toLocaleDateString("en-US", { weekday: "long" }),
+        recurrence: data.recurrence,
+        exceptions: data.exceptions,
+      });
+    } else {
+      eventsList.push({
+        id: doc.id,
+        title: data.title,
+        type: data.type || "",
+        typeId: data.typeId || "",
+        clientId: data.clientId || "",
+        clientName: data.clientName || "",
+        start: start,
+        end: end,
+        description: data.description || "",
+        isBackgroundEvent: data.isBackgroundEvent,
+        startDate: start,
+        startDay: start.toLocaleDateString("en-US", { weekday: "long" }),
+        endDate: end,
+        endDay: end.toLocaleDateString("en-US", { weekday: "long" }),
+      });
+    }
+  });
+  return eventsList;
+};
