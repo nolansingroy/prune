@@ -470,12 +470,7 @@ export default function Calendar() {
         // Calculate the time zone offsets for start time and end time
         const startDateTime = new Date(`${startDate}T${startTime}`);
         const endDateTime = new Date(`${startDate}T${endTime}`);
-
-        const startTimeZoneOffset = -startDateTime.getTimezoneOffset() / 60; // Offset in hours
-        const endTimeZoneOffset = -endDateTime.getTimezoneOffset() / 60; // Offset in hours
-
         const startRecur = new Date(recurrence.startRecur);
-
         const endRecur = new Date(recurrence.endRecur || startDate);
         endRecur.setDate(endRecur.getDate() + 1);
 

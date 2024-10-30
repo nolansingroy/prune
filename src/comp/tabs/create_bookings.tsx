@@ -55,6 +55,7 @@ import CreateBookingsFormDialog from "../CreateBookingsFormDialog";
 import { fetchBookingTypes } from "@/lib/converters/bookingTypes";
 import { fetchClients } from "@/lib/converters/clients";
 import {
+  createFireStoreEvent,
   fetchBookingsListviewEvents,
   updateFireStoreEvent,
 } from "@/lib/converters/events";
@@ -472,13 +473,19 @@ export default function CreateBookings() {
         throw new Error("User not authenticated");
       }
 
+      // Get the user's time zone
+      const userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
       // If this is a recurring event, handle it using the cloud function
       if (
         eventData.recurrence &&
         eventData.recurrence.daysOfWeek &&
         eventData.recurrence.daysOfWeek.length > 0
       ) {
-        // Adjust end recurrence date
+        // Calculate the time zone offsets for start time and end time
+        const startDateTime = new Date(`${startDate}T${eventData.startTime}`);
+        const endDateTime = new Date(`${startDate}T${eventData.endTime}`);
+        const startRecur = new Date(eventData.recurrence.startRecur);
         const endRecur = new Date(eventData.recurrence.endRecur || startDate);
         endRecur.setDate(endRecur.getDate() + 1);
 
@@ -497,10 +504,11 @@ export default function CreateBookings() {
           paid: eventData.paid,
           recurrence: {
             daysOfWeek: eventData.recurrence.daysOfWeek,
-            startRecur: eventData.recurrence.startRecur || startDate,
+            startRecur: startRecur.toISOString().split("T")[0] || startDate,
             endRecur: endRecur.toISOString().split("T")[0],
           },
           userId: user.uid,
+          userTimeZone,
         };
 
         console.log(
@@ -527,14 +535,22 @@ export default function CreateBookings() {
           const [endHour, endMinute] = eventData.endTime.split(":").map(Number);
 
           // Set the time in UTC
-          startDateTime.setUTCHours(startHour, startMinute, 0, 0);
-          endDateTime.setUTCHours(endHour, endMinute, 0, 0);
+          startDateTime.setHours(startHour, startMinute, 0, 0);
+          endDateTime.setHours(endHour, endMinute, 0, 0);
 
           // Ensure end time is after the start time
           if (endDateTime <= startDateTime) {
-            endDateTime.setUTCDate(endDateTime.getUTCDate() + 1);
+            endDateTime.setDate(endDateTime.getDate() + 1);
           }
         }
+
+        const startDay = startDateTime.toLocaleDateString("en-US", {
+          weekday: "long",
+        });
+
+        const endDay = endDateTime.toLocaleDateString("en-US", {
+          weekday: "long",
+        });
 
         // Create the event object for a single or background event
         let event: EventInput = {
@@ -546,43 +562,28 @@ export default function CreateBookings() {
           clientId: eventData.clientId,
           clientName: eventData.clientName,
           location: eventData.location || "",
-          start: startDateTime, // Save in UTC
-          end: endDateTime, // Save in UTC
+          start: startDateTime,
+          end: endDateTime,
           description: eventData.description,
           display: "auto",
           className: "",
           isBackgroundEvent: false,
-          startDate: startDateTime, // Save in UTC
-          startDay: startDateTime.toLocaleDateString("en-US", {
-            weekday: "long",
-            timeZone: "UTC",
-          }),
-          endDate: endDateTime, // Save in UTC
-          endDay: endDateTime.toLocaleDateString("en-US", {
-            weekday: "long",
-            timeZone: "UTC",
-          }),
+          startDate: startDateTime,
+          startDay: startDay,
+          endDate: endDateTime,
+          endDay: endDay,
           paid: eventData.paid,
         };
 
         console.log("Single event data ready for Firestore:", event);
         event = removeUndefinedFields(event);
 
-        // Save single event or background event directly to Firestore
-        const eventRef = await addDoc(
-          collection(db, "users", user.uid, "events"),
-          event
-        );
+        console.log("Event data before submitting to firebase:", event);
 
-        const eventId = eventRef.id;
-        event.id = eventId;
-
-        // Update the event with the ID
-        await updateDoc(eventRef, { id: eventId });
+        await createFireStoreEvent(user.uid, event);
 
         console.log("Single event created in Firestore with ID:", event.id);
       }
-
       // Fetch events again to update the list
       await fetchEvents();
     } catch (error) {
