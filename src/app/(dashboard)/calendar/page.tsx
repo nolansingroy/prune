@@ -308,36 +308,37 @@ export default function Calendar() {
     const defaultStartTimeLocal = new Date(selectInfo.startStr);
     const defaultEndTimeLocal = new Date(selectInfo.endStr);
 
+    console.log("Select Info start date:", defaultStartTimeLocal);
+
     // Derive the day of the week from startDate
     const defaultStartDay = defaultStartTimeLocal.toLocaleDateString("en-US", {
       weekday: "long",
     });
 
     setEditingEvent((prevState) => {
-      // Ensure required fields like `title`, `startDate`, and `isBackgroundEvent` are preserved
       const updatedEvent: EventInput = {
         id: prevState?.id,
-        ...prevState, // Preserve previous state
-        title: prevState?.title || "", // Ensure title is not undefined
+        ...prevState,
+        title: prevState?.title || "",
         fee: prevState?.fee || 0,
         clientId: prevState?.clientId || "",
         clientName: prevState?.clientName || "",
-        type: prevState?.type || "No type", // Ensure title is not undefined
-        typeId: prevState?.type || "", // Ensure title is not undefined
-        isBackgroundEvent: prevState?.isBackgroundEvent ?? false, // Ensure isBackgroundEvent is a boolean (default to false)
+        type: prevState?.type || "No type",
+        typeId: prevState?.typeId || "",
+        isBackgroundEvent: prevState?.isBackgroundEvent ?? false,
         start:
           prevState?.start instanceof Date
             ? prevState.start
-            : defaultStartTimeLocal, // Ensure start is a Date object in local time
+            : defaultStartTimeLocal,
         end:
-          prevState?.end instanceof Date ? prevState.end : defaultEndTimeLocal, // Use the correct end time from selectInfo
-        startDate: defaultStartTimeLocal, // Store startDate as the local Date object
-        endDate: defaultEndTimeLocal, // Store endDate as the local Date object
-        startDay: prevState?.startDay || defaultStartDay, // Ensure startDay is derived from startDate if not already present
+          prevState?.end instanceof Date ? prevState.end : defaultEndTimeLocal,
+        startDate: defaultStartTimeLocal,
+        endDate: defaultEndTimeLocal,
+        startDay: prevState?.startDay || defaultStartDay,
         endDay:
           prevState?.endDay ||
-          defaultEndTimeLocal.toLocaleDateString("en-US", { weekday: "long" }), // Derive endDay from endDate if not present
-        recurrence: undefined, // Set recurrence to undefined to prevent auto-selection
+          defaultEndTimeLocal.toLocaleDateString("en-US", { weekday: "long" }),
+        recurrence: undefined,
       };
       return updatedEvent;
     });

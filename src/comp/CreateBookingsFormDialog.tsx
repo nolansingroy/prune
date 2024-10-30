@@ -168,7 +168,9 @@ const CreateBookingsFormDialog: React.FC<CreateBookingsFormDialogProps> = ({
       setLocation(event.location || "");
       setPaid(event.paid || false);
       setDate(
-        event.startDate ? event.startDate.toISOString().split("T")[0] : ""
+        event.startDate
+          ? event.startDate.toLocaleDateString("en-CA") // Formats date as YYYY-MM-DD in local time
+          : ""
       );
       setStartTime(
         event.start
