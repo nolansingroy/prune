@@ -3,7 +3,7 @@ import * as admin from "firebase-admin";
 import {FieldValue, Timestamp} from "firebase-admin/firestore";
 import cors from "cors";
 import {RRule, RRuleSet} from "rrule";
-import {toDate} from "date-fns-tz";
+import moment from "moment-timezone";
 
 const db = admin.firestore();
 
@@ -34,6 +34,12 @@ export const createRecurringAvailabilityInstances = functions.https.onRequest(
           userTimeZone,
         } = req.body;
 
+        if (!title || !startDate || !startTime || !endTime ||
+          !recurrence || !userId || !userTimeZone) {
+          res.status(400).json({error: "Missing required fields"});
+          return;
+        }
+
         console.log("availabilities");
 
         console.log("Received request with data:", {
@@ -45,6 +51,7 @@ export const createRecurringAvailabilityInstances = functions.https.onRequest(
           endTime,
           recurrence,
           userId,
+          userTimeZone,
         });
 
         const batch = db.batch();
@@ -55,60 +62,56 @@ export const createRecurringAvailabilityInstances = functions.https.onRequest(
           .doc();
 
         // Combine startDate and startTime into Date objects
-        const originalStartDate = toDate(`${startDate}T${startTime}`, {timeZone: userTimeZone});
-        const originalEndDate = toDate(`${startDate}T${endTime}`, {timeZone: userTimeZone});
+        const originalStartDate = moment.tz(`${startDate}T${startTime}:00`, userTimeZone);
+        const originalEndDate = moment.tz(`${startDate}T${endTime}:00`, userTimeZone);
 
-        console.log("Original start date:", originalStartDate);
-        console.log("Original end date:", originalEndDate);
+        console.log("Original start date (local):", originalStartDate.format());
+        console.log("Original end date (local):", originalEndDate.format());
 
         const daysOfWeek = recurrence.daysOfWeek;
 
-        // Check if the original start date is on a recurring day; adjust if not
-        if (!daysOfWeek.includes(originalStartDate.getDay())) {
+        // Adjust the original start and end dates to the next valid recurring day if necessary
+        if (!daysOfWeek.includes(originalStartDate.day())) {
           let dayOffset = 1;
-          while (!daysOfWeek.includes((originalStartDate.getDay() + dayOffset) % 7)) {
+          while (!daysOfWeek.includes((originalStartDate.day() + dayOffset) % 7)) {
             dayOffset++;
           }
-          // Set the start date and end date to the next valid recurring day
-          originalStartDate.setDate(originalStartDate.getDate() + dayOffset);
-          originalEndDate.setDate(originalEndDate.getDate() + dayOffset);
+          originalStartDate.add(dayOffset, "days");
+          originalEndDate.add(dayOffset, "days");
         }
 
-        // Check if the recurrence is for every day (contains 0-6)
         const isEveryday =
           daysOfWeek.length === 7 && daysOfWeek.every((day: number) => day >= 0 && day <= 6);
         console.log("isEveryday:", isEveryday);
 
-        // Adjust the endRecur to avoid the bleeding of 1 day
-        const recurrenceEndDate = toDate(`${recurrence.endRecur}T23:59:59`, {timeZone: userTimeZone});
+        const recurrenceEndDate = moment.tz(`${recurrence.endRecur}T23:59:59Z`, userTimeZone);
         if (isEveryday) {
-          recurrenceEndDate.setDate(recurrenceEndDate.getDate() - 1);
+          recurrenceEndDate.subtract(1, "days");
         }
 
-        console.log("Recurrence end date:", recurrenceEndDate);
+        console.log("Recurrence end date (local):", recurrenceEndDate.format());
 
-        // Set up the recurrence rule using rrule
         const ruleSet = new RRuleSet();
         const rule = new RRule({
           freq: RRule.WEEKLY,
           byweekday: daysOfWeek,
-          dtstart: originalStartDate,
-          until: recurrenceEndDate,
+          dtstart: originalStartDate.toDate(),
+          until: recurrenceEndDate.toDate(),
         });
 
         ruleSet.rrule(rule);
-        ruleSet.exdate(originalStartDate);
+        ruleSet.exdate(originalStartDate.toDate());
 
         const allOccurrences = ruleSet.all();
         console.log("All occurrences:", allOccurrences);
 
         const instanceMap: { [key: string]: string } = {};
 
-        const timestampStartDate = Timestamp.fromDate(originalStartDate);
-        const timestampEndDate = Timestamp.fromDate(originalEndDate);
+        const timestampStartDate = Timestamp.fromDate(originalStartDate.toDate());
+        const timestampEndDate = Timestamp.fromDate(originalEndDate.toDate());
 
-        console.log("Timestamp start date:", timestampStartDate);
-        console.log("Timestamp end date:", timestampEndDate);
+        console.log("Timestamp start date:", timestampStartDate.toDate());
+        console.log("Timestamp end date:", timestampEndDate.toDate());
 
         // 1. Create the original event
         batch.set(eventRef, {
@@ -119,13 +122,9 @@ export const createRecurringAvailabilityInstances = functions.https.onRequest(
           end: timestampEndDate,
           isBackgroundEvent: true,
           startDate: timestampStartDate,
-          startDay: originalStartDate.toLocaleDateString("en-US", {
-            weekday: "long",
-          }),
+          startDay: originalStartDate.format("dddd"),
           endDate: timestampEndDate,
-          endDay: originalEndDate.toLocaleDateString("en-US", {
-            weekday: "long",
-          }),
+          endDay: originalEndDate.format("dddd"),
           recurrence: {
             daysOfWeek,
             startRecur: recurrence.startRecur,
@@ -140,34 +139,26 @@ export const createRecurringAvailabilityInstances = functions.https.onRequest(
           title,
           description,
           location,
-          start: originalStartDate,
-          end: originalEndDate,
+          start: originalStartDate.format(),
+          end: originalEndDate.format(),
         });
 
         // 2. Process occurrences
         allOccurrences.forEach((occurrence) => {
-          const instanceDate = toDate(occurrence, {timeZone: userTimeZone});
+          const instanceDate = moment(occurrence);
 
-          // Conditionally handle date adjustment:
           if (isEveryday) {
-            console.log("Everyday instanceDate:", instanceDate);
+            console.log("Everyday instanceDate:", instanceDate.format());
           } else {
-            instanceDate.setDate(instanceDate.getDate() - 1);
+            instanceDate.subtract(1, "days");
           }
 
-          const instanceStartDate = toDate(
-            `${instanceDate.toISOString().split("T")[0]}T${startTime}`,
-            {timeZone: userTimeZone}
-          );
-          const instanceEndDate = toDate(
-            `${instanceDate.toISOString().split("T")[0]}T${endTime}`,
-            {timeZone: userTimeZone}
-          );
 
-          // Skip creating the instance if it matches the original event date because it's
-          // already created and to prevent duplicated events
-          if (instanceStartDate.getTime() === originalStartDate.getTime()) {
-            console.log("Skipping instance creation for original event date:", instanceStartDate);
+          const instanceStartDate = moment.tz(`${instanceDate.format("YYYY-MM-DD")}T${startTime}:00`, userTimeZone);
+          const instanceEndDate = moment.tz(`${instanceDate.format("YYYY-MM-DD")}T${endTime}:00`, userTimeZone);
+
+          if (instanceStartDate.isSame(originalStartDate)) {
+            console.log("Skipping instance creation for original event date:", instanceStartDate.format());
             return;
           }
 
@@ -177,11 +168,11 @@ export const createRecurringAvailabilityInstances = functions.https.onRequest(
             .collection("events")
             .doc();
 
-          const timestampInstanceStartDate = Timestamp.fromDate(instanceStartDate);
-          const timestampInstanceEndDate = Timestamp.fromDate(instanceEndDate);
+          const timestampInstanceStartDate = Timestamp.fromDate(instanceStartDate.toDate());
+          const timestampInstanceEndDate = Timestamp.fromDate(instanceEndDate.toDate());
 
-          console.log("Timestamp instance start date:", timestampInstanceStartDate);
-          console.log("Timestamp instance end date:", timestampInstanceEndDate);
+          console.log("Timestamp instance start date:", timestampInstanceStartDate.toDate());
+          console.log("Timestamp instance end date:", timestampInstanceEndDate.toDate());
 
 
           batch.set(instanceRef, {
@@ -192,13 +183,9 @@ export const createRecurringAvailabilityInstances = functions.https.onRequest(
             end: timestampInstanceEndDate,
             isBackgroundEvent: true,
             startDate: timestampInstanceStartDate,
-            startDay: instanceStartDate.toLocaleDateString("en-US", {
-              weekday: "long",
-            }),
+            startDay: instanceStartDate.format("dddd"),
             endDate: timestampInstanceEndDate,
-            endDay: instanceEndDate.toLocaleDateString("en-US", {
-              weekday: "long",
-            }),
+            endDay: instanceEndDate.format("dddd"),
             originalEventId: eventRef.id, // Reference to the original event
             isInstance: true,
             created_at: FieldValue.serverTimestamp(),
@@ -208,8 +195,8 @@ export const createRecurringAvailabilityInstances = functions.https.onRequest(
             title,
             description,
             location,
-            start: instanceStartDate,
-            end: instanceEndDate,
+            start: instanceStartDate.format(),
+            end: instanceEndDate.format(),
           });
 
           instanceMap[instanceStartDate.toISOString()] = instanceRef.id;

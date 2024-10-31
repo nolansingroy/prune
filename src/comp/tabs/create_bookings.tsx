@@ -852,7 +852,7 @@ export default function CreateBookings() {
                 {/* <TableCell>{event.startDate.toLocaleDateString()}</TableCell> */}
 
                 {/* Display the date and make it editable */}
-                <TableCell>
+                {/* <TableCell>
                   {editingCell?.id === event.id &&
                   editingCell?.field === "startDate" ? (
                     <input
@@ -876,7 +876,8 @@ export default function CreateBookings() {
                       {event.startDate.toLocaleDateString()}
                     </div>
                   )}
-                </TableCell>
+                </TableCell> */}
+                <TableCell>{event.startDate.toLocaleDateString()}</TableCell>
                 <TableCell>{event.startDay}</TableCell>
 
                 <TableCell>
