@@ -385,7 +385,7 @@ export default function Availability() {
         );
 
         const result = await axios.post(
-          "https://us-central1-prune-94ad9.cloudfunctions.net/createRecurringBookingInstances",
+          "https://us-central1-prune-94ad9.cloudfunctions.net/createRecurringAvailabilityInstances",
           eventInput
         );
 
@@ -711,7 +711,7 @@ export default function Availability() {
                   />
                 </TableCell>
 
-                <TableCell>
+                {/* <TableCell>
                   {editingCell?.id === event.id &&
                   editingCell?.field === "startDate" ? (
                     <input
@@ -735,7 +735,8 @@ export default function Availability() {
                       {event.startDate.toLocaleDateString()}
                     </div>
                   )}
-                </TableCell>
+                </TableCell> */}
+                <TableCell>{event.startDate.toLocaleDateString()}</TableCell>
                 <TableCell>{event.startDay}</TableCell>
 
                 <TableCell>

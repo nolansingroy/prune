@@ -498,10 +498,10 @@ export default function Calendar() {
             eventInput
           );
 
-          //" https://us-central1-prune-94ad9.cloudfunctions.net/createRecurringAvailabilityInstances"
+          //"http://127.0.0.1:5001/prune-94ad9/us-central1/createRecurringAvailabilityInstances"
 
           const result = await axios.post(
-            "http://127.0.0.1:5001/prune-94ad9/us-central1/createRecurringAvailabilityInstances",
+            "https://us-central1-prune-94ad9.cloudfunctions.net/createRecurringAvailabilityInstances",
             eventInput
           );
 
@@ -534,10 +534,10 @@ export default function Calendar() {
             eventInput
           );
 
-          //"https://us-central1-prune-94ad9.cloudfunctions.net/createRecurringBookingInstances"
+          //"http://127.0.0.1:5001/prune-94ad9/us-central1/createRecurringBookingInstances"
 
           const result = await axios.post(
-            "http://127.0.0.1:5001/prune-94ad9/us-central1/createRecurringBookingInstances",
+            "https://us-central1-prune-94ad9.cloudfunctions.net/createRecurringBookingInstances",
             eventInput
           );
 
