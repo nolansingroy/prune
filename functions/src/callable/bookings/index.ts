@@ -88,17 +88,18 @@ export const createRecurringBookingInstances = functions.https.onRequest(
             dayOffset++;
           }
           originalStartDate.add(dayOffset, "days");
-          originalEndDate.add(dayOffset, "days");
+          originalEndDate.add(dayOffset - 1, "days");
         }
 
         const isEveryday =
           daysOfWeek.length === 7 && daysOfWeek.every((day: number) => day >= 0 && day <= 6);
         console.log("isEveryday:", isEveryday);
 
-        const recurrenceEndDate = moment.tz(`${recurrence.endRecur}T23:59:59`, userTimeZone);
+        const recurrenceEndDate = moment.tz(`${recurrence.endRecur}T23:59:59Z`, userTimeZone);
         if (isEveryday) {
           recurrenceEndDate.subtract(1, "days");
         }
+
 
         console.log("Recurrence end date (local):", recurrenceEndDate.format());
 
