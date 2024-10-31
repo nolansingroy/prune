@@ -88,7 +88,7 @@ export const createRecurringBookingInstances = functions.https.onRequest(
             dayOffset++;
           }
           originalStartDate.add(dayOffset, "days");
-          originalEndDate.add(dayOffset - 1, "days");
+          originalEndDate.add(dayOffset, "days");
         }
 
         const isEveryday =
