@@ -34,11 +34,11 @@ export const createRecurringAvailabilityInstances = functions.https.onRequest(
           userTimeZone,
         } = req.body;
 
-        if (!title || !startDate || !startTime || !endTime ||
-          !recurrence || !userId || !userTimeZone) {
-          res.status(400).json({error: "Missing required fields"});
-          return;
-        }
+        // if (!title || !startDate || !startTime || !endTime ||
+        //   !recurrence || !userId || !userTimeZone) {
+        //   res.status(400).json({error: "Missing required fields"});
+        //   return;
+        // }
 
         console.log("availabilities");
 
