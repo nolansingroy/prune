@@ -1,13 +1,11 @@
-import LoginForm from "@/components/auth/login-form";
-import LoginComp from "@/components/auth/login-form";
+import { Metadata } from "next";
+import SignInViewPage from "../_components/sigin-view";
 
-// SignIn component
-const SignIn = () => {
-  return (
-    <div className="flex flex-col justify-center text-gray-800 items-center h-full">
-      <LoginForm />
-    </div>
-  );
+export const metadata: Metadata = {
+  title: "Authentication | Sign In",
+  description: "Sign In page for authentication.",
 };
 
-export default SignIn;
+export default function Page() {
+  return <SignInViewPage />;
+}

@@ -13,14 +13,14 @@ import {
   EventClickArg,
   EventContentArg,
 } from "@fullcalendar/core";
-import EventFormDialog from "../../../comp/EventFormModal";
+import EventFormDialog from "../../comp/EventFormModal";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import Availability from "../../../comp/tabs/availability";
-import CreateBookings from "../../../comp/tabs/create_bookings";
-import { auth, db } from "../../../../firebase";
-import { createEvent } from "../../../services/userService";
-import useFetchEvents from "../../../hooks/useFetchEvents";
-import { EventInput } from "../../../interfaces/types";
+import Availability from "../../comp/tabs/availability";
+import CreateBookings from "../../comp/tabs/create_bookings";
+import { auth, db } from "../../../firebase";
+import { createEvent } from "../../services/userService";
+import useFetchEvents from "../../hooks/useFetchEvents";
+import { EventInput } from "../../interfaces/types";
 import { addDoc, getDoc, Timestamp } from "firebase/firestore";
 import { doc, updateDoc } from "firebase/firestore";
 import { collection, query, getDocs } from "firebase/firestore";

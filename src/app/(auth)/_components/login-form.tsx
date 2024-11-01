@@ -28,7 +28,7 @@ import {
   DialogTrigger,
   DialogDescription,
 } from "@/components/ui/dialog";
-import { auth, db } from "../../../firebase";
+import { auth, db } from "../../../../firebase";
 import {
   createUserWithEmailAndPassword,
   GoogleAuthProvider,
@@ -73,7 +73,7 @@ export default function LoginForm() {
       const user = userCredential.user;
       console.log("User logged in successfully with email:", user.email);
       // Redirect to dashboard
-      router.push("/calendar");
+      router.push("dashboard/calendar");
     } catch (error: any) {
       // Add type annotation to catch clause variable
       console.error("Error logging in:", error.message);
