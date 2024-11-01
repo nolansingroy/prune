@@ -364,8 +364,8 @@ export default function Availability() {
         endRecur.setDate(endRecur.getDate() + 1);
 
         const eventInput = {
-          title: eventData.title,
-          description: eventData.description,
+          title: eventData.title || "",
+          description: eventData.description || "",
           location: eventData.location || "",
           startDate,
           startTime: eventData.startTime,
@@ -430,7 +430,7 @@ export default function Availability() {
           location: eventData.location || "",
           start: startDateTime,
           end: endDateTime,
-          description: eventData.description,
+          description: eventData.description || "",
           display: "inverse-background",
           className: "",
           isBackgroundEvent: true,

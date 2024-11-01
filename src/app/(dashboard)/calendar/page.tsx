@@ -478,8 +478,8 @@ export default function Calendar() {
 
         if (isBackgroundEvent) {
           const eventInput = {
-            title,
-            description,
+            title: title || "",
+            description: description || "",
             location: location || "",
             startDate,
             startTime,
@@ -508,13 +508,13 @@ export default function Calendar() {
           console.log("Recurring event instances created:", result.data);
         } else {
           const eventInput = {
-            title,
-            type,
-            typeId,
-            clientId,
-            clientName,
-            description,
-            fee,
+            title: title || "",
+            type: type || "No type",
+            typeId: typeId || "",
+            clientId: clientId || "",
+            clientName: clientName || "",
+            description: description || "",
+            fee: fee || 0,
             location: location || "",
             startDate,
             startTime,

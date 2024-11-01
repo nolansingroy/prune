@@ -490,13 +490,13 @@ export default function CreateBookings() {
         endRecur.setDate(endRecur.getDate() + 1);
 
         const eventInput = {
-          title: eventData.title,
-          type: eventData.type,
-          typeId: eventData.typeId,
-          clientId: eventData.clientId,
-          clientName: eventData.clientName,
-          description: eventData.description,
-          fee: eventData.fee,
+          title: eventData.title || "",
+          type: eventData.type || "No type",
+          typeId: eventData.typeId || "",
+          clientId: eventData.clientId || "",
+          clientName: eventData.clientName || "",
+          description: eventData.description || "",
+          fee: eventData.fee || 0,
           location: eventData.location || "",
           startDate,
           startTime: eventData.startTime,
@@ -517,6 +517,7 @@ export default function CreateBookings() {
         );
 
         // Make the axios call to your cloud function
+        // "https://us-central1-prune-94ad9.cloudfunctions.net/createRecurringBookingInstances"
         // "http://127.0.0.1:5001/prune-94ad9/us-central1/createRecurringBookingInstances",
         const result = await axios.post(
           "https://us-central1-prune-94ad9.cloudfunctions.net/createRecurringBookingInstances",
@@ -555,16 +556,16 @@ export default function CreateBookings() {
         // Create the event object for a single or background event
         let event: EventInput = {
           id: "",
-          title: eventData.title,
-          type: eventData.type,
-          typeId: eventData.typeId,
-          fee: eventData.fee,
-          clientId: eventData.clientId,
-          clientName: eventData.clientName,
+          title: eventData.title || "",
+          type: eventData.type || "",
+          typeId: eventData.typeId || "",
+          fee: eventData.fee || 0,
+          clientId: eventData.clientId || "",
+          clientName: eventData.clientName || "",
           location: eventData.location || "",
           start: startDateTime,
           end: endDateTime,
-          description: eventData.description,
+          description: eventData.description || "",
           display: "auto",
           className: "",
           isBackgroundEvent: false,

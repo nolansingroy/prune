@@ -40,12 +40,29 @@ export const createRecurringBookingInstances = functions.https.onRequest(
           userTimeZone,
         } = req.body;
 
-        if (!title || !clientId || !clientName ||
-          !startDate || !startTime || !endTime ||
-          !recurrence || !userId || !userTimeZone) {
-          res.status(400).json({error: "Missing required fields"});
-          return;
-        }
+        // if (!title || !clientId || !clientName ||
+        //   !startDate || !startTime || !endTime ||
+        //   !recurrence || !userId || !userTimeZone) {
+        //   console.log("Missing required fields:", {
+        //     title,
+        //     clientId,
+        //     clientName,
+        //     fee,
+        //     paid,
+        //     type,
+        //     typeId,
+        //     description,
+        //     location,
+        //     startDate,
+        //     startTime,
+        //     endTime,
+        //     recurrence,
+        //     userId,
+        //     userTimeZone,
+        //   });
+        //   res.status(400).json({error: "Missing required fields"});
+        //   return;
+        // }
 
         console.log("Received request with data:", {
           title,
