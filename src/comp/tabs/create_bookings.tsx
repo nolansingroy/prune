@@ -627,14 +627,25 @@ export default function CreateBookings() {
     );
   };
 
+  const getAmPm = (date: Date) => {
+    const hours = date.getHours();
+    return hours >= 12 ? "PM" : "AM";
+  };
+
   const displayTime = (date: Date) => {
-    // const userTimezoneOffsetInHours = new Date().getTimezoneOffset() / 60;
     const adjustedDate = new Date(date.getTime());
-    return adjustedDate.toLocaleTimeString("en-US", {
-      hour: "2-digit",
-      minute: "2-digit",
-      hour12: true,
-    });
+    const hours = adjustedDate.getHours().toString().padStart(2, "0");
+    const minutes = adjustedDate.getMinutes().toString().padStart(2, "0");
+    return `${hours}:${minutes}`;
+  };
+
+  const displayTimeWithAmPm = (date: Date) => {
+    const adjustedDate = new Date(date.getTime());
+    const hours = adjustedDate.getHours();
+    const minutes = adjustedDate.getMinutes().toString().padStart(2, "0");
+    const ampm = hours >= 12 ? "PM" : "AM";
+    const formattedHours = (hours % 12 || 12).toString().padStart(2, "0");
+    return `${formattedHours}:${minutes} ${ampm}`;
   };
 
   const handleEditClick = (event: EventInput) => {
@@ -894,16 +905,17 @@ export default function CreateBookings() {
                     />
                   ) : (
                     <div
-                      onClick={() =>
+                      onClick={() => {
                         handleCellClick(
                           event.id!,
                           "start",
                           displayTime(event.start),
                           !!event.recurrence
-                        )
-                      }
+                        );
+                        setEditedValue(displayTime(event.start));
+                      }}
                     >
-                      {displayTime(event.start)}
+                      {displayTimeWithAmPm(event.start)}
                     </div>
                   )}
                 </TableCell>
@@ -921,16 +933,17 @@ export default function CreateBookings() {
                     />
                   ) : (
                     <div
-                      onClick={() =>
+                      onClick={() => {
                         handleCellClick(
                           event.id!,
                           "end",
                           displayTime(event.end),
                           !!event.recurrence
-                        )
-                      }
+                        );
+                        setEditedValue(displayTime(event.end));
+                      }}
                     >
-                      {displayTime(event.end)}
+                      {displayTimeWithAmPm(event.end)}
                     </div>
                   )}
                 </TableCell>
