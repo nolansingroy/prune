@@ -29,7 +29,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={exo_2.className}>
+      <body
+        className={`${exo_2.className} overflow-hidden`}
+        suppressHydrationWarning={true}
+      >
         <NextTopLoader showSpinner={false} color="#fff" />
         {/* <Header /> Include the Header at the top */}
         <ThemeProvider

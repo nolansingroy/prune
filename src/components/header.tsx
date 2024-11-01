@@ -44,7 +44,7 @@ const Header = () => {
     try {
       await authLogout();
       console.log("User logged out, redirecting...");
-      router.push("/login");
+      router.push("/");
     } catch (error) {
       console.error("Error during logout process:", error);
     }
