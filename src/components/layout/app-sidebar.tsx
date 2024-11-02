@@ -43,6 +43,7 @@ import {
   GalleryVerticalEnd,
   LogOut,
 } from "lucide-react";
+import Image from "next/image";
 // import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -53,11 +54,12 @@ import SearchInput from "../search-input";
 import ThemeToggle from "./ThemeToggle/theme-toggle";
 import { UserNav } from "./user-nav";
 import { useFirebaseAuth } from "@/services/authService";
+import { dashboardLogo } from "../../../public";
 
 export const company = {
-  name: "Acme Inc",
-  logo: GalleryVerticalEnd,
-  plan: "Enterprise",
+  name: "Rebus Pro",
+  logo: dashboardLogo,
+  plan: "starter plan",
 };
 
 export default function AppSidebar({
@@ -83,10 +85,10 @@ export default function AppSidebar({
       <Sidebar collapsible="icon">
         <SidebarHeader>
           <div className="flex gap-2 py-2 text-sidebar-accent-foreground ">
-            <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
-              <company.logo className="size-4" />
+            <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-transparent text-sidebar-primary-foreground border border-white">
+              <Image src={company.logo} alt="Company Logo" className="size-8" />
             </div>
-            <div className="grid flex-1 text-left text-sm leading-tight">
+            <div className="grid flex-1 text-left text-sm leading-tight text-sidebar-primary-foreground">
               <span className="truncate font-semibold">{company.name}</span>
               <span className="truncate text-xs">{company.plan}</span>
             </div>
@@ -247,7 +249,7 @@ export default function AppSidebar({
             <Breadcrumbs />
           </div>
           <div className=" hidden w-1/3 items-center gap-2 px-4 md:flex ">
-            <SearchInput />
+            {/* <SearchInput /> */}
           </div>
           <div className="flex items-center gap-2 px-4">
             <UserNav />

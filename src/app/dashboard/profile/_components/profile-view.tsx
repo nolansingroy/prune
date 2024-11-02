@@ -51,7 +51,7 @@ export default function ProfileView() {
   }
 
   return (
-    <div className="space-y-6 bg-gray-50 p-6 rounded-lg shadow-sm border">
+    <div className="space-y-6 bg-gray-50 dark:bg-primary-foreground p-6 rounded-lg shadow-sm border">
       <h2 className="text-2xl font-semibold">Profile Information</h2>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <p>

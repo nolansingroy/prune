@@ -142,7 +142,12 @@ export default function SignupForm() {
               onChange={(e) => setPassword(e.target.value)}
             />
           </div>
-          <Button type="submit" className="w-full" onClick={handleSignUp}>
+          <Button
+            variant={"rebusPro"}
+            type="submit"
+            className="w-full"
+            onClick={handleSignUp}
+          >
             Create an account
           </Button>
           {/* <Button

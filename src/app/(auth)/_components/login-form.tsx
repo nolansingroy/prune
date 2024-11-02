@@ -171,8 +171,13 @@ export default function LoginForm() {
               onKeyDown={handleKeyDown}
             />
           </div>
-          <Button type="submit" className="w-full" onClick={handleLogin}>
-            Login
+          <Button
+            variant={"rebusPro"}
+            type="submit"
+            className="w-full"
+            onClick={handleLogin}
+          >
+            LOGIN
           </Button>
         </div>
         <div className="mt-4 text-center text-sm">

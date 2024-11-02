@@ -36,13 +36,13 @@
 
     /* --fc-today-bg-color: rgba(255, 0, 0, 0); */
 
-    --sidebar-background: 0 0% 98%;
+    --sidebar-background: 202 100% 18%;
 
-    --sidebar-foreground: 240 5.3% 26.1%;
+    --sidebar-foreground: 240 4.8% 95.9%;
 
-    --sidebar-primary: 240 5.9% 10%;
+    --sidebar-primary: 224.3 76.3% 48%;
 
-    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-primary-foreground: 0 0% 100%;
 
     --sidebar-accent: 240 4.8% 95.9%;
 
@@ -56,39 +56,31 @@
   .dark {
     --background: 222.2 84% 4.9%;
     --foreground: 210 40% 98%;
-
     --card: 222.2 84% 4.9%;
     --card-foreground: 210 40% 98%;
-
     --popover: 222.2 84% 4.9%;
     --popover-foreground: 210 40% 98%;
-
-    --primary: 210 40% 98%;
+    --primary: 217.2 91.2% 59.8%;
     --primary-foreground: 222.2 47.4% 11.2%;
-
     --secondary: 217.2 32.6% 17.5%;
     --secondary-foreground: 210 40% 98%;
-
     --muted: 217.2 32.6% 17.5%;
     --muted-foreground: 215 20.2% 65.1%;
-
     --accent: 217.2 32.6% 17.5%;
     --accent-foreground: 210 40% 98%;
-
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 210 40% 98%;
-
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
+    --ring: 224.3 76.3% 48%;
+    --sidebar-background: 222.2 84% 4.9%;
+    --sidebar-foreground: 210 40% 98%;
+    --sidebar-primary: 217.2 91.2% 59.8%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-accent: 217.2 32.6% 17.5%;
+    --sidebar-accent-foreground: 210 40% 98%;
+    --sidebar-border: 217.2 32.6% 17.5%;
+    --sidebar-ring: 224.3 76.3% 48;
   }
 }
 
@@ -225,3 +217,48 @@
 /* .fc-timeGridDay-view .fc-timegrid-col.fc-timegrid-axis {
   background-color: #fff !important;
 } */
+
+input {
+  @apply px-2;
+}
+.fc-header-toolbar {
+  display: inline-block;
+  padding: 4px 4px;
+
+  @apply space-x-8;
+}
+
+.fc-day {
+  @apply m-8;
+}
+
+.fc-scrollgrid-sync-table {
+  @apply w-full;
+}
+
+.fc-view {
+  @apply w-full h-full lg:h-3/4 xl:h-2/3;
+}
+
+.fc-h-event {
+  @apply bg-violet-500 border border-violet-600;
+}
+
+.fc .fc-daygrid-day.fc-day-today {
+  @apply bg-[#c7deea];
+}
+
+.fc .fc-button {
+  @apply bg-[#003f5c] hover:bg-[#1fce88] hover:border-transparent;
+}
+
+.fc .fc-button-primary:not(:disabled).fc-button-active {
+  @apply bg-[#1fce88] border-transparent;
+}
+
+.fc .fc-button-primary:disabled {
+  @apply bg-[#c7deea] border-transparent text-primary;
+}
+.fc-v-event {
+  @apply bg-violet-500 border border-violet-600;
+}
