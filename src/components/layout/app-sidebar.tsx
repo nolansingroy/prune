@@ -164,10 +164,11 @@ export default function AppSidebar({
                     <Avatar className="h-8 w-8 rounded-lg">
                       <AvatarImage
                         src={authUser?.photoURL || ""}
-                        alt={authUser?.uid || ""}
+                        alt={authUser?.photoURL || ""}
                       />
                       <AvatarFallback className="rounded-lg">
-                        {authUser?.email.slice(0, 2)?.toUpperCase() || "CN"}
+                        {authUser?.displayName?.slice(0, 2)?.toUpperCase() ||
+                          "CN"}
                       </AvatarFallback>
                     </Avatar>
                     <div className="grid flex-1 text-left text-sm leading-tight">
@@ -195,7 +196,8 @@ export default function AppSidebar({
                           alt={authUser?.photoURL || ""}
                         />
                         <AvatarFallback className="rounded-lg">
-                          {authUser?.email?.slice(0, 2)?.toUpperCase() || "CN"}
+                          {authUser?.displayName?.slice(0, 2)?.toUpperCase() ||
+                            "CN"}
                         </AvatarFallback>
                       </Avatar>
                       <div className="grid flex-1 text-left text-sm leading-tight">

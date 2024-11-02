@@ -132,7 +132,7 @@ export default function LoginForm() {
                   <DialogTrigger asChild>
                     <a
                       href="#"
-                      className="underline ps-12 sm:text-xs"
+                      className="underline text-muted-foreground ps-2 sm:text-xs"
                       onClick={() => setResetDialogOpen(true)}
                     >
                       Forgot Password
@@ -140,7 +140,7 @@ export default function LoginForm() {
                   </DialogTrigger>
                   <DialogContent className="sm:max-w-[425px]">
                     <DialogHeader>
-                      <DialogTitle>Forgot Password</DialogTitle>
+                      <DialogTitle className="">Forgot Password</DialogTitle>
                       <DialogDescription>
                         Enter your email below to reset your password
                       </DialogDescription>
