@@ -40,7 +40,7 @@ export default function RootLayout({
         className={`${openSans.className} overflow-hidden`}
         suppressHydrationWarning={true}
       >
-        <NextTopLoader showSpinner={false} color="#fff" />
+        <NextTopLoader showSpinner={false} color="#1fce88" />
         {/* <Header /> Include the Header at the top */}
         <ThemeProvider
           attribute="class"
