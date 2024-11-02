@@ -9,20 +9,37 @@ import timeGridPlugin from "@fullcalendar/timegrid";
 import rrulePlugin from "@fullcalendar/rrule";
 import {
   DateSelectArg,
+  EventApi,
   EventClickArg,
   EventContentArg,
 } from "@fullcalendar/core";
 import EventFormDialog from "../../../../comp/EventFormModal";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import Availability from "../../../../comp/tabs/availability";
+import CreateBookings from "../../../../comp/tabs/create_bookings";
 import { auth, db } from "../../../../../firebase";
+import { createEvent } from "../../../../services/userService";
 import useFetchEvents from "../../../../hooks/useFetchEvents";
 import { EventInput } from "../../../../interfaces/types";
+import { addDoc, getDoc, Timestamp } from "firebase/firestore";
+import { doc, updateDoc } from "firebase/firestore";
+import { collection, query, getDocs } from "firebase/firestore";
 import { EventResizeDoneArg } from "@fullcalendar/interaction";
 import { EventDropArg } from "@fullcalendar/core";
 import axios from "axios";
-
+import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from "@/components/ui/hover-card";
+import { Badge } from "@/components/ui/badge";
+import { cl } from "@fullcalendar/core/internal-common";
+import { useFirebaseAuth } from "@/services/authService";
 import CreateBookingsFormDialog from "@/comp/CreateBookingsFormDialog";
 import tippy from "tippy.js";
 import "tippy.js/dist/tippy.css";
+// import { adjustForLocalTimezone } from "@/lib/functions/time-functions";
+// import { handleUpdatEventFormDialog } from "@/lib/functions/event-functions";
 import { Auth } from "firebase/auth";
 import {
   createFireStoreEvent,
@@ -32,7 +49,7 @@ import {
 // an instance of the tooltip for each event { this is initialized to track the instances of the tooltip to prevent adding multiple instances of the tooltip to the same event }
 const tippyInstances = new Map<string, any>();
 
-export default function FullCalendarComponent() {
+export default function Calendar() {
   const calendarRef = useRef<FullCalendar>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectInfo, setSelectInfo] = useState<DateSelectArg | null>(null);
@@ -62,6 +79,12 @@ export default function FullCalendarComponent() {
       fetchEvents(); // Trigger the fetch events after the page has fully loaded
     };
   }, []);
+
+  const handleTabChange = (value: string) => {
+    if (value === "calendar") {
+      fetchEvents(); // Force fetch events when the calendar tab is clicked
+    }
+  };
 
   const renderEventContent = (eventInfo: EventContentArg) => {
     const {
@@ -784,195 +807,216 @@ export default function FullCalendarComponent() {
 
   return (
     <div className="p-4">
-      <div className="overflow-hidden">
-        <div className="calendar-container overflow-y-scroll ">
-          <FullCalendar
-            timeZone="local"
-            key={calendarKey}
-            // eventColor="#000"
-            ref={calendarRef}
-            schedulerLicenseKey="0899673068-fcs-1718558974"
-            plugins={[
-              dayGridPlugin,
-              resourceTimelinePlugin,
-              interactionPlugin,
-              timeGridPlugin,
-              rrulePlugin,
-            ]}
-            headerToolbar={{
-              left: "prev,next today", // Sticky header elements
-              center: "title",
-              right: "dayGridMonth,timeGridWeek,timeGridDay",
-            }}
-            stickyHeaderDates={true} // Enables sticky headers for dates
-            height="auto"
-            contentHeight="150"
-            slotDuration="00:15:00"
-            slotMinTime="07:00:00"
-            slotLabelFormat={{
-              hour: "numeric",
-              minute: "2-digit",
-              meridiem: "short",
-              omitZeroMinute: false,
-            }}
-            initialView="timeGridWeek"
-            editable={true}
-            selectable={true}
-            selectMirror={true}
-            select={handleSelect}
-            eventClick={handleEventClick} // Handle event click to open dialog
-            navLinks={true}
-            navLinkDayClick={(date) => {
-              console.log("Clicked day:", date);
-              calendarRef.current
-                ?.getApi()
-                .changeView("timeGridDay", date.toISOString());
-            }}
-            navLinkWeekClick={(weekStartDate) => {
-              console.log("Clicked week:", weekStartDate);
-              calendarRef.current
-                ?.getApi()
-                .changeView("timeGridWeek", weekStartDate.toISOString());
-            }}
-            eventResize={handleEventResize} // Called when resizing an event
-            eventDidMount={handleEventDidMount} // Called after an event is rendered
-            eventDrop={handleEventDrop}
-            // moreLinkClick={(arg) => {
-            // }}
-            events={events.map((event, index) => {
-              const start = new Date(event.start);
-              const end = new Date(event.end);
-              const durationMs = end.getTime() - start.getTime();
-              const durationHours = Math.floor(durationMs / (1000 * 60 * 60));
-              const durationMinutes = Math.floor(
-                (durationMs % (1000 * 60 * 60)) / (1000 * 60)
-              );
-              const formattedDuration = `${String(durationHours).padStart(
-                2,
-                "0"
-              )}:${String(durationMinutes).padStart(2, "0")}`;
+      <Tabs
+        defaultValue="calendar"
+        className="w-full"
+        onValueChange={handleTabChange}
+      >
+        <TabsList>
+          <TabsTrigger value="calendar">Calendar</TabsTrigger>
+          <TabsTrigger value="availabile_time">Available Time</TabsTrigger>
+          <TabsTrigger value="create_bookings">Bookings</TabsTrigger>
+        </TabsList>
+        <TabsContent value="calendar">
+          <h1 className="text-xl font-bold mb-4">Calendar Page</h1>
+          <div className="overflow-hidden">
+            <div className="calendar-container overflow-y-scroll ">
+              <FullCalendar
+                timeZone="local"
+                key={calendarKey}
+                // eventColor="#000"
+                ref={calendarRef}
+                schedulerLicenseKey="0899673068-fcs-1718558974"
+                plugins={[
+                  dayGridPlugin,
+                  resourceTimelinePlugin,
+                  interactionPlugin,
+                  timeGridPlugin,
+                  rrulePlugin,
+                ]}
+                headerToolbar={{
+                  left: "prev,next today", // Sticky header elements
+                  center: "title",
+                  right: "dayGridMonth,timeGridWeek,timeGridDay",
+                }}
+                stickyHeaderDates={true} // Enables sticky headers for dates
+                height="auto"
+                contentHeight="150"
+                slotDuration="00:15:00"
+                slotMinTime="07:00:00"
+                slotLabelFormat={{
+                  hour: "numeric",
+                  minute: "2-digit",
+                  meridiem: "short",
+                  omitZeroMinute: false,
+                }}
+                initialView="timeGridWeek"
+                editable={true}
+                selectable={true}
+                selectMirror={true}
+                select={handleSelect}
+                eventClick={handleEventClick} // Handle event click to open dialog
+                navLinks={true}
+                navLinkDayClick={(date) => {
+                  console.log("Clicked day:", date);
+                  calendarRef.current
+                    ?.getApi()
+                    .changeView("timeGridDay", date.toISOString());
+                }}
+                navLinkWeekClick={(weekStartDate) => {
+                  console.log("Clicked week:", weekStartDate);
+                  calendarRef.current
+                    ?.getApi()
+                    .changeView("timeGridWeek", weekStartDate.toISOString());
+                }}
+                eventResize={handleEventResize} // Called when resizing an event
+                eventDidMount={handleEventDidMount} // Called after an event is rendered
+                eventDrop={handleEventDrop}
+                // moreLinkClick={(arg) => {
+                // }}
+                events={events.map((event, index) => {
+                  const start = new Date(event.start);
+                  const end = new Date(event.end);
+                  const durationMs = end.getTime() - start.getTime();
+                  const durationHours = Math.floor(
+                    durationMs / (1000 * 60 * 60)
+                  );
+                  const durationMinutes = Math.floor(
+                    (durationMs % (1000 * 60 * 60)) / (1000 * 60)
+                  );
+                  const formattedDuration = `${String(durationHours).padStart(
+                    2,
+                    "0"
+                  )}:${String(durationMinutes).padStart(2, "0")}`;
 
-              if (event.recurrence) {
-                if (event.isBackgroundEvent) {
-                  return {
-                    ...event,
-                    title: event.title,
-                    type: event.type,
-                    typeId: event.typeId,
-                    location: event.location,
-                    // rrule: {
-                    //   freq: "weekly",
-                    //   interval: 1,
-                    //   byweekday: event.recurrence.daysOfWeek
-                    //     ? event.recurrence.daysOfWeek.map(
-                    //         (day) =>
-                    //           ["SU", "MO", "TU", "WE", "TH", "FR", "SA"][
-                    //             day
-                    //           ]
-                    //       )
-                    //     : undefined,
-                    //   dtstart: new Date(event.start).toISOString(),
-                    //   until: event.recurrence.endRecur
-                    //     ? new Date(event.recurrence.endRecur).toISOString()
-                    //     : undefined,
-                    // },
-                    startTime: event.recurrence.startTime,
-                    endTime: event.recurrence.endTime,
-                    display: "inverse-background",
-                    groupId: `1234`,
-                    uniqueId: `${event.id}-${index}`,
-                    color: "#C5C5C5",
-                    duration: formattedDuration,
-                    originalEventId: event.originalEventId,
-                    // className: "bg-event-mirror",
-                  };
-                } else {
-                  return {
-                    ...event,
-                    title: event.title,
-                    type: event.type,
-                    typeId: event.typeId,
-                    location: event.location,
-                    // rrule: {
-                    //   freq: "weekly",
-                    //   interval: 1,
-                    //   byweekday: event.recurrence.daysOfWeek
-                    //     ? event.recurrence.daysOfWeek.map(
-                    //         (day) =>
-                    //           ["SU", "MO", "TU", "WE", "TH", "FR", "SA"][
-                    //             day
-                    //           ]
-                    //       )
-                    //     : undefined,
-                    //   dtstart: new Date(event.start).toISOString(),
-                    //   until: event.recurrence.endRecur
-                    //     ? new Date(event.recurrence.endRecur).toISOString()
-                    //     : undefined,
-                    // },
-                    startTime: event.recurrence.startTime,
-                    endTime: event.recurrence.endTime,
-                    display: "auto",
-                    groupId: event.id,
-                    uniqueId: `${event.id}-${index}`,
-                    color: event.color,
-                    duration: formattedDuration,
-                    originalEventId: event.originalEventId,
-                  };
-                }
-              } else {
-                if (event.isBackgroundEvent) {
-                  return {
-                    ...event,
-                    title: event.title,
-                    type: event.type,
-                    typeId: event.typeId,
-                    location: event.location,
-                    display: "inverse-background",
-                    groupId: `1234`,
-                    uniqueId: `${event.id}-${index}`,
-                    color: "#C5C5C5",
-                    originalEventId: event.originalEventId,
-                    // className: "bg-event-mirror",
-                  };
-                } else {
-                  return {
-                    ...event,
-                    title: event.title,
-                    type: event.type,
-                    typeId: event.typeId,
-                    location: event.location,
-                    display: "auto",
-                    groupId: event.id,
-                    uniqueId: `${event.id}-${index}`,
-                    color: event.color,
-                    originalEventId: event.originalEventId,
-                  };
-                }
-              }
-            })}
-            nowIndicator={true}
-            eventContent={renderEventContent}
-            scrollTime="07:00:00" // Automatically scrolls to 7:00 AM on load
-            views={{
-              dayGridMonth: {
-                // eventMaxStack: 3,
-                dayMaxEventRows: 4,
-                // nowIndicator: true
-              },
-              timeGridWeek: {
-                // nowIndicator: true,
-                scrollTime: "07:00:00",
-                stickyHeaderDates: true, // Enable sticky headers for dates
-              },
-              timeGridDay: {
-                // nowIndicator: true,
-                slotDuration: "00:15:00",
-              },
-            }}
-          />
-        </div>
-      </div>
-
+                  if (event.recurrence) {
+                    if (event.isBackgroundEvent) {
+                      return {
+                        ...event,
+                        title: event.title,
+                        type: event.type,
+                        typeId: event.typeId,
+                        location: event.location,
+                        // rrule: {
+                        //   freq: "weekly",
+                        //   interval: 1,
+                        //   byweekday: event.recurrence.daysOfWeek
+                        //     ? event.recurrence.daysOfWeek.map(
+                        //         (day) =>
+                        //           ["SU", "MO", "TU", "WE", "TH", "FR", "SA"][
+                        //             day
+                        //           ]
+                        //       )
+                        //     : undefined,
+                        //   dtstart: new Date(event.start).toISOString(),
+                        //   until: event.recurrence.endRecur
+                        //     ? new Date(event.recurrence.endRecur).toISOString()
+                        //     : undefined,
+                        // },
+                        startTime: event.recurrence.startTime,
+                        endTime: event.recurrence.endTime,
+                        display: "inverse-background",
+                        groupId: `1234`,
+                        uniqueId: `${event.id}-${index}`,
+                        color: "#C5C5C5",
+                        duration: formattedDuration,
+                        originalEventId: event.originalEventId,
+                        // className: "bg-event-mirror",
+                      };
+                    } else {
+                      return {
+                        ...event,
+                        title: event.title,
+                        type: event.type,
+                        typeId: event.typeId,
+                        location: event.location,
+                        // rrule: {
+                        //   freq: "weekly",
+                        //   interval: 1,
+                        //   byweekday: event.recurrence.daysOfWeek
+                        //     ? event.recurrence.daysOfWeek.map(
+                        //         (day) =>
+                        //           ["SU", "MO", "TU", "WE", "TH", "FR", "SA"][
+                        //             day
+                        //           ]
+                        //       )
+                        //     : undefined,
+                        //   dtstart: new Date(event.start).toISOString(),
+                        //   until: event.recurrence.endRecur
+                        //     ? new Date(event.recurrence.endRecur).toISOString()
+                        //     : undefined,
+                        // },
+                        startTime: event.recurrence.startTime,
+                        endTime: event.recurrence.endTime,
+                        display: "auto",
+                        groupId: event.id,
+                        uniqueId: `${event.id}-${index}`,
+                        color: event.color,
+                        duration: formattedDuration,
+                        originalEventId: event.originalEventId,
+                      };
+                    }
+                  } else {
+                    if (event.isBackgroundEvent) {
+                      return {
+                        ...event,
+                        title: event.title,
+                        type: event.type,
+                        typeId: event.typeId,
+                        location: event.location,
+                        display: "inverse-background",
+                        groupId: `1234`,
+                        uniqueId: `${event.id}-${index}`,
+                        color: "#C5C5C5",
+                        originalEventId: event.originalEventId,
+                        // className: "bg-event-mirror",
+                      };
+                    } else {
+                      return {
+                        ...event,
+                        title: event.title,
+                        type: event.type,
+                        typeId: event.typeId,
+                        location: event.location,
+                        display: "auto",
+                        groupId: event.id,
+                        uniqueId: `${event.id}-${index}`,
+                        color: event.color,
+                        originalEventId: event.originalEventId,
+                      };
+                    }
+                  }
+                })}
+                nowIndicator={true}
+                eventContent={renderEventContent}
+                scrollTime="07:00:00" // Automatically scrolls to 7:00 AM on load
+                views={{
+                  dayGridMonth: {
+                    // eventMaxStack: 3,
+                    dayMaxEventRows: 4,
+                    // nowIndicator: true
+                  },
+                  timeGridWeek: {
+                    // nowIndicator: true,
+                    scrollTime: "07:00:00",
+                    stickyHeaderDates: true, // Enable sticky headers for dates
+                  },
+                  timeGridDay: {
+                    // nowIndicator: true,
+                    slotDuration: "00:15:00",
+                  },
+                }}
+              />
+            </div>
+          </div>
+        </TabsContent>
+        <TabsContent value="availabile_time">
+          <Availability />
+        </TabsContent>
+        <TabsContent value="create_bookings">
+          <CreateBookings />
+        </TabsContent>
+      </Tabs>
       {editAll ? (
         <CreateBookingsFormDialog
           isOpen={isDialogOpen}

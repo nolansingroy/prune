@@ -1,25 +1,23 @@
-import * as React from "react";
-import { useEffect, useState } from "react";
+"use client";
+
+import React, { useCallback, useEffect, useState } from "react";
+import { EventInput } from "@/interfaces/types";
+import { useFirebaseAuth } from "@/services/authService";
 import {
-  collection,
-  query,
-  where,
-  getDocs,
-  doc,
-  writeBatch,
-  updateDoc,
-  Timestamp,
-  getDoc,
-  setDoc,
-} from "firebase/firestore";
-import { auth, db } from "../../../firebase";
-import { EventInput } from "../../interfaces/types";
+  createFireStoreEvent,
+  fetchAvailabilitiesListviewEvents,
+  updateFireStoreEvent,
+} from "@/lib/converters/events";
+import moment from "moment";
+import axios from "axios";
+import { collection, doc, setDoc, writeBatch } from "firebase/firestore";
+import { db } from "../../../../../firebase";
 import {
   CaretSortIcon,
   DotsHorizontalIcon,
   PlusCircledIcon,
 } from "@radix-ui/react-icons";
-import AvailabilityDialog from "../AvailabilityFormDialog";
+import AvailabilityDialog from "@/comp/AvailabilityFormDialog";
 
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -38,18 +36,10 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import moment from "moment-timezone";
-import axios from "axios";
-import { orderBy } from "firebase/firestore";
-import {
-  createFireStoreEvent,
-  fetchAvailabilitiesListviewEvents,
-  updateFireStoreEvent,
-} from "@/lib/converters/events";
 
 type SortableKeys = "start" | "end" | "title" | "startDate";
-
-export default function Availability() {
+export default function AvailabilityView() {
+  const { authUser } = useFirebaseAuth();
   const [events, setEvents] = useState<Omit<EventInput, "fee">[]>([]);
   const [selectedRows, setSelectedRows] = useState<Set<string>>(new Set());
   const [editingCell, setEditingCell] = useState<{
@@ -67,23 +57,20 @@ export default function Availability() {
     EventInput,
     "fee"
   > | null>(null);
-  const [userTimezone, setUserTimezone] = useState<string>("UTC");
   const [loading, setLoading] = useState(false); // New loading state
 
-  const fetchEvents = async () => {
-    if (!auth.currentUser) {
+  const fetchEvents = useCallback(async () => {
+    if (!authUser) {
       return;
     } else {
-      const eventList = await fetchAvailabilitiesListviewEvents(
-        auth.currentUser.uid
-      );
+      const eventList = await fetchAvailabilitiesListviewEvents(authUser.uid);
       setEvents(eventList);
     }
-  };
+  }, [authUser]);
 
   useEffect(() => {
     fetchEvents();
-  }, []);
+  }, [fetchEvents]);
 
   const handleCellClick = (
     id: string,
@@ -286,7 +273,7 @@ export default function Availability() {
       }
 
       // Save the updates to Firestore
-      await updateFireStoreEvent(auth.currentUser?.uid!, id, updates);
+      await updateFireStoreEvent(authUser?.uid!, id, updates);
 
       // Update local state
       setEvents((prevEvents) =>
@@ -336,7 +323,7 @@ export default function Availability() {
     setLoading(true);
 
     try {
-      const user = auth.currentUser;
+      const user = authUser;
       if (!user) {
         throw new Error("User not authenticated");
       }
@@ -515,7 +502,7 @@ export default function Availability() {
         const eventRef = doc(
           db,
           "users",
-          auth.currentUser?.uid ?? "",
+          authUser?.uid ?? "",
           "events",
           eventId
         );
@@ -563,13 +550,7 @@ export default function Availability() {
     ) {
       const batch = writeBatch(db);
       selectedRows.forEach((id) => {
-        const docRef = doc(
-          db,
-          "users",
-          auth.currentUser?.uid ?? "",
-          "events",
-          id
-        );
+        const docRef = doc(db, "users", authUser?.uid ?? "", "events", id);
         batch.delete(docRef);
       });
       await batch.commit();
@@ -589,7 +570,7 @@ export default function Availability() {
   // Function to clone the event
   const handleCloneClick = async (event: Omit<EventInput, "fee">) => {
     try {
-      const user = auth.currentUser;
+      const user = authUser;
       if (!user) {
         throw new Error("User not authenticated");
       }
@@ -624,10 +605,9 @@ export default function Availability() {
 
   return (
     <div className="w-full relative">
-      <h1 className="text-xl font-bold mb-4">My Available Times</h1>
       {/* Add loading spinner here */}
       {loading && <div className="spinner">Loading...</div>}
-      <hr></hr>
+
       <Input
         value={search}
         onChange={(e) => setSearch(e.target.value)}
