@@ -4,7 +4,7 @@ import PageContainer from "@/components/layout/page-container";
 
 export default function CalendarPage() {
   return (
-    <PageContainer>
+    <PageContainer className="md:px-2" scrollable={true}>
       <Calendar />
     </PageContainer>
   );

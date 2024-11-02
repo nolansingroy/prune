@@ -820,7 +820,7 @@ export default function Calendar() {
         <TabsContent value="calendar">
           <h1 className="text-xl font-bold mb-4">Calendar Page</h1>
           <div className="overflow-hidden">
-            <div className="calendar-container overflow-y-scroll h-[600px]">
+            <div className="calendar-container overflow-y-scroll ">
               <FullCalendar
                 timeZone="local"
                 key={calendarKey}
