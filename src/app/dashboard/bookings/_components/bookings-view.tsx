@@ -739,10 +739,8 @@ export default function BookingsView() {
 
   return (
     <div className="w-full relative">
-      <h1 className="text-xl font-bold mb-4">Bookings</h1>
       {/* Add loading spinner here */}
       {loading && <div className="spinner">Loading...</div>}
-      <hr></hr>
       <Input
         value={search}
         onChange={(e) => setSearch(e.target.value)}
