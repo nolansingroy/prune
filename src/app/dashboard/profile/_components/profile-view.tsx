@@ -15,6 +15,7 @@ export default function ProfileView() {
     lastName: "",
     email: "",
   });
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -30,6 +31,7 @@ export default function ProfileView() {
             email: userData.email || "",
           });
         }
+        setLoading(false);
       }
     };
 
@@ -43,6 +45,10 @@ export default function ProfileView() {
       setUserTimezone(newTimezone);
     }
   };
+
+  if (loading) {
+    return <p>Loading profile...</p>; // Display a loading message while fetching
+  }
 
   return (
     <div className="space-y-6 bg-gray-50 p-6 rounded-lg shadow-sm border">

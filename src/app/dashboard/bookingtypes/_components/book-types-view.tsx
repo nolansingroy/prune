@@ -35,6 +35,7 @@ export default function BookTypesView() {
     useState<BookingTypes>(initialBookingData);
 
   const [editingBookingId, setEditingBookingId] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
   let actionType = editingBookingId ? "edit" : "add";
 
   const fetchTypes = useCallback(async () => {
@@ -42,6 +43,7 @@ export default function BookTypesView() {
       // Fetching booking types from Firestore
       const types = await fetchBookingTypes(authUser.uid);
       setBookingTypes(types);
+      setLoading(false);
       console.log("Booking types from firebase:", types);
     }
   }, [authUser]);
@@ -90,6 +92,10 @@ export default function BookTypesView() {
       fetchTypes();
     }
   };
+
+  if (loading) {
+    return <p>Loading booking types...</p>; // Display a loading message while fetching
+  }
 
   return (
     <div className="space-y-6 bg-gray-50 p-6 rounded-lg shadow-sm border">
