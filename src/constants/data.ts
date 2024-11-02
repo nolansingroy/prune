@@ -124,7 +124,7 @@ export type Product = {
 export const navItems: NavItem[] = [
   {
     title: "Dashboard",
-    url: "/dashboard/overview",
+    url: "/dashboard/calendar",
     icon: "dashboard",
     isActive: false,
     items: [], // Empty array as there are no child items for Dashboard

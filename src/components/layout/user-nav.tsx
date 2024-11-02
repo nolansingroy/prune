@@ -38,7 +38,9 @@ export function UserNav() {
                 src={authUser?.photoURL ?? ""}
                 alt={authUser?.uid ?? ""}
               />
-              <AvatarFallback>{authUser?.email}</AvatarFallback>
+              <AvatarFallback>
+                {authUser?.email.slice(0, 1)?.toUpperCase() || "CN"}
+              </AvatarFallback>
             </Avatar>
           </Button>
         </DropdownMenuTrigger>

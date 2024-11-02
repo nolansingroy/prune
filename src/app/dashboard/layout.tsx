@@ -9,9 +9,9 @@ export const metadata: Metadata = {
 
 export default function DashboardLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode;
-}>) {
+}) {
   return (
     <>
       <AppSidebar>{children}</AppSidebar>

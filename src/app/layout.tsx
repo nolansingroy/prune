@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Inter, Open_Sans } from "next/font/google";
 import { Montserrat } from "next/font/google";
 import { Source_Sans_3 } from "next/font/google";
 import { Exo_2 } from "next/font/google";
@@ -17,6 +17,13 @@ const exo_2 = Exo_2({
   display: "swap",
 });
 
+const openSans = Open_Sans({
+  subsets: ["latin"],
+  display: "swap",
+  style: "normal",
+  weight: ["300", "400", "500", "600", "700", "800"],
+});
+
 export const metadata: Metadata = {
   title: "Rebus Pro",
   description: "Rebus Pro - The best way to manage your events",
@@ -30,7 +37,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${exo_2.className} overflow-hidden`}
+        className={`${openSans.className} overflow-hidden`}
         suppressHydrationWarning={true}
       >
         <NextTopLoader showSpinner={false} color="#fff" />
