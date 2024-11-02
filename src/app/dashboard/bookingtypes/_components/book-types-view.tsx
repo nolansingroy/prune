@@ -1,17 +1,6 @@
 "use client";
 
-import React, { ChangeEvent, useCallback, useEffect, useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
 import { BookingTypes } from "@/interfaces/bookingTypes";
-import {
-  Table,
-  TableRow,
-  TableCell,
-  TableBody,
-  TableHeader,
-} from "@/components/ui/table";
 import {
   addBookingType,
   deleteBookingType,
@@ -19,6 +8,17 @@ import {
   updateBookingType,
 } from "@/lib/converters/bookingTypes";
 import { useFirebaseAuth } from "@/services/authService";
+import React, { ChangeEvent, useCallback, useEffect, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import {
+  Table,
+  TableRow,
+  TableCell,
+  TableBody,
+  TableHeader,
+} from "@/components/ui/table";
 
 const initialBookingData: BookingTypes = {
   docId: "",
@@ -28,11 +28,12 @@ const initialBookingData: BookingTypes = {
   color: "#000000",
 };
 
-export default function BookingsTab() {
+export default function BookTypesView() {
+  const { authUser } = useFirebaseAuth();
   const [bookingTypes, setBookingTypes] = useState<BookingTypes[]>([]);
   const [newBookingData, setNewBookingData] =
     useState<BookingTypes>(initialBookingData);
-  const { authUser } = useFirebaseAuth();
+
   const [editingBookingId, setEditingBookingId] = useState<string | null>(null);
   let actionType = editingBookingId ? "edit" : "add";
 
@@ -91,7 +92,7 @@ export default function BookingsTab() {
   };
 
   return (
-    <div className="space-y-6 bg-gray-100 p-6 rounded-lg shadow-lg">
+    <div className="space-y-6 bg-gray-50 p-6 rounded-lg shadow-sm border">
       <h2 className="text-2xl font-semibold">
         {editingBookingId ? "Edit Booking type" : "Create Booking type"}
       </h2>
