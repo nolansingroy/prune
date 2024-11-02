@@ -1,6 +1,11 @@
 import React from "react";
-import Calendar from "@/components/calendar/full-calendar";
+import Calendar from "./_components/full-calendar";
+import PageContainer from "@/components/layout/page-container";
 
 export default function CalendarPage() {
-  return <Calendar />;
+  return (
+    <PageContainer>
+      <Calendar />
+    </PageContainer>
+  );
 }
