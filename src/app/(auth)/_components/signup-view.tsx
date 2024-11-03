@@ -4,7 +4,7 @@ import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import SignupForm from "./signup-form";
 import Image from "next/image";
-import { rebusProLogoPrimaryDark } from "../../../../public";
+import { rebusPrimaryDark } from "../../../../public";
 
 export const metadata: Metadata = {
   title: "Authentication",
@@ -41,7 +41,7 @@ export default function SignUpViewPage() {
           Logo */}
 
           <Image
-            src={rebusProLogoPrimaryDark}
+            src={rebusPrimaryDark}
             alt="Logo"
             width={186}
             height={51}

@@ -4,7 +4,7 @@ import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import LoginForm from "./login-form";
 import Image from "next/image";
-import { rebusProLogoPrimaryDark } from "../../../../public";
+import { rebusPrimaryDark } from "../../../../public";
 
 export const metadata: Metadata = {
   title: "Authentication",
@@ -28,7 +28,7 @@ export default function SignInViewPage() {
           <div className="absolute inset-0 bg-[#003f5c]" />
           <div className="relative z-20 flex items-center text-lg font-medium">
             <Image
-              src={rebusProLogoPrimaryDark}
+              src={rebusPrimaryDark}
               alt="Logo"
               width={186}
               height={51}

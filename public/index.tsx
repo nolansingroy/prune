@@ -1,5 +1,5 @@
 //fixing imports
-import rebusProLogoPrimaryDark from "../public/logo/rebusPrimaryDark.png";
-import dashboardLogo from "../public/logo/dashboardLogo.png";
+import rebusPrimaryDark from "./logo/rebusPrimaryDark.png";
+import dashboardLogo from "./logo/dashboardLogo.png";
 
-export { rebusProLogoPrimaryDark, dashboardLogo };
+export { rebusPrimaryDark, dashboardLogo };
