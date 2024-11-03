@@ -145,7 +145,7 @@ export default function ClientsView() {
   }
 
   return (
-    <div className="space-y-6 bg-gray-50 p-6 rounded-lg shadow-sm border">
+    <div className="space-y-6 bg-gray-50 dark:bg-primary-foreground p-6 rounded-lg shadow-sm border">
       <h2 className="text-2xl font-semibold">
         {editingClientId ? "Edit Client" : "Add Client"}
       </h2>

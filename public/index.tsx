@@ -1,4 +1,4 @@
-import rebusProLogoPrimaryDark from "./logo/RebusPrimaryDark.png";
-import dashboardLogo from "./logo/DashboardLogo.png";
+import rebusProLogoPrimaryDark from "./logo/rebusPrimaryDark.png";
+import dashboardLogo from "./logo/dashboardLogo.png";
 
 export { rebusProLogoPrimaryDark, dashboardLogo };
