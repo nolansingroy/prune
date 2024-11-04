@@ -22,7 +22,7 @@ export function UserNav() {
     try {
       await authLogout();
       console.log("User logged out, redirecting...");
-      router.push("/");
+      router.replace("/");
     } catch (error) {
       console.error("Error during logout process:", error);
     }
@@ -65,11 +65,11 @@ export function UserNav() {
               Billing
               <DropdownMenuShortcut>⌘B</DropdownMenuShortcut>
             </DropdownMenuItem>
-            <DropdownMenuItem>
+            {/* <DropdownMenuItem>
               Settings
               <DropdownMenuShortcut>⌘S</DropdownMenuShortcut>
-            </DropdownMenuItem>
-            <DropdownMenuItem>New Team</DropdownMenuItem>
+            </DropdownMenuItem> */}
+            {/* <DropdownMenuItem>New Team</DropdownMenuItem> */}
           </DropdownMenuGroup>
           <DropdownMenuSeparator />
           <DropdownMenuItem onClick={handleLogOut}>

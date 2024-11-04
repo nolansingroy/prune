@@ -10,7 +10,7 @@ export default function Page() {
   const title = "My bookings";
   const description = "Manage your bookings here.";
   return (
-    <PageContainer>
+    <PageContainer scrollable={false}>
       <div className="space-y-4 mb-5">
         <Heading title={title} description={description} />
         <Separator />

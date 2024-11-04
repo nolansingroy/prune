@@ -31,6 +31,7 @@ import {
   UserPen,
   UserX2Icon,
   X,
+  Calendar1,
 } from "lucide-react";
 
 export type Icon = LucideIcon;
@@ -63,6 +64,7 @@ export const Icons = {
   pizza: Pizza,
   sun: SunMedium,
   moon: Moon,
+  calendar: Calendar1,
   laptop: Laptop,
   gitHub: ({ ...props }: LucideProps) => (
     <svg

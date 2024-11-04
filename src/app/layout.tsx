@@ -4,9 +4,7 @@ import { Montserrat } from "next/font/google";
 import { Source_Sans_3 } from "next/font/google";
 import { Exo_2 } from "next/font/google";
 import "./globals.css";
-
-import Header from "@/components/header";
-import Footer from "@/components/footer";
+import { Toaster } from "@/components/ui/sonner";
 import NextTopLoader from "nextjs-toploader";
 import ThemeProvider from "@/components/layout/ThemeToggle/theme-provider";
 
@@ -35,22 +33,25 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html
+      lang="en"
+      className={`${openSans.className}`}
+      // suppressHydrationWarning={true}
+    >
       <body
-        className={`${openSans.className} overflow-hidden`}
-        suppressHydrationWarning={true}
+        className="overflow-hidden"
+        // suppressHydrationWarning={true}
       >
         <NextTopLoader showSpinner={false} color="#1fce88" />
-        {/* <Header /> Include the Header at the top */}
-        <ThemeProvider
+        {/* <ThemeProvider
           attribute="class"
           defaultTheme="light"
           enableSystem
           disableTransitionOnChange
-        >
-          <main>{children}</main> {/* Main content will be rendered here */}
-          {/* <Footer /> Include the Footer at the bottom */}
-        </ThemeProvider>
+        > */}
+        <Toaster />
+        {children}
+        {/* </ThemeProvider> */}
       </body>
     </html>
   );

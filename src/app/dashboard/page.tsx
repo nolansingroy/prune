@@ -1,14 +1,20 @@
 "use client";
 
+import { useEffect } from "react";
 import { useFirebaseAuth } from "@/services/authService";
-import { redirect } from "next/navigation";
+import { useRouter } from "next/navigation";
 
 export default function Dashboard() {
   const { authUser } = useFirebaseAuth();
+  const router = useRouter();
 
-  if (!authUser) {
-    return redirect("/");
-  } else {
-    redirect("/dashboard/calendar");
-  }
+  useEffect(() => {
+    if (!authUser) {
+      router.replace("/");
+    } else {
+      router.push("/dashboard/calendar");
+    }
+  }, [authUser, router]);
+
+  return null;
 }

@@ -748,7 +748,7 @@ export default function BookingsView() {
         className="mb-4"
       />
 
-      <div className="overflow-y-auto max-h-[400px]">
+      <div className="overflow-y-auto max-h-[800px]">
         <Table>
           <TableHeader>
             <TableRow>

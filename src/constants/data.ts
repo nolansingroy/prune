@@ -139,14 +139,14 @@ export const navItems: NavItem[] = [
   {
     title: "Bookings",
     url: "/dashboard/bookings",
-    icon: "product",
+    icon: "calendar",
     isActive: false,
     items: [], // No child items
   },
   {
     title: "Settings",
     url: "#", // Placeholder as there is no direct link for the parent
-    icon: "billing",
+    icon: "settings",
     isActive: true,
 
     items: [

@@ -1,7 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
-
+import { useState, useEffect, useTransition } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
 import {
   listenForAuthStateChanges,
   resetPassword,
@@ -15,10 +17,16 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-
 import {
   Dialog,
   DialogContent,
@@ -28,98 +36,101 @@ import {
   DialogTrigger,
   DialogDescription,
 } from "@/components/ui/dialog";
-import { auth, db } from "../../../../firebase";
-import {
-  createUserWithEmailAndPassword,
-  GoogleAuthProvider,
-  signInWithPopup,
-  updateProfile,
-  signInWithEmailAndPassword,
-} from "firebase/auth";
-import { collection, addDoc } from "firebase/firestore";
+import { toast } from "sonner";
+import { auth } from "../../../../firebase";
+import { signInWithEmailAndPassword } from "firebase/auth";
 import { useRouter } from "next/navigation";
-import { ToastAction } from "@/components/ui/toast";
-import { useToast } from "@/components/ui/use-toast";
+
+const formSchema = z.object({
+  email: z.string().email({ message: "Enter a valid email address" }),
+  password: z
+    .string()
+    .min(6, { message: "Password must be at least 6 characters" }),
+});
+
+type LoginFormValues = z.infer<typeof formSchema>;
 
 export default function LoginForm() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [loading, startTransition] = useTransition();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [resetDialogOpen, setResetDialogOpen] = useState(false);
-  const { toast } = useToast();
   const router = useRouter();
 
-  // figure out auth state of the user
+  const form = useForm<LoginFormValues>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      email: "",
+      password: "",
+    },
+  });
+
   useEffect(() => {
     const unsubscribe = listenForAuthStateChanges((user) => {
       if (user) {
-        setIsAuthenticated(true); // User is authenticated
+        setIsAuthenticated(true);
       } else {
-        setIsAuthenticated(false); // User is not authenticated
+        setIsAuthenticated(false);
       }
     });
 
     return () => unsubscribe();
   }, []);
 
-  // Handle the signUp logic Here
-  const handleLogin = async () => {
+  const handleLogin = async (data: LoginFormValues) => {
     try {
       const userCredential = await signInWithEmailAndPassword(
         auth,
-        email,
-        password
+        data.email,
+        data.password
       );
       const user = userCredential.user;
       console.log("User logged in successfully with email:", user.email);
-      // Redirect to dashboard
       router.push("dashboard/calendar");
     } catch (error: any) {
-      // Add type annotation to catch clause variable
       console.error("Error logging in:", error.message);
-      console.error(`Error logging in: ${email} +  ${password}`);
+      console.error(`Error logging in: ${data.email} +  ${data.password}`);
     }
   };
-  // const timestamp = new Date().toLocaleDateString();
-  const timestamp = new Date().toLocaleString();
+
+  const onSubmit = (data: LoginFormValues) => {
+    startTransition(() => {
+      handleLogin(data);
+      toast.success("Login successful");
+    });
+  };
 
   const resetPasswordFirebase = async () => {
     try {
-      console.log("Initiating password reset for email:", email);
-      await resetPassword(email, auth);
+      console.log(
+        "Initiating password reset for email:",
+        form.getValues("email")
+      );
+      await resetPassword(form.getValues("email"), auth);
       setResetDialogOpen(false);
 
-      toast({
-        title: "Reset successful, please check your email!",
-        description: `${timestamp}`,
-      });
+      toast.success("Password reset email sent");
     } catch (error: any) {}
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter") {
-      handleLogin();
-    }
-  };
   return (
-    <>
-      <Card className="mx-auto max-w-sm">
-        <CardHeader>
-          <CardTitle className="text-2xl">Login</CardTitle>
-          <CardDescription>
-            Enter your email below to login to your account
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid gap-4">
+    <Card className="mx-auto max-w-sm">
+      <CardHeader>
+        <CardTitle className="text-2xl">Login</CardTitle>
+        <CardDescription>
+          Enter your email below to login to your account
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="grid gap-4">
             <div className="grid gap-2">
               <Label htmlFor="email">Email</Label>
               <Input
                 id="email"
                 type="email"
                 required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                {...form.register("email")}
+                disabled={loading}
               />
             </div>
             <div className="grid gap-2">
@@ -150,12 +161,15 @@ export default function LoginForm() {
                         <Input
                           type="email"
                           placeholder="Enter your email"
-                          value={email}
-                          onChange={(e) => setEmail(e.target.value)}
+                          {...form.register("email")}
+                          disabled={loading}
                         />
                       </div>
                       <DialogFooter>
-                        <Button onClick={resetPasswordFirebase}>
+                        <Button
+                          onClick={resetPasswordFirebase}
+                          disabled={loading}
+                        >
                           Reset Password
                         </Button>
                       </DialogFooter>
@@ -167,28 +181,27 @@ export default function LoginForm() {
                 id="password"
                 type="password"
                 required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                onKeyDown={handleKeyDown}
+                {...form.register("password")}
+                disabled={loading}
               />
             </div>
             <Button
-              variant={"rebusPro"}
+              variant="rebusPro"
               type="submit"
               className="w-full"
-              onClick={handleLogin}
+              disabled={loading}
             >
               LOGIN
             </Button>
-          </div>
-          <div className="mt-4 text-center text-sm">
-            Don&apos;t have an account?{" "}
-            <Link href="signUp" className="underline">
-              Sign up
-            </Link>
-          </div>
-        </CardContent>
-      </Card>
-    </>
+          </form>
+        </Form>
+        <div className="mt-4 text-center text-sm">
+          Don&apos;t have an account?{" "}
+          <Link href="signUp" className="underline">
+            Sign up
+          </Link>
+        </div>
+      </CardContent>
+    </Card>
   );
 }

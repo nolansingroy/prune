@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import AppSidebar from "@/components/layout/app-sidebar";
-import "../globals.css";
 
 export const metadata: Metadata = {
   title: "Rebus Pro - Dashboard",

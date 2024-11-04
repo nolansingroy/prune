@@ -84,7 +84,7 @@ export default function AppSidebar({
     <SidebarProvider>
       <Sidebar collapsible="icon">
         <SidebarHeader>
-          <div className="flex gap-2 py-2 text-sidebar-accent-foreground ">
+          <div className="flex gap-2 py-2 text-sidebar-accent-foreground">
             <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-transparent text-sidebar-primary-foreground border border-white">
               <Image src={company.logo} alt="Company Logo" className="size-8" />
             </div>
@@ -155,8 +155,17 @@ export default function AppSidebar({
           </SidebarGroup>
         </SidebarContent>
         <SidebarFooter>
-          <SidebarMenu>
+          <SidebarMenu className="gap-0">
+            {/* make a version and all right reserved statement */}
             <SidebarMenuItem>
+              <span className="truncate text-xs font-semibold">v1.0.0</span>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <span className="truncate text-xs font-semibold">
+                © 2024 All rights reserved
+              </span>
+            </SidebarMenuItem>
+            {/* <SidebarMenuItem>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <SidebarMenuButton
@@ -236,7 +245,7 @@ export default function AppSidebar({
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
-            </SidebarMenuItem>
+            </SidebarMenuItem> */}
           </SidebarMenu>
         </SidebarFooter>
         <SidebarRail />
@@ -253,7 +262,7 @@ export default function AppSidebar({
           </div>
           <div className="flex items-center gap-2 px-4">
             <UserNav />
-            <ThemeToggle />
+            {/* <ThemeToggle /> */}
           </div>
         </header>
         {/* page main content */}

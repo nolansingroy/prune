@@ -59,7 +59,13 @@ export default function FullCalendarComponent() {
   // Fetch events on page load - fix calendar blank screen no fetch on refresh
   useEffect(() => {
     window.onload = () => {
-      fetchEvents(); // Trigger the fetch events after the page has fully loaded
+      fetchEvents();
+
+      // setCalendarKey((prevKey) => {
+      //   const newKey = prevKey + 1;
+      //   console.log("Calendar Key Updated:", newKey); // Log calendar key update
+      //   return newKey;
+      // }); // Trigger the fetch events after the page has fully loaded
     };
   }, []);
 
