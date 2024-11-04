@@ -84,7 +84,7 @@ export default function LoginForm() {
         data.password
       );
       const user = userCredential.user;
-      const idToken = await userCredential.user.getIdToken();
+      const idToken = await user.getIdToken();
 
       await fetch("/api/login", {
         headers: {

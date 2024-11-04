@@ -6,11 +6,11 @@ import {
 } from "next-firebase-auth-edge";
 import { clientConfig, serverConfig } from "./config";
 
-const PUBLIC_PATHS = ["/", "/signUp"];
+const PUBLIC_PATHS = ["/", "/signUp", "/login"];
 
 export async function middleware(request: NextRequest) {
   return authMiddleware(request, {
-    loginPath: "/api/login",
+    loginPath: "/",
     logoutPath: "/api/logout",
     apiKey: clientConfig.apiKey,
     cookieName: serverConfig.cookieName,
@@ -19,7 +19,9 @@ export async function middleware(request: NextRequest) {
     serviceAccount: serverConfig.serviceAccount,
     handleValidToken: async ({ token, decodedToken }, headers) => {
       if (PUBLIC_PATHS.includes(request.nextUrl.pathname)) {
-        return redirectToHome(request);
+        return NextResponse.redirect(
+          new URL("/dashboard/calendar", request.url)
+        );
       }
 
       return NextResponse.next({

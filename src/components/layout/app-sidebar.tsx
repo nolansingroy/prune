@@ -55,7 +55,6 @@ import ThemeToggle from "./ThemeToggle/theme-toggle";
 import { UserNav } from "./user-nav";
 import { useFirebaseAuth } from "@/services/authService";
 import { dashboardLogo } from "../../../public";
-import { DecodedIdToken } from "next-firebase-auth-edge/lib/auth";
 
 export const company = {
   name: "Rebus Pro",
@@ -63,12 +62,11 @@ export const company = {
   plan: "starter plan",
 };
 
-type AppSidebarProps = {
-  userToken: DecodedIdToken;
+export default function AppSidebar({
+  children,
+}: {
   children: React.ReactNode;
-};
-
-export default function AppSidebar({ userToken, children }: AppSidebarProps) {
+}) {
   const [mounted, setMounted] = React.useState(false);
   const { authUser } = useFirebaseAuth();
   // const { data: session } = useSession();
@@ -263,7 +261,7 @@ export default function AppSidebar({ userToken, children }: AppSidebarProps) {
             {/* <SearchInput /> */}
           </div>
           <div className="flex items-center gap-2 px-4">
-            <UserNav token={userToken} />
+            <UserNav />
             {/* <ThemeToggle /> */}
           </div>
         </header>
