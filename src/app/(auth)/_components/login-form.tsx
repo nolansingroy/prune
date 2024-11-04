@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useTransition } from "react";
+import { useState, useEffect, useTransition, FormEvent } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -64,17 +64,17 @@ export default function LoginForm() {
     },
   });
 
-  useEffect(() => {
-    const unsubscribe = listenForAuthStateChanges((user) => {
-      if (user) {
-        setIsAuthenticated(true);
-      } else {
-        setIsAuthenticated(false);
-      }
-    });
+  // useEffect(() => {
+  //   const unsubscribe = listenForAuthStateChanges((user) => {
+  //     if (user) {
+  //       setIsAuthenticated(true);
+  //     } else {
+  //       setIsAuthenticated(false);
+  //     }
+  //   });
 
-    return () => unsubscribe();
-  }, []);
+  //   return () => unsubscribe();
+  // }, []);
 
   const handleLogin = async (data: LoginFormValues) => {
     try {
@@ -84,7 +84,16 @@ export default function LoginForm() {
         data.password
       );
       const user = userCredential.user;
+      const idToken = await userCredential.user.getIdToken();
+
+      await fetch("/api/login", {
+        headers: {
+          Authorization: `Bearer ${idToken}`,
+        },
+      });
+
       console.log("User logged in successfully with email:", user.email);
+      console.log("ID token:", idToken);
       router.push("dashboard/calendar");
     } catch (error: any) {
       console.error("Error logging in:", error.message);

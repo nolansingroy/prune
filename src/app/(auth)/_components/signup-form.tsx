@@ -1,18 +1,19 @@
 "use client";
 
-import React, { useTransition } from "react";
+import React, { useTransition, FormEvent } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { auth } from "../../../../firebase";
+import { auth, app } from "../../../../firebase";
 import {
   createUserWithEmailAndPassword,
   GoogleAuthProvider,
   signInWithPopup,
   updateProfile,
+  getAuth,
 } from "firebase/auth";
 import { createUser } from "@/services/userService";
 import { Timestamp } from "firebase/firestore";
@@ -88,7 +89,7 @@ export default function SignupForm() {
         `${data.firstName} ${data.lastName}`
       );
 
-      router.push("/dashboard/calendar");
+      router.push("/");
     } catch (error: any) {
       console.error("Error creating user:", error.message);
     }
@@ -97,7 +98,7 @@ export default function SignupForm() {
   const onSubmit = (data: SignupFormValues) => {
     startTransition(() => {
       handleSignUp(data);
-      toast.success("Account created successfully");
+      toast.success("Account created successfully, please login");
     });
   };
 

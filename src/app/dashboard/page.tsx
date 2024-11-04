@@ -1,20 +1,20 @@
-"use client";
+import { redirect } from "next/navigation";
+import { getTokens } from "next-firebase-auth-edge";
+import { cookies } from "next/headers";
+import { notFound } from "next/navigation";
+import { clientConfig, serverConfig } from "../../../config";
 
-import { useEffect } from "react";
-import { useFirebaseAuth } from "@/services/authService";
-import { useRouter } from "next/navigation";
+export default async function Dashboard() {
+  const tokens = await getTokens(cookies(), {
+    apiKey: clientConfig.apiKey,
+    cookieName: serverConfig.cookieName,
+    cookieSignatureKeys: serverConfig.cookieSignatureKeys,
+    serviceAccount: serverConfig.serviceAccount,
+  });
 
-export default function Dashboard() {
-  const { authUser } = useFirebaseAuth();
-  const router = useRouter();
-
-  useEffect(() => {
-    if (!authUser) {
-      router.replace("/");
-    } else {
-      router.push("/dashboard/calendar");
-    }
-  }, [authUser, router]);
-
-  return null;
+  if (!tokens) {
+    return redirect("/");
+  } else {
+    redirect("/dashboard/overview");
+  }
 }
