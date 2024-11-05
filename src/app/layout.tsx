@@ -1,26 +1,9 @@
 import type { Metadata } from "next";
-import { Inter, Open_Sans } from "next/font/google";
-import { Montserrat } from "next/font/google";
-import { Source_Sans_3 } from "next/font/google";
-import { Exo_2 } from "next/font/google";
+import { exo_2, montserrat, roboto, inter, openSans } from "@/lib/fonts";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
 import NextTopLoader from "nextjs-toploader";
 import ThemeProvider from "@/components/layout/ThemeToggle/theme-provider";
-
-const exo_2 = Exo_2({
-  subsets: ["latin"],
-  weight: "700",
-  style: "normal",
-  display: "swap",
-});
-
-const openSans = Open_Sans({
-  subsets: ["latin"],
-  display: "swap",
-  style: "normal",
-  weight: ["300", "400", "500", "600", "700", "800"],
-});
 
 export const metadata: Metadata = {
   title: "Rebus Pro",
@@ -35,11 +18,11 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${openSans.className}`}
+      className={`${openSans.variable} ${inter.variable} ${roboto.variable} ${montserrat.variable} ${exo_2.variable}`}
       // suppressHydrationWarning={true}
     >
       <body
-        className="overflow-hidden"
+        className="overflow-hidden font-openSans"
         // suppressHydrationWarning={true}
       >
         <NextTopLoader showSpinner={false} color="#1fce88" />
