@@ -86,7 +86,13 @@ export default function AppSidebar({
         <SidebarHeader>
           <div className="flex gap-2 py-2 text-sidebar-accent-foreground">
             <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-transparent text-sidebar-primary-foreground border border-white">
-              <Image src={company.logo} alt="Company Logo" className="size-8" />
+              <Image
+                src={company.logo}
+                width={50}
+                height={50}
+                alt="Company Logo"
+                className="size-8"
+              />
             </div>
             <div className="grid flex-1 text-left text-sm leading-tight text-sidebar-primary-foreground">
               <span className="truncate font-semibold">{company.name}</span>

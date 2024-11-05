@@ -4,7 +4,7 @@ import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import SignupForm from "./signup-form";
 import Image from "next/image";
-import { rebusPrimaryDark } from "../../../../public";
+import { loginLogo } from "../../../../public";
 
 // export const metadata: Metadata = {
 //   title: "Authentication",
@@ -40,12 +40,7 @@ export default function SignUpViewPage() {
           </svg>
           Logo */}
 
-          <Image
-            src={rebusPrimaryDark}
-            alt="Logo"
-            width={186}
-            height={51}
-          ></Image>
+          <Image src={loginLogo} alt="Logo" width={186} height={51}></Image>
         </div>
         <div className="relative z-20 mt-auto">
           <blockquote className="space-y-2">

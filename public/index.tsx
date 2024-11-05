@@ -1,5 +1,5 @@
 //fixing imports
-const rebusPrimaryDark = "/logo/rebusPrimaryDark.png";
+const loginLogo = "/logo/loginLogo.png";
 const dashboardLogo = "/logo/dashboardLogo.png";
 
-export { rebusPrimaryDark, dashboardLogo };
+export { loginLogo, dashboardLogo };
