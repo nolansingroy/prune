@@ -13,8 +13,10 @@ export default async function Dashboard() {
   });
 
   if (!tokens) {
+    console.log("User is not signed in there is no token");
     return redirect("/");
   } else {
+    console.log("User is signed in with token", tokens.decodedToken);
     redirect("/dashboard/overview");
   }
 }
