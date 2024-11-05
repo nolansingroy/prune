@@ -1,5 +1,5 @@
 //fixing imports
-import rebusPrimaryDark from "./logo/rebusPrimaryDark.png";
-import dashboardLogo from "./logo/dashboardLogo.png";
+const rebusPrimaryDark = "/logo/rebusPrimaryDark.png";
+const dashboardLogo = "/logo/dashboardLogo.png";
 
 export { rebusPrimaryDark, dashboardLogo };
