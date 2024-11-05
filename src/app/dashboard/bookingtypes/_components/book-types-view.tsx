@@ -1,17 +1,6 @@
 "use client";
 
-import React, { ChangeEvent, useCallback, useEffect, useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
 import { BookingTypes } from "@/interfaces/bookingTypes";
-import {
-  Table,
-  TableRow,
-  TableCell,
-  TableBody,
-  TableHeader,
-} from "@/components/ui/table";
 import {
   addBookingType,
   deleteBookingType,
@@ -19,6 +8,18 @@ import {
   updateBookingType,
 } from "@/lib/converters/bookingTypes";
 import { useFirebaseAuth } from "@/services/authService";
+import React, { ChangeEvent, useCallback, useEffect, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import {
+  Table,
+  TableRow,
+  TableCell,
+  TableBody,
+  TableHeader,
+} from "@/components/ui/table";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
 
 const initialBookingData: BookingTypes = {
   docId: "",
@@ -28,12 +29,14 @@ const initialBookingData: BookingTypes = {
   color: "#000000",
 };
 
-export default function BookingsTab() {
+export default function BookTypesView() {
+  const { authUser } = useFirebaseAuth();
   const [bookingTypes, setBookingTypes] = useState<BookingTypes[]>([]);
   const [newBookingData, setNewBookingData] =
     useState<BookingTypes>(initialBookingData);
-  const { authUser } = useFirebaseAuth();
+
   const [editingBookingId, setEditingBookingId] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
   let actionType = editingBookingId ? "edit" : "add";
 
   const fetchTypes = useCallback(async () => {
@@ -41,6 +44,7 @@ export default function BookingsTab() {
       // Fetching booking types from Firestore
       const types = await fetchBookingTypes(authUser.uid);
       setBookingTypes(types);
+      setLoading(false);
       console.log("Booking types from firebase:", types);
     }
   }, [authUser]);
@@ -90,8 +94,16 @@ export default function BookingsTab() {
     }
   };
 
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <LoadingSpinner className="w-10 h-10" />
+      </div>
+    ); // Display a loading message while fetching
+  }
+
   return (
-    <div className="space-y-6 bg-gray-100 p-6 rounded-lg shadow-lg">
+    <div className="space-y-6 bg-gray-50 dark:bg-primary-foreground p-6 rounded-lg shadow-sm border">
       <h2 className="text-2xl font-semibold">
         {editingBookingId ? "Edit Booking type" : "Create Booking type"}
       </h2>

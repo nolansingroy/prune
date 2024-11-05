@@ -1,11 +1,11 @@
-import SignupForm from "@/components/auth/signup-form";
+import { Metadata } from "next";
+import SignUpViewPage from "../_components/signup-view";
 
-const SignUpPage = () => {
-  return (
-    <div className="flex flex-col justify-center text-gray-800 items-center h-full">
-      <SignupForm />
-    </div>
-  );
+export const metadata: Metadata = {
+  title: "Authentication | Sign up",
+  description: "Sign up page for authentication.",
 };
 
-export default SignUpPage;
+export default function Page() {
+  return <SignUpViewPage />;
+}

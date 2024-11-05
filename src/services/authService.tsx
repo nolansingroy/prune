@@ -15,6 +15,8 @@ interface AuthUser {
   photoURL: string;
   uid: string;
   email: string;
+  displayName?: string;
+
   // Add any other relevant user properties you need
 }
 

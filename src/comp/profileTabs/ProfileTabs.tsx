@@ -126,11 +126,11 @@ const ProfileTabs: React.FC<ProfileTabsProps> = ({
 
       {/* Booking Types Section */}
       <TabsContent value="bookings">
-        {authUser ? (
+        {/* {authUser ? (
           <BookingsTab authUser={authUser} />
         ) : (
           <p>Loading clients...</p>
-        )}
+        )} */}
       </TabsContent>
 
       {/* Clients Section */}

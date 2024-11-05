@@ -1,25 +1,30 @@
-import * as React from "react";
-import { useEffect, useState } from "react";
+import { EventInput } from "@/interfaces/types";
+import { fetchBookingTypes } from "@/lib/converters/bookingTypes";
+import { fetchClients } from "@/lib/converters/clients";
+import {
+  createFireStoreEvent,
+  fetchBookingsListviewEvents,
+  updateFireStoreEvent,
+} from "@/lib/converters/events";
+import { useFirebaseAuth } from "@/services/authService";
+import axios from "axios";
 import {
   collection,
-  query,
-  where,
-  getDocs,
   doc,
-  writeBatch,
-  updateDoc,
-  Timestamp,
-  getDoc,
   setDoc,
+  updateDoc,
+  writeBatch,
 } from "firebase/firestore";
-import { auth, db } from "../../../firebase";
-import { EventInput } from "../../interfaces/types";
+import moment from "moment";
+import React, { useCallback, useEffect, useState } from "react";
+import { db } from "../../../../../firebase";
+import CreateBookingsFormDialog from "@/comp/CreateBookingsFormDialog";
 import {
   CaretSortIcon,
   DotsHorizontalIcon,
   PlusCircledIcon,
 } from "@radix-ui/react-icons";
-import AvailabilityDialog from "../AvailabilityFormDialog";
+import AvailabilityDialog from "@/comp/AvailabilityFormDialog";
 
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -38,19 +43,19 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import moment from "moment-timezone";
-import axios from "axios";
-import { orderBy } from "firebase/firestore";
-import {
-  createFireStoreEvent,
-  fetchAvailabilitiesListviewEvents,
-  updateFireStoreEvent,
-} from "@/lib/converters/events";
 
+const formatFee = (fee: number): string => {
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    minimumFractionDigits: 2,
+  }).format(fee);
+};
 type SortableKeys = "start" | "end" | "title" | "startDate";
 
-export default function Availability() {
-  const [events, setEvents] = useState<Omit<EventInput, "fee">[]>([]);
+export default function BookingsView() {
+  const { authUser } = useFirebaseAuth();
+  const [events, setEvents] = useState<EventInput[]>([]);
   const [selectedRows, setSelectedRows] = useState<Set<string>>(new Set());
   const [editingCell, setEditingCell] = useState<{
     id: string;
@@ -63,27 +68,63 @@ export default function Availability() {
     direction: "asc" | "desc";
   }>({ key: "startDate", direction: "asc" });
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [editingEvent, setEditingEvent] = useState<Omit<
-    EventInput,
-    "fee"
-  > | null>(null);
-  const [userTimezone, setUserTimezone] = useState<string>("UTC");
+  const [editingEvent, setEditingEvent] = useState<EventInput | null>(null);
   const [loading, setLoading] = useState(false); // New loading state
+  const [clients, setClients] = useState<{ docId: string; fullName: string }[]>(
+    []
+  );
+  const [types, setTypes] = useState<{ docId: string; name: string }[]>([]);
 
-  const fetchEvents = async () => {
-    if (!auth.currentUser) {
+  const fetchEvents = useCallback(async () => {
+    if (!authUser) {
       return;
     } else {
-      const eventList = await fetchAvailabilitiesListviewEvents(
-        auth.currentUser.uid
-      );
+      const eventList = await fetchBookingsListviewEvents(authUser.uid);
       setEvents(eventList);
     }
-  };
+  }, [authUser]);
+
+  const fetchAllClients = useCallback(async () => {
+    if (authUser) {
+      // Fetching clients from Firestore
+      const clients = await fetchClients(authUser.uid);
+      //create an array of object with "key": name and value : join firstName field and lastName field
+      const clientsArray = clients.map((client) => {
+        return {
+          docId: client.docId,
+          fullName: client.firstName + " " + client.lastName,
+        };
+      });
+      setClients(clientsArray);
+    }
+  }, [authUser]);
+
+  const fetchAllBookingTypes = useCallback(async () => {
+    if (authUser) {
+      // Fetching booking types from Firestore
+      const types = await fetchBookingTypes(authUser.uid);
+      const typesArray = types.map((type) => {
+        return {
+          docId: type.docId!,
+          name: type.name,
+        };
+      });
+      console.log("Booking types fetched:", typesArray);
+      setTypes(typesArray);
+    }
+  }, [authUser]);
 
   useEffect(() => {
     fetchEvents();
-  }, []);
+  }, [fetchEvents]);
+
+  useEffect(() => {
+    fetchAllClients();
+  }, [fetchAllClients]);
+
+  useEffect(() => {
+    fetchAllBookingTypes();
+  }, [fetchAllBookingTypes]);
 
   const handleCellClick = (
     id: string,
@@ -103,13 +144,61 @@ export default function Availability() {
   const handleBlur = async () => {
     if (editingCell) {
       const { id, field } = editingCell;
-
+      // const docRef = doc(
+      //   db,
+      //   "users",
+      //   auth.currentUser?.uid ?? "",
+      //   "events",
+      //   id
+      // );
       const currentEvent = events.find((event) => event.id === id);
       if (!currentEvent) {
         setEditingCell(null);
         return;
       }
       let updates: any = {};
+
+      if (field === "clientName") {
+        if (currentEvent.clientName !== editedValue) {
+          updates = { [field]: editedValue };
+          const matchedClient = clients.find(
+            (client) =>
+              client.fullName.toLowerCase() === editedValue.toLowerCase()
+          );
+          if (matchedClient) {
+            updates = {
+              clientId: matchedClient.docId,
+              clientName: editedValue,
+            };
+            console.log("Matched client:", matchedClient);
+          } else {
+            updates = { clientId: "", clientName: editedValue };
+            console.log("Client not found:", editedValue);
+          }
+        }
+      }
+
+      if (field === "type") {
+        if (currentEvent.type !== editedValue) {
+          updates = { [field]: editedValue };
+          const matchedType = types.find(
+            (type) => type.name.toLowerCase() === editedValue.toLowerCase()
+          );
+          if (matchedType) {
+            updates = { typeId: matchedType.docId, type: editedValue };
+            console.log("Matched type:", matchedType);
+          } else {
+            updates = { typeId: "", type: editedValue };
+            console.log("Type not found:", editedValue);
+          }
+        }
+      }
+
+      if (field === "fee") {
+        if (currentEvent.fee !== parseFloat(editedValue)) {
+          updates = { [field]: parseFloat(editedValue) };
+        }
+      }
 
       if (field === "start" || field === "end") {
         const [time, period] = editedValue.split(" ");
@@ -270,10 +359,6 @@ export default function Availability() {
             console.log(`New date: ${newDateString}`);
           }
         }
-      } else if (field === "title") {
-        if (currentEvent.title !== editedValue) {
-          updates = { [field]: editedValue };
-        }
       } else if (field === "description") {
         if (currentEvent.description !== editedValue) {
           updates = { [field]: editedValue };
@@ -286,7 +371,8 @@ export default function Availability() {
       }
 
       // Save the updates to Firestore
-      await updateFireStoreEvent(auth.currentUser?.uid!, id, updates);
+      await updateFireStoreEvent(authUser?.uid!, id, updates);
+      // await updateDoc(docRef, updates);
 
       // Update local state
       setEvents((prevEvents) =>
@@ -312,38 +398,58 @@ export default function Availability() {
     return newDate;
   };
 
+  const removeUndefinedFields = (obj: any) => {
+    return Object.entries(obj).reduce((acc, [key, value]) => {
+      if (value !== undefined) {
+        acc[key] = value;
+      }
+      return acc;
+    }, {} as any);
+  };
+
   const handleSaveEvent = async (eventData: {
+    id?: string;
     title: string;
+    type: string;
+    typeId: string;
+    fee: number;
+    clientId: string;
+    clientName: string;
     description: string;
     location: string;
     isBackgroundEvent: boolean;
     date?: string;
     startTime: string;
     endTime: string;
+    paid: boolean;
     recurrence?: {
       daysOfWeek: number[];
+      startTime: string;
+      endTime: string;
       startRecur: string; // YYYY-MM-DD
       endRecur: string; // YYYY-MM-DD
     };
   }) => {
-    console.log("handleSaveEvent called from create Availability");
+    console.log("handleSaveEvent called from create bookings"); // Add this line
 
-    // First format the start date and end date based on the event selection
+    //First format the start and end date based on the event selection
+
     const startDate = eventData.date
       ? new Date(eventData.date).toISOString().split("T")[0]
       : new Date().toISOString().split("T")[0];
 
-    setLoading(true);
+    setLoading(true); // Start loading
 
     try {
-      const user = auth.currentUser;
+      const user = authUser;
       if (!user) {
         throw new Error("User not authenticated");
       }
 
       // Get the user's time zone
       const userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-      // Check if the event is recurring or a single event
+
+      // If this is a recurring event, handle it using the cloud function
       if (
         eventData.recurrence &&
         eventData.recurrence.daysOfWeek &&
@@ -358,13 +464,19 @@ export default function Availability() {
 
         const eventInput = {
           title: eventData.title || "",
+          type: eventData.type || "No type",
+          typeId: eventData.typeId || "",
+          clientId: eventData.clientId || "",
+          clientName: eventData.clientName || "",
           description: eventData.description || "",
+          fee: eventData.fee || 0,
           location: eventData.location || "",
           startDate,
           startTime: eventData.startTime,
           endTime: eventData.endTime,
+          paid: eventData.paid,
           recurrence: {
-            daysOfWeek: eventData.recurrence.daysOfWeek || [],
+            daysOfWeek: eventData.recurrence.daysOfWeek,
             startRecur: startRecur.toISOString().split("T")[0] || startDate,
             endRecur: endRecur.toISOString().split("T")[0],
           },
@@ -373,12 +485,15 @@ export default function Availability() {
         };
 
         console.log(
-          "event data ready for cloud function for background event from availabity tab",
+          "event data ready for cloud function for recurring bookings",
           eventInput
         );
 
+        // Make the axios call to your cloud function
+        // "https://us-central1-prune-94ad9.cloudfunctions.net/createRecurringBookingInstances"
+        // "http://127.0.0.1:5001/prune-94ad9/us-central1/createRecurringBookingInstances",
         const result = await axios.post(
-          "https://us-central1-prune-94ad9.cloudfunctions.net/createRecurringAvailabilityInstances",
+          "https://us-central1-prune-94ad9.cloudfunctions.net/createRecurringBookingInstances",
           eventInput
         );
 
@@ -411,40 +526,38 @@ export default function Availability() {
           weekday: "long",
         });
 
-        // Create a new event object
-        const eventInput = {
+        // Create the event object for a single or background event
+        let event: EventInput = {
           id: "",
-          title: eventData.title,
-          type: "",
-          typeId: "",
-          fee: 0,
-          clientId: "",
-          clientName: "",
+          title: eventData.title || "",
+          type: eventData.type || "",
+          typeId: eventData.typeId || "",
+          fee: eventData.fee || 0,
+          clientId: eventData.clientId || "",
+          clientName: eventData.clientName || "",
           location: eventData.location || "",
           start: startDateTime,
           end: endDateTime,
           description: eventData.description || "",
-          display: "inverse-background",
+          display: "auto",
           className: "",
-          isBackgroundEvent: true,
+          isBackgroundEvent: false,
           startDate: startDateTime,
           startDay: startDay,
           endDate: endDateTime,
           endDay: endDay,
-          paid: false,
+          paid: eventData.paid,
         };
-        console.log("Single event data ready for Firestore:", eventInput);
 
-        console.log("Event data before submitting to firebase:", eventInput);
+        console.log("Single event data ready for Firestore:", event);
+        event = removeUndefinedFields(event);
 
-        await createFireStoreEvent(user.uid, eventInput);
+        console.log("Event data before submitting to firebase:", event);
 
-        console.log(
-          "Single event created in Firestore with ID:",
-          eventInput.id
-        );
+        await createFireStoreEvent(user.uid, event);
+
+        console.log("Single event created in Firestore with ID:", event.id);
       }
-
       // Fetch events again to update the list
       await fetchEvents();
     } catch (error) {
@@ -487,6 +600,11 @@ export default function Availability() {
     );
   };
 
+  const getAmPm = (date: Date) => {
+    const hours = date.getHours();
+    return hours >= 12 ? "PM" : "AM";
+  };
+
   const displayTime = (date: Date) => {
     const adjustedDate = new Date(date.getTime());
     const hours = adjustedDate.getHours().toString().padStart(2, "0");
@@ -515,7 +633,7 @@ export default function Availability() {
         const eventRef = doc(
           db,
           "users",
-          auth.currentUser?.uid ?? "",
+          authUser?.uid ?? "",
           "events",
           eventId
         );
@@ -563,13 +681,7 @@ export default function Availability() {
     ) {
       const batch = writeBatch(db);
       selectedRows.forEach((id) => {
-        const docRef = doc(
-          db,
-          "users",
-          auth.currentUser?.uid ?? "",
-          "events",
-          id
-        );
+        const docRef = doc(db, "users", authUser?.uid ?? "", "events", id);
         batch.delete(docRef);
       });
       await batch.commit();
@@ -582,14 +694,14 @@ export default function Availability() {
 
   const filteredEvents = events.filter(
     (event) =>
-      event.title.toLowerCase().includes(search.toLowerCase()) ||
+      event.type.toLowerCase().includes(search.toLowerCase()) ||
       (event.description ?? "").toLowerCase().includes(search.toLowerCase())
   );
 
   // Function to clone the event
-  const handleCloneClick = async (event: Omit<EventInput, "fee">) => {
+  const handleCloneClick = async (event: EventInput) => {
     try {
-      const user = auth.currentUser;
+      const user = authUser;
       if (!user) {
         throw new Error("User not authenticated");
       }
@@ -597,7 +709,7 @@ export default function Availability() {
       // Remove any undefined fields from the cloned event (like exceptions)
       const { id, ...clonedEventData } = {
         ...event,
-        title: `${event.title} (Clone)`, // Optional: Append "Clone" to the title
+        description: `${event.type} (Clone)`, // Optional: Append "Clone" to the description
         created_at: new Date(), // Update creation timestamp
       };
 
@@ -610,8 +722,11 @@ export default function Availability() {
       const eventRef = doc(collection(db, "users", user.uid, "events"));
       await setDoc(eventRef, sanitizedEventData);
 
+      // Update the event with the ID
+      await updateDoc(eventRef, { id: eventRef.id });
+
       // Update local state
-      setEvents((prevEvents: Omit<EventInput, "fee">[]) => [
+      setEvents((prevEvents: EventInput[]) => [
         ...prevEvents,
         { ...sanitizedEventData, id: eventRef.id } as EventInput, // Assign the newly generated id
       ]);
@@ -624,10 +739,8 @@ export default function Availability() {
 
   return (
     <div className="w-full relative">
-      <h1 className="text-xl font-bold mb-4">My Available Times</h1>
       {/* Add loading spinner here */}
       {loading && <div className="spinner">Loading...</div>}
-      <hr></hr>
       <Input
         value={search}
         onChange={(e) => setSearch(e.target.value)}
@@ -635,7 +748,7 @@ export default function Availability() {
         className="mb-4"
       />
 
-      <div className="overflow-y-auto max-h-[400px]">
+      <div className="overflow-y-auto max-h-[800px]">
         <Table>
           <TableHeader>
             <TableRow>
@@ -694,7 +807,10 @@ export default function Availability() {
 
               <TableHead>Duration</TableHead>
 
-              <TableHead>Title</TableHead>
+              <TableHead>Client</TableHead>
+
+              <TableHead>Booking Type</TableHead>
+              <TableHead>Fee</TableHead>
               <TableHead>Notes</TableHead>
               <TableHead>Actions</TableHead>
             </TableRow>
@@ -710,6 +826,9 @@ export default function Availability() {
                   />
                 </TableCell>
 
+                {/* <TableCell>{event.startDate.toLocaleDateString()}</TableCell> */}
+
+                {/* Display the date and make it editable */}
                 {/* <TableCell>
                   {editingCell?.id === event.id &&
                   editingCell?.field === "startDate" ? (
@@ -819,26 +938,76 @@ export default function Availability() {
 
                 <TableCell>
                   {editingCell?.id === event.id &&
-                  editingCell?.field === "title" ? (
-                    <input
+                  editingCell?.field === "clientName" ? (
+                    <Input
                       value={editedValue}
                       onChange={handleInputChange}
                       onBlur={handleBlur}
                       autoFocus
                     />
                   ) : (
-                    <div
+                    <span
                       onClick={() =>
                         handleCellClick(
                           event.id!,
-                          "title",
-                          event.title || "",
+                          "clientName",
+                          event.clientName,
                           !!event.recurrence
                         )
                       }
                     >
-                      {event.title || "Untitled"}
-                    </div>
+                      {event.clientName}
+                    </span>
+                  )}
+                </TableCell>
+
+                <TableCell>
+                  {editingCell?.id === event.id &&
+                  editingCell?.field === "type" ? (
+                    <Input
+                      value={editedValue}
+                      onChange={handleInputChange}
+                      onBlur={handleBlur}
+                      autoFocus
+                    />
+                  ) : (
+                    <span
+                      onClick={() =>
+                        handleCellClick(
+                          event.id!,
+                          "type",
+                          event.type,
+                          !!event.recurrence
+                        )
+                      }
+                    >
+                      {event.type}
+                    </span>
+                  )}
+                </TableCell>
+
+                <TableCell>
+                  {editingCell?.id === event.id &&
+                  editingCell?.field === "fee" ? (
+                    <Input
+                      value={editedValue}
+                      onChange={handleInputChange}
+                      onBlur={handleBlur}
+                      autoFocus
+                    />
+                  ) : (
+                    <span
+                      onClick={() =>
+                        handleCellClick(
+                          event.id!,
+                          "fee",
+                          event.fee.toString(),
+                          !!event.recurrence
+                        )
+                      }
+                    >
+                      {formatFee(event.fee)}
+                    </span>
                   )}
                 </TableCell>
 
@@ -876,9 +1045,9 @@ export default function Availability() {
                     </DropdownMenuTrigger>
                     <DropdownMenuContent>
                       {/* Clone Option */}
-                      {/* <DropdownMenuItem onClick={() => handleCloneClick(event)}>
+                      <DropdownMenuItem onClick={() => handleCloneClick(event)}>
                         Clone
-                      </DropdownMenuItem> */}
+                      </DropdownMenuItem>
                       {/*  Delete Option */}
                       <DropdownMenuItem
                         onClick={() => handleDeleteClick(event.id!)}
@@ -915,10 +1084,11 @@ export default function Availability() {
         </button>
       </div>
 
-      <AvailabilityDialog
+      <CreateBookingsFormDialog
         isOpen={isDialogOpen}
         onClose={() => setIsDialogOpen(false)}
         onSave={handleSaveEvent}
+        showDateSelector={true}
         event={editingEvent}
       />
     </div>
