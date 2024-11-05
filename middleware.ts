@@ -17,7 +17,7 @@ export async function middleware(request: NextRequest) {
     cookieSignatureKeys: serverConfig.cookieSignatureKeys,
     cookieSerializeOptions: serverConfig.cookieSerializeOptions,
     serviceAccount: serverConfig.serviceAccount,
-    handleValidToken: async ({ token, decodedToken }, headers) => {
+    handleValidToken: async ({ token, decodedToken, customToken }, headers) => {
       if (PUBLIC_PATHS.includes(request.nextUrl.pathname)) {
         return NextResponse.redirect(
           new URL("/dashboard/calendar", request.url)
