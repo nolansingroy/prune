@@ -10,7 +10,7 @@ const PUBLIC_PATHS = ["/", "/signUp", "/login"];
 
 export async function middleware(request: NextRequest) {
   return authMiddleware(request, {
-    loginPath: "/",
+    loginPath: "/api/login",
     logoutPath: "/api/logout",
     apiKey: clientConfig.apiKey,
     cookieName: serverConfig.cookieName,
@@ -50,5 +50,11 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/dashboard/:path*", "/((?!_next|api|.*\\.).*)"],
+  matcher: [
+    "/",
+    "/dashboard/:path*",
+    "/((?!_next|api|.*\\.).*)",
+    "/api/login",
+    "/api/logout",
+  ],
 };
