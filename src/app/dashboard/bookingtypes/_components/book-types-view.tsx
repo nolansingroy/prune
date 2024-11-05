@@ -19,6 +19,7 @@ import {
   TableBody,
   TableHeader,
 } from "@/components/ui/table";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
 
 const initialBookingData: BookingTypes = {
   docId: "",
@@ -94,7 +95,11 @@ export default function BookTypesView() {
   };
 
   if (loading) {
-    return <p>Loading booking types...</p>; // Display a loading message while fetching
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <LoadingSpinner className="w-10 h-10" />
+      </div>
+    ); // Display a loading message while fetching
   }
 
   return (
