@@ -28,6 +28,7 @@ import {
   createFireStoreEvent,
   updateFireStoreEvent,
 } from "@/lib/converters/events";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
 
 // an instance of the tooltip for each event { this is initialized to track the instances of the tooltip to prevent adding multiple instances of the tooltip to the same event }
 const tippyInstances = new Map<string, any>();
@@ -117,7 +118,7 @@ export default function FullCalendarComponent() {
             className="w-2 h-2 rounded-full flex-shrink-0"
             style={{ backgroundColor: backgroundColor }}
           ></div>
-          <div className="flex items-center truncate w-full">
+          <div className="flex items-center truncate w-full font-semibold">
             <span className="text-xs">{formattedStartTime}</span>
             <span className="text-xs truncate ml-2">{clientName}</span>
           </div>
@@ -162,7 +163,7 @@ export default function FullCalendarComponent() {
                 }
               }}
             >
-              <span className="flex items-center truncate w-full">
+              <span className="flex items-center truncate w-full font-bold">
                 {clientName || "No name"}
               </span>
             </span>
@@ -594,9 +595,6 @@ export default function FullCalendarComponent() {
     handleDialogClose();
   };
 
-  if (eventsLoading) {
-    return <div>Loading...</div>;
-  }
   // // test build
   const checkOverlap = (
     event: {
@@ -787,6 +785,14 @@ export default function FullCalendarComponent() {
       setEditAll(false);
     }
   };
+
+  if (eventsLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <LoadingSpinner className="w-10 h-10" />
+      </div>
+    );
+  }
 
   return (
     <div className="p-4">

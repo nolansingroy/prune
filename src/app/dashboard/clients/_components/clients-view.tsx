@@ -22,6 +22,7 @@ import {
   TableBody,
   TableHeader,
 } from "@/components/ui/table";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
 
 interface Client {
   docId: string;
@@ -141,7 +142,11 @@ export default function ClientsView() {
   };
 
   if (loading) {
-    return <p>Loading clients...</p>; // Display a loading message while fetching
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <LoadingSpinner className="w-10 h-10" />
+      </div>
+    ); // Display a loading message while fetching
   }
 
   return (

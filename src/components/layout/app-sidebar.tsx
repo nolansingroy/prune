@@ -157,14 +157,14 @@ export default function AppSidebar({
         <SidebarFooter>
           <SidebarMenu className="gap-0">
             {/* make a version and all right reserved statement */}
-            <SidebarMenuItem>
+            {/* <SidebarMenuItem>
               <span className="truncate text-xs font-semibold">v1.0.0</span>
             </SidebarMenuItem>
             <SidebarMenuItem>
               <span className="truncate text-xs font-semibold">
                 © 2024 All rights reserved
               </span>
-            </SidebarMenuItem>
+            </SidebarMenuItem> */}
             {/* <SidebarMenuItem>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>

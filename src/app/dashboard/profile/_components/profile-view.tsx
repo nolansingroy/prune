@@ -6,6 +6,7 @@ import { doc, getDoc, updateDoc } from "firebase/firestore";
 import { db } from "../../../../../firebase";
 import { Label } from "@/components/ui/label";
 import { timezones } from "@/constants/data";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
 
 export default function ProfileView() {
   const { authUser } = useFirebaseAuth();
@@ -47,7 +48,11 @@ export default function ProfileView() {
   };
 
   if (loading) {
-    return <p>Loading profile...</p>; // Display a loading message while fetching
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <LoadingSpinner className="w-10 h-10" />
+      </div>
+    ); // Display a loading message while fetching
   }
 
   return (
