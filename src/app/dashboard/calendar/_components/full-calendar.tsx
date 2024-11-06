@@ -29,6 +29,7 @@ import {
   updateFireStoreEvent,
 } from "@/lib/converters/events";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 // an instance of the tooltip for each event { this is initialized to track the instances of the tooltip to prevent adding multiple instances of the tooltip to the same event }
 const tippyInstances = new Map<string, any>();
@@ -795,13 +796,13 @@ export default function FullCalendarComponent() {
   }
 
   return (
-    <div className="p-4">
-      <div className="overflow-hidden">
-        <div className="calendar-container overflow-y-scroll ">
+    <div className="min-h-screen flex flex-col pb-4">
+      <div className="flex-grow">
+        <div className="py-0 px-3">
+          {/* <div className="calendar-container overflow-y-scroll "> */}
           <FullCalendar
             timeZone="local"
             key={calendarKey}
-            // eventColor="#000"
             ref={calendarRef}
             schedulerLicenseKey="0899673068-fcs-1718558974"
             plugins={[
@@ -818,7 +819,7 @@ export default function FullCalendarComponent() {
             }}
             stickyHeaderDates={true} // Enables sticky headers for dates
             height="auto"
-            contentHeight="150"
+            contentHeight="auto"
             slotDuration="00:15:00"
             slotMinTime="07:00:00"
             slotLabelFormat={{
@@ -849,6 +850,26 @@ export default function FullCalendarComponent() {
             eventResize={handleEventResize} // Called when resizing an event
             eventDidMount={handleEventDidMount} // Called after an event is rendered
             eventDrop={handleEventDrop}
+            nowIndicator={true}
+            eventContent={renderEventContent}
+            scrollTime="07:00:00" // Automatically scrolls to 7:00 AM on load
+            views={{
+              dayGridMonth: {
+                // eventMaxStack: 3,
+                dayMaxEventRows: 4,
+                // nowIndicator: true
+              },
+              timeGridWeek: {
+                // nowIndicator: true,
+                scrollTime: "07:00:00",
+                stickyHeaderDates: true, // Enable sticky headers for dates
+              },
+              timeGridDay: {
+                // nowIndicator: true,
+                slotDuration: "00:15:00",
+              },
+            }}
+            // eventColor="#000"
             // moreLinkClick={(arg) => {
             // }}
             events={events.map((event, index) => {
@@ -962,49 +983,31 @@ export default function FullCalendarComponent() {
                 }
               }
             })}
-            nowIndicator={true}
-            eventContent={renderEventContent}
-            scrollTime="07:00:00" // Automatically scrolls to 7:00 AM on load
-            views={{
-              dayGridMonth: {
-                // eventMaxStack: 3,
-                dayMaxEventRows: 4,
-                // nowIndicator: true
-              },
-              timeGridWeek: {
-                // nowIndicator: true,
-                scrollTime: "07:00:00",
-                stickyHeaderDates: true, // Enable sticky headers for dates
-              },
-              timeGridDay: {
-                // nowIndicator: true,
-                slotDuration: "00:15:00",
-              },
-            }}
           />
+          {/* </div> */}
         </div>
-      </div>
 
-      {editAll ? (
-        <CreateBookingsFormDialog
-          isOpen={isDialogOpen}
-          onClose={handleDialogClose}
-          onSave={handleUpdatEventFormDialog}
-          showDateSelector={true}
-          event={editingEvent}
-          editAll={editAll}
-          eventId={editingEvent?.id}
-        />
-      ) : (
-        <EventFormDialog
-          isOpen={isDialogOpen}
-          onClose={handleDialogClose}
-          onSave={handleSave}
-          showDateSelector={true}
-          event={editingEvent}
-          editAll={editAll}
-        />
-      )}
+        {editAll ? (
+          <CreateBookingsFormDialog
+            isOpen={isDialogOpen}
+            onClose={handleDialogClose}
+            onSave={handleUpdatEventFormDialog}
+            showDateSelector={true}
+            event={editingEvent}
+            editAll={editAll}
+            eventId={editingEvent?.id}
+          />
+        ) : (
+          <EventFormDialog
+            isOpen={isDialogOpen}
+            onClose={handleDialogClose}
+            onSave={handleSave}
+            showDateSelector={true}
+            event={editingEvent}
+            editAll={editAll}
+          />
+        )}
+      </div>
     </div>
   );
 }
