@@ -1,4 +1,5 @@
 import type { Config } from "tailwindcss";
+import { custom } from "zod";
 
 const config = {
   darkMode: ["class"],
@@ -99,6 +100,13 @@ const config = {
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
+      },
+      fontFamily: {
+        openSans: ["var(--opensans)"],
+        inter: ["var(--inter)"],
+        roboto: ["var(--roboto)"],
+        montserrat: ["var(--montserrat)"],
+        exo2: ["var(--exo2)"],
       },
     },
   },

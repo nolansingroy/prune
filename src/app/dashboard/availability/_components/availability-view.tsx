@@ -36,6 +36,9 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
+import { DataTableSkeleton } from "@/components/tables/data-table-skeleton";
+import { Trash2 } from "lucide-react";
 
 type SortableKeys = "start" | "end" | "title" | "startDate";
 export default function AvailabilityView() {
@@ -63,8 +66,10 @@ export default function AvailabilityView() {
     if (!authUser) {
       return;
     } else {
+      setLoading(true);
       const eventList = await fetchAvailabilitiesListviewEvents(authUser.uid);
       setEvents(eventList);
+      setLoading(false);
     }
   }, [authUser]);
 
@@ -486,7 +491,7 @@ export default function AvailabilityView() {
     const hours = adjustedDate.getHours();
     const minutes = adjustedDate.getMinutes().toString().padStart(2, "0");
     const ampm = hours >= 12 ? "PM" : "AM";
-    const formattedHours = (hours % 12 || 12).toString().padStart(2, "0");
+    const formattedHours = (hours % 12 || 12).toString();
     return `${formattedHours}:${minutes} ${ampm}`;
   };
 
@@ -604,10 +609,7 @@ export default function AvailabilityView() {
   };
 
   return (
-    <div className="w-full relative">
-      {/* Add loading spinner here */}
-      {loading && <div className="spinner">Loading...</div>}
-
+    <div className="w-full relative flex flex-col h-screen">
       <Input
         value={search}
         onChange={(e) => setSearch(e.target.value)}
@@ -615,82 +617,84 @@ export default function AvailabilityView() {
         className="mb-4"
       />
 
-      <div className="overflow-y-auto max-h-[800px]">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>
-                <Checkbox
-                  checked={selectedRows.size === filteredEvents.length}
-                  onCheckedChange={(checked: any) =>
-                    handleSelectAllChange(!!checked)
-                  }
-                />
-              </TableHead>
-
-              <TableHead>
-                <div className="flex items-center">
-                  Date
-                  <button onClick={() => handleSort("startDate")}>
-                    {sortConfig.key === "startDate" &&
-                    sortConfig.direction === "asc" ? (
-                      <CaretSortIcon className="rotate-180" />
-                    ) : (
-                      <CaretSortIcon />
-                    )}
-                  </button>
-                </div>
-              </TableHead>
-
-              <TableHead>Day</TableHead>
-
-              <TableHead>
-                <div className="flex items-center">
-                  Start Time
-                  <button onClick={() => handleSort("start")}>
-                    {sortConfig.key === "start" &&
-                    sortConfig.direction === "asc" ? (
-                      <CaretSortIcon className="rotate-180" />
-                    ) : (
-                      <CaretSortIcon />
-                    )}
-                  </button>
-                </div>
-              </TableHead>
-
-              <TableHead>
-                <div className="flex items-center">
-                  End Time
-                  <button onClick={() => handleSort("end")}>
-                    {sortConfig.key === "end" &&
-                    sortConfig.direction === "asc" ? (
-                      <CaretSortIcon className="rotate-180" />
-                    ) : (
-                      <CaretSortIcon />
-                    )}
-                  </button>
-                </div>
-              </TableHead>
-
-              <TableHead>Duration</TableHead>
-
-              <TableHead>Title</TableHead>
-              <TableHead>Notes</TableHead>
-              <TableHead>Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-
-          <TableBody>
-            {filteredEvents.map((event) => (
-              <TableRow key={event.id || ""}>
-                <TableCell>
+      <div className="space-y-4">
+        <ScrollArea className="h-[calc(80vh-220px)] rounded-md border md:h-[calc(90dvh-240px)]">
+          {loading && <DataTableSkeleton />}
+          <Table className="relative">
+            <TableHeader>
+              <TableRow>
+                <TableHead>
                   <Checkbox
-                    checked={selectedRows.has(event.id || "")}
-                    onCheckedChange={() => toggleRowSelection(event.id!)}
+                    checked={selectedRows.size === filteredEvents.length}
+                    onCheckedChange={(checked: any) =>
+                      handleSelectAllChange(!!checked)
+                    }
                   />
-                </TableCell>
+                </TableHead>
 
-                {/* <TableCell>
+                <TableHead>
+                  <div className="flex items-center">
+                    Date
+                    <button onClick={() => handleSort("startDate")}>
+                      {sortConfig.key === "startDate" &&
+                      sortConfig.direction === "asc" ? (
+                        <CaretSortIcon className="rotate-180" />
+                      ) : (
+                        <CaretSortIcon />
+                      )}
+                    </button>
+                  </div>
+                </TableHead>
+
+                <TableHead>Day</TableHead>
+
+                <TableHead>
+                  <div className="flex items-center">
+                    Start Time
+                    <button onClick={() => handleSort("start")}>
+                      {sortConfig.key === "start" &&
+                      sortConfig.direction === "asc" ? (
+                        <CaretSortIcon className="rotate-180" />
+                      ) : (
+                        <CaretSortIcon />
+                      )}
+                    </button>
+                  </div>
+                </TableHead>
+
+                <TableHead>
+                  <div className="flex items-center">
+                    End Time
+                    <button onClick={() => handleSort("end")}>
+                      {sortConfig.key === "end" &&
+                      sortConfig.direction === "asc" ? (
+                        <CaretSortIcon className="rotate-180" />
+                      ) : (
+                        <CaretSortIcon />
+                      )}
+                    </button>
+                  </div>
+                </TableHead>
+
+                <TableHead>Duration</TableHead>
+
+                <TableHead>Title</TableHead>
+                <TableHead>Notes</TableHead>
+                <TableHead>Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+
+            <TableBody>
+              {filteredEvents.map((event) => (
+                <TableRow key={event.id || ""}>
+                  <TableCell>
+                    <Checkbox
+                      checked={selectedRows.has(event.id || "")}
+                      onCheckedChange={() => toggleRowSelection(event.id!)}
+                    />
+                  </TableCell>
+
+                  {/* <TableCell>
                   {editingCell?.id === event.id &&
                   editingCell?.field === "startDate" ? (
                     <input
@@ -715,178 +719,191 @@ export default function AvailabilityView() {
                     </div>
                   )}
                 </TableCell> */}
-                <TableCell>{event.startDate.toLocaleDateString()}</TableCell>
-                <TableCell>{event.startDay}</TableCell>
+                  <TableCell>{event.startDate.toLocaleDateString()}</TableCell>
+                  <TableCell>{event.startDay}</TableCell>
 
-                <TableCell>
-                  {editingCell?.id === event.id &&
-                  editingCell?.field === "start" ? (
-                    <input
-                      type="time"
-                      value={editedValue}
-                      onChange={handleInputChange}
-                      onBlur={handleBlur}
-                      step="900"
-                      autoFocus
-                    />
-                  ) : (
-                    <div
-                      onClick={() => {
-                        handleCellClick(
-                          event.id!,
-                          "start",
-                          displayTime(event.start),
-                          !!event.recurrence
-                        );
-                        setEditedValue(displayTime(event.start));
-                      }}
-                    >
-                      {displayTimeWithAmPm(event.start)}
-                    </div>
-                  )}
-                </TableCell>
+                  <TableCell>
+                    {editingCell?.id === event.id &&
+                    editingCell?.field === "start" ? (
+                      <input
+                        type="time"
+                        value={editedValue}
+                        onChange={handleInputChange}
+                        onBlur={handleBlur}
+                        step="900"
+                        autoFocus
+                      />
+                    ) : (
+                      <div
+                        onClick={() => {
+                          handleCellClick(
+                            event.id!,
+                            "start",
+                            displayTime(event.start),
+                            !!event.recurrence
+                          );
+                          setEditedValue(displayTime(event.start));
+                        }}
+                      >
+                        {displayTimeWithAmPm(event.start)}
+                      </div>
+                    )}
+                  </TableCell>
 
-                <TableCell>
-                  {editingCell?.id === event.id &&
-                  editingCell?.field === "end" ? (
-                    <input
-                      type="time"
-                      value={editedValue}
-                      onChange={handleInputChange}
-                      onBlur={handleBlur}
-                      step="900"
-                      autoFocus
-                    />
-                  ) : (
-                    <div
-                      onClick={() => {
-                        handleCellClick(
-                          event.id!,
-                          "end",
-                          displayTime(event.end),
-                          !!event.recurrence
-                        );
-                        setEditedValue(displayTime(event.end));
-                      }}
-                    >
-                      {displayTimeWithAmPm(event.end)}
-                    </div>
-                  )}
-                </TableCell>
+                  <TableCell>
+                    {editingCell?.id === event.id &&
+                    editingCell?.field === "end" ? (
+                      <input
+                        type="time"
+                        value={editedValue}
+                        onChange={handleInputChange}
+                        onBlur={handleBlur}
+                        step="900"
+                        autoFocus
+                      />
+                    ) : (
+                      <div
+                        onClick={() => {
+                          handleCellClick(
+                            event.id!,
+                            "end",
+                            displayTime(event.end),
+                            !!event.recurrence
+                          );
+                          setEditedValue(displayTime(event.end));
+                        }}
+                      >
+                        {displayTimeWithAmPm(event.end)}
+                      </div>
+                    )}
+                  </TableCell>
 
-                <TableCell>
-                  {(() => {
-                    const duration = moment.duration(
-                      moment(event.end).diff(moment(event.start))
-                    );
-                    const hours = Math.floor(duration.asHours());
-                    const minutes = duration.minutes();
+                  <TableCell>
+                    {(() => {
+                      const duration = moment.duration(
+                        moment(event.end).diff(moment(event.start))
+                      );
+                      const hours = Math.floor(duration.asHours());
+                      const minutes = duration.minutes();
 
-                    let formattedDuration = "";
-                    if (hours > 0) {
-                      formattedDuration += `${hours} h `;
-                    }
-                    if (minutes > 0) {
-                      formattedDuration += `${minutes} m`;
-                    }
-                    if (hours === 0 && minutes === 0) {
-                      formattedDuration = "0 m";
-                    }
-
-                    return formattedDuration.trim();
-                  })()}
-                </TableCell>
-
-                <TableCell>
-                  {editingCell?.id === event.id &&
-                  editingCell?.field === "title" ? (
-                    <input
-                      value={editedValue}
-                      onChange={handleInputChange}
-                      onBlur={handleBlur}
-                      autoFocus
-                    />
-                  ) : (
-                    <div
-                      onClick={() =>
-                        handleCellClick(
-                          event.id!,
-                          "title",
-                          event.title || "",
-                          !!event.recurrence
-                        )
+                      let formattedDuration = "";
+                      if (hours > 0) {
+                        formattedDuration += `${hours} h `;
                       }
-                    >
-                      {event.title || "Untitled"}
-                    </div>
-                  )}
-                </TableCell>
-
-                <TableCell>
-                  {editingCell?.id === event.id &&
-                  editingCell?.field === "description" ? (
-                    <input
-                      value={editedValue}
-                      onChange={handleInputChange}
-                      onBlur={handleBlur}
-                      autoFocus
-                    />
-                  ) : (
-                    <div
-                      onClick={() =>
-                        handleCellClick(
-                          event.id!,
-                          "description",
-                          event.description || "",
-                          !!event.recurrence
-                        )
+                      if (minutes > 0) {
+                        formattedDuration += `${minutes} m`;
                       }
-                    >
-                      {event.description || "No description"}
-                    </div>
-                  )}
-                </TableCell>
+                      if (hours === 0 && minutes === 0) {
+                        formattedDuration = "0 m";
+                      }
 
-                <TableCell>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost">
-                        <DotsHorizontalIcon />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent>
-                      {/* Clone Option */}
-                      {/* <DropdownMenuItem onClick={() => handleCloneClick(event)}>
+                      return formattedDuration.trim();
+                    })()}
+                  </TableCell>
+
+                  <TableCell>
+                    {editingCell?.id === event.id &&
+                    editingCell?.field === "title" ? (
+                      <input
+                        value={editedValue}
+                        onChange={handleInputChange}
+                        onBlur={handleBlur}
+                        autoFocus
+                      />
+                    ) : (
+                      <div
+                        onClick={() =>
+                          handleCellClick(
+                            event.id!,
+                            "title",
+                            event.title || "",
+                            !!event.recurrence
+                          )
+                        }
+                      >
+                        {event.title || "Untitled"}
+                      </div>
+                    )}
+                  </TableCell>
+
+                  <TableCell>
+                    {editingCell?.id === event.id &&
+                    editingCell?.field === "description" ? (
+                      <input
+                        value={editedValue}
+                        onChange={handleInputChange}
+                        onBlur={handleBlur}
+                        autoFocus
+                      />
+                    ) : (
+                      <div
+                        onClick={() =>
+                          handleCellClick(
+                            event.id!,
+                            "description",
+                            event.description || "",
+                            !!event.recurrence
+                          )
+                        }
+                      >
+                        {event.description || "No description"}
+                      </div>
+                    )}
+                  </TableCell>
+
+                  <TableCell>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost">
+                          <DotsHorizontalIcon />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent>
+                        {/* Clone Option */}
+                        {/* <DropdownMenuItem onClick={() => handleCloneClick(event)}>
                         Clone
                       </DropdownMenuItem> */}
-                      {/*  Delete Option */}
-                      <DropdownMenuItem
-                        onClick={() => handleDeleteClick(event.id!)}
-                      >
-                        Delete
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+                        {/*  Delete Option */}
+                        <DropdownMenuItem
+                          onClick={() => handleDeleteClick(event.id!)}
+                        >
+                          Delete
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+          <ScrollBar orientation="horizontal" />
+        </ScrollArea>
       </div>
 
-      <div className="flex justify-between mt-4">
+      <div className="flex justify-between mt-4 p-4">
         <span>{`${selectedRows.size} of ${events.length} row(s) selected`}</span>
-        <div className="pr-16">
+        {/* <div className="pr-16">
           <Button
             onClick={deleteSelectedEvents}
             disabled={selectedRows.size === 0}
           >
             Delete Selected
           </Button>
-        </div>
+        </div> */}
       </div>
 
-      <div className="fixed bottom-[calc(4rem+30px)] right-4">
+      {selectedRows.size > 0 && (
+        <div className="fixed bottom-[calc(4rem+30px)] right-4">
+          <button
+            className="p-4 bg-black text-white rounded-full shadow-lg hover:bg-blue-500 focus:outline-none"
+            onClick={deleteSelectedEvents}
+          >
+            <Trash2 className="h-6 w-6" />
+          </button>
+        </div>
+      )}
+
+      <div className="fixed bottom-[calc(1.5rem+10px)] right-4">
         <button
           className="p-4 bg-blue-600 text-white rounded-full shadow-lg hover:bg-blue-500 focus:outline-none"
           onClick={() => setIsDialogOpen(true)}

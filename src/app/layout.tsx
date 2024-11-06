@@ -1,26 +1,10 @@
 import type { Metadata } from "next";
-import { Inter, Open_Sans } from "next/font/google";
-import { Montserrat } from "next/font/google";
-import { Source_Sans_3 } from "next/font/google";
-import { Exo_2 } from "next/font/google";
+import { exo_2, montserrat, roboto, inter, openSans } from "@/lib/fonts";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
 import NextTopLoader from "nextjs-toploader";
 import ThemeProvider from "@/components/layout/ThemeToggle/theme-provider";
-
-const exo_2 = Exo_2({
-  subsets: ["latin"],
-  weight: "700",
-  style: "normal",
-  display: "swap",
-});
-
-const openSans = Open_Sans({
-  subsets: ["latin"],
-  display: "swap",
-  style: "normal",
-  weight: ["300", "400", "500", "600", "700", "800"],
-});
+import Script from "next/script";
 
 export const metadata: Metadata = {
   title: "Rebus Pro",
@@ -35,11 +19,11 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${openSans.className}`}
+      className={`${openSans.variable} ${inter.variable} ${roboto.variable} ${montserrat.variable} ${exo_2.variable}`}
       // suppressHydrationWarning={true}
     >
       <body
-        className="overflow-hidden"
+        className="overflow-hidden font-openSans"
         // suppressHydrationWarning={true}
       >
         <NextTopLoader showSpinner={false} color="#1fce88" />
@@ -51,6 +35,19 @@ export default function RootLayout({
         > */}
         <Toaster />
         {children}
+        <Script
+          id="microsoft-clarity"
+          strategy="afterInteractive"
+          dangerouslySetInnerHTML={{
+            __html: `
+          (function(c,l,a,r,i,t,y){
+              c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+              t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+              y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+          })(window, document, "clarity", "script", "ot2mw7b8el");
+        `,
+          }}
+        />
         {/* </ThemeProvider> */}
       </body>
     </html>
