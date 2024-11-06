@@ -282,3 +282,40 @@ input {
 .fc-v-event {
   @apply bg-violet-500 border border-violet-600;
 }
+
+.fc-toolbar {
+  .fc-center h2 {
+    font-size: 1.25em;
+  }
+  display: block;
+  text-align: center;
+  @media (min-width: 600px) {
+    display: flex;
+  }
+}
+
+@media screen and (max-width: 767px) {
+  .fc-toolbar.fc-header-toolbar.fc-toolbar-ltr {
+    font-size: 90%;
+    display: flex;
+    flex-direction: row !important;
+    width: 100% !important;
+    gap: 10px;
+    padding-top: 0px;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .fc-toolbar-chunk {
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    width: 100%;
+  }
+
+  .fc-toolbar-chunk .fc-toolbar-title {
+    display: none !important;
+  }
+}
