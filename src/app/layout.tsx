@@ -4,6 +4,7 @@ import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
 import NextTopLoader from "nextjs-toploader";
 import ThemeProvider from "@/components/layout/ThemeToggle/theme-provider";
+import Script from "next/script";
 
 export const metadata: Metadata = {
   title: "Rebus Pro",
@@ -34,6 +35,19 @@ export default function RootLayout({
         > */}
         <Toaster />
         {children}
+        <Script
+          id="microsoft-clarity"
+          strategy="afterInteractive"
+          dangerouslySetInnerHTML={{
+            __html: `
+          (function(c,l,a,r,i,t,y){
+              c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+              t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+              y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+          })(window, document, "clarity", "script", "ot2mw7b8el");
+        `,
+          }}
+        />
         {/* </ThemeProvider> */}
       </body>
     </html>

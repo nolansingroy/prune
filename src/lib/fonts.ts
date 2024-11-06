@@ -1,3 +1,5 @@
+// note: after adding a new font, you need to go to tailwind.config.js and add the font to the fontFamily section
+
 import { Exo_2, Montserrat, Roboto, Inter, Open_Sans } from "next/font/google";
 
 export const exo_2 = Exo_2({
