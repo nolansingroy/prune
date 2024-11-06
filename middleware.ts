@@ -1,8 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import { authMiddleware, redirectToLogin } from "next-firebase-auth-edge";
+import {
+  authMiddleware,
+  redirectToHome,
+  redirectToLogin,
+} from "next-firebase-auth-edge";
 import { clientConfig, serverConfig } from "./config";
 
-const PUBLIC_PATHS = ["/", "/signUp", "/login"];
+const PUBLIC_PATHS = ["/register", "/login"];
 
 export async function middleware(request: NextRequest) {
   return authMiddleware(request, {
@@ -14,10 +18,9 @@ export async function middleware(request: NextRequest) {
     cookieSerializeOptions: serverConfig.cookieSerializeOptions,
     serviceAccount: serverConfig.serviceAccount,
     handleValidToken: async ({ token, decodedToken, customToken }, headers) => {
+      // Authenticated user should not be able to access /login, /register and /reset-password routes
       if (PUBLIC_PATHS.includes(request.nextUrl.pathname)) {
-        return NextResponse.redirect(
-          new URL("/dashboard/calendar", request.url)
-        );
+        return redirectToHome(request);
       }
 
       return NextResponse.next({
@@ -30,7 +33,7 @@ export async function middleware(request: NextRequest) {
       console.info("Missing or malformed credentials", { reason });
 
       return redirectToLogin(request, {
-        path: "/",
+        path: "/login",
         publicPaths: PUBLIC_PATHS,
       });
     },
@@ -38,7 +41,7 @@ export async function middleware(request: NextRequest) {
       console.error("Unhandled authentication error", { error });
 
       return redirectToLogin(request, {
-        path: "/",
+        path: "/login",
         publicPaths: PUBLIC_PATHS,
       });
     },
@@ -46,11 +49,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: [
-    "/",
-    "/dashboard/:path*",
-    "/((?!_next|api|.*\\.).*)",
-    "/api/login",
-    "/api/logout",
-  ],
+  matcher: ["/", "/((?!_next|api|.*\\.).*)", "/api/login", "/api/logout"],
 };

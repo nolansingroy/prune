@@ -37,8 +37,8 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { auth } from "../../../../firebase";
-import { signInWithEmailAndPassword } from "firebase/auth";
+import { app } from "../../../../firebase";
+import { signInWithEmailAndPassword, getAuth } from "firebase/auth";
 import { useRouter } from "next/navigation";
 
 const formSchema = z.object({
@@ -52,7 +52,7 @@ type LoginFormValues = z.infer<typeof formSchema>;
 
 export default function LoginForm() {
   const [loading, startTransition] = useTransition();
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  // const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [resetDialogOpen, setResetDialogOpen] = useState(false);
   const router = useRouter();
 
@@ -79,22 +79,26 @@ export default function LoginForm() {
   const handleLogin = async (data: LoginFormValues) => {
     try {
       const userCredential = await signInWithEmailAndPassword(
-        auth,
+        getAuth(app),
         data.email,
         data.password
       );
       const user = userCredential.user;
       const idToken = await user.getIdToken();
 
-      await fetch("/api/login", {
-        headers: {
-          Authorization: `Bearer ${idToken}`,
-        },
-      });
+      try {
+        await fetch("/api/login", {
+          headers: {
+            Authorization: `Bearer ${idToken}`,
+          },
+        });
+      } catch (error) {
+        console.error("Failed to send ID token to API", error);
+      }
 
       console.log("User logged in successfully with email:", user.email);
       console.log("ID token:", idToken);
-      router.push("dashboard/calendar");
+      router.push("/");
     } catch (error: any) {
       console.error("Error logging in:", error.message);
       console.error(`Error logging in: ${data.email} +  ${data.password}`);
@@ -114,7 +118,7 @@ export default function LoginForm() {
         "Initiating password reset for email:",
         form.getValues("email")
       );
-      await resetPassword(form.getValues("email"), auth);
+      await resetPassword(form.getValues("email"), getAuth(app));
       setResetDialogOpen(false);
 
       toast.success("Password reset email sent");
@@ -206,7 +210,7 @@ export default function LoginForm() {
         </Form>
         <div className="mt-4 text-center text-sm">
           Don&apos;t have an account?{" "}
-          <Link href="signUp" className="underline">
+          <Link href="register" className="underline">
             Sign up
           </Link>
         </div>
