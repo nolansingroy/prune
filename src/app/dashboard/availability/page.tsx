@@ -9,7 +9,7 @@ export default function Page() {
   const description = "Manage your available times here.";
   return (
     <PageContainer scrollable={false}>
-      <div className="space-y-4 mb-5">
+      <div className="space-y-4">
         <Heading title={title} description={description} />
         <Separator />
         <AvailabilityView />

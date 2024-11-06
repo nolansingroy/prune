@@ -631,7 +631,7 @@ export default function BookingsView() {
     const hours = adjustedDate.getHours();
     const minutes = adjustedDate.getMinutes().toString().padStart(2, "0");
     const ampm = hours >= 12 ? "PM" : "AM";
-    const formattedHours = (hours % 12 || 12).toString().padStart(2, "0");
+    const formattedHours = (hours % 12 || 12).toString();
     return `${formattedHours}:${minutes} ${ampm}`;
   };
 
@@ -753,8 +753,6 @@ export default function BookingsView() {
 
   return (
     <div className="w-full relative flex flex-col h-screen">
-      {/* Add loading spinner here */}
-
       <Input
         value={search}
         onChange={(e) => setSearch(e.target.value)}
