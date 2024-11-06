@@ -853,6 +853,7 @@ export default function FullCalendarComponent() {
             nowIndicator={true}
             eventContent={renderEventContent}
             scrollTime="07:00:00" // Automatically scrolls to 7:00 AM on load
+            allDaySlot={false}
             views={{
               dayGridMonth: {
                 // eventMaxStack: 3,
