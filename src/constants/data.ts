@@ -123,9 +123,9 @@ export type Product = {
 
 export const navItems: NavItem[] = [
   {
-    title: "Dashboard",
+    title: "Calendar",
     url: "/dashboard/calendar",
-    icon: "dashboard",
+    icon: "calendar",
     isActive: false,
     items: [], // Empty array as there are no child items for Dashboard
   },
@@ -139,7 +139,7 @@ export const navItems: NavItem[] = [
   {
     title: "Bookings",
     url: "/dashboard/bookings",
-    icon: "calendar",
+    icon: "bookings",
     isActive: false,
     items: [], // No child items
   },
@@ -156,7 +156,7 @@ export const navItems: NavItem[] = [
         icon: "userPen",
       },
       {
-        title: "Book Types",
+        title: "Booking Types",
         url: "/dashboard/bookingtypes",
         icon: "login",
       },

@@ -32,11 +32,13 @@ import {
   UserX2Icon,
   X,
   Calendar1,
+  ListTodo,
 } from "lucide-react";
 
 export type Icon = LucideIcon;
 
 export const Icons = {
+  bookings: ListTodo,
   dashboard: LayoutDashboardIcon,
   logo: Command,
   login: LogIn,
