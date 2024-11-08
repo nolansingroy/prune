@@ -85,8 +85,12 @@ export default function LoginForm() {
       );
       const user = userCredential.user;
       console.log("User logged in successfully with email:", user.email);
+      toast.success("Login successful");
       router.push("dashboard/calendar");
     } catch (error: any) {
+      toast.error(
+        error.message || "An error occurred while logging in. Please try again."
+      );
       console.error("Error logging in:", error.message);
       console.error(`Error logging in: ${data.email} +  ${data.password}`);
     }
@@ -95,7 +99,7 @@ export default function LoginForm() {
   const onSubmit = (data: LoginFormValues) => {
     startTransition(() => {
       handleLogin(data);
-      toast.success("Login successful");
+      // toast.success("Login successful");
     });
   };
 
