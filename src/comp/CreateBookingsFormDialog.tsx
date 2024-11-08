@@ -487,7 +487,7 @@ const CreateBookingsFormDialog: React.FC<CreateBookingsFormDialogProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="overflow-y-scroll max-h-screen overflow-x-clip">
+      <DialogContent className="overflow-y-auto max-h-full h-full overflow-x-auto w-11/12 sm:max-w-md sm:max-h-[80vh] sm:h-auto">
         <DialogHeader>
           <div className="flex items-center gap-4">
             <DialogTitle>
@@ -897,7 +897,7 @@ const CreateBookingsFormDialog: React.FC<CreateBookingsFormDialogProps> = ({
             </>
           )}
         </div>
-        <DialogFooter>
+        <DialogFooter className="flex flex-col space-y-2 sm:flex-row sm:space-y-0 sm:space-x-2">
           <Button variant="secondary" onClick={handleClose}>
             Cancel
           </Button>

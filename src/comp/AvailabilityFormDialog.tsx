@@ -193,7 +193,7 @@ const AvailabilityDialog: React.FC<AvailabilityDialogProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="overflow-y-scroll max-h-screen overflow-x-clip">
+      <DialogContent className="overflow-y-auto max-h-full h-full overflow-x-auto w-11/12 sm:max-w-md sm:max-h-[80vh] sm:h-auto">
         <DialogHeader>
           <DialogTitle>
             {event ? "Edit Availability" : "New Availability"}

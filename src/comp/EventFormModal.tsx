@@ -431,7 +431,7 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="modal-content overflow-y-scroll max-h-screen overflow-x-clip">
+      <DialogContent className="modal-content overflow-y-auto max-h-full h-full overflow-x-auto w-11/12 sm:max-w-md sm:max-h-[80vh] sm:h-auto">
         <DialogHeader>
           <DialogTitle>
             {editAll
@@ -440,13 +440,6 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
               ? "Create Availability"
               : "Create Booking"}
           </DialogTitle>
-          {/* <DialogDescription>
-            {editAll
-              ? "Edit all instances of this recurring event"
-              : isBackgroundEvent
-              ? "Edit this availability event"
-              : "Edit this booking event"}
-          </DialogDescription> */}
         </DialogHeader>
 
         {/* Event Type Toggle (Create Availability / Create Booking) */}
