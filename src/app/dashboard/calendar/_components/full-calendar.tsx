@@ -858,16 +858,44 @@ export default function FullCalendarComponent() {
               dayGridMonth: {
                 // eventMaxStack: 3,
                 dayMaxEventRows: 4,
+
                 // nowIndicator: true
               },
               timeGridWeek: {
                 // nowIndicator: true,
                 scrollTime: "07:00:00",
                 stickyHeaderDates: true, // Enable sticky headers for dates
+                dayHeaderContent: (args) => {
+                  const date = args.date;
+                  const dayOfWeek = date.toLocaleDateString("en-US", {
+                    weekday: "short",
+                  }); // e.g., "Tue"
+                  const dayOfMonth = date.getDate(); // e.g., 4
+
+                  return (
+                    <div style={{ textAlign: "center" }}>
+                      <div className="text-sm font-normal">{dayOfWeek}</div>
+                      <div className="text-sm font-normal">{dayOfMonth}</div>
+                    </div>
+                  );
+                },
               },
               timeGridDay: {
                 // nowIndicator: true,
                 slotDuration: "00:15:00",
+                stickyHeaderDates: true, // Enable sticky headers for dates
+                dayHeaderContent: (args) => {
+                  const date = args.date;
+                  const dayOfWeek = date.toLocaleDateString("en-US", {
+                    weekday: "long",
+                  });
+
+                  return (
+                    <div style={{ textAlign: "center" }}>
+                      <div>{dayOfWeek}</div>
+                    </div>
+                  );
+                },
               },
             }}
             // eventColor="#000"

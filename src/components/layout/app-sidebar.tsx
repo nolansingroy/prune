@@ -263,11 +263,12 @@ export default function AppSidebar({
           <div className="flex items-center gap-2 px-4">
             <SidebarTrigger className="-ml-1" />
             <Separator orientation="vertical" className="mr-2 h-4" />
-            {isBelowMd ? (
+            {/* {isBelowMd ? (
               <div className="fc-toolbar-title"></div>
             ) : (
               <Breadcrumbs />
-            )}
+            )} */}
+            <Breadcrumbs />
           </div>
           <div className=" hidden w-1/3 items-center gap-2 px-4 md:flex ">
             {/* <SearchInput /> */}
