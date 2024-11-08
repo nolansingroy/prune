@@ -105,7 +105,7 @@ export default function FullCalendarComponent() {
     }
     if (monthViw) {
       const defaultStartTimeLocal = new Date(eventInfo.event.startStr);
-      const formattedStartTime = defaultStartTimeLocal.toLocaleTimeString(
+      let formattedStartTime = defaultStartTimeLocal.toLocaleTimeString(
         "en-US",
         {
           hour: "2-digit",
@@ -113,6 +113,9 @@ export default function FullCalendarComponent() {
           hour12: true,
         }
       );
+
+      // Remove leading zero from the hour part
+      formattedStartTime = formattedStartTime.replace(/^0(\d)/, "$1");
       return (
         <div className="flex gap-1 items-center w-full overflow-hidden">
           <div
