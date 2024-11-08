@@ -59,6 +59,7 @@
     "react-dom": "^18",
     "react-firebase-hooks": "^5.1.1",
     "react-hook-form": "^7.52.1",
+    "react-responsive": "^10.0.0",
     "react-time-picker": "^7.0.0",
     "rrule": "^2.8.1",
     "sharp": "^0.33.5",
@@ -67,7 +68,8 @@
     "tailwindcss-animate": "^1.0.7",
     "tippy.js": "^6.2.5",
     "yup": "^1.4.0",
-    "zod": "^3.23.8"
+    "zod": "^3.23.8",
+    "zustand": "^5.0.1"
   },
   "devDependencies": {
     "@types/json-schema": "^7.0.15",
