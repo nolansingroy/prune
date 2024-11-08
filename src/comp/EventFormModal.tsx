@@ -844,16 +844,19 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
           )}
 
           {/* Date and Time Inputs */}
+          <div>
+            <Label className="block text-sm font-medium text-gray-700">
+              Date
+            </Label>
+            <Input
+              type="date"
+              value={date}
+              onChange={handleDateChange}
+              className="px-2 py-2 text-center rounded-md border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+            />
+          </div>
+
           <div className="flex items-center space-x-6">
-            <div className="flex flex-col">
-              <Label className="text-sm font-medium text-gray-700">Date</Label>
-              <Input
-                type="date"
-                value={date}
-                onChange={handleDateChange}
-                className="px-2 py-2 text-center rounded-md border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-              />
-            </div>
             <div className="flex flex-col">
               <Label className="text-sm font-medium text-gray-700">
                 Start Time
@@ -882,7 +885,8 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
             </div>
           </div>
         </div>
-        <DialogFooter>
+
+        <DialogFooter className="flex flex-col space-y-2 sm:flex-row sm:space-y-0 sm:space-x-2">
           <Button variant="secondary" onClick={handleClose}>
             Cancel
           </Button>
