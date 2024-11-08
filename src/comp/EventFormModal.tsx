@@ -431,7 +431,7 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="modal-content overflow-y-scroll max-h-screen overflow-x-clip">
+      <DialogContent className="modal-content overflow-y-auto max-h-full h-full overflow-x-auto w-11/12 sm:max-w-md sm:max-h-[80vh] sm:h-auto">
         <DialogHeader>
           <DialogTitle>
             {editAll
@@ -440,13 +440,6 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
               ? "Create Availability"
               : "Create Booking"}
           </DialogTitle>
-          {/* <DialogDescription>
-            {editAll
-              ? "Edit all instances of this recurring event"
-              : isBackgroundEvent
-              ? "Edit this availability event"
-              : "Edit this booking event"}
-          </DialogDescription> */}
         </DialogHeader>
 
         {/* Event Type Toggle (Create Availability / Create Booking) */}
@@ -851,16 +844,19 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
           )}
 
           {/* Date and Time Inputs */}
+          <div>
+            <Label className="block text-sm font-medium text-gray-700">
+              Date
+            </Label>
+            <Input
+              type="date"
+              value={date}
+              onChange={handleDateChange}
+              className="px-2 py-2 text-center rounded-md border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+            />
+          </div>
+
           <div className="flex items-center space-x-6">
-            <div className="flex flex-col">
-              <Label className="text-sm font-medium text-gray-700">Date</Label>
-              <Input
-                type="date"
-                value={date}
-                onChange={handleDateChange}
-                className="px-2 py-2 text-center rounded-md border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-              />
-            </div>
             <div className="flex flex-col">
               <Label className="text-sm font-medium text-gray-700">
                 Start Time
@@ -889,7 +885,8 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
             </div>
           </div>
         </div>
-        <DialogFooter>
+
+        <DialogFooter className="flex flex-col space-y-2 sm:flex-row sm:space-y-0 sm:space-x-2">
           <Button variant="secondary" onClick={handleClose}>
             Cancel
           </Button>

@@ -193,7 +193,7 @@ const AvailabilityDialog: React.FC<AvailabilityDialogProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="overflow-y-scroll max-h-screen overflow-x-clip">
+      <DialogContent className="overflow-y-auto max-h-full h-full overflow-x-auto w-11/12 sm:max-w-md sm:max-h-[80vh] sm:h-auto">
         <DialogHeader>
           <DialogTitle>
             {event ? "Edit Availability" : "New Availability"}
@@ -341,11 +341,14 @@ const AvailabilityDialog: React.FC<AvailabilityDialogProps> = ({
             </div>
           </div>
 
+          <div>
+            <Label className="block text-sm font-medium text-gray-700">
+              Date
+            </Label>
+            <Input type="date" value={date} onChange={handleDateChange} />
+          </div>
+
           <div className="flex items-center space-x-6">
-            <div className="flex flex-col">
-              <Label className="text-sm font-medium text-gray-700">Date</Label>
-              <Input type="date" value={date} onChange={handleDateChange} />
-            </div>
             <div className="flex flex-col">
               <Label className="text-sm font-medium text-gray-700">
                 Start Time
@@ -430,7 +433,8 @@ const AvailabilityDialog: React.FC<AvailabilityDialogProps> = ({
             </>
           )}
         </div>
-        <DialogFooter>
+
+        <DialogFooter className="flex flex-col space-y-2 sm:flex-row sm:space-y-0 sm:space-x-2">
           <Button variant="secondary" onClick={handleClose}>
             Cancel
           </Button>
