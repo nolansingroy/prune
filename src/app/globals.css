@@ -241,12 +241,6 @@
 input {
   @apply px-2;
 }
-.fc-header-toolbar {
-  display: inline-block;
-  padding: 4px 4px;
-
-  @apply space-x-8;
-}
 
 .fc-day {
   @apply m-8;
@@ -283,11 +277,18 @@ input {
   @apply bg-violet-500 border border-violet-600;
 }
 
+.fc-header-toolbar {
+  display: flex;
+  padding: 4px 4px;
+
+  @apply space-x-8;
+}
+
 .fc-toolbar {
   .fc-center h2 {
     font-size: 1.25em;
   }
-  display: block;
+  display: flex;
   text-align: center;
   @media (min-width: 600px) {
     display: flex;
@@ -295,6 +296,9 @@ input {
 }
 
 @media screen and (max-width: 767px) {
+  .fc-toolbar {
+    flex-wrap: wrap;
+  }
   .fc-toolbar.fc-header-toolbar.fc-toolbar-ltr {
     font-size: 90%;
     display: flex;
@@ -315,7 +319,45 @@ input {
     width: 100%;
   }
 
+  .fc-toolbar.fc-header-toolbar .fc-toolbar-chunk:nth-child(2) {
+    order: -1;
+    width: 100%;
+  }
+
+  .fc-toolbar.fc-header-toolbar .fc-toolbar-chunk:nth-child(1),
+  .fc-toolbar.fc-header-toolbar .fc-toolbar-chunk:nth-child(3) {
+    order: 0;
+    width: auto;
+    flex: 1;
+  }
+
   .fc-toolbar-chunk .fc-toolbar-title {
-    display: none !important;
+    font-size: 1.25em;
+  }
+}
+
+@media screen and (max-width: 400px) {
+  .fc-toolbar {
+    flex-wrap: wrap;
+  }
+  .fc-toolbar.fc-header-toolbar.fc-toolbar-ltr {
+    font-size: 68%;
+    padding-top: -20px;
+  }
+
+  .fc-toolbar.fc-header-toolbar .fc-toolbar-chunk:nth-child(2) {
+    order: -1;
+    width: 100%;
+  }
+
+  .fc-toolbar.fc-header-toolbar .fc-toolbar-chunk:nth-child(1),
+  .fc-toolbar.fc-header-toolbar .fc-toolbar-chunk:nth-child(3) {
+    order: 0;
+    width: auto;
+    flex: 1;
+  }
+
+  .fc-toolbar-chunk .fc-toolbar-title {
+    font-size: 1.25em;
   }
 }
