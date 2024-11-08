@@ -88,8 +88,14 @@ export default function SignupForm() {
         `${data.firstName} ${data.lastName}`
       );
 
+      toast.success("Account created successfully");
+
       router.push("/dashboard/calendar");
     } catch (error: any) {
+      toast.error(
+        error.message ||
+          "An error occurred while creating an account. Please try again."
+      );
       console.error("Error creating user:", error.message);
     }
   };
@@ -97,7 +103,7 @@ export default function SignupForm() {
   const onSubmit = (data: SignupFormValues) => {
     startTransition(() => {
       handleSignUp(data);
-      toast.success("Account created successfully");
+      // toast.success("Account created successfully");
     });
   };
 

@@ -32,6 +32,7 @@ import {
   SidebarProvider,
   SidebarRail,
   SidebarTrigger,
+  useSidebar,
 } from "@/components/ui/sidebar";
 import { navItems } from "@/constants/data";
 import {
@@ -55,6 +56,7 @@ import ThemeToggle from "./ThemeToggle/theme-toggle";
 import { UserNav } from "./user-nav";
 import { useFirebaseAuth } from "@/services/authService";
 import { dashboardLogo } from "../../../public";
+import { useBreakpoint } from "@/hooks/useBreakPoints";
 
 export const company = {
   name: "Rebus Pro",
@@ -69,7 +71,7 @@ export default function AppSidebar({
 }) {
   const [mounted, setMounted] = React.useState(false);
   const { authUser } = useFirebaseAuth();
-  // const { data: session } = useSession();
+  const { isBelowMd } = useBreakpoint("md");
   const pathname = usePathname();
   // Only render after first client-side mount
   React.useEffect(() => {
@@ -261,6 +263,11 @@ export default function AppSidebar({
           <div className="flex items-center gap-2 px-4">
             <SidebarTrigger className="-ml-1" />
             <Separator orientation="vertical" className="mr-2 h-4" />
+            {/* {isBelowMd ? (
+              <div className="fc-toolbar-title"></div>
+            ) : (
+              <Breadcrumbs />
+            )} */}
             <Breadcrumbs />
           </div>
           <div className=" hidden w-1/3 items-center gap-2 px-4 md:flex ">
