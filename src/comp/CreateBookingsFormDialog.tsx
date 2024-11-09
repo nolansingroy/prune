@@ -46,10 +46,12 @@ import { CaretSortIcon, CheckIcon } from "@radix-ui/react-icons";
 import { fetchClients } from "@/lib/converters/clients";
 import { Switch } from "@headlessui/react";
 import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
 
 interface CreateBookingsFormDialogProps {
   isOpen: boolean;
   onClose: () => void;
+  onDelete?: (eventId: string, action: string) => void;
   onSave: (
     eventData: {
       id?: string;
@@ -95,6 +97,7 @@ const CreateBookingsFormDialog: React.FC<CreateBookingsFormDialogProps> = ({
   isOpen,
   onClose,
   onSave,
+  onDelete,
   showDateSelector = true,
   event,
   editAll,
@@ -485,6 +488,26 @@ const CreateBookingsFormDialog: React.FC<CreateBookingsFormDialogProps> = ({
     }
   };
 
+  // delete a single event
+  // create a function to delete a single event by passing the event id to the onDelete
+
+  const handleDeleteSingle = (id: string) => {
+    if (onDelete) {
+      onDelete(id, "single");
+      handleClose;
+    }
+  };
+
+  // delete a series of events
+  // create a function to delete a series of events by passing the original event id to the onDelete
+
+  const handleDeleteSeries = (id: string) => {
+    if (onDelete) {
+      onDelete(id, "series");
+      handleClose;
+    }
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="overflow-y-auto max-h-full h-full overflow-x-auto w-11/12 sm:max-w-md sm:max-h-[80vh] sm:h-auto">
@@ -504,7 +527,7 @@ const CreateBookingsFormDialog: React.FC<CreateBookingsFormDialogProps> = ({
                       color: bookingColor,
                     }}
                   >
-                    {<span className="text-sm font-bold">recurring</span>}
+                    {<span className="text-sm font-bold">Series</span>}
                   </Badge>
                 )}
                 {event.recurrence && (
@@ -515,7 +538,7 @@ const CreateBookingsFormDialog: React.FC<CreateBookingsFormDialogProps> = ({
                       color: bookingColor,
                     }}
                   >
-                    {<span className="text-sm font-bold">original</span>}
+                    {<span className="text-sm font-bold">Series</span>}
                   </Badge>
                 )}
               </div>
@@ -897,13 +920,40 @@ const CreateBookingsFormDialog: React.FC<CreateBookingsFormDialogProps> = ({
             </>
           )}
         </div>
-        <DialogFooter className="flex flex-col space-y-2 sm:flex-row sm:space-y-0 sm:space-x-2">
-          <Button variant="secondary" onClick={handleClose}>
-            Cancel
-          </Button>
-          <Button variant="secondary" onClick={handleSave}>
-            Save
-          </Button>
+        <DialogFooter
+          className={cn(
+            "flex flex-col-reverse space-y-2 sm:flex-row sm:space-y-0 sm:space-x-2",
+            editAll && event ? "sm:justify-between" : ""
+          )}
+        >
+          {editAll && event && (
+            <div className="flex flex-col-reverse space-y-2 sm:flex-row sm:space-y-0 sm:space-x-2 gap-2 sm:gap-0">
+              <Button
+                variant="destructive"
+                onClick={() => handleDeleteSingle(event?.id || "")}
+              >
+                Delete
+              </Button>
+
+              {/* Checking if the event is an original event through event.recurrence or a recurring event through originalEventId  */}
+              {(event.recurrence || originalEventId) && (
+                <Button
+                  variant="destructive"
+                  onClick={() => handleDeleteSeries(event?.id || "")}
+                >
+                  Delete Series
+                </Button>
+              )}
+            </div>
+          )}
+          <div className="flex flex-col-reverse space-y-2 sm:flex-row sm:space-y-0 sm:space-x-2 gap-2 sm:gap-0">
+            <Button variant="outline" onClick={handleClose}>
+              Cancel
+            </Button>
+            <Button variant="rebusPro" onClick={handleSave}>
+              Save
+            </Button>
+          </div>
         </DialogFooter>
       </DialogContent>
     </Dialog>
