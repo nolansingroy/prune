@@ -31,11 +31,13 @@ import {
 } from "@/lib/converters/events";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import useConfirmationStore from "@/lib/store/confirmationStore";
 
 // an instance of the tooltip for each event { this is initialized to track the instances of the tooltip to prevent adding multiple instances of the tooltip to the same event }
 const tippyInstances = new Map<string, any>();
 
 export default function FullCalendarComponent() {
+  const { openConfirmation } = useConfirmationStore();
   const calendarRef = useRef<FullCalendar>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectInfo, setSelectInfo] = useState<DateSelectArg | null>(null);
@@ -805,14 +807,31 @@ export default function FullCalendarComponent() {
     try {
       console.log("Deleting event from Firestore for event ID:", eventId);
       // construnct the array
-      let eventIds = [];
+      let eventIds: string[] = [];
 
       // do the database operation based on the action
       if (action === "single") {
         // make sure the array is empty
         eventIds = [eventId];
         console.log("Events to delete (single):", eventIds);
-        await deleteEvents(user.uid, eventIds);
+
+        openConfirmation({
+          title: "Delete Confirmation",
+          description: "Are you sure you want to delete this event?",
+          cancelLabel: "Cancel",
+          actionLabel: "Delete",
+          onAction: async () => {
+            await deleteEvents(user.uid, eventIds);
+            // close the dialog
+            setIsDialogOpen(false);
+            setLoading(false); // Stop loading
+            setSelectInfo(null);
+            setEditingEvent(null);
+            setEditAll(false);
+            await fetchEvents();
+          },
+          onCancel: () => {},
+        });
       } else {
         // make sure the array is empty
         eventIds = [];
@@ -840,7 +859,7 @@ export default function FullCalendarComponent() {
 
             // update the eventIds array with all the found events with the same originalEventId and add the original event id to the eventIds array as well
 
-            eventIds = [...eventsToDelete, foundOriginalEventId];
+            eventIds = [...eventsToDelete, foundOriginalEventId] as string[];
 
             console.log(
               "Events to delete (series) when the event to delete is not the original event :",
@@ -875,7 +894,7 @@ export default function FullCalendarComponent() {
 
             // update the eventIds array with all the found events with the same originalEventId and add the eventId to the eventIds array as well
 
-            eventIds = [...eventsToDelete, foundOriginalEventId];
+            eventIds = [...eventsToDelete, foundOriginalEventId] as string[];
 
             console.log(
               "Events to delete (series) when the event to delete is the original event :",
@@ -900,13 +919,13 @@ export default function FullCalendarComponent() {
     } catch (error) {
       console.error("Error deleting event:", error);
     } finally {
-      // close the dialog
-      setIsDialogOpen(false);
-      await fetchEvents();
-      setLoading(false); // Stop loading
-      setSelectInfo(null);
-      setEditingEvent(null);
-      setEditAll(false);
+      // // close the dialog
+      // setIsDialogOpen(false);
+      // await fetchEvents();
+      // setLoading(false); // Stop loading
+      // setSelectInfo(null);
+      // setEditingEvent(null);
+      // setEditAll(false);
     }
   };
 
