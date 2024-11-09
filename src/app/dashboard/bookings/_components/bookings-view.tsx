@@ -706,10 +706,10 @@ export default function BookingsView() {
     }
   };
 
-  const filteredEvents = events.filter(
-    (event) =>
-      event.type.toLowerCase().includes(search.toLowerCase()) ||
-      (event.description ?? "").toLowerCase().includes(search.toLowerCase())
+  const filteredEvents = events.filter((event) =>
+    // event.type.toLowerCase().includes(search.toLowerCase()) ||
+    // (event.description ?? "").toLowerCase().includes(search.toLowerCase()) ||
+    (event.clientName ?? "").toLowerCase().includes(search.toLowerCase())
   );
 
   // Function to clone the event
