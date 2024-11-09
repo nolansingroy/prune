@@ -4,7 +4,7 @@ import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import SignupForm from "./signup-form";
 import Image from "next/image";
-import { loginLogo } from "../../../../public";
+import { loginLogoDark, loginLogoLight } from "../../../../public";
 
 // export const metadata: Metadata = {
 //   title: "Authentication",
@@ -40,7 +40,7 @@ export default function SignUpViewPage() {
           </svg>
           Logo */}
 
-          <Image src={loginLogo} alt="Logo" width={186} height={51}></Image>
+          <Image src={loginLogoDark} alt="Logo" width={186} height={51}></Image>
         </div>
         <div className="relative z-20 mt-auto">
           <blockquote className="space-y-2">
@@ -54,6 +54,14 @@ export default function SignUpViewPage() {
       </div>
       <div className="flex h-full items-center p-4 lg:p-8">
         <div className="mx-auto flex w-full flex-col justify-center space-y-6 sm:w-[350px]">
+          <div className="flex items-center justify-center lg:hidden">
+            <Image
+              src={loginLogoLight}
+              alt="Logo"
+              width={186}
+              height={51}
+            ></Image>
+          </div>
           <div className="flex flex-col space-y-2 text-center">
             <h1 className="text-2xl font-semibold tracking-tight">
               Create an account
@@ -63,7 +71,7 @@ export default function SignUpViewPage() {
             </p>
           </div>
           <SignupForm />
-          <p className="px-8 text-center text-sm text-muted-foreground">
+          {/* <p className="px-8 text-center text-sm text-muted-foreground">
             By clicking continue, you agree to our{" "}
             <Link
               href="/terms"
@@ -79,7 +87,7 @@ export default function SignUpViewPage() {
               Privacy Policy
             </Link>
             .
-          </p>
+          </p> */}
         </div>
       </div>
     </div>
