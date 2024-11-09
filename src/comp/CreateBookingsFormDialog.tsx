@@ -927,7 +927,12 @@ const CreateBookingsFormDialog: React.FC<CreateBookingsFormDialogProps> = ({
           )}
         >
           {editAll && event && (
-            <div className="flex flex-col-reverse space-y-2 sm:flex-row sm:space-y-0 sm:space-x-2 gap-2 sm:gap-0">
+            <div
+              className={cn(
+                "flex flex-col-reverse space-y-2 sm:flex-row sm:space-y-0 sm:space-x-2",
+                !event.recurrence || !originalEventId ? "gap-2" : ""
+              )}
+            >
               <Button
                 variant="destructive"
                 onClick={() => handleDeleteSingle(event?.id || "")}
@@ -935,7 +940,6 @@ const CreateBookingsFormDialog: React.FC<CreateBookingsFormDialogProps> = ({
                 Delete
               </Button>
 
-              {/* Checking if the event is an original event through event.recurrence or a recurring event through originalEventId  */}
               {(event.recurrence || originalEventId) && (
                 <Button
                   variant="destructive"
