@@ -828,7 +828,7 @@ export default function FullCalendarComponent() {
 
         openConfirmation({
           title: "Delete Confirmation",
-          description: "Are you sure you want to delete this event?",
+          description: "Do you want to delete this booking event?",
           cancelLabel: "Cancel",
           actionLabel: "Delete",
           onAction: () => {
@@ -836,7 +836,7 @@ export default function FullCalendarComponent() {
               await deleteEvents(user.uid, eventIds);
               await closeActions();
               setIsLoading(false);
-              toast.success("Event deleted successfully");
+              toast.success("Booking event deleted successfully");
             });
           },
           onCancel: () => {
@@ -886,7 +886,8 @@ export default function FullCalendarComponent() {
 
             openConfirmation({
               title: "Delete Confirmation",
-              description: "Are you sure you want to delete all series?",
+              description:
+                "Do you want to delete all the bookings in this series?",
               cancelLabel: "Cancel",
               actionLabel: "Delete",
               onAction: () => {
@@ -938,7 +939,8 @@ export default function FullCalendarComponent() {
 
             openConfirmation({
               title: "Delete Confirmation",
-              description: "Are you sure you want to delete all series?",
+              description:
+                "Do you want to delete all the bookings in this series?",
               cancelLabel: "Cancel",
               actionLabel: "Delete",
               onAction: () => {
