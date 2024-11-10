@@ -32,7 +32,7 @@ const ConfirmationDialog = () => {
           <AlertDialogDescription>{description}</AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel>{cancelLabel}</AlertDialogCancel>
+          {cancelLabel && <AlertDialogCancel>{cancelLabel}</AlertDialogCancel>}
           <AlertDialogAction onClick={onAction}>
             {actionLabel}
           </AlertDialogAction>

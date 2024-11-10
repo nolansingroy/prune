@@ -151,7 +151,15 @@ export default function AvailabilityView() {
                 // Check if start time is after end time
                 const endTime = new Date(currentEvent.end);
                 if (updatedTime > endTime) {
-                  alert("Start time cannot be after end time.");
+                  // alert("Start time cannot be after end time.");
+
+                  openConfirmation({
+                    title: "Alert",
+                    description: "Start time cannot be after end time.",
+                    actionLabel: "Ok",
+                    onAction: () => {},
+                    onCancel: () => {},
+                  });
                   return;
                 }
 
@@ -163,20 +171,41 @@ export default function AvailabilityView() {
 
                 // Check if start time is the same as end time
                 if (updatedTime.getTime() === endTime.getTime()) {
-                  alert("Start time cannot be the same as end time.");
+                  // alert("Start time cannot be the same as end time.");
+                  openConfirmation({
+                    title: "Alert",
+                    description: "Start time cannot be the same as end time.",
+                    actionLabel: "Ok",
+                    onAction: () => {},
+                    onCancel: () => {},
+                  });
                   return;
                 }
               } else if (field === "end") {
                 // Check if end time is before start time
                 const startTime = new Date(currentEvent.start);
                 if (updatedTime < startTime) {
-                  alert("End time cannot be before start time.");
+                  // alert("End time cannot be before start time.");
+                  openConfirmation({
+                    title: "Alert",
+                    description: "End time cannot be before start time.",
+                    actionLabel: "Ok",
+                    onAction: () => {},
+                    onCancel: () => {},
+                  });
                   return;
                 }
 
                 // Check if end time is the same as start time
                 if (updatedTime.getTime() === startTime.getTime()) {
-                  alert("End time cannot be the same as start time.");
+                  // alert("End time cannot be the same as start time.");
+                  openConfirmation({
+                    title: "Alert",
+                    description: "End time cannot be the same as start time.",
+                    actionLabel: "Ok",
+                    onAction: () => {},
+                    onCancel: () => {},
+                  });
                   return;
                 }
 
