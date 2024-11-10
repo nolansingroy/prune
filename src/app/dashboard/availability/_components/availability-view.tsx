@@ -17,7 +17,7 @@ import {
   DotsHorizontalIcon,
   PlusCircledIcon,
 } from "@radix-ui/react-icons";
-import AvailabilityDialog from "@/comp/AvailabilityFormDialog";
+import AvailabilityDialog from "@/components/modals/AvailabilityFormDialog";
 
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -37,7 +37,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
-import { DataTableSkeleton } from "@/components/tables/data-table-skeleton";
+import { DataTableSkeleton } from "@/components/loaders/data-table-skeleton";
 import { Trash2 } from "lucide-react";
 import useConfirmationStore from "@/lib/store/confirmationStore";
 import { toast } from "sonner";

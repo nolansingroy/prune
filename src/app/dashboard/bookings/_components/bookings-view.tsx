@@ -20,13 +20,13 @@ import {
 import moment from "moment";
 import React, { useTransition, useCallback, useEffect, useState } from "react";
 import { db } from "../../../../../firebase";
-import CreateBookingsFormDialog from "@/comp/CreateBookingsFormDialog";
+import CreateBookingsFormDialog from "@/components/modals/CreateBookingsFormDialog";
 import {
   CaretSortIcon,
   DotsHorizontalIcon,
   PlusCircledIcon,
 } from "@radix-ui/react-icons";
-import AvailabilityDialog from "@/comp/AvailabilityFormDialog";
+import AvailabilityDialog from "@/components/modals/AvailabilityFormDialog";
 
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -47,7 +47,7 @@ import {
 } from "@/components/ui/table";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { Trash2 } from "lucide-react";
-import { DataTableSkeleton } from "@/components/tables/data-table-skeleton";
+import { DataTableSkeleton } from "@/components/loaders/data-table-skeleton";
 import useConfirmationStore from "@/lib/store/confirmationStore";
 import { toast } from "sonner";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";

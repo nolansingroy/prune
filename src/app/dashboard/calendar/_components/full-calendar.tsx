@@ -12,7 +12,7 @@ import {
   EventClickArg,
   EventContentArg,
 } from "@fullcalendar/core";
-import EventFormDialog from "../../../../comp/EventFormModal";
+import EventFormDialog from "../../../../components/modals/EventFormModal";
 import { auth, db } from "../../../../../firebase";
 import useFetchEvents from "../../../../hooks/useFetchEvents";
 import { EventInput } from "../../../../interfaces/types";
@@ -20,7 +20,7 @@ import { EventResizeDoneArg } from "@fullcalendar/interaction";
 import { EventDropArg } from "@fullcalendar/core";
 import axios from "axios";
 
-import CreateBookingsFormDialog from "@/comp/CreateBookingsFormDialog";
+import CreateBookingsFormDialog from "@/components/modals/CreateBookingsFormDialog";
 import tippy from "tippy.js";
 import "tippy.js/dist/tippy.css";
 import { Auth } from "firebase/auth";
