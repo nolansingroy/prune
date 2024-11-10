@@ -41,16 +41,21 @@ const useConfirmationStore = create<ConfirmationState & ConfirmationActions>(
         onAction: data.onAction,
         onCancel: data.onCancel,
       })),
-    closeConfirmation: () =>
+    closeConfirmation: () => {
       set((state) => ({
+        ...state,
         open: false,
+      }));
+      set((state) => ({
+        ...state,
         title: null,
         description: null,
         cancelLabel: null,
         actionLabel: null,
         onAction: () => {},
         onCancel: () => {},
-      })),
+      }));
+    },
   })
 );
 

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useTransition } from "react";
 import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import resourceTimelinePlugin from "@fullcalendar/resource-timeline";
@@ -32,6 +32,7 @@ import {
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import useConfirmationStore from "@/lib/store/confirmationStore";
+import { toast } from "sonner";
 
 // an instance of the tooltip for each event { this is initialized to track the instances of the tooltip to prevent adding multiple instances of the tooltip to the same event }
 const tippyInstances = new Map<string, any>();
@@ -43,8 +44,9 @@ export default function FullCalendarComponent() {
   const [selectInfo, setSelectInfo] = useState<DateSelectArg | null>(null);
   const [editingEvent, setEditingEvent] = useState<EventInput | null>(null);
   const [editAll, setEditAll] = useState(false); // New state to control if we're editing all instances
-  const [loading, setLoading] = useState(false); // New loading state
+  const [isLoading, setIsLoading] = useState(false); // New loading state
   const [calendarKey, setCalendarKey] = useState(0); // a stet variable to check if the calendar is re-rendered
+  const [loading, startTransition] = useTransition();
 
   useEffect(() => {
     console.log("Calendar re-rendered with key:", calendarKey); // Log calendar re-render
@@ -441,7 +443,7 @@ export default function FullCalendarComponent() {
       ? new Date(date).toISOString().split("T")[0]
       : new Date(selectInfo.startStr).toISOString().split("T")[0];
 
-    setLoading(true); // Start loading
+    setIsLoading(true); // Start loading
 
     try {
       const user = auth.currentUser;
@@ -596,7 +598,7 @@ export default function FullCalendarComponent() {
     } catch (error) {
       console.error("Error saving event:", error);
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
 
     handleDialogClose();
@@ -705,7 +707,7 @@ export default function FullCalendarComponent() {
       weekday: "long",
     });
 
-    setLoading(true); // Start loading
+    setIsLoading(true); // Start loading
 
     try {
       if (
@@ -786,7 +788,7 @@ export default function FullCalendarComponent() {
       console.error("Error saving event:", error);
     } finally {
       await fetchEvents();
-      setLoading(false); // Stop loading
+      setIsLoading(false); // Stop loading
       setSelectInfo(null);
       setEditingEvent(null);
       setEditAll(false);
@@ -798,15 +800,24 @@ export default function FullCalendarComponent() {
     action: string
   ) => {
     const user = auth.currentUser;
+
+    const closeActions = async () => {
+      setIsDialogOpen(false);
+      setSelectInfo(null);
+      setEditingEvent(null);
+      setEditAll(false);
+      await fetchEvents();
+    };
+
     if (!user) {
       throw new Error("User not authenticated");
     }
 
-    setLoading(true); // Start loading
+    setIsLoading(true); // Start loading
 
     try {
       console.log("Deleting event from Firestore for event ID:", eventId);
-      // construnct the array
+      // construct the array
       let eventIds: string[] = [];
 
       // do the database operation based on the action
@@ -820,17 +831,17 @@ export default function FullCalendarComponent() {
           description: "Are you sure you want to delete this event?",
           cancelLabel: "Cancel",
           actionLabel: "Delete",
-          onAction: async () => {
-            await deleteEvents(user.uid, eventIds);
-            // close the dialog
-            setIsDialogOpen(false);
-            setLoading(false); // Stop loading
-            setSelectInfo(null);
-            setEditingEvent(null);
-            setEditAll(false);
-            await fetchEvents();
+          onAction: () => {
+            startTransition(async () => {
+              await deleteEvents(user.uid, eventIds);
+              await closeActions();
+              setIsLoading(false);
+              toast.success("Event deleted successfully");
+            });
           },
-          onCancel: () => {},
+          onCancel: () => {
+            setIsLoading(false); // Stop loading if canceled
+          },
         });
       } else {
         // make sure the array is empty
@@ -872,7 +883,24 @@ export default function FullCalendarComponent() {
             );
 
             // call the deleteEvents function with the eventIds array
-            await deleteEvents(user.uid, validEventIds);
+
+            openConfirmation({
+              title: "Delete Confirmation",
+              description: "Are you sure you want to delete all series?",
+              cancelLabel: "Cancel",
+              actionLabel: "Delete",
+              onAction: () => {
+                startTransition(async () => {
+                  await deleteEvents(user.uid, validEventIds);
+                  await closeActions();
+                  setIsLoading(false);
+                  toast.success("Series deleted successfully");
+                });
+              },
+              onCancel: () => {
+                setIsLoading(false); // Stop loading if canceled
+              },
+            });
           } else {
             console.log(
               "original event id not found (series) so this is the original event  : ",
@@ -907,25 +935,39 @@ export default function FullCalendarComponent() {
             );
 
             // call the deleteEvents function with the eventIds array
-            await deleteEvents(user.uid, validEventIds);
+
+            openConfirmation({
+              title: "Delete Confirmation",
+              description: "Are you sure you want to delete all series?",
+              cancelLabel: "Cancel",
+              actionLabel: "Delete",
+              onAction: () => {
+                startTransition(async () => {
+                  await deleteEvents(user.uid, validEventIds);
+                  await closeActions();
+                  setIsLoading(false);
+                  toast.success("Series deleted successfully");
+                });
+              },
+              onCancel: () => {
+                setIsLoading(false); // Stop loading if canceled
+              },
+            });
           }
         } else {
           // This case is not possible because the clicked event must have an id , but its here to debug if the clicked event does not have an id
           eventIds = [eventId];
           console.log("Event object was not found (series) for: ", eventIds);
+          setIsLoading(false); // Stop loading
           // await deleteEvents(user.uid, eventIds);
         }
       }
     } catch (error) {
       console.error("Error deleting event:", error);
+      setIsLoading(false); // Stop loading
+      toast.error("An error occurred while deleting the event");
     } finally {
-      // // close the dialog
-      // setIsDialogOpen(false);
-      // await fetchEvents();
-      // setLoading(false); // Stop loading
-      // setSelectInfo(null);
-      // setEditingEvent(null);
-      // setEditAll(false);
+      console.log("delete event success");
     }
   };
 
@@ -1168,6 +1210,7 @@ export default function FullCalendarComponent() {
             event={editingEvent}
             editAll={editAll}
             eventId={editingEvent?.id}
+            isLoading={loading}
           />
         ) : (
           <EventFormDialog

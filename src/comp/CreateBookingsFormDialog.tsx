@@ -83,6 +83,7 @@ interface CreateBookingsFormDialogProps {
   event?: EventInput | null;
   editAll?: boolean;
   eventId?: string;
+  isLoading?: boolean;
 }
 
 const presetLocations = [
@@ -102,6 +103,7 @@ const CreateBookingsFormDialog: React.FC<CreateBookingsFormDialogProps> = ({
   event,
   editAll,
   eventId,
+  isLoading,
 }) => {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -936,6 +938,7 @@ const CreateBookingsFormDialog: React.FC<CreateBookingsFormDialogProps> = ({
               <Button
                 variant="destructive"
                 onClick={() => handleDeleteSingle(event?.id || "")}
+                disabled={isLoading}
               >
                 Delete
               </Button>
@@ -944,6 +947,7 @@ const CreateBookingsFormDialog: React.FC<CreateBookingsFormDialogProps> = ({
                 <Button
                   variant="destructive"
                   onClick={() => handleDeleteSeries(event?.id || "")}
+                  disabled={isLoading}
                 >
                   Delete Series
                 </Button>
@@ -951,10 +955,18 @@ const CreateBookingsFormDialog: React.FC<CreateBookingsFormDialogProps> = ({
             </div>
           )}
           <div className="flex flex-col-reverse space-y-2 sm:flex-row sm:space-y-0 sm:space-x-2 gap-2 sm:gap-0">
-            <Button variant="outline" onClick={handleClose}>
+            <Button
+              variant="outline"
+              onClick={handleClose}
+              disabled={isLoading}
+            >
               Cancel
             </Button>
-            <Button variant="rebusPro" onClick={handleSave}>
+            <Button
+              variant="rebusPro"
+              onClick={handleSave}
+              disabled={isLoading}
+            >
               Save
             </Button>
           </div>
