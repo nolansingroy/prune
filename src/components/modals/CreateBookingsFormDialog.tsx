@@ -947,8 +947,13 @@ const CreateBookingsFormDialog: React.FC<CreateBookingsFormDialogProps> = ({
                   variant="destructive"
                   onClick={() => handleDeleteSingle(event?.id || "")}
                   disabled={isLoading}
+                  className={cn(
+                    event.recurrence || originalEventId
+                      ? "sm:text-sm sm:p-2"
+                      : ""
+                  )}
                 >
-                  Delete
+                  Delete booking
                 </Button>
               </div>
 
@@ -957,8 +962,13 @@ const CreateBookingsFormDialog: React.FC<CreateBookingsFormDialogProps> = ({
                   variant="destructive"
                   onClick={() => handleDeleteSeries(event?.id || "")}
                   disabled={isLoading}
+                  className={cn(
+                    event.recurrence || originalEventId
+                      ? "sm:text-sm sm:p-2"
+                      : ""
+                  )}
                 >
-                  Delete Series
+                  Delete series
                 </Button>
               )}
             </div>
