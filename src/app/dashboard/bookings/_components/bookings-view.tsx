@@ -18,7 +18,7 @@ import {
   writeBatch,
 } from "firebase/firestore";
 import moment from "moment";
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useTransition, useCallback, useEffect, useState } from "react";
 import { db } from "../../../../../firebase";
 import CreateBookingsFormDialog from "@/comp/CreateBookingsFormDialog";
 import {
@@ -48,6 +48,9 @@ import {
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { Trash2 } from "lucide-react";
 import { DataTableSkeleton } from "@/components/tables/data-table-skeleton";
+import useConfirmationStore from "@/lib/store/confirmationStore";
+import { toast } from "sonner";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
 
 const formatFee = (fee: number): string => {
   return new Intl.NumberFormat("en-US", {
@@ -59,6 +62,8 @@ const formatFee = (fee: number): string => {
 type SortableKeys = "start" | "end" | "title" | "startDate";
 
 export default function BookingsView() {
+  const { openConfirmation } = useConfirmationStore();
+  const [loading, startTransition] = useTransition();
   const { authUser } = useFirebaseAuth();
   const [events, setEvents] = useState<EventInput[]>([]);
   const [selectedRows, setSelectedRows] = useState<Set<string>>(new Set());
@@ -74,7 +79,7 @@ export default function BookingsView() {
   }>({ key: "startDate", direction: "asc" });
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingEvent, setEditingEvent] = useState<EventInput | null>(null);
-  const [loading, setLoading] = useState(false); // New loading state
+  const [isLoading, setIsLoading] = useState(false); // New loading state
   const [clients, setClients] = useState<{ docId: string; fullName: string }[]>(
     []
   );
@@ -86,7 +91,7 @@ export default function BookingsView() {
     } else {
       const eventList = await fetchBookingsListviewEvents(authUser.uid);
       setEvents(eventList);
-      setLoading(false);
+      setIsLoading(false);
     }
   }, [authUser]);
 
@@ -122,7 +127,7 @@ export default function BookingsView() {
 
   useEffect(() => {
     const fetchData = async () => {
-      setLoading(true); // Start loading
+      setIsLoading(true); // Start loading
 
       try {
         await Promise.all([
@@ -133,7 +138,7 @@ export default function BookingsView() {
       } catch (error) {
         console.error("Error fetching data:", error);
       } finally {
-        setLoading(false); // Stop loading
+        setIsLoading(false); // Stop loading
       }
     };
 
@@ -452,7 +457,7 @@ export default function BookingsView() {
       ? new Date(eventData.date).toISOString().split("T")[0]
       : new Date().toISOString().split("T")[0];
 
-    setLoading(true); // Start loading
+    setIsLoading(true); // Start loading
 
     try {
       const user = authUser;
@@ -577,7 +582,7 @@ export default function BookingsView() {
     } catch (error) {
       console.error("Error saving event:", error);
     } finally {
-      setLoading(false); // Stop loading
+      setIsLoading(false); // Stop loading
     }
   };
 
@@ -641,7 +646,7 @@ export default function BookingsView() {
   };
 
   const handleDeleteClick = async (eventId: string) => {
-    if (window.confirm("Are you sure you want to delete this event?")) {
+    const confirmDelet = async () => {
       try {
         const batch = writeBatch(db); // Create a Firestore batch operation
         const eventRef = doc(
@@ -664,7 +669,21 @@ export default function BookingsView() {
       } catch (error) {
         console.error("Error deleting event:", error);
       }
-    }
+    };
+
+    openConfirmation({
+      title: "Delete Confirmation",
+      description: "Are you sure you want to delete this booking event?",
+      cancelLabel: "Cancel",
+      actionLabel: "Delete",
+      onAction: () => {
+        startTransition(async () => {
+          await confirmDelet();
+          toast.success("Booking event deleted successfully");
+        });
+      },
+      onCancel: () => {},
+    });
   };
 
   const handleSelectAllChange = (checked: boolean) => {
@@ -690,9 +709,7 @@ export default function BookingsView() {
   };
 
   const deleteSelectedEvents = async () => {
-    if (
-      window.confirm("Are you sure you want to delete the selected events?")
-    ) {
+    const confirmDelete = async () => {
       const batch = writeBatch(db);
       selectedRows.forEach((id) => {
         const docRef = doc(db, "users", authUser?.uid ?? "", "events", id);
@@ -703,7 +720,22 @@ export default function BookingsView() {
         events.filter((event) => event.id && !selectedRows.has(event.id))
       );
       setSelectedRows(new Set());
-    }
+    };
+
+    openConfirmation({
+      title: "Delete Confirmation",
+      description:
+        "Are you sure you want to delete the selected booking events?",
+      cancelLabel: "Cancel",
+      actionLabel: "Delete",
+      onAction: () => {
+        startTransition(async () => {
+          await confirmDelete();
+          toast.success("Booking events deleted successfully");
+        });
+      },
+      onCancel: () => {},
+    });
   };
 
   const filteredEvents = events.filter(
@@ -763,7 +795,11 @@ export default function BookingsView() {
 
       <div className="space-y-4">
         <ScrollArea className="h-[calc(80vh-220px)] rounded-md border md:h-[calc(90dvh-240px)]">
-          {loading && <DataTableSkeleton />}
+          {isLoading && (
+            <div className="flex items-center justify-center min-h-screen">
+              <LoadingSpinner className="w-10 h-10" />
+            </div>
+          )}
           <Table className="relative">
             <TableHeader>
               <TableRow>
