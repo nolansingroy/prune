@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useTransition, useCallback, useEffect, useState } from "react";
 import { EventInput } from "@/interfaces/types";
 import { useFirebaseAuth } from "@/services/authService";
 import {
@@ -17,7 +17,7 @@ import {
   DotsHorizontalIcon,
   PlusCircledIcon,
 } from "@radix-ui/react-icons";
-import AvailabilityDialog from "@/comp/AvailabilityFormDialog";
+import AvailabilityDialog from "@/components/modals/AvailabilityFormDialog";
 
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -37,11 +37,16 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
-import { DataTableSkeleton } from "@/components/tables/data-table-skeleton";
+import { DataTableSkeleton } from "@/components/loaders/data-table-skeleton";
 import { Trash2 } from "lucide-react";
+import useConfirmationStore from "@/lib/store/confirmationStore";
+import { toast } from "sonner";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
 
 type SortableKeys = "start" | "end" | "title" | "startDate";
 export default function AvailabilityView() {
+  const { openConfirmation } = useConfirmationStore();
+  const [loading, startTransition] = useTransition();
   const { authUser } = useFirebaseAuth();
   const [events, setEvents] = useState<Omit<EventInput, "fee">[]>([]);
   const [selectedRows, setSelectedRows] = useState<Set<string>>(new Set());
@@ -60,16 +65,16 @@ export default function AvailabilityView() {
     EventInput,
     "fee"
   > | null>(null);
-  const [loading, setLoading] = useState(false); // New loading state
+  const [isLoading, setIsLoading] = useState(false); // New loading state
 
   const fetchEvents = useCallback(async () => {
     if (!authUser) {
       return;
     } else {
-      setLoading(true);
+      setIsLoading(true);
       const eventList = await fetchAvailabilitiesListviewEvents(authUser.uid);
       setEvents(eventList);
-      setLoading(false);
+      setIsLoading(false);
     }
   }, [authUser]);
 
@@ -146,7 +151,15 @@ export default function AvailabilityView() {
                 // Check if start time is after end time
                 const endTime = new Date(currentEvent.end);
                 if (updatedTime > endTime) {
-                  alert("Start time cannot be after end time.");
+                  // alert("Start time cannot be after end time.");
+
+                  openConfirmation({
+                    title: "Alert",
+                    description: "Start time cannot be after end time.",
+                    actionLabel: "Ok",
+                    onAction: () => {},
+                    onCancel: () => {},
+                  });
                   return;
                 }
 
@@ -158,20 +171,41 @@ export default function AvailabilityView() {
 
                 // Check if start time is the same as end time
                 if (updatedTime.getTime() === endTime.getTime()) {
-                  alert("Start time cannot be the same as end time.");
+                  // alert("Start time cannot be the same as end time.");
+                  openConfirmation({
+                    title: "Alert",
+                    description: "Start time cannot be the same as end time.",
+                    actionLabel: "Ok",
+                    onAction: () => {},
+                    onCancel: () => {},
+                  });
                   return;
                 }
               } else if (field === "end") {
                 // Check if end time is before start time
                 const startTime = new Date(currentEvent.start);
                 if (updatedTime < startTime) {
-                  alert("End time cannot be before start time.");
+                  // alert("End time cannot be before start time.");
+                  openConfirmation({
+                    title: "Alert",
+                    description: "End time cannot be before start time.",
+                    actionLabel: "Ok",
+                    onAction: () => {},
+                    onCancel: () => {},
+                  });
                   return;
                 }
 
                 // Check if end time is the same as start time
                 if (updatedTime.getTime() === startTime.getTime()) {
-                  alert("End time cannot be the same as start time.");
+                  // alert("End time cannot be the same as start time.");
+                  openConfirmation({
+                    title: "Alert",
+                    description: "End time cannot be the same as start time.",
+                    actionLabel: "Ok",
+                    onAction: () => {},
+                    onCancel: () => {},
+                  });
                   return;
                 }
 
@@ -325,7 +359,7 @@ export default function AvailabilityView() {
       ? new Date(eventData.date).toISOString().split("T")[0]
       : new Date().toISOString().split("T")[0];
 
-    setLoading(true);
+    setIsLoading(true);
 
     try {
       const user = authUser;
@@ -442,7 +476,7 @@ export default function AvailabilityView() {
     } catch (error) {
       console.error("Error saving event:", error);
     } finally {
-      setLoading(false); // Stop loading
+      setIsLoading(false); // Stop loading
     }
   };
 
@@ -501,7 +535,7 @@ export default function AvailabilityView() {
   };
 
   const handleDeleteClick = async (eventId: string) => {
-    if (window.confirm("Are you sure you want to delete this event?")) {
+    const confirmDelet = async () => {
       try {
         const batch = writeBatch(db); // Create a Firestore batch operation
         const eventRef = doc(
@@ -511,10 +545,7 @@ export default function AvailabilityView() {
           "events",
           eventId
         );
-
-        batch.delete(eventRef); // Add delete operation to batch
-
-        // Commit the batch to execute the delete
+        batch.delete(eventRef);
         await batch.commit();
 
         // Update the local state to remove the deleted event
@@ -524,7 +555,21 @@ export default function AvailabilityView() {
       } catch (error) {
         console.error("Error deleting event:", error);
       }
-    }
+    };
+
+    openConfirmation({
+      title: "Delete Availability",
+      description: "Are you sure you want to delete this availability?",
+      cancelLabel: "Cancel",
+      actionLabel: "Delete",
+      onAction: () => {
+        startTransition(async () => {
+          await confirmDelet();
+          toast.success("Availability deleted successfully");
+        });
+      },
+      onCancel: () => {},
+    });
   };
 
   const handleSelectAllChange = (checked: boolean) => {
@@ -550,9 +595,11 @@ export default function AvailabilityView() {
   };
 
   const deleteSelectedEvents = async () => {
-    if (
-      window.confirm("Are you sure you want to delete the selected events?")
-    ) {
+    // if (
+    //   window.confirm("Are you sure you want to delete the selected events?")
+    // ) {
+
+    const confirmDelete = async () => {
       const batch = writeBatch(db);
       selectedRows.forEach((id) => {
         const docRef = doc(db, "users", authUser?.uid ?? "", "events", id);
@@ -563,7 +610,22 @@ export default function AvailabilityView() {
         events.filter((event) => event.id && !selectedRows.has(event.id))
       );
       setSelectedRows(new Set());
-    }
+    };
+
+    openConfirmation({
+      title: "Delete Availabilities",
+      description:
+        "Are you sure you want to delete the selected availabilities?",
+      cancelLabel: "Cancel",
+      actionLabel: "Delete",
+      onAction: () => {
+        startTransition(async () => {
+          await confirmDelete();
+          toast.success("Availabilities deleted successfully");
+        });
+      },
+      onCancel: () => {},
+    });
   };
 
   const filteredEvents = events.filter(
@@ -619,7 +681,11 @@ export default function AvailabilityView() {
 
       <div className="space-y-4">
         <ScrollArea className="h-[calc(80vh-220px)] rounded-md border md:h-[calc(90dvh-240px)]">
-          {loading && <DataTableSkeleton />}
+          {isLoading && (
+            <div className="flex items-center justify-center min-h-screen">
+              <LoadingSpinner className="w-10 h-10" />
+            </div>
+          )}
           <Table className="relative">
             <TableHeader>
               <TableRow>

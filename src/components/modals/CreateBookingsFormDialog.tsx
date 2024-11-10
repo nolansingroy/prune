@@ -7,7 +7,7 @@ import React, {
   useEffect,
   useCallback,
 } from "react";
-import { auth } from "../../firebase";
+import { auth } from "../../../firebase";
 import {
   Dialog,
   DialogContent,
@@ -931,24 +931,29 @@ const CreateBookingsFormDialog: React.FC<CreateBookingsFormDialogProps> = ({
           {editAll && event && (
             <div
               className={cn(
-                "flex flex-col-reverse space-y-2 sm:flex-row sm:space-y-0 sm:space-x-2",
-                !event.recurrence || !originalEventId ? "gap-2" : ""
+                "flex flex-col space-y-2 sm:flex-row sm:space-y-0 sm:space-x-2",
+                event.recurrence || originalEventId ? "" : "mt-2 sm:mt-0"
               )}
             >
               <div
                 className={cn(
                   "flex flex-col",
                   event.recurrence || originalEventId
-                    ? "mt-0 sm:mt-0"
-                    : "mt-2 sm:mt-0"
+                    ? "mt-2 sm:mt-0"
+                    : "mt-0 sm:mt-0"
                 )}
               >
                 <Button
                   variant="destructive"
                   onClick={() => handleDeleteSingle(event?.id || "")}
                   disabled={isLoading}
+                  className={cn(
+                    event.recurrence || originalEventId
+                      ? "sm:text-sm sm:p-2"
+                      : ""
+                  )}
                 >
-                  Delete
+                  Delete booking
                 </Button>
               </div>
 
@@ -957,8 +962,13 @@ const CreateBookingsFormDialog: React.FC<CreateBookingsFormDialogProps> = ({
                   variant="destructive"
                   onClick={() => handleDeleteSeries(event?.id || "")}
                   disabled={isLoading}
+                  className={cn(
+                    event.recurrence || originalEventId
+                      ? "sm:text-sm sm:p-2"
+                      : ""
+                  )}
                 >
-                  Delete Series
+                  Delete series
                 </Button>
               )}
             </div>

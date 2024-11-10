@@ -438,7 +438,7 @@ const AvailabilityDialog: React.FC<AvailabilityDialogProps> = ({
           <Button variant="secondary" onClick={handleClose}>
             Cancel
           </Button>
-          <Button variant="secondary" onClick={handleSave}>
+          <Button variant="rebusPro" onClick={handleSave}>
             Save
           </Button>
         </DialogFooter>

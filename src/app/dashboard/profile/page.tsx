@@ -1,5 +1,4 @@
 import PageContainer from "@/components/layout/page-container";
-import ProfileComponent from "@/components/profile/profile";
 import { Heading } from "@/components/ui/heading";
 import { Separator } from "@/components/ui/separator";
 import { Metadata } from "next";

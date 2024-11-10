@@ -12,7 +12,7 @@ import {
   EventClickArg,
   EventContentArg,
 } from "@fullcalendar/core";
-import EventFormDialog from "../../../../comp/EventFormModal";
+import EventFormDialog from "../../../../components/modals/EventFormModal";
 import { auth, db } from "../../../../../firebase";
 import useFetchEvents from "../../../../hooks/useFetchEvents";
 import { EventInput } from "../../../../interfaces/types";
@@ -20,7 +20,7 @@ import { EventResizeDoneArg } from "@fullcalendar/interaction";
 import { EventDropArg } from "@fullcalendar/core";
 import axios from "axios";
 
-import CreateBookingsFormDialog from "@/comp/CreateBookingsFormDialog";
+import CreateBookingsFormDialog from "@/components/modals/CreateBookingsFormDialog";
 import tippy from "tippy.js";
 import "tippy.js/dist/tippy.css";
 import { Auth } from "firebase/auth";
@@ -828,7 +828,7 @@ export default function FullCalendarComponent() {
 
         openConfirmation({
           title: "Delete Confirmation",
-          description: "Are you sure you want to delete this event?",
+          description: "Do you want to delete this booking event?",
           cancelLabel: "Cancel",
           actionLabel: "Delete",
           onAction: () => {
@@ -836,7 +836,7 @@ export default function FullCalendarComponent() {
               await deleteEvents(user.uid, eventIds);
               await closeActions();
               setIsLoading(false);
-              toast.success("Event deleted successfully");
+              toast.success("Booking event deleted successfully");
             });
           },
           onCancel: () => {
@@ -886,7 +886,8 @@ export default function FullCalendarComponent() {
 
             openConfirmation({
               title: "Delete Confirmation",
-              description: "Are you sure you want to delete all series?",
+              description:
+                "Do you want to delete all the bookings in this series?",
               cancelLabel: "Cancel",
               actionLabel: "Delete",
               onAction: () => {
@@ -938,7 +939,8 @@ export default function FullCalendarComponent() {
 
             openConfirmation({
               title: "Delete Confirmation",
-              description: "Are you sure you want to delete all series?",
+              description:
+                "Do you want to delete all the bookings in this series?",
               cancelLabel: "Cancel",
               actionLabel: "Delete",
               onAction: () => {
