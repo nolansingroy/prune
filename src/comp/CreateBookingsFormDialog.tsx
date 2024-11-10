@@ -935,13 +935,22 @@ const CreateBookingsFormDialog: React.FC<CreateBookingsFormDialogProps> = ({
                 !event.recurrence || !originalEventId ? "gap-2" : ""
               )}
             >
-              <Button
-                variant="destructive"
-                onClick={() => handleDeleteSingle(event?.id || "")}
-                disabled={isLoading}
+              <div
+                className={cn(
+                  "flex flex-col",
+                  event.recurrence || originalEventId
+                    ? "mt-0 sm:mt-0"
+                    : "mt-2 sm:mt-0"
+                )}
               >
-                Delete
-              </Button>
+                <Button
+                  variant="destructive"
+                  onClick={() => handleDeleteSingle(event?.id || "")}
+                  disabled={isLoading}
+                >
+                  Delete
+                </Button>
+              </div>
 
               {(event.recurrence || originalEventId) && (
                 <Button
