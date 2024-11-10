@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useTransition } from "react";
 import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import resourceTimelinePlugin from "@fullcalendar/resource-timeline";
@@ -26,22 +26,27 @@ import "tippy.js/dist/tippy.css";
 import { Auth } from "firebase/auth";
 import {
   createFireStoreEvent,
+  deleteEvents,
   updateFireStoreEvent,
 } from "@/lib/converters/events";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import useConfirmationStore from "@/lib/store/confirmationStore";
+import { toast } from "sonner";
 
 // an instance of the tooltip for each event { this is initialized to track the instances of the tooltip to prevent adding multiple instances of the tooltip to the same event }
 const tippyInstances = new Map<string, any>();
 
 export default function FullCalendarComponent() {
+  const { openConfirmation } = useConfirmationStore();
   const calendarRef = useRef<FullCalendar>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectInfo, setSelectInfo] = useState<DateSelectArg | null>(null);
   const [editingEvent, setEditingEvent] = useState<EventInput | null>(null);
   const [editAll, setEditAll] = useState(false); // New state to control if we're editing all instances
-  const [loading, setLoading] = useState(false); // New loading state
+  const [isLoading, setIsLoading] = useState(false); // New loading state
   const [calendarKey, setCalendarKey] = useState(0); // a stet variable to check if the calendar is re-rendered
+  const [loading, startTransition] = useTransition();
 
   useEffect(() => {
     console.log("Calendar re-rendered with key:", calendarKey); // Log calendar re-render
@@ -438,7 +443,7 @@ export default function FullCalendarComponent() {
       ? new Date(date).toISOString().split("T")[0]
       : new Date(selectInfo.startStr).toISOString().split("T")[0];
 
-    setLoading(true); // Start loading
+    setIsLoading(true); // Start loading
 
     try {
       const user = auth.currentUser;
@@ -593,7 +598,7 @@ export default function FullCalendarComponent() {
     } catch (error) {
       console.error("Error saving event:", error);
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
 
     handleDialogClose();
@@ -702,7 +707,7 @@ export default function FullCalendarComponent() {
       weekday: "long",
     });
 
-    setLoading(true); // Start loading
+    setIsLoading(true); // Start loading
 
     try {
       if (
@@ -783,10 +788,186 @@ export default function FullCalendarComponent() {
       console.error("Error saving event:", error);
     } finally {
       await fetchEvents();
-      setLoading(false); // Stop loading
+      setIsLoading(false); // Stop loading
       setSelectInfo(null);
       setEditingEvent(null);
       setEditAll(false);
+    }
+  };
+
+  const handleDeleteEventFromDialog = async (
+    eventId: string,
+    action: string
+  ) => {
+    const user = auth.currentUser;
+
+    const closeActions = async () => {
+      setIsDialogOpen(false);
+      setSelectInfo(null);
+      setEditingEvent(null);
+      setEditAll(false);
+      await fetchEvents();
+    };
+
+    if (!user) {
+      throw new Error("User not authenticated");
+    }
+
+    setIsLoading(true); // Start loading
+
+    try {
+      console.log("Deleting event from Firestore for event ID:", eventId);
+      // construct the array
+      let eventIds: string[] = [];
+
+      // do the database operation based on the action
+      if (action === "single") {
+        // make sure the array is empty
+        eventIds = [eventId];
+        console.log("Events to delete (single):", eventIds);
+
+        openConfirmation({
+          title: "Delete Confirmation",
+          description: "Are you sure you want to delete this event?",
+          cancelLabel: "Cancel",
+          actionLabel: "Delete",
+          onAction: () => {
+            startTransition(async () => {
+              await deleteEvents(user.uid, eventIds);
+              await closeActions();
+              setIsLoading(false);
+              toast.success("Event deleted successfully");
+            });
+          },
+          onCancel: () => {
+            setIsLoading(false); // Stop loading if canceled
+          },
+        });
+      } else {
+        // make sure the array is empty
+        eventIds = [];
+
+        // extract the originalEventId from the event with the eventId
+        const event = events.find((event) => event.id === eventId);
+        if (event) {
+          let foundOriginalEventId = event.originalEventId;
+
+          if (foundOriginalEventId) {
+            console.log(
+              "original event id found (series) : ",
+              foundOriginalEventId
+            );
+            // get all the events with the same originalEventId
+
+            const eventsToDelete = events
+              .filter((event) => event.originalEventId === foundOriginalEventId)
+              .map((event) => event.id);
+
+            console.log(
+              "(series) finding all the events that will be deleted",
+              eventsToDelete
+            );
+
+            // update the eventIds array with all the found events with the same originalEventId and add the original event id to the eventIds array as well
+
+            eventIds = [...eventsToDelete, foundOriginalEventId] as string[];
+
+            console.log(
+              "Events to delete (series) when the event to delete is not the original event :",
+              eventIds
+            );
+
+            // Filter out undefined values
+            const validEventIds = eventIds.filter(
+              (id): id is string => id !== undefined
+            );
+
+            // call the deleteEvents function with the eventIds array
+
+            openConfirmation({
+              title: "Delete Confirmation",
+              description: "Are you sure you want to delete all series?",
+              cancelLabel: "Cancel",
+              actionLabel: "Delete",
+              onAction: () => {
+                startTransition(async () => {
+                  await deleteEvents(user.uid, validEventIds);
+                  await closeActions();
+                  setIsLoading(false);
+                  toast.success("Series deleted successfully");
+                });
+              },
+              onCancel: () => {
+                setIsLoading(false); // Stop loading if canceled
+              },
+            });
+          } else {
+            console.log(
+              "original event id not found (series) so this is the original event  : ",
+              foundOriginalEventId
+            );
+            // if the original event id is not found, then this event is the original event, in this case find all the events with the same originalEventId
+
+            // assign the eventId to the foundOriginalEventId
+            foundOriginalEventId = eventId;
+
+            const eventsToDelete = events
+              .filter((event) => event.originalEventId === foundOriginalEventId)
+              .map((event) => event.id);
+
+            console.log(
+              "(series) finding all the events that will be deleted",
+              eventsToDelete
+            );
+
+            // update the eventIds array with all the found events with the same originalEventId and add the eventId to the eventIds array as well
+
+            eventIds = [...eventsToDelete, foundOriginalEventId] as string[];
+
+            console.log(
+              "Events to delete (series) when the event to delete is the original event :",
+              eventIds
+            );
+
+            // Filter out undefined values
+            const validEventIds = eventIds.filter(
+              (id): id is string => id !== undefined
+            );
+
+            // call the deleteEvents function with the eventIds array
+
+            openConfirmation({
+              title: "Delete Confirmation",
+              description: "Are you sure you want to delete all series?",
+              cancelLabel: "Cancel",
+              actionLabel: "Delete",
+              onAction: () => {
+                startTransition(async () => {
+                  await deleteEvents(user.uid, validEventIds);
+                  await closeActions();
+                  setIsLoading(false);
+                  toast.success("Series deleted successfully");
+                });
+              },
+              onCancel: () => {
+                setIsLoading(false); // Stop loading if canceled
+              },
+            });
+          }
+        } else {
+          // This case is not possible because the clicked event must have an id , but its here to debug if the clicked event does not have an id
+          eventIds = [eventId];
+          console.log("Event object was not found (series) for: ", eventIds);
+          setIsLoading(false); // Stop loading
+          // await deleteEvents(user.uid, eventIds);
+        }
+      }
+    } catch (error) {
+      console.error("Error deleting event:", error);
+      setIsLoading(false); // Stop loading
+      toast.error("An error occurred while deleting the event");
+    } finally {
+      console.log("delete event success");
     }
   };
 
@@ -1024,10 +1205,12 @@ export default function FullCalendarComponent() {
             isOpen={isDialogOpen}
             onClose={handleDialogClose}
             onSave={handleUpdatEventFormDialog}
+            onDelete={handleDeleteEventFromDialog}
             showDateSelector={true}
             event={editingEvent}
             editAll={editAll}
             eventId={editingEvent?.id}
+            isLoading={loading}
           />
         ) : (
           <EventFormDialog

@@ -1,5 +1,6 @@
 //fixing imports
-const loginLogo = "/logo/loginLogo.png";
+const loginLogoDark = "/logo/loginLogoDark.png";
 const dashboardLogo = "/logo/dashboardLogo.png";
+const loginLogoLight = "/logo/loginLogoLight.png";
 
-export { loginLogo, dashboardLogo };
+export { loginLogoDark, dashboardLogo, loginLogoLight };

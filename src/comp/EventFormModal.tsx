@@ -563,12 +563,12 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
                   onChange={setPaid}
                   className={`${
                     paid ? "bg-blue-600" : "bg-gray-200"
-                  } relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none`}
+                  } relative inline-flex h-8 w-16 items-center rounded-full transition-colors focus:outline-none`}
                 >
                   <span
                     className={`${
-                      paid ? "translate-x-6" : "translate-x-1"
-                    } inline-block h-4 w-4 transform bg-white rounded-full transition-transform`}
+                      paid ? "translate-x-8" : "translate-x-1"
+                    } inline-block h-6 w-6 transform bg-white rounded-full transition-transform`}
                   />
                 </Switch>
               </div>

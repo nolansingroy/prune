@@ -13,6 +13,7 @@ import {
   doc,
   where,
   orderBy,
+  writeBatch,
 } from "firebase/firestore";
 import { EventInput } from "@/interfaces/types";
 import { fetchBookingType } from "./bookingTypes";
@@ -346,3 +347,19 @@ export const fetchAvailabilitiesListviewEvents = async (
   });
   return eventsList;
 };
+
+// Function to delete batch events
+export async function deleteEvents(userId: string, eventIds: string[]) {
+  const batch = writeBatch(db);
+  eventIds.forEach((eventId) => {
+    const eventDocRef = doc(
+      db,
+      "users",
+      userId,
+      "events",
+      eventId
+    ).withConverter(eventConverter);
+    batch.delete(eventDocRef);
+  });
+  await batch.commit();
+}

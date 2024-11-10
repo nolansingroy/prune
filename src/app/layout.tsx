@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/sonner";
 import NextTopLoader from "nextjs-toploader";
 import ThemeProvider from "@/components/layout/ThemeToggle/theme-provider";
 import Script from "next/script";
+import ConfirmationDialog from "../components/alerts/confirmation-dialog";
 
 export const metadata: Metadata = {
   title: "Rebus Pro",
@@ -35,6 +36,7 @@ export default function RootLayout({
         > */}
         <Toaster />
         {children}
+        <ConfirmationDialog />
         <Script
           id="microsoft-clarity"
           strategy="afterInteractive"
