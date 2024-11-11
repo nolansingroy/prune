@@ -103,7 +103,7 @@ export default function BookTypesView() {
   }
 
   return (
-    <div className="space-y-6 bg-gray-50 dark:bg-primary-foreground p-6 rounded-lg shadow-sm border">
+    <div className="space-y-6 bg-white dark:bg-primary-foreground p-6 rounded-lg shadow-sm border">
       <h2 className="text-2xl font-semibold">
         {editingBookingId ? "Edit Booking type" : "Create Booking type"}
       </h2>

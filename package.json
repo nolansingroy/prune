@@ -60,6 +60,7 @@
     "react-dom": "^18.3.1",
     "react-firebase-hooks": "^5.1.1",
     "react-hook-form": "^7.52.1",
+    "react-phone-number-input": "^3.4.9",
     "react-responsive": "^10.0.0",
     "react-time-picker": "^7.0.0",
     "rrule": "^2.8.1",

@@ -23,14 +23,17 @@ import {
   TableHeader,
 } from "@/components/ui/table";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import { PhoneInput } from "@/components/ui/phone-input";
 
 interface Client {
   docId: string;
   stripeId: string;
   status: string;
   active: boolean;
+  email: string;
+  phoneNumber: string;
   deprecated: boolean;
-  defaultRate?: number | null;
+  // defaultRate?: number | null;
   firstName: string;
   lastName: string;
   created_at?: Timestamp; // Firestore timestamp
@@ -42,9 +45,11 @@ const initialClientData: Omit<Client, "docId"> = {
   status: "active", // Default status to "active"
   active: true,
   deprecated: false,
-  defaultRate: null,
+  // defaultRate: null,
   firstName: "",
   lastName: "",
+  email: "",
+  phoneNumber: "",
 };
 
 export default function ClientsView() {
@@ -62,8 +67,9 @@ export default function ClientsView() {
     const { name, value } = e.target;
     setNewClientData((prev) => ({
       ...prev,
-      [name]:
-        name === "defaultRate" ? (value === "" ? null : Number(value)) : value,
+      [name]: value,
+      // [name]:
+      //   name === "defaultRate" ? (value === "" ? null : Number(value)) : value,
     }));
   };
 
@@ -150,46 +156,69 @@ export default function ClientsView() {
   }
 
   return (
-    <div className="space-y-6 bg-gray-50 dark:bg-primary-foreground p-6 rounded-lg shadow-sm border">
+    <div className="space-y-6 bg-white dark:bg-primary-foreground p-6 rounded-lg shadow-sm border">
       <h2 className="text-2xl font-semibold">
         {editingClientId ? "Edit Client" : "Add Client"}
       </h2>
 
       <div className="space-y-4">
         {/* Form to add/edit client */}
-        <Label>First Name</Label>
-        <Input
-          name="firstName"
-          value={newClientData.firstName}
-          onChange={handleInputChange}
-        />
+        <div className="space-y-2">
+          <Label>First Name</Label>
+          <Input
+            name="firstName"
+            value={newClientData.firstName}
+            onChange={handleInputChange}
+            className="w-full"
+          />
+        </div>
 
-        <Label>Last Name</Label>
-        <Input
-          name="lastName"
-          value={newClientData.lastName}
-          onChange={handleInputChange}
-        />
+        <div className="space-y-2">
+          <Label>Last Name</Label>
+          <Input
+            name="lastName"
+            value={newClientData.lastName}
+            onChange={handleInputChange}
+            className="w-full"
+          />
+        </div>
 
-        <Label>Status</Label>
-        <select
-          name="status"
-          value={newClientData.status}
-          onChange={handleInputChange}
-          className="border border-gray-300 rounded-lg p-2 w-full"
-        >
-          <option value="active">Active</option>
-          <option value="pending">Pending</option>
-          <option value="deactivated">Deactivated</option>
-        </select>
+        <div className="space-y-2">
+          <Label>Status</Label>
+          <select
+            name="status"
+            value={newClientData.status}
+            onChange={handleInputChange}
+            className="border border-gray-300 rounded-lg p-2 w-full"
+          >
+            <option value="active">Active</option>
+            <option value="pending">Pending</option>
+            <option value="deactivated">Deactivated</option>
+          </select>
+        </div>
 
-        <Label>Default Rate | USD</Label>
-        <Input
-          name="defaultRate"
-          type="number"
-          value={newClientData.defaultRate || ""}
-          onChange={handleInputChange}
-        />
+        <div className="space-y-2">
+          <Label>Email</Label>
+          <Input
+            name="email"
+            value={newClientData.email}
+            onChange={handleInputChange}
+            className="w-full"
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label>Phone</Label>
+          <PhoneInput
+            defaultCountry="US"
+            name="phoneNumber"
+            value={newClientData.phoneNumber}
+            onChange={(value) =>
+              setNewClientData((prev) => ({ ...prev, phoneNumber: value }))
+            }
+            className="w-full"
+          />
+        </div>
 
         {/* Buttons */}
         <div className="flex space-x-4">
@@ -221,8 +250,10 @@ export default function ClientsView() {
               <TableRow>
                 <TableCell>First Name</TableCell>
                 <TableCell>Last Name</TableCell>
+                <TableCell>Email</TableCell>
+                <TableCell>Phone</TableCell>
                 <TableCell>Status</TableCell>
-                <TableCell>Rate</TableCell>
+                {/* <TableCell>Rate</TableCell> */}
                 <TableCell>Actions</TableCell>
               </TableRow>
             </TableHeader>
@@ -231,8 +262,10 @@ export default function ClientsView() {
                 <TableRow key={client.docId}>
                   <TableCell>{client.firstName}</TableCell>
                   <TableCell>{client.lastName}</TableCell>
+                  <TableCell>{client.email}</TableCell>
+                  <TableCell>{client.phoneNumber}</TableCell>
                   <TableCell>{client.status}</TableCell>
-                  <TableCell>{client.defaultRate || "N/A"}</TableCell>
+                  {/* <TableCell>{client.defaultRate || "N/A"}</TableCell> */}
                   <TableCell>
                     <Button
                       className="mr-2"
