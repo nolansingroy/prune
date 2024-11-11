@@ -9,11 +9,16 @@ import { Period } from "./time-picker-utils";
 interface TimePickerDemoProps {
   date: Date | undefined;
   setDate: (date: Date | undefined) => void;
+  period: Period;
+  setPeriod: (period: Period) => void;
 }
 
-export function TimePicker12Demo({ date, setDate }: TimePickerDemoProps) {
-  const [period, setPeriod] = React.useState<Period>("PM");
-
+export function TimePicker12Demo({
+  date,
+  setDate,
+  period,
+  setPeriod,
+}: TimePickerDemoProps) {
   const minuteRef = React.useRef<HTMLInputElement>(null);
   const hourRef = React.useRef<HTMLInputElement>(null);
   const secondRef = React.useRef<HTMLInputElement>(null);

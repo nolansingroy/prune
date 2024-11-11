@@ -1,7 +1,7 @@
 "use client";
 
 import { useFirebaseAuth } from "@/services/authService";
-import React, { useEffect, useState } from "react";
+import React, { useTransition, useEffect, useState } from "react";
 import { doc, getDoc, updateDoc } from "firebase/firestore";
 import { db } from "../../../../../firebase";
 import { Label } from "@/components/ui/label";
@@ -9,6 +9,8 @@ import { timezones } from "@/constants/data";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { TimePicker12Demo } from "@/components/inputs/time-picker-12h-demo"; // Import the TimePicker12Demo component
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
+import { Period } from "@/components/inputs/time-picker-utils"; // Import the Period type
 
 function convertTo24HourFormat(
   hours: number,
@@ -27,7 +29,20 @@ function convertTo24HourFormat(
     .padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
 }
 
+function convertTo12HourFormat(time24h: string): {
+  hours: number;
+  minutes: number;
+  seconds: number;
+  period: string;
+} {
+  let [hours, minutes, seconds] = time24h.split(":").map(Number);
+  const period = hours >= 12 ? "PM" : "AM";
+  hours = hours % 12 || 12; // Convert 0 to 12 for 12 AM
+  return { hours, minutes, seconds, period };
+}
+
 export default function ProfileView() {
+  const [loading, startTransition] = useTransition();
   const { authUser } = useFirebaseAuth();
   const [userTimezone, setUserTimezone] = useState("");
   const [calendarStartTime, setCalendarStartTime] = useState("07:00:00");
@@ -36,10 +51,11 @@ export default function ProfileView() {
     lastName: "",
     email: "",
   });
-  const [loading, setLoading] = useState(true);
+  const [isLoading, setLoading] = useState(true);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(
     new Date()
   );
+  const [period, setPeriod] = useState<Period>("AM"); // State for period
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -56,14 +72,15 @@ export default function ProfileView() {
             email: userData.email || "",
           });
           if (userData.calendarStartTime) {
-            const [hours, minutes, seconds] = userData.calendarStartTime
-              .split(":")
-              .map(Number);
+            const { hours, minutes, seconds, period } = convertTo12HourFormat(
+              userData.calendarStartTime
+            );
             const date = new Date();
             date.setHours(hours);
             date.setMinutes(minutes);
             date.setSeconds(seconds);
             setSelectedDate(date);
+            setPeriod(period as Period); // Set the period state
           }
         }
         setLoading(false);
@@ -73,28 +90,36 @@ export default function ProfileView() {
     fetchUserData();
   }, [authUser]);
 
-  const handleSaveProfile = async () => {
-    if (authUser && selectedDate) {
-      const hours = selectedDate.getHours();
-      const minutes = selectedDate.getMinutes();
-      const seconds = selectedDate.getSeconds();
-      const period = hours >= 12 ? "PM" : "AM";
-      const time24h = convertTo24HourFormat(
-        hours % 12 || 12,
-        minutes,
-        seconds,
-        period
-      );
-      const userDocRef = doc(db, "users", authUser.uid);
-      await updateDoc(userDocRef, {
-        timezone: userTimezone,
-        calendarStartTime: time24h,
-      });
-      setCalendarStartTime(time24h);
+  const handleSaveProfile = () => {
+    try {
+      if (authUser && selectedDate) {
+        const hours = selectedDate.getHours();
+        const minutes = selectedDate.getMinutes();
+        const seconds = selectedDate.getSeconds();
+        const period = hours >= 12 ? "PM" : "AM";
+        const time24h = convertTo24HourFormat(
+          hours % 12 || 12,
+          minutes,
+          seconds,
+          period
+        );
+        const userDocRef = doc(db, "users", authUser.uid);
+
+        startTransition(async () => {
+          await updateDoc(userDocRef, {
+            timezone: userTimezone,
+            calendarStartTime: time24h,
+          });
+          setCalendarStartTime(time24h);
+          toast.success("Profile updated successfully");
+        });
+      }
+    } catch (error) {
+      toast.error("An error occurred while updating profile");
     }
   };
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <LoadingSpinner className="w-10 h-10" />
@@ -103,7 +128,7 @@ export default function ProfileView() {
   }
 
   return (
-    <div className="space-y-6 bg-white dark:bg-primary-foreground p-6 rounded-lg shadow-sm border">
+    <div className="max-w-4xl p-6 space-y-6 bg-white dark:bg-primary-foreground rounded-lg shadow-sm border">
       <h2 className="text-2xl font-semibold">Profile Information</h2>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <p>
@@ -142,11 +167,17 @@ export default function ProfileView() {
         <Label className="block text-lg font-medium text-gray-700">
           Calendar Display Start Time
         </Label>
-        <TimePicker12Demo date={selectedDate} setDate={setSelectedDate} />
+        <TimePicker12Demo
+          date={selectedDate}
+          setDate={setSelectedDate}
+          period={period}
+          setPeriod={setPeriod}
+        />
         <Button
           variant={"rebusPro"}
           onClick={handleSaveProfile}
-          className="mt-4"
+          className="mt-8 w-full sm:w-auto"
+          disabled={loading}
         >
           Save profile
         </Button>
