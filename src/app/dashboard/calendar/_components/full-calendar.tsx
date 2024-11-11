@@ -13,7 +13,7 @@ import {
   EventContentArg,
 } from "@fullcalendar/core";
 import EventFormDialog from "../../../../components/modals/EventFormModal";
-import { auth, db } from "../../../../../firebase";
+import { auth, db, doc } from "../../../../../firebase";
 import useFetchEvents from "../../../../hooks/useFetchEvents";
 import { EventInput } from "../../../../interfaces/types";
 import { EventResizeDoneArg } from "@fullcalendar/interaction";
@@ -33,6 +33,7 @@ import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import useConfirmationStore from "@/lib/store/confirmationStore";
 import { toast } from "sonner";
+import { getDoc } from "firebase/firestore";
 
 // an instance of the tooltip for each event { this is initialized to track the instances of the tooltip to prevent adding multiple instances of the tooltip to the same event }
 const tippyInstances = new Map<string, any>();
@@ -47,6 +48,7 @@ export default function FullCalendarComponent() {
   const [isLoading, setIsLoading] = useState(false); // New loading state
   const [calendarKey, setCalendarKey] = useState(0); // a stet variable to check if the calendar is re-rendered
   const [loading, startTransition] = useTransition();
+  const [userStartTime, setUserStartTime] = useState("07:00:00"); // State variable for user's preferred start time
 
   useEffect(() => {
     console.log("Calendar re-rendered with key:", calendarKey); // Log calendar re-render
@@ -74,6 +76,22 @@ export default function FullCalendarComponent() {
       //   return newKey;
       // }); // Trigger the fetch events after the page has fully loaded
     };
+  }, []);
+
+  useEffect(() => {
+    const fetchUserStartTime = async () => {
+      const user = auth.currentUser;
+      if (user) {
+        const userDocRef = doc(db, "users", user.uid);
+        const userDoc = await getDoc(userDocRef);
+        if (userDoc.exists()) {
+          const userData = userDoc.data();
+          setUserStartTime(userData.calendarStartTime || "07:00:00");
+        }
+      }
+    };
+
+    fetchUserStartTime();
   }, []);
 
   const renderEventContent = (eventInfo: EventContentArg) => {
@@ -1007,7 +1025,7 @@ export default function FullCalendarComponent() {
             height="auto"
             contentHeight="auto"
             slotDuration="00:15:00"
-            slotMinTime="07:00:00"
+            slotMinTime={userStartTime}
             slotLabelFormat={{
               hour: "numeric",
               minute: "2-digit",
