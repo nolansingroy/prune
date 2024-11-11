@@ -65,23 +65,21 @@ export default function ProfileView() {
         if (userDoc.exists()) {
           const userData = userDoc.data();
           setUserTimezone(userData.timezone || "");
-          setCalendarStartTime(userData.calendarStartTime || "07:00:00");
+          const startTime = userData.calendarStartTime || "07:00:00";
+          setCalendarStartTime(startTime);
           setProfileData({
             firstName: userData.firstName || "",
             lastName: userData.lastName || "",
             email: userData.email || "",
           });
-          if (userData.calendarStartTime) {
-            const { hours, minutes, seconds, period } = convertTo12HourFormat(
-              userData.calendarStartTime
-            );
-            const date = new Date();
-            date.setHours(hours);
-            date.setMinutes(minutes);
-            date.setSeconds(seconds);
-            setSelectedDate(date);
-            setPeriod(period as Period); // Set the period state
-          }
+          const { hours, minutes, seconds, period } =
+            convertTo12HourFormat(startTime);
+          const date = new Date();
+          date.setHours(hours);
+          date.setMinutes(minutes);
+          date.setSeconds(seconds);
+          setSelectedDate(date);
+          setPeriod(period as Period); // Set the period state
         }
         setLoading(false);
       }
