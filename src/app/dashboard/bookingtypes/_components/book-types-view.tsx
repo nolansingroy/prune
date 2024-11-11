@@ -173,7 +173,11 @@ export default function BookTypesView() {
 
         {/* Buttons */}
         <div className="flex space-x-4">
-          <Button className="mt-4" onClick={handleSaveBookingType}>
+          <Button
+            variant={"rebusPro"}
+            className="mt-4"
+            onClick={handleSaveBookingType}
+          >
             {editingBookingId ? "Update Booking Type" : "Add Booking Type"}
           </Button>
 
