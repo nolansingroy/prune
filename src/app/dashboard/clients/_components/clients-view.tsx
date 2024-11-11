@@ -10,6 +10,9 @@ import {
   setDoc,
   Timestamp,
 } from "firebase/firestore";
+import parsePhoneNumberFromString, {
+  parsePhoneNumberWithError,
+} from "libphonenumber-js";
 import React, { ChangeEvent, useEffect, useState } from "react";
 import { db } from "../../../../../firebase";
 import { Input } from "@/components/ui/input"; // Input component
@@ -68,8 +71,6 @@ export default function ClientsView() {
     setNewClientData((prev) => ({
       ...prev,
       [name]: value,
-      // [name]:
-      //   name === "defaultRate" ? (value === "" ? null : Number(value)) : value,
     }));
   };
 
@@ -112,8 +113,16 @@ export default function ClientsView() {
         ? doc(clientsCollectionRef, editingClientId)
         : doc(clientsCollectionRef);
 
+      const formattedPhoneNumber = newClientData.phoneNumber
+        ? parsePhoneNumberWithError(
+            newClientData.phoneNumber,
+            "US"
+          ).formatNational()
+        : "";
+
       const newClient = {
         ...newClientData,
+        phoneNumber: formattedPhoneNumber,
         status: newClientData.status || "active", // Default to "active" if status is not selected
         created_at: editingClientId
           ? newClientData.created_at
@@ -132,8 +141,19 @@ export default function ClientsView() {
 
   // Set client for editing
   const handleEditClient = (client: Client) => {
+    const parsedPhoneNumber = parsePhoneNumberFromString(
+      client.phoneNumber,
+      "US"
+    );
+    const formattedPhoneNumber = parsedPhoneNumber
+      ? parsedPhoneNumber.number
+      : client.phoneNumber;
+
     setEditingClientId(client.docId);
-    setNewClientData(client);
+    setNewClientData({
+      ...client,
+      phoneNumber: formattedPhoneNumber,
+    });
   };
 
   // Delete a client from the 'clients' subcollection
@@ -222,7 +242,11 @@ export default function ClientsView() {
 
         {/* Buttons */}
         <div className="flex space-x-4">
-          <Button className="mt-4" onClick={handleSaveClient}>
+          <Button
+            variant={"rebusPro"}
+            className="mt-4"
+            onClick={handleSaveClient}
+          >
             {editingClientId ? "Update Client" : "Add Client"}
           </Button>
 
