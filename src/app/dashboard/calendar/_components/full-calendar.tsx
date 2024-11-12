@@ -34,9 +34,12 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import useConfirmationStore from "@/lib/store/confirmationStore";
 import { toast } from "sonner";
 import { getDoc } from "firebase/firestore";
-
-// an instance of the tooltip for each event { this is initialized to track the instances of the tooltip to prevent adding multiple instances of the tooltip to the same event }
-const tippyInstances = new Map<string, any>();
+import {
+  checkOverlap,
+  handleEventDidMount,
+  removeUndefinedFields,
+  renderEventContent,
+} from "@/lib/functions/calendar";
 
 export default function FullCalendarComponent() {
   const { openConfirmation } = useConfirmationStore();
@@ -48,7 +51,8 @@ export default function FullCalendarComponent() {
   const [isLoading, setIsLoading] = useState(false); // New loading state
   const [calendarKey, setCalendarKey] = useState(0); // a stet variable to check if the calendar is re-rendered
   const [loading, startTransition] = useTransition();
-  const [userStartTime, setUserStartTime] = useState("07:00:00"); // State variable for user's preferred start time
+  const [events, setEvents] = useState<EventInput[]>([]);
+  const [userStartTime, setUserStartTime] = useState("07:00:00");
 
   useEffect(() => {
     console.log("Calendar re-rendered with key:", calendarKey); // Log calendar re-render
@@ -57,18 +61,21 @@ export default function FullCalendarComponent() {
   const {
     events: fetchedEvents,
     loading: eventsLoading,
+    userStartTime: fetchedUserStartTime,
     fetchEvents,
+    fetchUserStartTime,
   } = useFetchEvents();
-  const [events, setEvents] = useState<EventInput[]>([]);
 
   useEffect(() => {
     setEvents(fetchedEvents);
-  }, [fetchedEvents]);
+    setUserStartTime(fetchedUserStartTime);
+  }, [fetchedEvents, fetchedUserStartTime]);
 
   // Fetch events on page load - fix calendar blank screen no fetch on refresh
   useEffect(() => {
     window.onload = () => {
       fetchEvents();
+      fetchUserStartTime();
 
       // setCalendarKey((prevKey) => {
       //   const newKey = prevKey + 1;
@@ -93,112 +100,6 @@ export default function FullCalendarComponent() {
 
     fetchUserStartTime();
   }, []);
-
-  const renderEventContent = (eventInfo: EventContentArg) => {
-    const {
-      isBackgroundEvent,
-      clientName,
-      title,
-      description,
-      paid,
-      type,
-      location,
-    } = eventInfo.event.extendedProps;
-
-    // console.log("for month view props", eventInfo);
-
-    const backgroundColor = eventInfo.backgroundColor || "#000000";
-
-    const monthViw = eventInfo.view.type.includes("dayGridMonth");
-
-    const classNames = eventInfo.event.classNames || [];
-    const view = eventInfo.view.type;
-
-    // console.log("==================================", eventInfo);
-
-    if (isBackgroundEvent) {
-    }
-
-    if (classNames.includes("bg-event-mirror")) {
-      return (
-        <div className="bg-blue-200 opacity-50 text-black p-1 rounded text-center border">
-          {eventInfo.event.title}
-        </div>
-      );
-    }
-    if (monthViw) {
-      const defaultStartTimeLocal = new Date(eventInfo.event.startStr);
-      let formattedStartTime = defaultStartTimeLocal.toLocaleTimeString(
-        "en-US",
-        {
-          hour: "2-digit",
-          minute: "2-digit",
-          hour12: true,
-        }
-      );
-
-      // Remove leading zero from the hour part
-      formattedStartTime = formattedStartTime.replace(/^0(\d)/, "$1");
-      return (
-        <div className="flex gap-1 items-center w-full overflow-hidden">
-          <div
-            className="w-2 h-2 rounded-full flex-shrink-0"
-            style={{ backgroundColor: backgroundColor }}
-          ></div>
-          <div className="flex items-center truncate w-full font-semibold">
-            <span className="text-xs">{formattedStartTime}</span>
-            <span className="text-xs truncate ml-2">{clientName}</span>
-          </div>
-        </div>
-      );
-    }
-
-    return (
-      <>
-        {!isBackgroundEvent && (
-          <div>
-            <span
-              className="underline"
-              ref={(el) => {
-                if (el) {
-                  // Destroy existing tippy instance if it exists
-                  const existingInstance = tippyInstances.get(
-                    eventInfo.event.id
-                  );
-                  if (existingInstance) {
-                    existingInstance.destroy();
-                  }
-
-                  // Create new tippy instance
-                  const tippyInstance = tippy(el, {
-                    trigger: "mouseenter", // Change trigger to 'mouseenter' for hover
-                    touch: "hold",
-                    allowHTML: true,
-                    content: `
-                      <div class="tippy-content">
-                        <p class="${paid ? "paid-status" : "unpaid-status"}">
-                          <strong>${paid ? "Paid" : "Unpaid"}</strong>
-                        </p>
-                        <p><strong>Notes:</strong> ${description}</p>
-                      </div>
-                    `,
-                    theme: "custom", // Apply custom theme
-                  });
-
-                  // Store the new tippy instance in the Map
-                  tippyInstances.set(eventInfo.event.id, tippyInstance);
-                }
-              }}
-            >
-              <span className="flex items-center truncate w-full font-bold">
-                {clientName || "No name"}
-              </span>
-            </span>
-          </div>
-        )}
-      </>
-    );
-  };
 
   // add event to firestore
   const handleEventResize = async (resizeInfo: EventResizeDoneArg) => {
@@ -307,12 +208,6 @@ export default function FullCalendarComponent() {
     }
   };
 
-  // const handleSelect = (selectInfo: DateSelectArg) => {
-  //   setSelectInfo(selectInfo);
-  //   setEditingEvent(null); // Clear editing event
-  //   setIsDialogOpen(true);
-  // };
-
   const handleSelect = (selectInfo: DateSelectArg) => {
     setSelectInfo(selectInfo);
 
@@ -400,19 +295,6 @@ export default function FullCalendarComponent() {
     setSelectInfo(null);
     setEditingEvent(null);
     setEditAll(false);
-  };
-
-  const removeUndefinedFields = (obj: any) => {
-    return Object.entries(obj).reduce((acc, [key, value]) => {
-      if (value !== undefined) {
-        acc[key] = value;
-      }
-      return acc;
-    }, {} as any);
-  };
-
-  const convertToUTC = (date: Date): Date => {
-    return new Date(date.getTime() - date.getTimezoneOffset() * 60000);
   };
 
   const handleSave = async ({
@@ -620,55 +502,6 @@ export default function FullCalendarComponent() {
     }
 
     handleDialogClose();
-  };
-
-  // // test build
-  const checkOverlap = (
-    event: {
-      extendedProps: { isBackgroundEvent: any };
-      start: { getTime: () => any };
-      end: { getTime: () => any };
-      id: any;
-    },
-    allEvents: any[]
-  ) => {
-    const isBackgroundEvent = event.extendedProps.isBackgroundEvent;
-    if (isBackgroundEvent) return false;
-
-    const eventStart = event.start.getTime();
-    // const eventEnd = event.end.getTime();
-    const eventEnd = event.end ? event.end.getTime() : eventStart;
-
-    return allEvents.some((e) => {
-      if (e.id !== event.id && e.extendedProps.isBackgroundEvent) {
-        const bgStart = e.start.getTime();
-        // const bgEnd = e.end.getTime();
-        const bgEnd = e.end ? e.end.getTime() : bgStart;
-
-        return (
-          (eventStart >= bgStart && eventStart < bgEnd) ||
-          (eventEnd > bgStart && eventEnd <= bgEnd) ||
-          (eventStart <= bgStart && eventEnd >= bgEnd)
-        );
-      }
-      return false;
-    });
-  };
-
-  const handleEventDidMount = (info: {
-    view: { calendar: any };
-    event: any;
-    el: { classList: { add: (arg0: string) => void } };
-  }) => {
-    const calendarApi = info.view.calendar;
-    const allEvents = calendarApi.getEvents();
-
-    // Check for overlap with background events
-    if (checkOverlap(info.event, allEvents)) {
-      info.el.classList.add("overlap-event");
-    }
-
-    // add a popOver to the event here
   };
 
   const handleUpdatEventFormDialog = async (eventData: {
