@@ -39,7 +39,7 @@ import {
   handleEventDidMount,
   removeUndefinedFields,
   renderEventContent,
-} from "@/lib/functions/calendar";
+} from "@/lib/helpers/calendar";
 
 export default function FullCalendarComponent() {
   const { openConfirmation } = useConfirmationStore();
