@@ -15,7 +15,6 @@ import { Period } from "@/components/inputs/time-picker-utils"; // Import the Pe
 function convertTo24HourFormat(
   hours: number,
   minutes: number,
-  seconds: number,
   period: string
 ): string {
   if (period === "PM" && hours < 12) {
@@ -26,19 +25,18 @@ function convertTo24HourFormat(
   }
   return `${hours.toString().padStart(2, "0")}:${minutes
     .toString()
-    .padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
+    .padStart(2, "0")}:00`;
 }
 
 function convertTo12HourFormat(time24h: string): {
   hours: number;
   minutes: number;
-  seconds: number;
   period: string;
 } {
-  let [hours, minutes, seconds] = time24h.split(":").map(Number);
+  let [hours, minutes] = time24h.split(":").map(Number);
   const period = hours >= 12 ? "PM" : "AM";
   hours = hours % 12 || 12; // Convert 0 to 12 for 12 AM
-  return { hours, minutes, seconds, period };
+  return { hours, minutes, period };
 }
 
 export default function ProfileView() {
@@ -72,12 +70,10 @@ export default function ProfileView() {
             lastName: userData.lastName || "",
             email: userData.email || "",
           });
-          const { hours, minutes, seconds, period } =
-            convertTo12HourFormat(startTime);
+          const { hours, minutes, period } = convertTo12HourFormat(startTime);
           const date = new Date();
           date.setHours(hours);
           date.setMinutes(minutes);
-          date.setSeconds(seconds);
           setSelectedDate(date);
           setPeriod(period as Period); // Set the period state
         }
@@ -93,12 +89,10 @@ export default function ProfileView() {
       if (authUser && selectedDate) {
         const hours = selectedDate.getHours();
         const minutes = selectedDate.getMinutes();
-        const seconds = selectedDate.getSeconds();
         const period = hours >= 12 ? "PM" : "AM";
         const time24h = convertTo24HourFormat(
           hours % 12 || 12,
           minutes,
-          seconds,
           period
         );
         const userDocRef = doc(db, "users", authUser.uid);
