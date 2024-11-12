@@ -265,7 +265,7 @@ export default function FullCalendarComponent() {
         clientId: extendedProps.clientId || "",
         clientName: extendedProps.clientName || "",
         description: extendedProps.description || "",
-        location: extendedProps.location || "",
+        // location: extendedProps.location || "",
         isBackgroundEvent: extendedProps.isBackgroundEvent || false,
         fee: extendedProps.fee || 0,
         paid: extendedProps.paid || false,
@@ -299,7 +299,7 @@ export default function FullCalendarComponent() {
     clientId,
     clientName,
     description,
-    location,
+    // location,
     isBackgroundEvent,
     date,
     startTime,
@@ -313,7 +313,7 @@ export default function FullCalendarComponent() {
     description: string;
     clientId: string;
     clientName: string;
-    location: string;
+    // location: string;
     isBackgroundEvent: boolean;
     startTime: string;
     endTime: string;
@@ -368,7 +368,7 @@ export default function FullCalendarComponent() {
             const eventInput = {
               title: title || "",
               description: description || "",
-              location: location || "",
+              // location: location || "",
               startDate,
               startTime,
               endTime,
@@ -411,7 +411,7 @@ export default function FullCalendarComponent() {
               clientName: clientName || "",
               description: description || "",
               fee: fee || 0,
-              location: location || "",
+              // location: location || "",
               startDate,
               startTime,
               endTime,
@@ -481,7 +481,7 @@ export default function FullCalendarComponent() {
               fee,
               clientId,
               clientName,
-              location,
+              // location,
               start: startDateTime,
               end: endDateTime,
               description,
@@ -518,7 +518,7 @@ export default function FullCalendarComponent() {
               fee,
               clientId,
               clientName,
-              location,
+              // location,
               start: startDateTime,
               end: endDateTime,
               description,
@@ -566,7 +566,7 @@ export default function FullCalendarComponent() {
     clientId: string;
     clientName: string;
     description: string;
-    location: string;
+    // location: string;
     isBackgroundEvent: boolean;
     date?: string;
     startTime: string;
@@ -905,7 +905,7 @@ export default function FullCalendarComponent() {
                     title: event.title,
                     type: event.type,
                     typeId: event.typeId,
-                    location: event.location,
+                    // location: event.location,
                     // rrule: {
                     //   freq: "weekly",
                     //   interval: 1,
@@ -938,7 +938,7 @@ export default function FullCalendarComponent() {
                     title: event.title,
                     type: event.type,
                     typeId: event.typeId,
-                    location: event.location,
+                    // location: event.location,
                     // rrule: {
                     //   freq: "weekly",
                     //   interval: 1,
@@ -972,7 +972,7 @@ export default function FullCalendarComponent() {
                     title: event.title,
                     type: event.type,
                     typeId: event.typeId,
-                    location: event.location,
+                    // location: event.location,
                     display: "inverse-background",
                     groupId: `1234`,
                     uniqueId: `${event.id}-${index}`,
@@ -986,7 +986,7 @@ export default function FullCalendarComponent() {
                     title: event.title,
                     type: event.type,
                     typeId: event.typeId,
-                    location: event.location,
+                    // location: event.location,
                     display: "auto",
                     groupId: event.id,
                     uniqueId: `${event.id}-${index}`,
