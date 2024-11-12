@@ -52,6 +52,7 @@ interface AvailabilityDialogProps {
     };
   }) => void;
   event?: Omit<EventInput, "fee"> | null;
+  isLoading?: boolean;
 }
 
 const presetLocations = [
@@ -67,6 +68,7 @@ const AvailabilityDialog: React.FC<AvailabilityDialogProps> = ({
   onClose,
   onSave,
   event,
+  isLoading,
 }) => {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -435,10 +437,14 @@ const AvailabilityDialog: React.FC<AvailabilityDialogProps> = ({
         </div>
 
         <DialogFooter className="flex flex-col space-y-2 sm:flex-row sm:space-y-0 sm:space-x-2">
-          <Button variant="secondary" onClick={handleClose}>
+          <Button
+            variant="secondary"
+            onClick={handleClose}
+            disabled={isLoading}
+          >
             Cancel
           </Button>
-          <Button variant="rebusPro" onClick={handleSave}>
+          <Button variant="rebusPro" onClick={handleSave} disabled={isLoading}>
             Save
           </Button>
         </DialogFooter>
