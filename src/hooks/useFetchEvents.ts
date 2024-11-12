@@ -14,17 +14,17 @@ import { fetchFirestoreEvents } from "@/lib/converters/events";
 const useFetchEvents = () => {
   const [events, setEvents] = useState<EventInput[]>([]);
   const [userStartTime, setUserStartTime] = useState("07:00:00");
-  const [loading, setLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
 
   const fetchEvents = useCallback(async () => {
     const user = auth.currentUser;
 
-    setLoading(true);
+    setIsLoading(true);
     const eventsData = await fetchFirestoreEvents(user);
 
     setEvents(eventsData);
     console.log("Events set to state:", eventsData);
-    setLoading(false);
+    setIsLoading(false);
   }, []);
 
   const fetchUserStartTime = useCallback(async () => {
@@ -46,7 +46,7 @@ const useFetchEvents = () => {
         fetchUserStartTime();
       } else {
         console.warn("No authenticated user found.");
-        setLoading(false);
+        setIsLoading(false);
       }
     });
 
@@ -54,7 +54,14 @@ const useFetchEvents = () => {
     return () => unsubscribe();
   }, [fetchEvents, fetchUserStartTime]);
 
-  return { events, userStartTime, loading, fetchEvents, fetchUserStartTime };
+  return {
+    events,
+    userStartTime,
+    isLoading,
+    fetchEvents,
+    fetchUserStartTime,
+    setIsLoading,
+  };
 };
 
 export default useFetchEvents;

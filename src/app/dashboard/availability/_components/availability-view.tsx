@@ -338,7 +338,7 @@ export default function AvailabilityView() {
     return newDate;
   };
 
-  const handleSaveEvent = async (eventData: {
+  const handleSaveEvent = (eventData: {
     title: string;
     description: string;
     location: string;
@@ -361,123 +361,144 @@ export default function AvailabilityView() {
 
     setIsLoading(true);
 
-    try {
-      const user = authUser;
-      if (!user) {
-        throw new Error("User not authenticated");
-      }
-
-      // Get the user's time zone
-      const userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-      // Check if the event is recurring or a single event
-      if (
-        eventData.recurrence &&
-        eventData.recurrence.daysOfWeek &&
-        eventData.recurrence.daysOfWeek.length > 0
-      ) {
-        // Calculate the time zone offsets for start time and end time
-        const startDateTime = new Date(`${startDate}T${eventData.startTime}`);
-        const endDateTime = new Date(`${startDate}T${eventData.endTime}`);
-        const startRecur = new Date(eventData.recurrence.startRecur);
-        const endRecur = new Date(eventData.recurrence.endRecur || startDate);
-        endRecur.setDate(endRecur.getDate() + 1);
-
-        const eventInput = {
-          title: eventData.title || "",
-          description: eventData.description || "",
-          location: eventData.location || "",
-          startDate,
-          startTime: eventData.startTime,
-          endTime: eventData.endTime,
-          recurrence: {
-            daysOfWeek: eventData.recurrence.daysOfWeek || [],
-            startRecur: startRecur.toISOString().split("T")[0] || startDate,
-            endRecur: endRecur.toISOString().split("T")[0],
-          },
-          userId: user.uid,
-          userTimeZone,
-        };
-
-        console.log(
-          "event data ready for cloud function for background event from availabity tab",
-          eventInput
-        );
-
-        const result = await axios.post(
-          "https://us-central1-prune-94ad9.cloudfunctions.net/createRecurringAvailabilityInstances",
-          eventInput
-        );
-
-        console.log("Recurring event instances created:", result.data);
-      } else {
-        let startDateTime = new Date(`${startDate}T${eventData.startTime}`);
-        let endDateTime = new Date(`${startDate}T${eventData.endTime}`);
-
-        if (eventData.startTime && eventData.endTime) {
-          const [startHour, startMinute] = eventData.startTime
-            .split(":")
-            .map(Number);
-          const [endHour, endMinute] = eventData.endTime.split(":").map(Number);
-
-          // Set the time in UTC
-          startDateTime.setHours(startHour, startMinute, 0, 0);
-          endDateTime.setHours(endHour, endMinute, 0, 0);
-
-          // Ensure end time is after the start time
-          if (endDateTime <= startDateTime) {
-            endDateTime.setDate(endDateTime.getDate() + 1);
-          }
+    startTransition(async () => {
+      try {
+        const user = authUser;
+        if (!user) {
+          throw new Error("User not authenticated");
         }
 
-        const startDay = startDateTime.toLocaleDateString("en-US", {
-          weekday: "long",
-        });
+        // Get the user's time zone
+        const userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        // Check if the event is recurring or a single event
+        if (
+          eventData.recurrence &&
+          eventData.recurrence.daysOfWeek &&
+          eventData.recurrence.daysOfWeek.length > 0
+        ) {
+          // Calculate the time zone offsets for start time and end time
+          const startDateTime = new Date(`${startDate}T${eventData.startTime}`);
+          const endDateTime = new Date(`${startDate}T${eventData.endTime}`);
+          const startRecur = new Date(eventData.recurrence.startRecur);
+          const endRecur = new Date(eventData.recurrence.endRecur || startDate);
+          endRecur.setDate(endRecur.getDate() + 1);
 
-        const endDay = endDateTime.toLocaleDateString("en-US", {
-          weekday: "long",
-        });
+          const eventInput = {
+            title: eventData.title || "",
+            description: eventData.description || "",
+            location: eventData.location || "",
+            startDate,
+            startTime: eventData.startTime,
+            endTime: eventData.endTime,
+            recurrence: {
+              daysOfWeek: eventData.recurrence.daysOfWeek || [],
+              startRecur: startRecur.toISOString().split("T")[0] || startDate,
+              endRecur: endRecur.toISOString().split("T")[0],
+            },
+            userId: user.uid,
+            userTimeZone,
+          };
 
-        // Create a new event object
-        const eventInput = {
-          id: "",
-          title: eventData.title,
-          type: "",
-          typeId: "",
-          fee: 0,
-          clientId: "",
-          clientName: "",
-          location: eventData.location || "",
-          start: startDateTime,
-          end: endDateTime,
-          description: eventData.description || "",
-          display: "inverse-background",
-          className: "",
-          isBackgroundEvent: true,
-          startDate: startDateTime,
-          startDay: startDay,
-          endDate: endDateTime,
-          endDay: endDay,
-          paid: false,
-        };
-        console.log("Single event data ready for Firestore:", eventInput);
+          console.log(
+            "event data ready for cloud function for background event from availabity tab",
+            eventInput
+          );
 
-        console.log("Event data before submitting to firebase:", eventInput);
+          try {
+            const result = await axios.post(
+              "https://us-central1-prune-94ad9.cloudfunctions.net/createRecurringAvailabilityInstances",
+              eventInput
+            );
+            console.log("Recurring event instances created:", result.data);
+            toast.success("Recurring availability added successfully");
+          } catch (error) {
+            console.error("Error adding recurring event:", error);
+            toast.error("Error adding recurring availability");
+          }
+        } else {
+          let startDateTime = new Date(`${startDate}T${eventData.startTime}`);
+          let endDateTime = new Date(`${startDate}T${eventData.endTime}`);
 
-        await createFireStoreEvent(user.uid, eventInput);
+          if (eventData.startTime && eventData.endTime) {
+            const [startHour, startMinute] = eventData.startTime
+              .split(":")
+              .map(Number);
+            const [endHour, endMinute] = eventData.endTime
+              .split(":")
+              .map(Number);
 
-        console.log(
-          "Single event created in Firestore with ID:",
-          eventInput.id
-        );
+            // Set the time in UTC
+            startDateTime.setHours(startHour, startMinute, 0, 0);
+            endDateTime.setHours(endHour, endMinute, 0, 0);
+
+            // Ensure end time is after the start time
+            if (endDateTime <= startDateTime) {
+              endDateTime.setDate(endDateTime.getDate() + 1);
+            }
+          }
+
+          const startDay = startDateTime.toLocaleDateString("en-US", {
+            weekday: "long",
+          });
+
+          const endDay = endDateTime.toLocaleDateString("en-US", {
+            weekday: "long",
+          });
+
+          // Create a new event object
+          const eventInput = {
+            id: "",
+            title: eventData.title,
+            type: "",
+            typeId: "",
+            fee: 0,
+            clientId: "",
+            clientName: "",
+            location: eventData.location || "",
+            start: startDateTime,
+            end: endDateTime,
+            description: eventData.description || "",
+            display: "inverse-background",
+            className: "",
+            isBackgroundEvent: true,
+            startDate: startDateTime,
+            startDay: startDay,
+            endDate: endDateTime,
+            endDay: endDay,
+            paid: false,
+          };
+
+          try {
+            console.log("Single event data ready for Firestore:", eventInput);
+
+            console.log(
+              "Event data before submitting to firebase:",
+              eventInput
+            );
+
+            await createFireStoreEvent(user.uid, eventInput);
+
+            console.log(
+              "Single event created in Firestore with ID:",
+              eventInput.id
+            );
+            toast.success("Availability event added successfully");
+          } catch (error) {
+            console.error("Error saving event:", error);
+            toast.error(
+              "An error occurred while adding the availability event"
+            );
+          }
+        }
+      } catch (error) {
+        console.error("Error saving event:", error);
+        toast.error("An error occurred while adding the event");
+      } finally {
+        // Fetch events again to update the list
+        await fetchEvents();
+        setIsLoading(false); // Stop loading
       }
-
-      // Fetch events again to update the list
-      await fetchEvents();
-    } catch (error) {
-      console.error("Error saving event:", error);
-    } finally {
-      setIsLoading(false); // Stop loading
-    }
+    });
   };
 
   const handleSort = (key: SortableKeys) => {
@@ -983,6 +1004,7 @@ export default function AvailabilityView() {
         onClose={() => setIsDialogOpen(false)}
         onSave={handleSaveEvent}
         event={editingEvent}
+        isLoading={loading}
       />
     </div>
   );

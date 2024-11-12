@@ -5,10 +5,12 @@ import {
 } from "@fullcalendar/core";
 import tippy from "tippy.js";
 import "tippy.js/dist/tippy.css";
+import { auth, db, doc } from "../../../firebase";
+import { updateFireStoreEvent } from "../converters/events";
+import { toast } from "sonner";
 
 // an instance of the tooltip for each event { this is initialized to track the instances of the tooltip to prevent adding multiple instances of the tooltip to the same event }
 const tippyInstances = new Map<string, any>();
-
 
 //----------- A function to render the event content -----------//
 export const checkOverlap = (
@@ -45,7 +47,6 @@ export const checkOverlap = (
 
 //----------- A function to render the event content -----------//
 
-
 export const handleEventDidMount = (info: {
   view: { calendar: any };
   event: any;
@@ -62,7 +63,6 @@ export const handleEventDidMount = (info: {
   // add a popOver to the event here
 };
 
-
 //----------- A function to render the event content -----------//
 export const removeUndefinedFields = (obj: any) => {
   return Object.entries(obj).reduce((acc, [key, value]) => {
@@ -72,7 +72,6 @@ export const removeUndefinedFields = (obj: any) => {
     return acc;
   }, {} as any);
 };
-
 
 //----------- A function to render the event content -----------//
 
@@ -110,14 +109,11 @@ export const renderEventContent = (eventInfo: EventContentArg) => {
   }
   if (monthViw) {
     const defaultStartTimeLocal = new Date(eventInfo.event.startStr);
-    let formattedStartTime = defaultStartTimeLocal.toLocaleTimeString(
-      "en-US",
-      {
-        hour: "2-digit",
-        minute: "2-digit",
-        hour12: true,
-      }
-    );
+    let formattedStartTime = defaultStartTimeLocal.toLocaleTimeString("en-US", {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true,
+    });
 
     // Remove leading zero from the hour part
     formattedStartTime = formattedStartTime.replace(/^0(\d)/, "$1");
@@ -144,9 +140,7 @@ export const renderEventContent = (eventInfo: EventContentArg) => {
             ref={(el) => {
               if (el) {
                 // Destroy existing tippy instance if it exists
-                const existingInstance = tippyInstances.get(
-                  eventInfo.event.id
-                );
+                const existingInstance = tippyInstances.get(eventInfo.event.id);
                 if (existingInstance) {
                   existingInstance.destroy();
                 }
@@ -181,3 +175,141 @@ export const renderEventContent = (eventInfo: EventContentArg) => {
     </>
   );
 };
+
+//----------- A function that control updating a new event  -----------//
+
+export const updatEventFormDialog = async (
+  eventData: {
+    id?: string;
+    type: string;
+    typeId: string;
+    fee: number;
+    clientId: string;
+    clientName: string;
+    description: string;
+    location: string;
+    isBackgroundEvent: boolean;
+    date?: string;
+    startTime: string;
+    endTime: string;
+    paid: boolean;
+    recurrence?: {
+      daysOfWeek: number[];
+      startRecur: string; // YYYY-MM-DD
+      endRecur: string; // YYYY-MM-DD
+    };
+  },
+  userId: string
+) => {
+  let startDateTime = new Date(`${eventData.date}T${eventData.startTime}`);
+  let endDateTime = new Date(`${eventData.date}T${eventData.endTime}`);
+
+  if (eventData.startTime && eventData.endTime) {
+    const [startHour, startMinute] = eventData.startTime.split(":").map(Number);
+    const [endHour, endMinute] = eventData.endTime.split(":").map(Number);
+
+    startDateTime.setHours(startHour, startMinute, 0, 0);
+    endDateTime.setHours(endHour, endMinute, 0, 0);
+
+    // Ensure end time is after the start time
+    if (endDateTime <= startDateTime) {
+      endDateTime.setDate(endDateTime.getDate() + 1);
+    }
+  }
+
+  const startDay = startDateTime.toLocaleDateString("en-US", {
+    weekday: "long",
+  });
+
+  const endDay = endDateTime.toLocaleDateString("en-US", {
+    weekday: "long",
+  });
+
+  try {
+    if (!eventData.recurrence || eventData.recurrence.daysOfWeek.length === 0) {
+      console.log("updating event in firebase");
+      if (!eventData.id) {
+        throw new Error("Event ID is missing");
+      }
+      const eventInput = {
+        type: eventData.type,
+        typeId: eventData.typeId,
+        fee: eventData.fee,
+        clientId: eventData.clientId,
+        clientName: eventData.clientName,
+        description: eventData.description,
+        location: eventData.location || "",
+        isBackgroundEvent: eventData.isBackgroundEvent,
+        start: startDateTime,
+        end: endDateTime,
+        startDate: startDateTime,
+        endDate: endDateTime,
+        startDay: startDay,
+        endDay: endDay,
+        paid: eventData.paid,
+      };
+
+      try {
+        await updateFireStoreEvent(userId!, eventData.id, eventInput);
+        toast.success("Booking event updated successfully");
+      } catch (error) {
+        console.error("Error saving event:", error);
+        toast.error("Error editing booking event");
+      }
+
+      console.log("Single event updated in Firestore");
+    } else {
+      // update the event in firebase instead of creating a new one
+      console.log("updating event in firebase recurring event");
+      if (!eventData.id) {
+        throw new Error("Event ID is missing");
+      }
+
+      const startRecur = new Date(eventData.recurrence?.startRecur);
+      const endRecur = new Date(eventData.recurrence?.endRecur);
+      endRecur.setDate(endRecur.getDate() + 1);
+
+      // convert startRecur and endRecur to strings
+      const startRecurString = startRecur.toISOString().split("T")[0];
+      const endRecurString = endRecur.toISOString().split("T")[0];
+
+      const eventInput = {
+        type: eventData.type,
+        typeId: eventData.typeId,
+        fee: eventData.fee,
+        clientId: eventData.clientId,
+        clientName: eventData.clientName,
+        description: eventData.description,
+        location: eventData.location || "",
+        isBackgroundEvent: eventData.isBackgroundEvent,
+        start: startDateTime,
+        end: endDateTime,
+        startDate: startDateTime,
+        endDate: endDateTime,
+        startDay: startDay,
+        endDay: endDay,
+        startTime: eventData.startTime,
+        endTime: eventData.endTime,
+        paid: eventData.paid,
+        recurrence: {
+          daysOfWeek: eventData.recurrence?.daysOfWeek || [],
+          startRecur: startRecurString,
+          endRecur: endRecurString,
+        },
+        userId: userId!,
+      };
+
+      try {
+        await updateFireStoreEvent(userId!, eventData.id, eventInput);
+        toast.success("Booking event updated successfully");
+      } catch (error) {
+        console.error("Error saving event:", error);
+        toast.error("Error editing booking event");
+      }
+    }
+  } catch (error) {
+    console.error("Error saving event:", error);
+  }
+};
+
+//----------------------------------------------------------//

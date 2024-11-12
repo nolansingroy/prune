@@ -70,6 +70,7 @@ interface EventFormDialogProps {
   showDateSelector?: boolean;
   event?: EventInput | null;
   editAll?: boolean;
+  isLoading?: boolean;
 }
 
 const presetLocations = [
@@ -87,6 +88,7 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
   showDateSelector = true,
   event,
   editAll = false,
+  isLoading,
 }) => {
   const { authUser } = useFirebaseAuth();
   const [title, setTitle] = useState("");
@@ -887,10 +889,14 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
         </div>
 
         <DialogFooter className="flex flex-col space-y-2 sm:flex-row sm:space-y-0 sm:space-x-2">
-          <Button variant="secondary" onClick={handleClose}>
+          <Button
+            variant="secondary"
+            onClick={handleClose}
+            disabled={isLoading}
+          >
             Cancel
           </Button>
-          <Button variant="rebusPro" onClick={handleSave}>
+          <Button variant="rebusPro" onClick={handleSave} disabled={isLoading}>
             Save
           </Button>
         </DialogFooter>

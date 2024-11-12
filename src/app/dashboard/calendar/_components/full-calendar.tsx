@@ -7,11 +7,7 @@ import resourceTimelinePlugin from "@fullcalendar/resource-timeline";
 import interactionPlugin from "@fullcalendar/interaction";
 import timeGridPlugin from "@fullcalendar/timegrid";
 import rrulePlugin from "@fullcalendar/rrule";
-import {
-  DateSelectArg,
-  EventClickArg,
-  EventContentArg,
-} from "@fullcalendar/core";
+import { DateSelectArg, EventClickArg } from "@fullcalendar/core";
 import EventFormDialog from "../../../../components/modals/EventFormModal";
 import { auth, db, doc } from "../../../../../firebase";
 import useFetchEvents from "../../../../hooks/useFetchEvents";
@@ -21,24 +17,21 @@ import { EventDropArg } from "@fullcalendar/core";
 import axios from "axios";
 
 import CreateBookingsFormDialog from "@/components/modals/CreateBookingsFormDialog";
-import tippy from "tippy.js";
-import "tippy.js/dist/tippy.css";
-import { Auth } from "firebase/auth";
+
 import {
   createFireStoreEvent,
   deleteEvents,
   updateFireStoreEvent,
 } from "@/lib/converters/events";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import useConfirmationStore from "@/lib/store/confirmationStore";
 import { toast } from "sonner";
 import { getDoc } from "firebase/firestore";
 import {
-  checkOverlap,
   handleEventDidMount,
   removeUndefinedFields,
   renderEventContent,
+  updatEventFormDialog,
 } from "@/lib/helpers/calendar";
 
 export default function FullCalendarComponent() {
@@ -48,7 +41,7 @@ export default function FullCalendarComponent() {
   const [selectInfo, setSelectInfo] = useState<DateSelectArg | null>(null);
   const [editingEvent, setEditingEvent] = useState<EventInput | null>(null);
   const [editAll, setEditAll] = useState(false); // New state to control if we're editing all instances
-  const [isLoading, setIsLoading] = useState(false); // New loading state
+  // const [isLoading, setIsLoading] = useState(false); // New loading state
   const [calendarKey, setCalendarKey] = useState(0); // a stet variable to check if the calendar is re-rendered
   const [loading, startTransition] = useTransition();
   const [events, setEvents] = useState<EventInput[]>([]);
@@ -60,7 +53,8 @@ export default function FullCalendarComponent() {
 
   const {
     events: fetchedEvents,
-    loading: eventsLoading,
+    isLoading: eventsLoading,
+    setIsLoading,
     userStartTime: fetchedUserStartTime,
     fetchEvents,
     fetchUserStartTime,
@@ -297,7 +291,7 @@ export default function FullCalendarComponent() {
     setEditAll(false);
   };
 
-  const handleSave = async ({
+  const handleSave = ({
     title,
     type,
     typeId,
@@ -345,166 +339,226 @@ export default function FullCalendarComponent() {
 
     setIsLoading(true); // Start loading
 
-    try {
-      const user = auth.currentUser;
-      if (!user) {
-        throw new Error("User not authenticated");
-      }
-
-      // Get the user's time zone
-      const userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-
-      // If this is a recurring event, handle it using the cloud function
-      if (
-        recurrence &&
-        recurrence.daysOfWeek &&
-        recurrence.daysOfWeek.length > 0
-      ) {
-        // Calculate the time zone offsets for start time and end time
-        const startDateTime = new Date(`${startDate}T${startTime}`);
-        const endDateTime = new Date(`${startDate}T${endTime}`);
-        const startRecur = new Date(recurrence.startRecur);
-        const endRecur = new Date(recurrence.endRecur || startDate);
-        endRecur.setDate(endRecur.getDate() + 1);
-
-        // Prepare the event input for the cloud function
-
-        if (isBackgroundEvent) {
-          const eventInput = {
-            title: title || "",
-            description: description || "",
-            location: location || "",
-            startDate,
-            startTime,
-            endTime,
-            recurrence: {
-              daysOfWeek: recurrence.daysOfWeek,
-              startRecur: startRecur.toISOString().split("T")[0] || startDate,
-              endRecur: endRecur.toISOString().split("T")[0],
-            },
-            userId: user.uid,
-            userTimeZone,
-          };
-
-          console.log(
-            "event data ready for cloud function for background event",
-            eventInput
-          );
-
-          //"http://127.0.0.1:5001/prune-94ad9/us-central1/createRecurringAvailabilityInstances"
-
-          const result = await axios.post(
-            "https://us-central1-prune-94ad9.cloudfunctions.net/createRecurringAvailabilityInstances",
-            eventInput
-          );
-
-          console.log("Recurring event instances created:", result.data);
-        } else {
-          const eventInput = {
-            title: title || "",
-            type: type || "No type",
-            typeId: typeId || "",
-            clientId: clientId || "",
-            clientName: clientName || "",
-            description: description || "",
-            fee: fee || 0,
-            location: location || "",
-            startDate,
-            startTime,
-            endTime,
-            paid,
-            recurrence: {
-              daysOfWeek: recurrence.daysOfWeek,
-              startRecur: startRecur.toISOString().split("T")[0] || startDate,
-              endRecur: endRecur.toISOString().split("T")[0],
-            },
-            userId: user.uid,
-            userTimeZone,
-          };
-
-          console.log(
-            "event data ready for cloud function for recurring bookings",
-            eventInput
-          );
-
-          //"http://127.0.0.1:5001/prune-94ad9/us-central1/createRecurringBookingInstances"
-
-          const result = await axios.post(
-            "https://us-central1-prune-94ad9.cloudfunctions.net/createRecurringBookingInstances",
-            eventInput
-          );
-
-          console.log("Recurring event instances created:", result.data);
+    startTransition(async () => {
+      try {
+        const user = auth.currentUser;
+        if (!user) {
+          throw new Error("User not authenticated");
         }
-      } else {
-        // Handle single or background event directly on the client side
-        // Parse the start and end times
 
-        let startDateTime = new Date(selectInfo.startStr);
-        let endDateTime = new Date(selectInfo.startStr);
+        // Get the user's time zone
+        const userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
-        if (startTime && endTime) {
-          const [startHour, startMinute] = startTime.split(":").map(Number);
-          const [endHour, endMinute] = endTime.split(":").map(Number);
+        // If this is a recurring event, handle it using the cloud function
+        if (
+          recurrence &&
+          recurrence.daysOfWeek &&
+          recurrence.daysOfWeek.length > 0
+        ) {
+          // Calculate the time zone offsets for start time and end time
+          const startDateTime = new Date(`${startDate}T${startTime}`);
+          const endDateTime = new Date(`${startDate}T${endTime}`);
+          const startRecur = new Date(recurrence.startRecur);
+          const endRecur = new Date(recurrence.endRecur || startDate);
+          endRecur.setDate(endRecur.getDate() + 1);
 
-          startDateTime.setHours(startHour, startMinute, 0, 0);
-          endDateTime.setHours(endHour, endMinute, 0, 0);
+          // Prepare the event input for the cloud function
 
-          if (endDateTime <= startDateTime) {
-            endDateTime.setDate(endDateTime.getDate() + 1);
+          if (isBackgroundEvent) {
+            const eventInput = {
+              title: title || "",
+              description: description || "",
+              location: location || "",
+              startDate,
+              startTime,
+              endTime,
+              recurrence: {
+                daysOfWeek: recurrence.daysOfWeek,
+                startRecur: startRecur.toISOString().split("T")[0] || startDate,
+                endRecur: endRecur.toISOString().split("T")[0],
+              },
+              userId: user.uid,
+              userTimeZone,
+            };
+
+            console.log(
+              "event data ready for cloud function for background event",
+              eventInput
+            );
+
+            //"http://127.0.0.1:5001/prune-94ad9/us-central1/createRecurringAvailabilityInstances"
+
+            try {
+              const result = await axios.post(
+                "https://us-central1-prune-94ad9.cloudfunctions.net/createRecurringAvailabilityInstances",
+                eventInput
+              );
+              console.log(
+                "Recurring availability instances created:",
+                result.data
+              );
+              toast.success("Recurring availability added successfully");
+            } catch (error) {
+              console.error("Error saving recurring event:", error);
+              toast.error("Error adding recurring availability");
+            }
+          } else {
+            const eventInput = {
+              title: title || "",
+              type: type || "No type",
+              typeId: typeId || "",
+              clientId: clientId || "",
+              clientName: clientName || "",
+              description: description || "",
+              fee: fee || 0,
+              location: location || "",
+              startDate,
+              startTime,
+              endTime,
+              paid,
+              recurrence: {
+                daysOfWeek: recurrence.daysOfWeek,
+                startRecur: startRecur.toISOString().split("T")[0] || startDate,
+                endRecur: endRecur.toISOString().split("T")[0],
+              },
+              userId: user.uid,
+              userTimeZone,
+            };
+
+            console.log(
+              "event data ready for cloud function for recurring bookings",
+              eventInput
+            );
+
+            //"http://127.0.0.1:5001/prune-94ad9/us-central1/createRecurringBookingInstances"
+
+            try {
+              const result = await axios.post(
+                "https://us-central1-prune-94ad9.cloudfunctions.net/createRecurringBookingInstances",
+                eventInput
+              );
+              console.log("Recurring bookings instances created:", result.data);
+              toast.success("Recurring bookings added successfully");
+            } catch (error) {
+              console.error("Error saving recurring event:", error);
+              toast.error("Error adding recurring bookings");
+            }
+          }
+        } else {
+          // Handle single or background event directly on the client side
+          // Parse the start and end times
+
+          let startDateTime = new Date(selectInfo.startStr);
+          let endDateTime = new Date(selectInfo.startStr);
+
+          if (startTime && endTime) {
+            const [startHour, startMinute] = startTime.split(":").map(Number);
+            const [endHour, endMinute] = endTime.split(":").map(Number);
+
+            startDateTime.setHours(startHour, startMinute, 0, 0);
+            endDateTime.setHours(endHour, endMinute, 0, 0);
+
+            if (endDateTime <= startDateTime) {
+              endDateTime.setDate(endDateTime.getDate() + 1);
+            }
+          }
+
+          const startDay = startDateTime.toLocaleDateString("en-US", {
+            weekday: "long",
+          });
+
+          const endDay = endDateTime.toLocaleDateString("en-US", {
+            weekday: "long",
+          });
+
+          if (isBackgroundEvent) {
+            // Create the event object for a booking or availability event
+            let event: EventInput = {
+              id: "",
+              title,
+              type,
+              typeId,
+              fee,
+              clientId,
+              clientName,
+              location,
+              start: startDateTime,
+              end: endDateTime,
+              description,
+              display: "inverse-background",
+              className: "custom-bg-event",
+              isBackgroundEvent,
+              startDate: startDateTime,
+              startDay: startDay,
+              endDate: endDateTime,
+              endDay: endDay,
+              paid,
+            };
+
+            try {
+              console.log("Single event data ready for Firestore:", event);
+              event = removeUndefinedFields(event);
+              console.log("Event data before submitting to firebase:", event);
+
+              await createFireStoreEvent(user.uid, event);
+              setEvents((prevEvents) => [...prevEvents, event]);
+              toast.success("Availability event added successfully");
+            } catch (error) {
+              console.error("Error saving event:", error);
+              toast.error(
+                "An error occurred while adding the availability event"
+              );
+            }
+          } else {
+            let event: EventInput = {
+              id: "",
+              title,
+              type,
+              typeId,
+              fee,
+              clientId,
+              clientName,
+              location,
+              start: startDateTime,
+              end: endDateTime,
+              description,
+              display: "auto",
+              className: "",
+              isBackgroundEvent,
+              startDate: startDateTime,
+              startDay: startDay,
+              endDate: endDateTime,
+              endDay: endDay,
+              paid,
+            };
+
+            try {
+              console.log("Single event data ready for Firestore:", event);
+              event = removeUndefinedFields(event);
+              console.log("Event data before submitting to firebase:", event);
+
+              await createFireStoreEvent(user.uid, event);
+              setEvents((prevEvents) => [...prevEvents, event]);
+              toast.success("Booking event added successfully");
+            } catch (error) {
+              console.error("Error saving event:", error);
+              toast.error("An error occurred while adding the booking event");
+            }
           }
         }
-
-        const startDay = startDateTime.toLocaleDateString("en-US", {
-          weekday: "long",
-        });
-
-        const endDay = endDateTime.toLocaleDateString("en-US", {
-          weekday: "long",
-        });
-
-        // Create the event object for a booking or availability event
-        let event: EventInput = {
-          id: "",
-          title,
-          type,
-          typeId,
-          fee,
-          clientId,
-          clientName,
-          location,
-          start: startDateTime,
-          end: endDateTime,
-          description,
-          display: isBackgroundEvent ? "inverse-background" : "auto",
-          className: isBackgroundEvent ? "custom-bg-event" : "",
-          isBackgroundEvent,
-          startDate: startDateTime,
-          startDay: startDay,
-          endDate: endDateTime,
-          endDay: endDay,
-          paid,
-        };
-
-        console.log("Single event data ready for Firestore:", event);
-        event = removeUndefinedFields(event);
-
-        console.log("Event data before submitting to firebase:", event);
-
-        await createFireStoreEvent(user.uid, event);
-        setEvents((prevEvents) => [...prevEvents, event]);
+      } catch (error) {
+        console.error("Error saving event:", error);
+        toast.error("An error occurred while adding the event");
+      } finally {
+        await fetchEvents();
+        setIsLoading(false);
       }
-      await fetchEvents();
-    } catch (error) {
-      console.error("Error saving event:", error);
-    } finally {
-      setIsLoading(false);
-    }
+    });
 
-    handleDialogClose();
+    // handleDialogClose();
   };
 
-  const handleUpdatEventFormDialog = async (eventData: {
+  const handleUpdatEventFormDialog = (eventData: {
     id?: string;
     type: string;
     typeId: string;
@@ -526,124 +580,16 @@ export default function FullCalendarComponent() {
   }) => {
     const user = auth.currentUser;
     const userId = user?.uid;
-
     if (!user) {
       throw new Error("User not authenticated");
     }
     console.log("updating information triggered");
 
-    let startDateTime = new Date(`${eventData.date}T${eventData.startTime}`);
-    let endDateTime = new Date(`${eventData.date}T${eventData.endTime}`);
-
-    if (eventData.startTime && eventData.endTime) {
-      const [startHour, startMinute] = eventData.startTime
-        .split(":")
-        .map(Number);
-      const [endHour, endMinute] = eventData.endTime.split(":").map(Number);
-
-      startDateTime.setHours(startHour, startMinute, 0, 0);
-      endDateTime.setHours(endHour, endMinute, 0, 0);
-
-      // Ensure end time is after the start time
-      if (endDateTime <= startDateTime) {
-        endDateTime.setDate(endDateTime.getDate() + 1);
-      }
-    }
-
-    const startDay = startDateTime.toLocaleDateString("en-US", {
-      weekday: "long",
-    });
-
-    const endDay = endDateTime.toLocaleDateString("en-US", {
-      weekday: "long",
-    });
-
-    setIsLoading(true); // Start loading
-
-    try {
-      if (
-        !eventData.recurrence ||
-        eventData.recurrence.daysOfWeek.length === 0
-      ) {
-        console.log("updating event in firebase");
-        if (!eventData.id) {
-          throw new Error("Event ID is missing");
-        }
-        const eventInput = {
-          type: eventData.type,
-          typeId: eventData.typeId,
-          fee: eventData.fee,
-          clientId: eventData.clientId,
-          clientName: eventData.clientName,
-          description: eventData.description,
-          location: eventData.location || "",
-          isBackgroundEvent: eventData.isBackgroundEvent,
-          start: startDateTime,
-          end: endDateTime,
-          startDate: startDateTime,
-          endDate: endDateTime,
-          startDay: startDay,
-          endDay: endDay,
-          paid: eventData.paid,
-        };
-
-        await updateFireStoreEvent(userId!, eventData.id, eventInput);
-
-        console.log("Single event updated in Firestore");
-      } else {
-        // update the event in firebase instead of creating a new one
-        console.log("updating event in firebase recurring event");
-        if (!eventData.id) {
-          throw new Error("Event ID is missing");
-        }
-
-        const startRecur = new Date(eventData.recurrence?.startRecur);
-        const endRecur = new Date(eventData.recurrence?.endRecur);
-        endRecur.setDate(endRecur.getDate() + 1);
-
-        // convert startRecur and endRecur to strings
-        const startRecurString = startRecur.toISOString().split("T")[0];
-        const endRecurString = endRecur.toISOString().split("T")[0];
-
-        const eventInput = {
-          type: eventData.type,
-          typeId: eventData.typeId,
-          fee: eventData.fee,
-          clientId: eventData.clientId,
-          clientName: eventData.clientName,
-          description: eventData.description,
-          location: eventData.location || "",
-          isBackgroundEvent: eventData.isBackgroundEvent,
-          start: startDateTime,
-          end: endDateTime,
-          startDate: startDateTime,
-          endDate: endDateTime,
-          startDay: startDay,
-          endDay: endDay,
-          startTime: eventData.startTime,
-          endTime: eventData.endTime,
-          paid: eventData.paid,
-          recurrence: {
-            daysOfWeek: eventData.recurrence?.daysOfWeek || [],
-            startRecur: startRecurString,
-            endRecur: endRecurString,
-          },
-          userId: userId!,
-        };
-
-        await updateFireStoreEvent(userId!, eventData.id, eventInput);
-
-        console.log("Recurring event updated in Firestore");
-      }
-    } catch (error) {
-      console.error("Error saving event:", error);
-    } finally {
+    startTransition(async () => {
+      await updatEventFormDialog(eventData, userId!);
       await fetchEvents();
-      setIsLoading(false); // Stop loading
-      setSelectInfo(null);
-      setEditingEvent(null);
-      setEditAll(false);
-    }
+      setIsLoading(false);
+    });
   };
 
   const handleDeleteEventFromDialog = async (
@@ -664,8 +610,6 @@ export default function FullCalendarComponent() {
       throw new Error("User not authenticated");
     }
 
-    setIsLoading(true); // Start loading
-
     try {
       console.log("Deleting event from Firestore for event ID:", eventId);
       // construct the array
@@ -683,6 +627,7 @@ export default function FullCalendarComponent() {
           cancelLabel: "Cancel",
           actionLabel: "Delete",
           onAction: () => {
+            setIsLoading(true); // Start loading
             startTransition(async () => {
               await deleteEvents(user.uid, eventIds);
               await closeActions();
@@ -742,6 +687,7 @@ export default function FullCalendarComponent() {
               cancelLabel: "Cancel",
               actionLabel: "Delete",
               onAction: () => {
+                setIsLoading(true); // Start loading
                 startTransition(async () => {
                   await deleteEvents(user.uid, validEventIds);
                   await closeActions();
@@ -796,6 +742,7 @@ export default function FullCalendarComponent() {
               actionLabel: "Delete",
               onAction: () => {
                 startTransition(async () => {
+                  setIsLoading(true); // Start loading
                   await deleteEvents(user.uid, validEventIds);
                   await closeActions();
                   setIsLoading(false);
@@ -1073,6 +1020,7 @@ export default function FullCalendarComponent() {
             showDateSelector={true}
             event={editingEvent}
             editAll={editAll}
+            isLoading={loading}
           />
         )}
       </div>
