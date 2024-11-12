@@ -25,7 +25,7 @@ export const createRecurringAvailabilityInstances = functions.https.onRequest(
         const {
           title,
           description,
-          location,
+          // location,
           startDate,
           startTime,
           endTime,
@@ -45,7 +45,7 @@ export const createRecurringAvailabilityInstances = functions.https.onRequest(
         console.log("Received request with data:", {
           title,
           description,
-          location,
+          // location,
           startDate,
           startTime,
           endTime,
@@ -117,7 +117,7 @@ export const createRecurringAvailabilityInstances = functions.https.onRequest(
         batch.set(eventRef, {
           title,
           description,
-          location,
+          // location,
           start: timestampStartDate,
           end: timestampEndDate,
           isBackgroundEvent: true,
@@ -138,7 +138,7 @@ export const createRecurringAvailabilityInstances = functions.https.onRequest(
         console.log("Original event created:", {
           title,
           description,
-          location,
+          // location,
           start: originalStartDate.format(),
           end: originalEndDate.format(),
         });
@@ -178,7 +178,7 @@ export const createRecurringAvailabilityInstances = functions.https.onRequest(
           batch.set(instanceRef, {
             title,
             description,
-            location,
+            // location,
             start: timestampInstanceStartDate,
             end: timestampInstanceEndDate,
             isBackgroundEvent: true,
@@ -194,7 +194,7 @@ export const createRecurringAvailabilityInstances = functions.https.onRequest(
           console.log("Instance created:", {
             title,
             description,
-            location,
+            // location,
             start: instanceStartDate.format(),
             end: instanceEndDate.format(),
           });

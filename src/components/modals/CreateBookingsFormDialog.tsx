@@ -62,7 +62,7 @@ interface CreateBookingsFormDialogProps {
       clientId: string;
       clientName: string;
       description: string;
-      location: string;
+      // location: string;
       isBackgroundEvent: boolean; // Automatically false for regular bookings
       originalEventId: string;
       date?: string;
@@ -86,13 +86,13 @@ interface CreateBookingsFormDialogProps {
   isLoading?: boolean;
 }
 
-const presetLocations = [
-  { value: "Kraken 1", label: "Kraken 1" },
-  { value: "Kraken 2", label: "Kraken 2" },
-  { value: "Kraken 3", label: "Kraken 3" },
-  { value: "location4", label: "Location 4" },
-  { value: "location5", label: "Location 5" },
-];
+// const presetLocations = [
+//   { value: "Kraken 1", label: "Kraken 1" },
+//   { value: "Kraken 2", label: "Kraken 2" },
+//   { value: "Kraken 3", label: "Kraken 3" },
+//   { value: "location4", label: "Location 4" },
+//   { value: "location5", label: "Location 5" },
+// ];
 
 const CreateBookingsFormDialog: React.FC<CreateBookingsFormDialogProps> = ({
   isOpen,
@@ -115,9 +115,9 @@ const CreateBookingsFormDialog: React.FC<CreateBookingsFormDialogProps> = ({
   const [startRecur, setStartRecur] = useState("");
   const [endRecur, setEndRecur] = useState("");
   // Location state
-  const [location, setLocation] = useState("");
-  const [locationPopoverOpen, setLocationPopoverOpen] = useState(false);
-  const [filteredLocations, setFilteredLocations] = useState(presetLocations);
+  // const [location, setLocation] = useState("");
+  // const [locationPopoverOpen, setLocationPopoverOpen] = useState(false);
+  // const [filteredLocations, setFilteredLocations] = useState(presetLocations);
   // Payment status state
   const [paid, setPaid] = useState(false); // Defaults to false (Unpaid)
   // booking fee state
@@ -170,7 +170,7 @@ const CreateBookingsFormDialog: React.FC<CreateBookingsFormDialogProps> = ({
       setTypeId(event.typeId || "");
       setDescription(event.description || "");
       setBookingFee(event.fee ? event.fee.toString() : "");
-      setLocation(event.location || "");
+      // setLocation(event.location || "");
       setPaid(event.paid || false);
       setDate(
         event.startDate
@@ -315,7 +315,7 @@ const CreateBookingsFormDialog: React.FC<CreateBookingsFormDialogProps> = ({
       clientId: clientId || "",
       clientName: client || "",
       description: description,
-      location: location,
+      // location: location,
       isBackgroundEvent: false, // Always false for regular bookings
       date: showDateSelector ? date : undefined,
       startTime,
@@ -351,7 +351,7 @@ const CreateBookingsFormDialog: React.FC<CreateBookingsFormDialogProps> = ({
   const handleClose = () => {
     setTitle("");
     setDescription("");
-    setLocation("");
+    // setLocation("");
     setDate("");
     setStartTime("");
     setEndTime("");
@@ -370,27 +370,27 @@ const CreateBookingsFormDialog: React.FC<CreateBookingsFormDialogProps> = ({
 
   // location functions
 
-  const handleLocationSelect = (currentValue: string) => {
-    setLocation(currentValue);
-    setLocationPopoverOpen(false);
-  };
+  // const handleLocationSelect = (currentValue: string) => {
+  //   setLocation(currentValue);
+  //   setLocationPopoverOpen(false);
+  // };
 
-  const handleLocationInputChange = (value: string) => {
-    setLocation(value);
+  // const handleLocationInputChange = (value: string) => {
+  //   setLocation(value);
 
-    const filtered = presetLocations.filter((loc) =>
-      loc.label.toLowerCase().includes(value.toLowerCase())
-    );
-    setFilteredLocations(filtered);
-  };
+  //   const filtered = presetLocations.filter((loc) =>
+  //     loc.label.toLowerCase().includes(value.toLowerCase())
+  //   );
+  //   setFilteredLocations(filtered);
+  // };
 
-  const handleLocationInputKeyPress = (
-    event: React.KeyboardEvent<HTMLInputElement>
-  ) => {
-    if (event.key === "Enter") {
-      setLocationPopoverOpen(false);
-    }
-  };
+  // const handleLocationInputKeyPress = (
+  //   event: React.KeyboardEvent<HTMLInputElement>
+  // ) => {
+  //   if (event.key === "Enter") {
+  //     setLocationPopoverOpen(false);
+  //   }
+  // };
 
   // booking type functions
   const handleBookingTypeSelect = (
@@ -592,7 +592,7 @@ const CreateBookingsFormDialog: React.FC<CreateBookingsFormDialogProps> = ({
                             key={cli.value}
                             value={cli.value}
                             onSelect={() => {
-                              handleClientSelect(cli.value, cli.docId); // Set location
+                              handleClientSelect(cli.value, cli.docId);
                               setClientsPopoverOpen(false);
                             }}
                           >
@@ -689,7 +689,7 @@ const CreateBookingsFormDialog: React.FC<CreateBookingsFormDialogProps> = ({
                                 book.fee,
                                 book.color,
                                 book.docId
-                              ); // Set location
+                              );
                               setBookingsPopoverOpen(false); // Close the popover after selection
                             }}
                           >
@@ -746,7 +746,8 @@ const CreateBookingsFormDialog: React.FC<CreateBookingsFormDialogProps> = ({
               }
             />
           </div>
-          <div>
+          {/* location input */}
+          {/* <div>
             <Label className="block text-sm font-medium text-gray-700">
               Location
             </Label>
@@ -805,7 +806,7 @@ const CreateBookingsFormDialog: React.FC<CreateBookingsFormDialogProps> = ({
                 </Command>
               </PopoverContent>
             </Popover>
-          </div>
+          </div> */}
 
           {!editAll && (
             <div className="space-y-2">

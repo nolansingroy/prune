@@ -31,7 +31,7 @@ export const createRecurringBookingInstances = functions.https.onRequest(
           type,
           typeId,
           description,
-          location,
+          // location,
           startDate,
           startTime,
           endTime,
@@ -73,7 +73,7 @@ export const createRecurringBookingInstances = functions.https.onRequest(
           type,
           typeId,
           description,
-          location,
+          // location,
           startDate,
           startTime,
           endTime,
@@ -151,7 +151,7 @@ export const createRecurringBookingInstances = functions.https.onRequest(
           type,
           typeId,
           description,
-          location,
+          // location,
           start: timestampStartDate,
           end: timestampEndDate,
           isBackgroundEvent: false,
@@ -172,7 +172,7 @@ export const createRecurringBookingInstances = functions.https.onRequest(
         console.log("Original event created:", {
           title,
           description,
-          location,
+          // location,
           start: originalStartDate.format(),
           end: originalEndDate.format(),
         });
@@ -215,7 +215,7 @@ export const createRecurringBookingInstances = functions.https.onRequest(
             type,
             typeId,
             description,
-            location,
+            // location,
             start: timestampInstanceStartDate,
             end: timestampInstanceEndDate,
             isBackgroundEvent: false,
@@ -231,7 +231,7 @@ export const createRecurringBookingInstances = functions.https.onRequest(
           console.log("Instance created:", {
             title,
             description,
-            location,
+            // location,
             start: instanceStartDate.format(),
             end: instanceEndDate.format(),
           });

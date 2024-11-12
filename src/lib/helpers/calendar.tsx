@@ -83,7 +83,7 @@ export const renderEventContent = (eventInfo: EventContentArg) => {
     description,
     paid,
     type,
-    location,
+    // location,
   } = eventInfo.event.extendedProps;
 
   // console.log("for month view props", eventInfo);
@@ -187,7 +187,7 @@ export const updatEventFormDialog = async (
     clientId: string;
     clientName: string;
     description: string;
-    location: string;
+    // location: string;
     isBackgroundEvent: boolean;
     date?: string;
     startTime: string;
@@ -238,7 +238,7 @@ export const updatEventFormDialog = async (
         clientId: eventData.clientId,
         clientName: eventData.clientName,
         description: eventData.description,
-        location: eventData.location || "",
+        // location: eventData.location || "",
         isBackgroundEvent: eventData.isBackgroundEvent,
         start: startDateTime,
         end: endDateTime,
@@ -280,7 +280,7 @@ export const updatEventFormDialog = async (
         clientId: eventData.clientId,
         clientName: eventData.clientName,
         description: eventData.description,
-        location: eventData.location || "",
+        // location: eventData.location || "",
         isBackgroundEvent: eventData.isBackgroundEvent,
         start: startDateTime,
         end: endDateTime,

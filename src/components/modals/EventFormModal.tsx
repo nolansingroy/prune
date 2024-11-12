@@ -53,7 +53,7 @@ interface EventFormDialogProps {
     clientId: string;
     clientName: string;
     description: string;
-    location: string;
+    // location: string;
     isBackgroundEvent: boolean;
     date?: string;
     startTime: string;
@@ -73,13 +73,13 @@ interface EventFormDialogProps {
   isLoading?: boolean;
 }
 
-const presetLocations = [
-  { value: "Kraken 1", label: "Kraken 1" },
-  { value: "Kraken 2", label: "Kraken 2" },
-  { value: "Kraken 3", label: "Kraken 3" },
-  { value: "location4", label: "Location 4" },
-  { value: "location5", label: "Location 5" },
-];
+// const presetLocations = [
+//   { value: "Kraken 1", label: "Kraken 1" },
+//   { value: "Kraken 2", label: "Kraken 2" },
+//   { value: "Kraken 3", label: "Kraken 3" },
+//   { value: "location4", label: "Location 4" },
+//   { value: "location5", label: "Location 5" },
+// ];
 
 const EventFormDialog: React.FC<EventFormDialogProps> = ({
   isOpen,
@@ -103,9 +103,9 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
   const [startRecur, setStartRecur] = useState("");
   const [endRecur, setEndRecur] = useState("");
   // Location state
-  const [location, setLocation] = useState("");
-  const [locationPopoverOpen, setLocationPopoverOpen] = useState(false);
-  const [filteredLocations, setFilteredLocations] = useState(presetLocations);
+  // const [location, setLocation] = useState("");
+  // const [locationPopoverOpen, setLocationPopoverOpen] = useState(false);
+  // const [filteredLocations, setFilteredLocations] = useState(presetLocations);
   // Payment status state
   const [paid, setPaid] = useState(false); // Defaults to false (Unpaid)
   // booking fee state
@@ -136,7 +136,7 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
     if (event) {
       setTitle(event.title || "");
       setDescription(event.description || "");
-      setLocation(event.location || "");
+      // setLocation(event.location || "");
       setIsBackgroundEvent(event.isBackgroundEvent || true);
       setPaid(event.paid || false);
       setDate(
@@ -266,7 +266,7 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
       clientId: !isBackgroundEvent ? clientId : "",
       clientName: !isBackgroundEvent ? client : "",
       description,
-      location,
+      // location,
       isBackgroundEvent,
       date: showDateSelector ? date : undefined,
       startTime,
@@ -291,7 +291,7 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
   const handleClose = () => {
     setTitle("");
     setDescription("");
-    setLocation("");
+    // setLocation("");
     setDate("");
     setIsBackgroundEvent(true);
     setStartTime("");
@@ -311,27 +311,27 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
 
   // location functions
 
-  const handleLocationSelect = (currentValue: string) => {
-    setLocation(currentValue);
-    setLocationPopoverOpen(false);
-  };
+  // const handleLocationSelect = (currentValue: string) => {
+  //   setLocation(currentValue);
+  //   setLocationPopoverOpen(false);
+  // };
 
-  const handleLocationInputChange = (value: string) => {
-    setLocation(value);
+  // const handleLocationInputChange = (value: string) => {
+  //   setLocation(value);
 
-    const filtered = presetLocations.filter((loc) =>
-      loc.label.toLowerCase().includes(value.toLowerCase())
-    );
-    setFilteredLocations(filtered);
-  };
+  //   const filtered = presetLocations.filter((loc) =>
+  //     loc.label.toLowerCase().includes(value.toLowerCase())
+  //   );
+  //   setFilteredLocations(filtered);
+  // };
 
-  const handleLocationInputKeyPress = (
-    event: React.KeyboardEvent<HTMLInputElement>
-  ) => {
-    if (event.key === "Enter") {
-      setLocationPopoverOpen(false);
-    }
-  };
+  // const handleLocationInputKeyPress = (
+  //   event: React.KeyboardEvent<HTMLInputElement>
+  // ) => {
+  //   if (event.key === "Enter") {
+  //     setLocationPopoverOpen(false);
+  //   }
+  // };
 
   // booking type functions
 
@@ -528,7 +528,7 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
                             key={cli.value}
                             value={cli.value}
                             onSelect={() => {
-                              handleClientSelect(cli.value, cli.docId); // Set location
+                              handleClientSelect(cli.value, cli.docId);
                               setClientsPopoverOpen(false);
                             }}
                           >
@@ -629,7 +629,7 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
                                 book.value,
                                 book.fee,
                                 book.docId
-                              ); // Set location
+                              );
                               setBookingsPopoverOpen(false); // Close the popover after selection
                             }}
                           >
@@ -692,7 +692,8 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
               }
             />
           </div>
-          <div>
+          {/* Location Input */}
+          {/* <div>
             <Label className="block text-sm font-medium text-gray-700">
               Location
             </Label>
@@ -751,7 +752,7 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
                 </Command>
               </PopoverContent>
             </Popover>
-          </div>
+          </div> */}
 
           {/* Recurring Event Toggle (Single Event / Recurring Event) */}
           <div className="space-y-2">

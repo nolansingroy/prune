@@ -38,7 +38,7 @@ interface AvailabilityDialogProps {
   onSave: (eventData: {
     title: string;
     description: string;
-    location: string;
+    // location: string;
     isBackgroundEvent: boolean;
     date?: string;
     startTime: string;
@@ -55,13 +55,13 @@ interface AvailabilityDialogProps {
   isLoading?: boolean;
 }
 
-const presetLocations = [
-  { value: "Kraken 1", label: "Kraken 1" },
-  { value: "Kraken 2", label: "Kraken 2" },
-  { value: "Kraken 3", label: "Kraken 3" },
-  { value: "location4", label: "Location 4" },
-  { value: "location5", label: "Location 5" },
-];
+// const presetLocations = [
+//   { value: "Kraken 1", label: "Kraken 1" },
+//   { value: "Kraken 2", label: "Kraken 2" },
+//   { value: "Kraken 3", label: "Kraken 3" },
+//   { value: "location4", label: "Location 4" },
+//   { value: "location5", label: "Location 5" },
+// ];
 
 const AvailabilityDialog: React.FC<AvailabilityDialogProps> = ({
   isOpen,
@@ -72,7 +72,7 @@ const AvailabilityDialog: React.FC<AvailabilityDialogProps> = ({
 }) => {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [location, setLocation] = useState("");
+  // const [location, setLocation] = useState("");
   const [date, setDate] = useState("");
   const [isBackgroundEvent, setIsBackgroundEvent] = useState(true);
   const [startTime, setStartTime] = useState("");
@@ -82,13 +82,13 @@ const AvailabilityDialog: React.FC<AvailabilityDialogProps> = ({
   const [startRecur, setStartRecur] = useState("");
   const [endRecur, setEndRecur] = useState("");
   const [open, setOpen] = useState(false);
-  const [filteredLocations, setFilteredLocations] = useState(presetLocations);
+  // const [filteredLocations, setFilteredLocations] = useState(presetLocations);
 
   useEffect(() => {
     if (event) {
       setTitle(event.title || "");
       setDescription(event.description || "");
-      setLocation(event.location || "");
+      // setLocation(event.location || "");
       setIsBackgroundEvent(event.isBackgroundEvent || false);
       setDate(
         event.startDate
@@ -134,7 +134,7 @@ const AvailabilityDialog: React.FC<AvailabilityDialogProps> = ({
     const eventData = {
       title,
       description,
-      location,
+      // location,
       isBackgroundEvent,
       date,
       startTime,
@@ -158,7 +158,7 @@ const AvailabilityDialog: React.FC<AvailabilityDialogProps> = ({
   const handleClose = () => {
     setTitle("");
     setDescription("");
-    setLocation("");
+    // setLocation("");
     setDate("");
     setIsBackgroundEvent(true);
     setStartTime("");
@@ -170,28 +170,28 @@ const AvailabilityDialog: React.FC<AvailabilityDialogProps> = ({
     onClose();
   };
 
-  const handleLocationSelect = (currentValue: string) => {
-    setLocation(currentValue);
-    setOpen(false);
-  };
+  // const handleLocationSelect = (currentValue: string) => {
+  //   setLocation(currentValue);
+  //   setOpen(false);
+  // };
 
-  const handleLocationInputChange = (value: string) => {
-    setLocation(value);
+  // const handleLocationInputChange = (value: string) => {
+  //   setLocation(value);
 
-    const filtered = presetLocations.filter((loc) =>
-      loc.label.toLowerCase().includes(value.toLowerCase())
-    );
-    setFilteredLocations(filtered);
-  };
+  //   const filtered = presetLocations.filter((loc) =>
+  //     loc.label.toLowerCase().includes(value.toLowerCase())
+  //   );
+  //   setFilteredLocations(filtered);
+  // };
 
-  const handleLocationInputKeyPress = (
-    event: React.KeyboardEvent<HTMLInputElement>
-  ) => {
-    if (event.key === "Enter") {
-      // When the Enter key is pressed, close the popover and save the input
-      setOpen(false);
-    }
-  };
+  // const handleLocationInputKeyPress = (
+  //   event: React.KeyboardEvent<HTMLInputElement>
+  // ) => {
+  //   if (event.key === "Enter") {
+  //     // When the Enter key is pressed, close the popover and save the input
+  //     setOpen(false);
+  //   }
+  // };
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
@@ -229,19 +229,9 @@ const AvailabilityDialog: React.FC<AvailabilityDialogProps> = ({
               }
             />
           </div>
+
+          {/* location */}
           {/* <div>
-            <Label className="block text-sm font-medium text-gray-700">
-              Location
-            </Label>
-            <Input
-              value={location}
-              onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                setLocation(e.target.value)
-              }
-              placeholder="Select a location"
-            />
-          </div> */}
-          <div>
             <Label className="block text-sm font-medium text-gray-700">
               Location
             </Label>
@@ -297,7 +287,7 @@ const AvailabilityDialog: React.FC<AvailabilityDialogProps> = ({
                 </Command>
               </PopoverContent>
             </Popover>
-          </div>
+          </div> */}
           <div className="space-y-2">
             <Label className="block text-sm font-medium text-gray-700">
               Availability Event
