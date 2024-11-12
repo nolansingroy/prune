@@ -18,13 +18,9 @@ const useFetchEvents = () => {
 
   const fetchEvents = useCallback(async () => {
     const user = auth.currentUser;
-
-    setIsLoading(true);
     const eventsData = await fetchFirestoreEvents(user);
-
     setEvents(eventsData);
     console.log("Events set to state:", eventsData);
-    setIsLoading(false);
   }, []);
 
   const fetchUserStartTime = useCallback(async () => {
@@ -39,11 +35,16 @@ const useFetchEvents = () => {
     }
   }, []);
 
+  const fetchData = useCallback(async () => {
+    setIsLoading(true);
+    await Promise.all([fetchEvents(), fetchUserStartTime()]);
+    setIsLoading(false);
+  }, [fetchEvents, fetchUserStartTime]);
+
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((user) => {
       if (user) {
-        fetchEvents();
-        fetchUserStartTime();
+        fetchData();
       } else {
         console.warn("No authenticated user found.");
         setIsLoading(false);
@@ -52,7 +53,7 @@ const useFetchEvents = () => {
 
     // Cleanup the subscription on component unmount
     return () => unsubscribe();
-  }, [fetchEvents, fetchUserStartTime]);
+  }, [fetchData]);
 
   return {
     events,
