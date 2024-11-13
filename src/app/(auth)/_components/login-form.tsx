@@ -4,10 +4,10 @@ import { useState, useEffect, useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import {
-  listenForAuthStateChanges,
-  resetPassword,
-} from "@/services/authService";
+// import {
+//   listenForAuthStateChanges,
+//   resetPassword,
+// } from "@/services/authService";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import {
@@ -64,17 +64,17 @@ export default function LoginForm() {
     },
   });
 
-  useEffect(() => {
-    const unsubscribe = listenForAuthStateChanges((user) => {
-      if (user) {
-        setIsAuthenticated(true);
-      } else {
-        setIsAuthenticated(false);
-      }
-    });
+  // useEffect(() => {
+  //   const unsubscribe = listenForAuthStateChanges((user) => {
+  //     if (user) {
+  //       setIsAuthenticated(true);
+  //     } else {
+  //       setIsAuthenticated(false);
+  //     }
+  //   });
 
-    return () => unsubscribe();
-  }, []);
+  //   return () => unsubscribe();
+  // }, []);
 
   const handleLogin = async (data: LoginFormValues) => {
     try {
@@ -120,7 +120,7 @@ export default function LoginForm() {
         "Initiating password reset for email:",
         form.getValues("email")
       );
-      await resetPassword(form.getValues("email"), auth);
+      // await resetPassword(form.getValues("email"), auth);
       setResetDialogOpen(false);
 
       toast.success("Password reset email sent");

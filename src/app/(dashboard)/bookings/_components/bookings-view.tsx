@@ -8,7 +8,7 @@ import {
   fetchBookingsListviewEvents,
   updateFireStoreEvent,
 } from "@/lib/converters/events";
-import { useFirebaseAuth } from "@/services/authService";
+import { useAuth } from "@/context/AuthContext";
 import axios from "axios";
 import {
   collection,
@@ -64,7 +64,7 @@ type SortableKeys = "start" | "end" | "title" | "startDate";
 export default function BookingsView() {
   const { openConfirmation } = useConfirmationStore();
   const [loading, startTransition] = useTransition();
-  const { authUser } = useFirebaseAuth();
+  const { user } = useAuth();
   const [events, setEvents] = useState<EventInput[]>([]);
   const [selectedRows, setSelectedRows] = useState<Set<string>>(new Set());
   const [editingCell, setEditingCell] = useState<{
@@ -86,19 +86,19 @@ export default function BookingsView() {
   const [types, setTypes] = useState<{ docId: string; name: string }[]>([]);
 
   const fetchEvents = useCallback(async () => {
-    if (!authUser) {
+    if (!user) {
       return;
     } else {
-      const eventList = await fetchBookingsListviewEvents(authUser.uid);
+      const eventList = await fetchBookingsListviewEvents(user.uid);
       setEvents(eventList);
       setIsLoading(false);
     }
-  }, [authUser]);
+  }, [user]);
 
   const fetchAllClients = useCallback(async () => {
-    if (authUser) {
+    if (user) {
       // Fetching clients from Firestore
-      const clients = await fetchClients(authUser.uid);
+      const clients = await fetchClients(user.uid);
       //create an array of object with "key": name and value : join firstName field and lastName field
       const clientsArray = clients.map((client) => {
         return {
@@ -108,12 +108,12 @@ export default function BookingsView() {
       });
       setClients(clientsArray);
     }
-  }, [authUser]);
+  }, [user]);
 
   const fetchAllBookingTypes = useCallback(async () => {
-    if (authUser) {
+    if (user) {
       // Fetching booking types from Firestore
-      const types = await fetchBookingTypes(authUser.uid);
+      const types = await fetchBookingTypes(user.uid);
       const typesArray = types.map((type) => {
         return {
           docId: type.docId!,
@@ -123,7 +123,7 @@ export default function BookingsView() {
       console.log("Booking types fetched:", typesArray);
       setTypes(typesArray);
     }
-  }, [authUser]);
+  }, [user]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -421,7 +421,7 @@ export default function BookingsView() {
       }
 
       // Save the updates to Firestore
-      await updateFireStoreEvent(authUser?.uid!, id, updates);
+      await updateFireStoreEvent(user?.uid!, id, updates);
       // await updateDoc(docRef, updates);
 
       // Update local state
@@ -491,7 +491,6 @@ export default function BookingsView() {
     setIsLoading(true); // Start loading
 
     try {
-      const user = authUser;
       if (!user) {
         throw new Error("User not authenticated");
       }
@@ -680,13 +679,7 @@ export default function BookingsView() {
     const confirmDelet = async () => {
       try {
         const batch = writeBatch(db); // Create a Firestore batch operation
-        const eventRef = doc(
-          db,
-          "users",
-          authUser?.uid ?? "",
-          "events",
-          eventId
-        );
+        const eventRef = doc(db, "users", user?.uid ?? "", "events", eventId);
 
         batch.delete(eventRef); // Add delete operation to batch
 
@@ -743,7 +736,7 @@ export default function BookingsView() {
     const confirmDelete = async () => {
       const batch = writeBatch(db);
       selectedRows.forEach((id) => {
-        const docRef = doc(db, "users", authUser?.uid ?? "", "events", id);
+        const docRef = doc(db, "users", user?.uid ?? "", "events", id);
         batch.delete(docRef);
       });
       await batch.commit();
@@ -779,7 +772,6 @@ export default function BookingsView() {
   // Function to clone the event
   const handleCloneClick = async (event: EventInput) => {
     try {
-      const user = authUser;
       if (!user) {
         throw new Error("User not authenticated");
       }

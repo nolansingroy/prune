@@ -1,6 +1,6 @@
 "use client";
 
-import { useFirebaseAuth } from "@/services/authService";
+// import { useFirebaseAuth } from "@/services/authService";
 import React, { useTransition, useEffect, useState } from "react";
 import { doc, getDoc, updateDoc } from "firebase/firestore";
 import { db } from "../../../../../firebase";

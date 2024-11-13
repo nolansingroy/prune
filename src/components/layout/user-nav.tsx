@@ -11,12 +11,12 @@ import {
   DropdownMenuShortcut,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { authLogout, useFirebaseAuth } from "@/services/authService";
+// import { authLogout, useFirebaseAuth } from "@/services/authService";
 // import { signOut, useSession } from 'next-auth/react';
 import { useRouter } from "next/navigation";
 import { getAuth, signOut } from "firebase/auth";
 import { auth } from "../../../firebase";
-import { useAuth } from "../../context/AuthContext";
+import { useAuth } from "@/context/AuthContext";
 
 export function UserNav() {
   const { user } = useAuth();

@@ -38,7 +38,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { EventInput } from "@/interfaces/types";
 import { Switch } from "@headlessui/react";
 import { fetchBookingTypes } from "@/lib/converters/bookingTypes";
-import { useFirebaseAuth } from "@/services/authService";
+import { useAuth } from "@/context/AuthContext";
 import { B } from "@fullcalendar/core/internal-common";
 import { fetchClients } from "@/lib/converters/clients";
 
@@ -90,7 +90,7 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
   editAll = false,
   isLoading,
 }) => {
-  const { authUser } = useFirebaseAuth();
+  const { user } = useAuth();
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
 
@@ -178,9 +178,9 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
   }, [date]);
 
   const fetchBookings = useCallback(async () => {
-    if (authUser) {
+    if (user) {
       // Fetching booking types from Firestore
-      const types = await fetchBookingTypes(authUser.uid);
+      const types = await fetchBookingTypes(user.uid);
       let presetBookings: {
         value: string;
         label: string;
@@ -199,12 +199,12 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
       setFilteredBookings(presetBookings);
       // console.log("Booking types from firebase:", types);
     }
-  }, [authUser]);
+  }, [user]);
 
   const fetchAllClients = useCallback(async () => {
-    if (authUser) {
+    if (user) {
       // Fetching clients from Firestore
-      const clients = await fetchClients(authUser.uid);
+      const clients = await fetchClients(user.uid);
       let presetClients: { value: string; label: string; docId: string }[] = [];
       clients.forEach((cli) => {
         presetClients.push({
@@ -219,7 +219,7 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
       setFilteredClients(presetClients);
       console.log("Clients from firebase:", clients);
     }
-  }, [authUser]);
+  }, [user]);
 
   useEffect(() => {
     fetchBookings();
