@@ -3,6 +3,7 @@ import {
   authMiddleware,
   redirectToHome,
   redirectToLogin,
+  redirectToPath,
 } from "next-firebase-auth-edge";
 import { clientConfig, serverConfig } from "../config";
 
@@ -18,10 +19,10 @@ export async function middleware(request: NextRequest) {
     cookieSignatureKeys: serverConfig.cookieSignatureKeys,
     cookieSerializeOptions: serverConfig.cookieSerializeOptions,
     serviceAccount: serverConfig.serviceAccount,
-    handleValidToken: async ({ token, decodedToken, customToken }, headers) => {
+    handleValidToken: async ({ token, decodedToken }, headers) => {
       // Authenticated user should not be able to access /login, /register and /reset-password routes
       if (PUBLIC_PATHS.includes(request.nextUrl.pathname)) {
-        return NextResponse.redirect(new URL("/calendar", request.url));
+        return redirectToHome(request);
       }
 
       return NextResponse.next({

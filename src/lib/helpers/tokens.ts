@@ -2,6 +2,8 @@ import { getTokens } from "next-firebase-auth-edge";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { clientConfig, serverConfig } from "../../../config";
+import { NextRequest, NextResponse } from "next/server";
+// import {redirectToPath} from 'next-firebase-auth-edge';
 
 export async function getDecodedToken() {
   const tokens = await getTokens(cookies(), {
@@ -17,3 +19,18 @@ export async function getDecodedToken() {
 
   return tokens.decodedToken;
 }
+
+// export function redirectToPath(
+//   request: NextRequest,
+//   path: string,
+//   options: redirectToPath = {shouldClearSearchParams: false}
+// ) {
+//   const url = request.nextUrl.clone();
+//   url.pathname = path;
+
+//   if (options.shouldClearSearchParams) {
+//     url.search = '';
+//   }
+
+//   return NextResponse.redirect(url);
+// }

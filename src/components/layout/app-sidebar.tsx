@@ -70,6 +70,7 @@ export default function AppSidebar({
   children: React.ReactNode;
 }) {
   const [mounted, setMounted] = React.useState(false);
+
   const { authUser } = useFirebaseAuth();
   const { isBelowMd } = useBreakpoint("md");
   const pathname = usePathname();

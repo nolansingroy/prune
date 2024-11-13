@@ -98,7 +98,7 @@ export default function LoginForm() {
       console.log("User logged in successfully with email:", user.email);
       console.log("ID token:", idToken);
       toast.success("Login successful");
-      router.push("/calendar");
+      router.refresh();
     } catch (error: any) {
       toast.error(
         error.message || "An error occurred while logging in. Please try again."
