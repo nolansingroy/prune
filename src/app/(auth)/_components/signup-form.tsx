@@ -90,7 +90,7 @@ export default function SignupForm() {
 
       toast.success("Account created successfully");
 
-      router.push("/dashboard/calendar");
+      router.push("/login");
     } catch (error: any) {
       toast.error(
         error.message ||
@@ -103,7 +103,6 @@ export default function SignupForm() {
   const onSubmit = (data: SignupFormValues) => {
     startTransition(() => {
       handleSignUp(data);
-      // toast.success("Account created successfully");
     });
   };
 

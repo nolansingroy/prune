@@ -14,15 +14,18 @@ import {
 import { authLogout, useFirebaseAuth } from "@/services/authService";
 // import { signOut, useSession } from 'next-auth/react';
 import { useRouter } from "next/navigation";
+import { getAuth, signOut } from "firebase/auth";
+import { auth } from "../../../firebase";
 
 export function UserNav() {
   const { authUser } = useFirebaseAuth();
   const router = useRouter();
   const handleLogOut = async () => {
     try {
-      await authLogout();
+      await signOut(auth);
+      await fetch("/api/logout");
       console.log("User logged out, redirecting...");
-      router.replace("/");
+      router.push("/");
     } catch (error) {
       console.error("Error during logout process:", error);
     }

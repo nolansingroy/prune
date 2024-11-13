@@ -84,9 +84,21 @@ export default function LoginForm() {
         data.password
       );
       const user = userCredential.user;
+      const idToken = await user.getIdToken();
+
+      try {
+        await fetch("/api/login", {
+          headers: {
+            Authorization: `Bearer ${idToken}`,
+          },
+        });
+      } catch (error) {
+        console.error("Failed to send ID token to API", error);
+      }
       console.log("User logged in successfully with email:", user.email);
+      console.log("ID token:", idToken);
       toast.success("Login successful");
-      router.push("dashboard/calendar");
+      router.push("/calendar");
     } catch (error: any) {
       toast.error(
         error.message || "An error occurred while logging in. Please try again."
@@ -99,7 +111,6 @@ export default function LoginForm() {
   const onSubmit = (data: LoginFormValues) => {
     startTransition(() => {
       handleLogin(data);
-      // toast.success("Login successful");
     });
   };
 
