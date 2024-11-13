@@ -33,8 +33,14 @@ import {
   renderEventContent,
   updatEventFormDialog,
 } from "@/lib/helpers/calendar";
+import { DecodedIdToken } from "next-firebase-auth-edge/lib/auth";
 
-export default function FullCalendarComponent() {
+// type FullCalendarProps = {
+//   events: EventInput[];
+//   tokens: DecodedIdToken;
+// };
+
+export default function FullCalendarComponent({}) {
   const { openConfirmation } = useConfirmationStore();
   const calendarRef = useRef<FullCalendar>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
