@@ -19,18 +19,3 @@ export async function getDecodedToken() {
 
   return tokens.decodedToken;
 }
-
-// export function redirectToPath(
-//   request: NextRequest,
-//   path: string,
-//   options: redirectToPath = {shouldClearSearchParams: false}
-// ) {
-//   const url = request.nextUrl.clone();
-//   url.pathname = path;
-
-//   if (options.shouldClearSearchParams) {
-//     url.search = '';
-//   }
-
-//   return NextResponse.redirect(url);
-// }

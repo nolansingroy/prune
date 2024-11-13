@@ -3,8 +3,11 @@ import { Heading } from "@/components/ui/heading";
 import { Separator } from "@/components/ui/separator";
 import { Metadata } from "next";
 import ProfileView from "./_components/profile-view";
+import { getDecodedToken } from "@/lib/helpers/tokens";
 
-export default function Page() {
+export default async function Page() {
+  const tokens = await getDecodedToken();
+
   const title = "Profile Settings";
   const description = "Update your profile settings here.";
   return (
