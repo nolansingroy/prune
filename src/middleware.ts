@@ -4,12 +4,13 @@ import {
   redirectToHome,
   redirectToLogin,
 } from "next-firebase-auth-edge";
-import { clientConfig, serverConfig } from "./config";
+import { clientConfig, serverConfig } from "../config";
 
 const PUBLIC_PATHS = ["/register", "/login"];
 
 export async function middleware(request: NextRequest) {
   return authMiddleware(request, {
+    debug: true,
     loginPath: "/api/login",
     logoutPath: "/api/logout",
     apiKey: clientConfig.apiKey,
