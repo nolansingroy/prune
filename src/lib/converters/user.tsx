@@ -5,6 +5,7 @@ import {
   DocumentData,
   doc,
   getDoc,
+  updateDoc,
 } from "firebase/firestore";
 import { db } from "../../../firebase";
 import { User } from "@/interfaces/user";
@@ -52,4 +53,15 @@ export async function fetchUser(uid: string): Promise<User | undefined> {
     return userSnapshot.data();
   }
   return undefined;
+}
+
+export async function updateUserData(
+  uid: string,
+  data: Partial<User>
+): Promise<void> {
+  const userDocRef = userRef(uid);
+  await updateDoc(userDocRef, {
+    ...data,
+    updated_at: new Date(),
+  });
 }
