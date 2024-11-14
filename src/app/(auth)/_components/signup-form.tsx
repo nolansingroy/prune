@@ -3,7 +3,6 @@
 import React, { useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -77,12 +76,7 @@ export default function SignupForm() {
         console.log("User data:", userData);
         await createUser(userData);
 
-        console.log(
-          "User created successfully with name:",
-          `${data.firstName} ${data.lastName}`
-        );
-
-        toast.success("Account created successfully");
+        toast.success("Account created successfully, please login");
 
         router.push("/login");
       } catch (error: any) {
@@ -103,7 +97,6 @@ export default function SignupForm() {
     const provider = new GoogleAuthProvider();
     try {
       await signInWithPopup(auth, provider);
-      // Handle successful sign-up (e.g., redirect to home page)
     } catch (error: any) {
       console.error("Error signing in with Google:", error.message);
     }
@@ -119,64 +112,73 @@ export default function SignupForm() {
       </CardHeader>
       <CardContent>
         <form onSubmit={form.handleSubmit(onSubmit)} className="grid gap-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div className="grid gap-2">
+          <div className="flex gap-4">
+            <div className="flex-1">
               <Label htmlFor="first-name">First name</Label>
               <Input
                 id="first-name"
                 placeholder="Max"
-                required
                 {...form.register("firstName")}
                 disabled={loading}
               />
+              {form.formState.errors.firstName && (
+                <p className="text-destructive text-sm">
+                  {form.formState.errors.firstName.message}
+                </p>
+              )}
             </div>
-            <div className="grid gap-2">
+            <div className="flex-1">
               <Label htmlFor="last-name">Last name</Label>
               <Input
                 id="last-name"
                 placeholder="Robinson"
-                required
                 {...form.register("lastName")}
                 disabled={loading}
               />
+              {form.formState.errors.lastName && (
+                <p className="text-destructive text-sm">
+                  {form.formState.errors.lastName.message}
+                </p>
+              )}
             </div>
           </div>
           <div className="grid gap-2">
             <Label htmlFor="email">Email</Label>
             <Input
               id="email"
-              type="email"
+              type="text" // Changed from "email" to "text" to disable HTML validation
               placeholder="m@example.com"
-              required
               {...form.register("email")}
               disabled={loading}
             />
+            {form.formState.errors.email && (
+              <p className="text-destructive text-sm">
+                {form.formState.errors.email.message}
+              </p>
+            )}
           </div>
           <div className="grid gap-2">
             <Label htmlFor="password">Password</Label>
             <Input
               id="password"
               type="password"
-              required
               {...form.register("password")}
               disabled={loading}
             />
+            {form.formState.errors.password && (
+              <p className="text-destructive text-sm">
+                {form.formState.errors.password.message}
+              </p>
+            )}
           </div>
           <Button
-            variant={"rebusPro"}
+            variant="rebusPro"
             type="submit"
             className="w-full"
             disabled={loading}
           >
             Create an account
           </Button>
-          {/* <Button
-            variant="outline"
-            className="w-full"
-            onClick={handleGoogleSignUp}
-          >
-            Sign up with Google
-          </Button> */}
         </form>
         <div className="mt-4 text-center text-sm">
           Already have an account?{" "}
