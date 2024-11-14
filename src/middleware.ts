@@ -1,3 +1,5 @@
+//middleware to handle authentication and authorization
+
 import { NextRequest, NextResponse } from "next/server";
 import {
   authMiddleware,
