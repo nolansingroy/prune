@@ -26,24 +26,17 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-
-const formSchema = z.object({
-  firstName: z.string().min(1, { message: "First name is required" }),
-  lastName: z.string().min(1, { message: "Last name is required" }),
-  email: z.string().email({ message: "Enter a valid email address" }),
-  password: z
-    .string()
-    .min(6, { message: "Password must be at least 6 characters" }),
-});
-
-type SignupFormValues = z.infer<typeof formSchema>;
+import {
+  registerFormSchema,
+  registerFormValues,
+} from "@/lib/validations/register-validations";
 
 export default function SignupForm() {
   const [loading, startTransition] = useTransition();
   const router = useRouter();
 
-  const form = useForm<SignupFormValues>({
-    resolver: zodResolver(formSchema),
+  const form = useForm<registerFormValues>({
+    resolver: zodResolver(registerFormSchema),
     defaultValues: {
       firstName: "",
       lastName: "",
@@ -52,58 +45,58 @@ export default function SignupForm() {
     },
   });
 
-  const handleSignUp = async (data: SignupFormValues) => {
-    try {
-      const userCredential = await createUserWithEmailAndPassword(
-        auth,
-        data.email,
-        data.password
-      );
+  const handleSignUp = (data: registerFormValues) => {
+    startTransition(async () => {
+      try {
+        const userCredential = await createUserWithEmailAndPassword(
+          auth,
+          data.email,
+          data.password
+        );
 
-      const user = userCredential.user;
-      await updateProfile(user, {
-        displayName: `${data.firstName} ${data.lastName}`,
-      });
+        const user = userCredential.user;
+        await updateProfile(user, {
+          displayName: `${data.firstName} ${data.lastName}`,
+        });
 
-      const userData = {
-        uid: user.uid,
-        displayName: `${data.firstName} ${data.lastName}`,
-        email: user.email || "",
-        emailVerified: user.emailVerified,
-        firstName: data.firstName,
-        lastName: data.lastName,
-        photoURL: user.photoURL || "",
-        role: "user",
-        loginType: "email",
-        contactPreference: "email",
-        creationTime: Timestamp.now(),
-        updated_at: Timestamp.now(),
-      };
+        const userData = {
+          uid: user.uid,
+          displayName: `${data.firstName} ${data.lastName}`,
+          email: user.email || "",
+          emailVerified: user.emailVerified,
+          firstName: data.firstName,
+          lastName: data.lastName,
+          photoURL: user.photoURL || "",
+          role: "user",
+          loginType: "email",
+          contactPreference: "email",
+          creationTime: Timestamp.now(),
+          updated_at: Timestamp.now(),
+        };
 
-      console.log("User data:", userData);
-      await createUser(userData);
+        console.log("User data:", userData);
+        await createUser(userData);
 
-      console.log(
-        "User created successfully with name:",
-        `${data.firstName} ${data.lastName}`
-      );
+        console.log(
+          "User created successfully with name:",
+          `${data.firstName} ${data.lastName}`
+        );
 
-      toast.success("Account created successfully");
+        toast.success("Account created successfully");
 
-      router.push("/login");
-    } catch (error: any) {
-      toast.error(
-        error.message ||
-          "An error occurred while creating an account. Please try again."
-      );
-      console.error("Error creating user:", error.message);
-    }
+        router.push("/login");
+      } catch (error: any) {
+        toast.error(
+          error.message ||
+            "An error occurred while creating an account. Please try again."
+        );
+        console.error("Error creating user:", error.message);
+      }
+    });
   };
 
-  const onSubmit = (data: SignupFormValues) => {
-    startTransition(() => {
-      handleSignUp(data);
-    });
+  const onSubmit = (data: registerFormValues) => {
+    handleSignUp(data);
   };
 
   const handleGoogleSignUp = async () => {

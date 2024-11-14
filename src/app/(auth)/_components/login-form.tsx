@@ -40,15 +40,10 @@ import { toast } from "sonner";
 import { auth } from "../../../../firebase";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { useRouter } from "next/navigation";
-
-const formSchema = z.object({
-  email: z.string().email({ message: "Enter a valid email address" }),
-  password: z
-    .string()
-    .min(6, { message: "Password must be at least 6 characters" }),
-});
-
-type LoginFormValues = z.infer<typeof formSchema>;
+import {
+  LoginFormValues,
+  loginFormSchema,
+} from "@/lib/validations/login-validations";
 
 export default function LoginForm() {
   const [loading, startTransition] = useTransition();
@@ -57,61 +52,50 @@ export default function LoginForm() {
   const router = useRouter();
 
   const form = useForm<LoginFormValues>({
-    resolver: zodResolver(formSchema),
+    resolver: zodResolver(loginFormSchema),
     defaultValues: {
       email: "",
       password: "",
     },
   });
 
-  // useEffect(() => {
-  //   const unsubscribe = listenForAuthStateChanges((user) => {
-  //     if (user) {
-  //       setIsAuthenticated(true);
-  //     } else {
-  //       setIsAuthenticated(false);
-  //     }
-  //   });
-
-  //   return () => unsubscribe();
-  // }, []);
-
-  const handleLogin = async (data: LoginFormValues) => {
-    try {
-      const userCredential = await signInWithEmailAndPassword(
-        auth,
-        data.email,
-        data.password
-      );
-      const user = userCredential.user;
-      const idToken = await user.getIdToken();
-
+  const handleLogin = (data: LoginFormValues) => {
+    startTransition(async () => {
       try {
-        await fetch("/api/login", {
-          headers: {
-            Authorization: `Bearer ${idToken}`,
-          },
-        });
-      } catch (error) {
-        console.error("Failed to send ID token to API", error);
+        const userCredential = await signInWithEmailAndPassword(
+          auth,
+          data.email,
+          data.password
+        );
+        const user = userCredential.user;
+        const idToken = await user.getIdToken();
+
+        try {
+          await fetch("/api/login", {
+            headers: {
+              Authorization: `Bearer ${idToken}`,
+            },
+          });
+        } catch (error) {
+          console.error("Failed to send ID token to API", error);
+        }
+        console.log("User logged in successfully with email:", user.email);
+        console.log("ID token:", idToken);
+        toast.success("Login successful");
+        router.refresh();
+      } catch (error: any) {
+        toast.error(
+          error.message ||
+            "An error occurred while logging in. Please try again."
+        );
+        console.error("Error logging in:", error.message);
+        console.error(`Error logging in: ${data.email} +  ${data.password}`);
       }
-      console.log("User logged in successfully with email:", user.email);
-      console.log("ID token:", idToken);
-      toast.success("Login successful");
-      router.refresh();
-    } catch (error: any) {
-      toast.error(
-        error.message || "An error occurred while logging in. Please try again."
-      );
-      console.error("Error logging in:", error.message);
-      console.error(`Error logging in: ${data.email} +  ${data.password}`);
-    }
+    });
   };
 
   const onSubmit = (data: LoginFormValues) => {
-    startTransition(() => {
-      handleLogin(data);
-    });
+    handleLogin(data);
   };
 
   const resetPasswordFirebase = async () => {
