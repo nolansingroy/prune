@@ -31,6 +31,7 @@ import {
   LoginFormValues,
   loginFormSchema,
 } from "@/lib/validations/login-validations";
+import { resetPassword } from "@/services/authService";
 
 export default function LoginForm() {
   const [loading, startTransition] = useTransition();
@@ -90,7 +91,7 @@ export default function LoginForm() {
         "Initiating password reset for email:",
         form.getValues("email")
       );
-      // await resetPassword(form.getValues("email"), auth);
+      await resetPassword(form.getValues("email"), auth);
       setResetDialogOpen(false);
       toast.success("Password reset email sent");
     } catch (error: any) {}
