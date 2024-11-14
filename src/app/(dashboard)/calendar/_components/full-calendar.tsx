@@ -9,7 +9,7 @@ import timeGridPlugin from "@fullcalendar/timegrid";
 import rrulePlugin from "@fullcalendar/rrule";
 import { DateSelectArg, EventClickArg } from "@fullcalendar/core";
 import EventFormDialog from "../../../../components/modals/EventFormModal";
-import { auth, db, doc } from "../../../../../firebase";
+import { useAuth } from "@/context/AuthContext";
 import useFetchEvents from "../../../../hooks/useFetchEvents";
 import { EventInput } from "../../../../interfaces/types";
 import { EventResizeDoneArg } from "@fullcalendar/interaction";
@@ -33,8 +33,15 @@ import {
   renderEventContent,
   updatEventFormDialog,
 } from "@/lib/helpers/calendar";
+import { DecodedIdToken } from "next-firebase-auth-edge/lib/auth";
 
-export default function FullCalendarComponent() {
+// type FullCalendarProps = {
+//   events: EventInput[];
+//   tokens: DecodedIdToken;
+// };
+
+export default function FullCalendarComponent({}) {
+  const { user } = useAuth();
   const { openConfirmation } = useConfirmationStore();
   const calendarRef = useRef<FullCalendar>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -79,26 +86,25 @@ export default function FullCalendarComponent() {
     };
   }, []);
 
-  useEffect(() => {
-    const fetchUserStartTime = async () => {
-      const user = auth.currentUser;
-      if (user) {
-        const userDocRef = doc(db, "users", user.uid);
-        const userDoc = await getDoc(userDocRef);
-        if (userDoc.exists()) {
-          const userData = userDoc.data();
-          setUserStartTime(userData.calendarStartTime || "07:00:00");
-        }
-      }
-    };
+  // useEffect(() => {
+  //   const fetchUserStartTime = async () => {
+  //     const user = auth.currentUser;
+  //     if (user) {
+  //       const userDocRef = doc(db, "users", user.uid);
+  //       const userDoc = await getDoc(userDocRef);
+  //       if (userDoc.exists()) {
+  //         const userData = userDoc.data();
+  //         setUserStartTime(userData.calendarStartTime || "07:00:00");
+  //       }
+  //     }
+  //   };
 
-    fetchUserStartTime();
-  }, []);
+  //   fetchUserStartTime();
+  // }, []);
 
   // add event to firestore
   const handleEventResize = async (resizeInfo: EventResizeDoneArg) => {
     try {
-      const user = auth.currentUser;
       if (user) {
         const startDay = resizeInfo.event.start?.toLocaleDateString("en-US", {
           weekday: "long",
@@ -155,7 +161,6 @@ export default function FullCalendarComponent() {
 
   const handleEventDrop = async (dropInfo: EventDropArg) => {
     try {
-      const user = auth.currentUser;
       if (user) {
         const startDay = dropInfo.event.start?.toLocaleDateString("en-US", {
           weekday: "long",
@@ -341,7 +346,6 @@ export default function FullCalendarComponent() {
 
     startTransition(async () => {
       try {
-        const user = auth.currentUser;
         if (!user) {
           throw new Error("User not authenticated");
         }
@@ -578,7 +582,6 @@ export default function FullCalendarComponent() {
       endRecur: string; // YYYY-MM-DD
     };
   }) => {
-    const user = auth.currentUser;
     const userId = user?.uid;
     if (!user) {
       throw new Error("User not authenticated");
@@ -596,8 +599,6 @@ export default function FullCalendarComponent() {
     eventId: string,
     action: string
   ) => {
-    const user = auth.currentUser;
-
     const closeActions = async () => {
       setIsDialogOpen(false);
       setSelectInfo(null);

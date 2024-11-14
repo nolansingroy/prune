@@ -1,6 +1,6 @@
 "use client";
 
-import { useFirebaseAuth } from "@/services/authService";
+// import { useFirebaseAuth } from "@/services/authService";
 import React, { useTransition, useEffect, useState } from "react";
 import { doc, getDoc, updateDoc } from "firebase/firestore";
 import { db } from "../../../../../firebase";
@@ -11,6 +11,7 @@ import { TimePicker12Demo } from "@/components/inputs/time-picker-12h-demo"; // 
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { Period } from "@/components/inputs/time-picker-utils"; // Import the Period type
+import { useAuth } from "@/context/AuthContext";
 
 function convertTo24HourFormat(
   hours: number,
@@ -40,8 +41,9 @@ function convertTo12HourFormat(time24h: string): {
 }
 
 export default function ProfileView() {
+  const { user } = useAuth();
   const [loading, startTransition] = useTransition();
-  const { authUser } = useFirebaseAuth();
+  // const { authUser } = useFirebaseAuth();
   const [userTimezone, setUserTimezone] = useState("");
   const [calendarStartTime, setCalendarStartTime] = useState("07:00:00");
   const [profileData, setProfileData] = useState({
@@ -57,8 +59,8 @@ export default function ProfileView() {
 
   useEffect(() => {
     const fetchUserData = async () => {
-      if (authUser) {
-        const userDocRef = doc(db, "users", authUser.uid);
+      if (user) {
+        const userDocRef = doc(db, "users", user.uid);
         const userDoc = await getDoc(userDocRef);
         if (userDoc.exists()) {
           const userData = userDoc.data();
@@ -82,11 +84,11 @@ export default function ProfileView() {
     };
 
     fetchUserData();
-  }, [authUser]);
+  }, [user]);
 
   const handleSaveProfile = () => {
     try {
-      if (authUser && selectedDate) {
+      if (user && selectedDate) {
         const hours = selectedDate.getHours();
         const minutes = selectedDate.getMinutes();
         const period = hours >= 12 ? "PM" : "AM";
@@ -95,7 +97,7 @@ export default function ProfileView() {
           minutes,
           period
         );
-        const userDocRef = doc(db, "users", authUser.uid);
+        const userDocRef = doc(db, "users", user.uid);
 
         startTransition(async () => {
           await updateDoc(userDocRef, {

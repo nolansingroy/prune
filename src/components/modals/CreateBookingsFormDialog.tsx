@@ -7,7 +7,7 @@ import React, {
   useEffect,
   useCallback,
 } from "react";
-import { auth } from "../../../firebase";
+import { useAuth } from "@/context/AuthContext";
 import {
   Dialog,
   DialogContent,
@@ -105,6 +105,7 @@ const CreateBookingsFormDialog: React.FC<CreateBookingsFormDialogProps> = ({
   eventId,
   isLoading,
 }) => {
+  const { user } = useAuth();
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [date, setDate] = useState("");
@@ -204,9 +205,9 @@ const CreateBookingsFormDialog: React.FC<CreateBookingsFormDialogProps> = ({
   }, [date]);
 
   const fetchBookings = useCallback(async () => {
-    if (auth.currentUser) {
+    if (user) {
       // Fetching booking types from Firestore
-      const types = await fetchBookingTypes(auth.currentUser.uid);
+      const types = await fetchBookingTypes(user.uid);
       let presetBookings: {
         value: string;
         label: string;
@@ -227,12 +228,12 @@ const CreateBookingsFormDialog: React.FC<CreateBookingsFormDialogProps> = ({
       setFilteredBookings(presetBookings);
       // console.log("Booking types from firebase:", types);
     }
-  }, [auth.currentUser]);
+  }, [user]);
 
   const fetchAllClients = useCallback(async () => {
-    if (auth.currentUser) {
+    if (user) {
       // Fetching clients from Firestore
-      const clients = await fetchClients(auth.currentUser.uid);
+      const clients = await fetchClients(user.uid);
       let presetClients: { value: string; label: string; docId: string }[] = [];
       clients.forEach((cli) => {
         presetClients.push({
@@ -247,7 +248,7 @@ const CreateBookingsFormDialog: React.FC<CreateBookingsFormDialogProps> = ({
       setFilteredClients(presetClients);
       console.log("Clients from firebase:", clients);
     }
-  }, [auth.currentUser]);
+  }, [user]);
 
   // useEffect(() => {
   //   console.log("booking type", bookingType);

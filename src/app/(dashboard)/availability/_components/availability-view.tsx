@@ -2,7 +2,7 @@
 
 import React, { useTransition, useCallback, useEffect, useState } from "react";
 import { EventInput } from "@/interfaces/types";
-import { useFirebaseAuth } from "@/services/authService";
+import { useAuth } from "@/context/AuthContext";
 import {
   createFireStoreEvent,
   fetchAvailabilitiesListviewEvents,
@@ -47,7 +47,7 @@ type SortableKeys = "start" | "end" | "title" | "startDate";
 export default function AvailabilityView() {
   const { openConfirmation } = useConfirmationStore();
   const [loading, startTransition] = useTransition();
-  const { authUser } = useFirebaseAuth();
+  const { user } = useAuth();
   const [events, setEvents] = useState<Omit<EventInput, "fee">[]>([]);
   const [selectedRows, setSelectedRows] = useState<Set<string>>(new Set());
   const [editingCell, setEditingCell] = useState<{
@@ -68,15 +68,15 @@ export default function AvailabilityView() {
   const [isLoading, setIsLoading] = useState(false); // New loading state
 
   const fetchEvents = useCallback(async () => {
-    if (!authUser) {
+    if (!user) {
       return;
     } else {
       setIsLoading(true);
-      const eventList = await fetchAvailabilitiesListviewEvents(authUser.uid);
+      const eventList = await fetchAvailabilitiesListviewEvents(user.uid);
       setEvents(eventList);
       setIsLoading(false);
     }
-  }, [authUser]);
+  }, [user]);
 
   useEffect(() => {
     fetchEvents();
@@ -312,7 +312,7 @@ export default function AvailabilityView() {
       }
 
       // Save the updates to Firestore
-      await updateFireStoreEvent(authUser?.uid!, id, updates);
+      await updateFireStoreEvent(user?.uid!, id, updates);
 
       // Update local state
       setEvents((prevEvents) =>
@@ -363,7 +363,6 @@ export default function AvailabilityView() {
 
     startTransition(async () => {
       try {
-        const user = authUser;
         if (!user) {
           throw new Error("User not authenticated");
         }
@@ -559,13 +558,7 @@ export default function AvailabilityView() {
     const confirmDelet = async () => {
       try {
         const batch = writeBatch(db); // Create a Firestore batch operation
-        const eventRef = doc(
-          db,
-          "users",
-          authUser?.uid ?? "",
-          "events",
-          eventId
-        );
+        const eventRef = doc(db, "users", user?.uid ?? "", "events", eventId);
         batch.delete(eventRef);
         await batch.commit();
 
@@ -623,7 +616,7 @@ export default function AvailabilityView() {
     const confirmDelete = async () => {
       const batch = writeBatch(db);
       selectedRows.forEach((id) => {
-        const docRef = doc(db, "users", authUser?.uid ?? "", "events", id);
+        const docRef = doc(db, "users", user?.uid ?? "", "events", id);
         batch.delete(docRef);
       });
       await batch.commit();
@@ -658,7 +651,6 @@ export default function AvailabilityView() {
   // Function to clone the event
   const handleCloneClick = async (event: Omit<EventInput, "fee">) => {
     try {
-      const user = authUser;
       if (!user) {
         throw new Error("User not authenticated");
       }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useFirebaseAuth } from "@/services/authService";
+import { useAuth } from "@/context/AuthContext";
 import {
   collection,
   deleteDoc,
@@ -56,7 +56,7 @@ const initialClientData: Omit<Client, "docId"> = {
 };
 
 export default function ClientsView() {
-  const { authUser } = useFirebaseAuth();
+  const { user } = useAuth();
   const [clients, setClients] = useState<Client[]>([]);
 
   const [newClientData, setNewClientData] = useState(initialClientData); // Form data state
@@ -76,13 +76,8 @@ export default function ClientsView() {
 
   // Fetch clients from the Firestore subcollection
   const fetchClients = async () => {
-    if (authUser) {
-      const clientsCollectionRef = collection(
-        db,
-        "users",
-        authUser.uid,
-        "clients"
-      );
+    if (user) {
+      const clientsCollectionRef = collection(db, "users", user.uid, "clients");
       const clientSnapshot = await getDocs(clientsCollectionRef);
       const clientList = clientSnapshot.docs.map((doc) => ({
         docId: doc.id,
@@ -98,17 +93,12 @@ export default function ClientsView() {
   // Fetch clients on component mount
   useEffect(() => {
     fetchClients();
-  }, [authUser]);
+  }, [user]);
 
   // Save or update client in the 'clients' subcollection
   const handleSaveClient = async () => {
-    if (authUser) {
-      const clientsCollectionRef = collection(
-        db,
-        "users",
-        authUser.uid,
-        "clients"
-      );
+    if (user) {
+      const clientsCollectionRef = collection(db, "users", user.uid, "clients");
       const clientDocRef = editingClientId
         ? doc(clientsCollectionRef, editingClientId)
         : doc(clientsCollectionRef);
@@ -158,8 +148,8 @@ export default function ClientsView() {
 
   // Delete a client from the 'clients' subcollection
   const handleDeleteClient = async (clientId: string) => {
-    if (authUser) {
-      const clientDocRef = doc(db, "users", authUser.uid, "clients", clientId);
+    if (user) {
+      const clientDocRef = doc(db, "users", user.uid, "clients", clientId);
       await deleteDoc(clientDocRef);
 
       // Refresh client list after deletion

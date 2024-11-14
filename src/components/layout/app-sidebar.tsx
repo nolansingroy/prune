@@ -54,7 +54,7 @@ import { Icons } from "../icons";
 import SearchInput from "../search-input";
 import ThemeToggle from "./ThemeToggle/theme-toggle";
 import { UserNav } from "./user-nav";
-import { useFirebaseAuth } from "@/services/authService";
+import { useAuth } from "@/context/AuthContext";
 import { dashboardLogo } from "../../../public";
 import { useBreakpoint } from "@/hooks/useBreakPoints";
 
@@ -70,7 +70,8 @@ export default function AppSidebar({
   children: React.ReactNode;
 }) {
   const [mounted, setMounted] = React.useState(false);
-  const { authUser } = useFirebaseAuth();
+
+  const { user } = useAuth();
   const { isBelowMd } = useBreakpoint("md");
   const pathname = usePathname();
   // Only render after first client-side mount

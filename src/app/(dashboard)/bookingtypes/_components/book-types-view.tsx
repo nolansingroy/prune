@@ -7,7 +7,7 @@ import {
   fetchBookingTypes,
   updateBookingType,
 } from "@/lib/converters/bookingTypes";
-import { useFirebaseAuth } from "@/services/authService";
+import { useAuth } from "@/context/AuthContext";
 import React, { ChangeEvent, useCallback, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -30,7 +30,7 @@ const initialBookingData: BookingTypes = {
 };
 
 export default function BookTypesView() {
-  const { authUser } = useFirebaseAuth();
+  const { user } = useAuth();
   const [bookingTypes, setBookingTypes] = useState<BookingTypes[]>([]);
   const [newBookingData, setNewBookingData] =
     useState<BookingTypes>(initialBookingData);
@@ -40,14 +40,14 @@ export default function BookTypesView() {
   let actionType = editingBookingId ? "edit" : "add";
 
   const fetchTypes = useCallback(async () => {
-    if (authUser) {
+    if (user) {
       // Fetching booking types from Firestore
-      const types = await fetchBookingTypes(authUser.uid);
+      const types = await fetchBookingTypes(user.uid);
       setBookingTypes(types);
       setLoading(false);
       console.log("Booking types from firebase:", types);
     }
-  }, [authUser]);
+  }, [user]);
 
   useEffect(() => {
     console.log("Component mounted or authUser.uid changed");
@@ -61,18 +61,18 @@ export default function BookTypesView() {
 
   const handleSaveBookingType = async () => {
     console.log("actionType:", actionType);
-    if (authUser) {
+    if (user) {
       const { docId, ...bookingDataWithoutId } = newBookingData;
 
       if (actionType === "add") {
-        await addBookingType(authUser.uid, bookingDataWithoutId);
+        await addBookingType(user.uid, bookingDataWithoutId);
         fetchTypes();
         setNewBookingData(initialBookingData);
       }
 
       if (actionType === "edit") {
         // Update booking type in Firestore
-        await updateBookingType(authUser.uid, newBookingData);
+        await updateBookingType(user.uid, newBookingData);
         fetchTypes();
         setNewBookingData(initialBookingData);
         setEditingBookingId(null);
@@ -87,9 +87,9 @@ export default function BookTypesView() {
   };
 
   const handleDeleteBookingType = async (id: string) => {
-    if (authUser) {
+    if (user) {
       // Deleteing booking type from Firestore
-      await deleteBookingType(authUser.uid, id);
+      await deleteBookingType(user.uid, id);
       fetchTypes();
     }
   };
