@@ -55,6 +55,15 @@ import useConfirmationStore from "@/lib/store/confirmationStore";
 import { toast } from "sonner";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { CalendarDatePicker } from "@/components/ui/calendar-date-picker";
+import {
+  endOfMonth,
+  endOfWeek,
+  endOfYear,
+  startOfMonth,
+  startOfWeek,
+  startOfYear,
+  subDays,
+} from "date-fns";
 
 const formatFee = (fee: number): string => {
   return new Intl.NumberFormat("en-US", {
@@ -72,6 +81,7 @@ export default function BookingsView() {
   const { openConfirmation } = useConfirmationStore();
   const [loading, startTransition] = useTransition();
   const { user } = useAuth();
+  const [allEvents, setAllEvents] = useState<EventInput[]>([]);
   const [events, setEvents] = useState<EventInput[]>([]);
   const [selectedRows, setSelectedRows] = useState<Set<string>>(new Set());
   const [editingCell, setEditingCell] = useState<{
@@ -97,8 +107,127 @@ export default function BookingsView() {
   });
   const [selectedLabel, setSelectedLabel] = useState<string>("Future");
 
+  const fetchEvents = useCallback(async () => {
+    if (!user) {
+      return;
+    } else {
+      const eventList = await fetchBookingsListviewEvents(user.uid);
+      setAllEvents(eventList); // Store all events
+      filterEvents("Future", eventList); // Initialize displayed events with "Future" events
+      setIsLoading(false);
+    }
+  }, [user]);
+
+  const filterEvents = (
+    label: string,
+    eventsToFilter: EventInput[] = allEvents
+  ) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    let filteredEvents = eventsToFilter;
+
+    switch (label) {
+      case "Today":
+        filteredEvents = eventsToFilter.filter(
+          (event) => event.start >= today && event.start < subDays(today, -1)
+        );
+        break;
+      case "Yesterday":
+        const yesterday = subDays(today, 1);
+        filteredEvents = eventsToFilter.filter(
+          (event) => event.start >= yesterday && event.start < today
+        );
+        break;
+      case "This Week":
+        const startOfThisWeek = startOfWeek(today, { weekStartsOn: 1 });
+        const endOfThisWeek = endOfWeek(today, { weekStartsOn: 1 });
+        filteredEvents = eventsToFilter.filter(
+          (event) =>
+            event.start >= startOfThisWeek && event.start <= endOfThisWeek
+        );
+        break;
+      case "Last Week":
+        const startOfLastWeek = subDays(
+          startOfWeek(today, { weekStartsOn: 1 }),
+          7
+        );
+        const endOfLastWeek = subDays(endOfWeek(today, { weekStartsOn: 1 }), 7);
+        filteredEvents = eventsToFilter.filter(
+          (event) =>
+            event.start >= startOfLastWeek && event.start <= endOfLastWeek
+        );
+        break;
+      case "Last 7 Days":
+        const last7Days = subDays(today, 6);
+        filteredEvents = eventsToFilter.filter(
+          (event) => event.start >= last7Days && event.start <= today
+        );
+        break;
+      case "This Month":
+        const startOfThisMonth = startOfMonth(today);
+        const endOfThisMonth = endOfMonth(today);
+        filteredEvents = eventsToFilter.filter(
+          (event) =>
+            event.start >= startOfThisMonth && event.start <= endOfThisMonth
+        );
+        break;
+      case "Last Month":
+        const startOfLastMonth = startOfMonth(subDays(today, today.getDate()));
+        const endOfLastMonth = endOfMonth(subDays(today, today.getDate()));
+        filteredEvents = eventsToFilter.filter(
+          (event) =>
+            event.start >= startOfLastMonth && event.start <= endOfLastMonth
+        );
+        break;
+      case "This Year":
+        const startOfThisYear = startOfYear(today);
+        const endOfThisYear = endOfYear(today);
+        filteredEvents = eventsToFilter.filter(
+          (event) =>
+            event.start >= startOfThisYear && event.start <= endOfThisYear
+        );
+        break;
+      case "Last Year":
+        const startOfLastYear = startOfYear(subDays(today, 365));
+        const endOfLastYear = endOfYear(subDays(today, 365));
+        filteredEvents = eventsToFilter.filter(
+          (event) =>
+            event.start >= startOfLastYear && event.start <= endOfLastYear
+        );
+        break;
+      case "Future":
+        filteredEvents = eventsToFilter.filter((event) => event.start >= today);
+        break;
+      case "Past":
+        filteredEvents = eventsToFilter.filter((event) => event.start < today);
+        break;
+      case "All Time":
+        filteredEvents = eventsToFilter;
+        break;
+      default:
+        break;
+    }
+
+    setEvents(filteredEvents);
+  };
+
+  const filterEventsByDateRange = (from: Date, to: Date) => {
+    const filteredEvents = allEvents.filter(
+      (event) => event.start >= from && event.start <= to
+    );
+    setEvents(filteredEvents);
+  };
+
   const handleLabelSelect = (label: string) => {
     setSelectedLabel(label);
+    filterEvents(label);
+  };
+
+  const handleDateSelect = (range: { from: Date; to: Date }) => {
+    setSelectedDateRange(range);
+    setSelectedLabel("Custom"); // Set the label to "Custom" when a manual date range is selected
+    filterEventsByDateRange(range.from, range.to);
   };
 
   const getColorWithOpacity = (color: string, opacity: number) => {
@@ -111,16 +240,6 @@ export default function BookingsView() {
 
   const color = "#007bff"; // Example color, replace with your desired color
   const colorWithOpacity = getColorWithOpacity(color, 0.2);
-
-  const fetchEvents = useCallback(async () => {
-    if (!user) {
-      return;
-    } else {
-      const eventList = await fetchBookingsListviewEvents(user.uid);
-      setEvents(eventList);
-      setIsLoading(false);
-    }
-  }, [user]);
 
   const fetchAllClients = useCallback(async () => {
     if (user) {
@@ -850,7 +969,7 @@ export default function BookingsView() {
           </Badge>
           <CalendarDatePicker
             date={selectedDateRange}
-            onDateSelect={setSelectedDateRange}
+            onDateSelect={handleDateSelect} // Use the updated handler
             onLabelSelect={handleLabelSelect} // Pass the handler
           />
         </div>
