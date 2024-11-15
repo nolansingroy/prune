@@ -1,7 +1,3 @@
-// src/components/calendar-date-picker.tsx
-
-"use client";
-
 import * as React from "react";
 import { CalendarIcon } from "lucide-react";
 import {
@@ -421,21 +417,9 @@ export const CalendarDatePicker = React.forwardRef<
                     <>
                       {formatWithTz(date.from, "MMM dd, yyyy")} -{" "}
                       {formatWithTz(date.to, "MMM dd, yyyy")}
-                      {numberOfMonths === 2 && (
-                        <>
-                          {" "}
-                          ({formatWithTz(date.from, "MMM yyyy")} -{" "}
-                          {formatWithTz(date.to, "MMM yyyy")})
-                        </>
-                      )}
                     </>
                   ) : (
-                    <>
-                      {formatWithTz(date.from, "MMM dd, yyyy")}
-                      {numberOfMonths === 2 && (
-                        <> ({formatWithTz(date.from, "MMM yyyy")})</>
-                      )}
-                    </>
+                    <>{formatWithTz(date.from, "MMM dd, yyyy")}</>
                   )
                 ) : (
                   <span>Pick a date</span>
