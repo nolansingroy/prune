@@ -342,9 +342,8 @@ export default function FullCalendarComponent({}) {
       ? new Date(date).toISOString().split("T")[0]
       : new Date(selectInfo.startStr).toISOString().split("T")[0];
 
-    setIsLoading(true); // Start loading
-
     startTransition(async () => {
+      setIsLoading(true); // Start loading
       try {
         if (!user) {
           throw new Error("User not authenticated");
@@ -628,8 +627,8 @@ export default function FullCalendarComponent({}) {
           cancelLabel: "Cancel",
           actionLabel: "Delete",
           onAction: () => {
-            setIsLoading(true); // Start loading
             startTransition(async () => {
+              setIsLoading(true); // Start loading
               await deleteEvents(user.uid, eventIds);
               await closeActions();
               setIsLoading(false);
@@ -688,8 +687,8 @@ export default function FullCalendarComponent({}) {
               cancelLabel: "Cancel",
               actionLabel: "Delete",
               onAction: () => {
-                setIsLoading(true); // Start loading
                 startTransition(async () => {
+                  setIsLoading(true); // Start loading
                   await deleteEvents(user.uid, validEventIds);
                   await closeActions();
                   setIsLoading(false);
