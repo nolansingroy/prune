@@ -203,7 +203,7 @@ export const fetchBookingsListviewEvents = async (
   const q = query(
     eventRef(userId),
     where("isBackgroundEvent", "==", false),
-    where("start", ">=", today), // Fetch events starting from today onwards
+    // where("start", ">=", today), // Fetch events starting from today onwards
     orderBy("start", "asc") // Ascending order
   );
 

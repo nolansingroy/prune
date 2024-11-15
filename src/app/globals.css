@@ -398,3 +398,9 @@ input {
   width: 100%;
   /* overflow: hidden; */
 }
+
+/* Calendar popover
+------------------------------------------------------------------------*/
+.popover-content-custom {
+  margin-right: 30px;
+}

@@ -36,6 +36,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import {
   Table,
@@ -45,12 +46,15 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Heading } from "@/components/ui/heading";
+import { Separator } from "@/components/ui/separator";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { Trash2 } from "lucide-react";
 import { DataTableSkeleton } from "@/components/loaders/data-table-skeleton";
 import useConfirmationStore from "@/lib/store/confirmationStore";
 import { toast } from "sonner";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import { CalendarDatePicker } from "@/components/ui/calendar-date-picker";
 
 const formatFee = (fee: number): string => {
   return new Intl.NumberFormat("en-US", {
@@ -60,6 +64,9 @@ const formatFee = (fee: number): string => {
   }).format(fee);
 };
 type SortableKeys = "start" | "end" | "title" | "startDate";
+
+const title = "My bookings";
+const description = "Manage your bookings here.";
 
 export default function BookingsView() {
   const { openConfirmation } = useConfirmationStore();
@@ -84,6 +91,26 @@ export default function BookingsView() {
     []
   );
   const [types, setTypes] = useState<{ docId: string; name: string }[]>([]);
+  const [selectedDateRange, setSelectedDateRange] = useState({
+    from: new Date(), // Today's date
+    to: new Date(9999, 11, 31), // Far future date
+  });
+  const [selectedLabel, setSelectedLabel] = useState<string>("Future");
+
+  const handleLabelSelect = (label: string) => {
+    setSelectedLabel(label);
+  };
+
+  const getColorWithOpacity = (color: string, opacity: number) => {
+    const hex = color.replace("#", "");
+    const r = parseInt(hex.substring(0, 2), 16);
+    const g = parseInt(hex.substring(2, 4), 16);
+    const b = parseInt(hex.substring(4, 6), 16);
+    return `rgba(${r}, ${g}, ${b}, ${opacity})`;
+  };
+
+  const color = "#007bff"; // Example color, replace with your desired color
+  const colorWithOpacity = getColorWithOpacity(color, 0.2);
 
   const fetchEvents = useCallback(async () => {
     if (!user) {
@@ -808,102 +835,125 @@ export default function BookingsView() {
   };
 
   return (
-    <div className="w-full relative flex flex-col h-screen">
-      <Input
-        value={search}
-        onChange={(e) => setSearch(e.target.value)}
-        placeholder="Search by type, notes or client"
-        className="mb-4"
-      />
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <Heading title={title} description={description} />
+        <div className="flex items-center">
+          <Badge
+            className="mr-2 py-0 px-1"
+            style={{
+              backgroundColor: colorWithOpacity,
+              color: color,
+            }}
+          >
+            <span className="text-sm font-bold">{selectedLabel}</span>
+          </Badge>
+          <CalendarDatePicker
+            date={selectedDateRange}
+            onDateSelect={setSelectedDateRange}
+            onLabelSelect={handleLabelSelect} // Pass the handler
+          />
+        </div>
+      </div>
 
-      <div className="space-y-4">
-        <ScrollArea className="h-[calc(80vh-220px)] rounded-md border md:h-[calc(90dvh-240px)]">
-          {isLoading && (
-            <div className="flex items-center justify-center min-h-screen">
-              <LoadingSpinner className="w-10 h-10" />
-            </div>
-          )}
-          <Table className="relative">
-            <TableHeader>
-              <TableRow>
-                <TableHead>
-                  <Checkbox
-                    checked={selectedRows.size === filteredEvents.length}
-                    onCheckedChange={(checked: any) =>
-                      handleSelectAllChange(!!checked)
-                    }
-                  />
-                </TableHead>
+      <Separator />
 
-                <TableHead>
-                  <div className="flex items-center">
-                    Date
-                    <button onClick={() => handleSort("startDate")}>
-                      {sortConfig.key === "startDate" &&
-                      sortConfig.direction === "asc" ? (
-                        <CaretSortIcon className="rotate-180" />
-                      ) : (
-                        <CaretSortIcon />
-                      )}
-                    </button>
-                  </div>
-                </TableHead>
+      <div className="w-full relative flex flex-col h-screen">
+        <Input
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Search by type, notes or client"
+          className="mb-4"
+        />
 
-                <TableHead>Day</TableHead>
-
-                <TableHead>
-                  <div className="flex items-center">
-                    Start Time
-                    <button onClick={() => handleSort("start")}>
-                      {sortConfig.key === "start" &&
-                      sortConfig.direction === "asc" ? (
-                        <CaretSortIcon className="rotate-180" />
-                      ) : (
-                        <CaretSortIcon />
-                      )}
-                    </button>
-                  </div>
-                </TableHead>
-
-                <TableHead>
-                  <div className="flex items-center">
-                    End Time
-                    <button onClick={() => handleSort("end")}>
-                      {sortConfig.key === "end" &&
-                      sortConfig.direction === "asc" ? (
-                        <CaretSortIcon className="rotate-180" />
-                      ) : (
-                        <CaretSortIcon />
-                      )}
-                    </button>
-                  </div>
-                </TableHead>
-
-                <TableHead>Duration</TableHead>
-
-                <TableHead>Client</TableHead>
-
-                <TableHead>Booking Type</TableHead>
-                <TableHead>Fee</TableHead>
-                <TableHead>Notes</TableHead>
-                <TableHead>Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-
-            <TableBody>
-              {filteredEvents.map((event) => (
-                <TableRow key={event.id || ""}>
-                  <TableCell>
+        <div className="space-y-4">
+          <ScrollArea className="h-[calc(80vh-220px)] rounded-md border md:h-[calc(90dvh-240px)]">
+            {isLoading && (
+              <div className="flex items-center justify-center min-h-screen">
+                <LoadingSpinner className="w-10 h-10" />
+              </div>
+            )}
+            <Table className="relative">
+              <TableHeader>
+                <TableRow>
+                  <TableHead>
                     <Checkbox
-                      checked={selectedRows.has(event.id || "")}
-                      onCheckedChange={() => toggleRowSelection(event.id!)}
+                      checked={selectedRows.size === filteredEvents.length}
+                      onCheckedChange={(checked: any) =>
+                        handleSelectAllChange(!!checked)
+                      }
                     />
-                  </TableCell>
+                  </TableHead>
 
-                  {/* <TableCell>{event.startDate.toLocaleDateString()}</TableCell> */}
+                  <TableHead>
+                    <div className="flex items-center">
+                      Date
+                      <button onClick={() => handleSort("startDate")}>
+                        {sortConfig.key === "startDate" &&
+                        sortConfig.direction === "asc" ? (
+                          <CaretSortIcon className="rotate-180" />
+                        ) : (
+                          <CaretSortIcon />
+                        )}
+                      </button>
+                    </div>
+                  </TableHead>
 
-                  {/* Display the date and make it editable */}
-                  {/* <TableCell>
+                  <TableHead>Day</TableHead>
+
+                  <TableHead>
+                    <div className="flex items-center">
+                      Start Time
+                      <button onClick={() => handleSort("start")}>
+                        {sortConfig.key === "start" &&
+                        sortConfig.direction === "asc" ? (
+                          <CaretSortIcon className="rotate-180" />
+                        ) : (
+                          <CaretSortIcon />
+                        )}
+                      </button>
+                    </div>
+                  </TableHead>
+
+                  <TableHead>
+                    <div className="flex items-center">
+                      End Time
+                      <button onClick={() => handleSort("end")}>
+                        {sortConfig.key === "end" &&
+                        sortConfig.direction === "asc" ? (
+                          <CaretSortIcon className="rotate-180" />
+                        ) : (
+                          <CaretSortIcon />
+                        )}
+                      </button>
+                    </div>
+                  </TableHead>
+
+                  <TableHead>Duration</TableHead>
+
+                  <TableHead>Client</TableHead>
+
+                  <TableHead>Booking Type</TableHead>
+                  <TableHead>Fee</TableHead>
+                  <TableHead>Notes</TableHead>
+                  <TableHead>Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+
+              <TableBody>
+                {filteredEvents.map((event) => (
+                  <TableRow key={event.id || ""}>
+                    <TableCell>
+                      <Checkbox
+                        checked={selectedRows.has(event.id || "")}
+                        onCheckedChange={() => toggleRowSelection(event.id!)}
+                      />
+                    </TableCell>
+
+                    {/* <TableCell>{event.startDate.toLocaleDateString()}</TableCell> */}
+
+                    {/* Display the date and make it editable */}
+                    {/* <TableCell>
                   {editingCell?.id === event.id &&
                   editingCell?.field === "startDate" ? (
                     <input
@@ -928,221 +978,223 @@ export default function BookingsView() {
                     </div>
                   )}
                 </TableCell> */}
-                  <TableCell>{event.startDate.toLocaleDateString()}</TableCell>
-                  <TableCell>{event.startDay}</TableCell>
+                    <TableCell>
+                      {event.startDate.toLocaleDateString()}
+                    </TableCell>
+                    <TableCell>{event.startDay}</TableCell>
 
-                  <TableCell>
-                    {editingCell?.id === event.id &&
-                    editingCell?.field === "start" ? (
-                      <input
-                        type="time"
-                        value={editedValue}
-                        onChange={handleInputChange}
-                        onBlur={handleBlur}
-                        step="900"
-                        autoFocus
-                      />
-                    ) : (
-                      <div
-                        onClick={() => {
-                          handleCellClick(
-                            event.id!,
-                            "start",
-                            displayTime(event.start),
-                            !!event.recurrence
-                          );
-                          setEditedValue(displayTime(event.start));
-                        }}
-                      >
-                        {displayTimeWithAmPm(event.start)}
-                      </div>
-                    )}
-                  </TableCell>
-
-                  <TableCell>
-                    {editingCell?.id === event.id &&
-                    editingCell?.field === "end" ? (
-                      <input
-                        type="time"
-                        value={editedValue}
-                        onChange={handleInputChange}
-                        onBlur={handleBlur}
-                        step="900"
-                        autoFocus
-                      />
-                    ) : (
-                      <div
-                        onClick={() => {
-                          handleCellClick(
-                            event.id!,
-                            "end",
-                            displayTime(event.end),
-                            !!event.recurrence
-                          );
-                          setEditedValue(displayTime(event.end));
-                        }}
-                      >
-                        {displayTimeWithAmPm(event.end)}
-                      </div>
-                    )}
-                  </TableCell>
-
-                  <TableCell>
-                    {(() => {
-                      const duration = moment.duration(
-                        moment(event.end).diff(moment(event.start))
-                      );
-                      const hours = Math.floor(duration.asHours());
-                      const minutes = duration.minutes();
-
-                      let formattedDuration = "";
-                      if (hours > 0) {
-                        formattedDuration += `${hours} h `;
-                      }
-                      if (minutes > 0) {
-                        formattedDuration += `${minutes} m`;
-                      }
-                      if (hours === 0 && minutes === 0) {
-                        formattedDuration = "0 m";
-                      }
-
-                      return formattedDuration.trim();
-                    })()}
-                  </TableCell>
-
-                  <TableCell>
-                    {editingCell?.id === event.id &&
-                    editingCell?.field === "clientName" ? (
-                      <Input
-                        value={editedValue}
-                        onChange={handleInputChange}
-                        onBlur={handleBlur}
-                        autoFocus
-                      />
-                    ) : (
-                      <span
-                        onClick={() =>
-                          handleCellClick(
-                            event.id!,
-                            "clientName",
-                            event.clientName,
-                            !!event.recurrence
-                          )
-                        }
-                      >
-                        {event.clientName}
-                      </span>
-                    )}
-                  </TableCell>
-
-                  <TableCell>
-                    {editingCell?.id === event.id &&
-                    editingCell?.field === "type" ? (
-                      <Input
-                        value={editedValue}
-                        onChange={handleInputChange}
-                        onBlur={handleBlur}
-                        autoFocus
-                      />
-                    ) : (
-                      <span
-                        onClick={() =>
-                          handleCellClick(
-                            event.id!,
-                            "type",
-                            event.type,
-                            !!event.recurrence
-                          )
-                        }
-                      >
-                        {event.type}
-                      </span>
-                    )}
-                  </TableCell>
-
-                  <TableCell>
-                    {editingCell?.id === event.id &&
-                    editingCell?.field === "fee" ? (
-                      <Input
-                        value={editedValue}
-                        onChange={handleInputChange}
-                        onBlur={handleBlur}
-                        autoFocus
-                      />
-                    ) : (
-                      <span
-                        onClick={() =>
-                          handleCellClick(
-                            event.id!,
-                            "fee",
-                            event.fee.toString(),
-                            !!event.recurrence
-                          )
-                        }
-                      >
-                        {formatFee(event.fee)}
-                      </span>
-                    )}
-                  </TableCell>
-
-                  <TableCell>
-                    {editingCell?.id === event.id &&
-                    editingCell?.field === "description" ? (
-                      <input
-                        value={editedValue}
-                        onChange={handleInputChange}
-                        onBlur={handleBlur}
-                        autoFocus
-                      />
-                    ) : (
-                      <div
-                        onClick={() =>
-                          handleCellClick(
-                            event.id!,
-                            "description",
-                            event.description || "",
-                            !!event.recurrence
-                          )
-                        }
-                      >
-                        {event.description || "No description"}
-                      </div>
-                    )}
-                  </TableCell>
-
-                  <TableCell>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost">
-                          <DotsHorizontalIcon />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent>
-                        {/* Clone Option */}
-                        <DropdownMenuItem
-                          onClick={() => handleCloneClick(event)}
+                    <TableCell>
+                      {editingCell?.id === event.id &&
+                      editingCell?.field === "start" ? (
+                        <input
+                          type="time"
+                          value={editedValue}
+                          onChange={handleInputChange}
+                          onBlur={handleBlur}
+                          step="900"
+                          autoFocus
+                        />
+                      ) : (
+                        <div
+                          onClick={() => {
+                            handleCellClick(
+                              event.id!,
+                              "start",
+                              displayTime(event.start),
+                              !!event.recurrence
+                            );
+                            setEditedValue(displayTime(event.start));
+                          }}
                         >
-                          Clone
-                        </DropdownMenuItem>
-                        {/*  Delete Option */}
-                        <DropdownMenuItem
-                          onClick={() => handleDeleteClick(event.id!)}
-                        >
-                          Delete
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-          <ScrollBar orientation="horizontal" />
-        </ScrollArea>
+                          {displayTimeWithAmPm(event.start)}
+                        </div>
+                      )}
+                    </TableCell>
 
-        <div className="flex justify-between mt-4 p-4">
-          <span>{`${selectedRows.size} of ${events.length} row(s) selected`}</span>
-          {/* <div className="pr-16">
+                    <TableCell>
+                      {editingCell?.id === event.id &&
+                      editingCell?.field === "end" ? (
+                        <input
+                          type="time"
+                          value={editedValue}
+                          onChange={handleInputChange}
+                          onBlur={handleBlur}
+                          step="900"
+                          autoFocus
+                        />
+                      ) : (
+                        <div
+                          onClick={() => {
+                            handleCellClick(
+                              event.id!,
+                              "end",
+                              displayTime(event.end),
+                              !!event.recurrence
+                            );
+                            setEditedValue(displayTime(event.end));
+                          }}
+                        >
+                          {displayTimeWithAmPm(event.end)}
+                        </div>
+                      )}
+                    </TableCell>
+
+                    <TableCell>
+                      {(() => {
+                        const duration = moment.duration(
+                          moment(event.end).diff(moment(event.start))
+                        );
+                        const hours = Math.floor(duration.asHours());
+                        const minutes = duration.minutes();
+
+                        let formattedDuration = "";
+                        if (hours > 0) {
+                          formattedDuration += `${hours} h `;
+                        }
+                        if (minutes > 0) {
+                          formattedDuration += `${minutes} m`;
+                        }
+                        if (hours === 0 && minutes === 0) {
+                          formattedDuration = "0 m";
+                        }
+
+                        return formattedDuration.trim();
+                      })()}
+                    </TableCell>
+
+                    <TableCell>
+                      {editingCell?.id === event.id &&
+                      editingCell?.field === "clientName" ? (
+                        <Input
+                          value={editedValue}
+                          onChange={handleInputChange}
+                          onBlur={handleBlur}
+                          autoFocus
+                        />
+                      ) : (
+                        <span
+                          onClick={() =>
+                            handleCellClick(
+                              event.id!,
+                              "clientName",
+                              event.clientName,
+                              !!event.recurrence
+                            )
+                          }
+                        >
+                          {event.clientName}
+                        </span>
+                      )}
+                    </TableCell>
+
+                    <TableCell>
+                      {editingCell?.id === event.id &&
+                      editingCell?.field === "type" ? (
+                        <Input
+                          value={editedValue}
+                          onChange={handleInputChange}
+                          onBlur={handleBlur}
+                          autoFocus
+                        />
+                      ) : (
+                        <span
+                          onClick={() =>
+                            handleCellClick(
+                              event.id!,
+                              "type",
+                              event.type,
+                              !!event.recurrence
+                            )
+                          }
+                        >
+                          {event.type}
+                        </span>
+                      )}
+                    </TableCell>
+
+                    <TableCell>
+                      {editingCell?.id === event.id &&
+                      editingCell?.field === "fee" ? (
+                        <Input
+                          value={editedValue}
+                          onChange={handleInputChange}
+                          onBlur={handleBlur}
+                          autoFocus
+                        />
+                      ) : (
+                        <span
+                          onClick={() =>
+                            handleCellClick(
+                              event.id!,
+                              "fee",
+                              event.fee.toString(),
+                              !!event.recurrence
+                            )
+                          }
+                        >
+                          {formatFee(event.fee)}
+                        </span>
+                      )}
+                    </TableCell>
+
+                    <TableCell>
+                      {editingCell?.id === event.id &&
+                      editingCell?.field === "description" ? (
+                        <input
+                          value={editedValue}
+                          onChange={handleInputChange}
+                          onBlur={handleBlur}
+                          autoFocus
+                        />
+                      ) : (
+                        <div
+                          onClick={() =>
+                            handleCellClick(
+                              event.id!,
+                              "description",
+                              event.description || "",
+                              !!event.recurrence
+                            )
+                          }
+                        >
+                          {event.description || "No description"}
+                        </div>
+                      )}
+                    </TableCell>
+
+                    <TableCell>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost">
+                            <DotsHorizontalIcon />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent>
+                          {/* Clone Option */}
+                          <DropdownMenuItem
+                            onClick={() => handleCloneClick(event)}
+                          >
+                            Clone
+                          </DropdownMenuItem>
+                          {/*  Delete Option */}
+                          <DropdownMenuItem
+                            onClick={() => handleDeleteClick(event.id!)}
+                          >
+                            Delete
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+            <ScrollBar orientation="horizontal" />
+          </ScrollArea>
+
+          <div className="flex justify-between mt-4 p-4">
+            <span>{`${selectedRows.size} of ${events.length} row(s) selected`}</span>
+            {/* <div className="pr-16">
             <Button
               onClick={deleteSelectedEvents}
               disabled={selectedRows.size === 0}
@@ -1150,36 +1202,37 @@ export default function BookingsView() {
               Delete Selected
             </Button>
           </div> */}
+          </div>
         </div>
-      </div>
 
-      {selectedRows.size > 0 && (
-        <div className="fixed bottom-[calc(4rem+30px)] right-4">
+        {selectedRows.size > 0 && (
+          <div className="fixed bottom-[calc(4rem+30px)] right-4">
+            <button
+              className="p-4 bg-black text-white rounded-full shadow-lg hover:bg-blue-500 focus:outline-none"
+              onClick={deleteSelectedEvents}
+            >
+              <Trash2 className="h-6 w-6" />
+            </button>
+          </div>
+        )}
+
+        <div className="fixed bottom-[calc(1.5rem+10px)] right-4">
           <button
-            className="p-4 bg-black text-white rounded-full shadow-lg hover:bg-blue-500 focus:outline-none"
-            onClick={deleteSelectedEvents}
+            className="p-4 bg-blue-600 text-white rounded-full shadow-lg hover:bg-blue-500 focus:outline-none"
+            onClick={() => setIsDialogOpen(true)}
           >
-            <Trash2 className="h-6 w-6" />
+            <PlusCircledIcon className="h-6 w-6" />
           </button>
         </div>
-      )}
 
-      <div className="fixed bottom-[calc(1.5rem+10px)] right-4">
-        <button
-          className="p-4 bg-blue-600 text-white rounded-full shadow-lg hover:bg-blue-500 focus:outline-none"
-          onClick={() => setIsDialogOpen(true)}
-        >
-          <PlusCircledIcon className="h-6 w-6" />
-        </button>
+        <CreateBookingsFormDialog
+          isOpen={isDialogOpen}
+          onClose={() => setIsDialogOpen(false)}
+          onSave={handleSaveEvent}
+          showDateSelector={true}
+          event={editingEvent}
+        />
       </div>
-
-      <CreateBookingsFormDialog
-        isOpen={isDialogOpen}
-        onClose={() => setIsDialogOpen(false)}
-        onSave={handleSaveEvent}
-        showDateSelector={true}
-        event={editingEvent}
-      />
     </div>
   );
 }
