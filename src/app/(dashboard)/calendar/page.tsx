@@ -7,9 +7,5 @@ export default async function CalendarPage() {
   const tokens = await getDecodedToken();
   console.log(tokens);
 
-  return (
-    <PageContainer className="md:px-0" scrollable={true}>
-      <FullCalendarComponent />
-    </PageContainer>
-  );
+  return <FullCalendarComponent />;
 }
