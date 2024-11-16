@@ -359,9 +359,10 @@ export default function AvailabilityView() {
       ? new Date(eventData.date).toISOString().split("T")[0]
       : new Date().toISOString().split("T")[0];
 
-    setIsLoading(true);
+    // setIsLoading(true);
 
     startTransition(async () => {
+      setIsLoading(true);
       try {
         if (!user) {
           throw new Error("User not authenticated");

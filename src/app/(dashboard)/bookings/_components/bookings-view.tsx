@@ -64,6 +64,7 @@ import {
   startOfYear,
   subDays,
 } from "date-fns";
+import { Switch } from "@/components/ui/switch";
 
 const formatFee = (fee: number): string => {
   return new Intl.NumberFormat("en-US", {
@@ -322,6 +323,10 @@ export default function BookingsView() {
         return;
       }
       let updates: any = {};
+
+      if (field === "paid") {
+        updates[field] = editedValue === "true";
+      }
 
       if (field === "clientName") {
         if (currentEvent.clientName !== editedValue) {
@@ -634,132 +639,148 @@ export default function BookingsView() {
       ? new Date(eventData.date).toISOString().split("T")[0]
       : new Date().toISOString().split("T")[0];
 
-    setIsLoading(true); // Start loading
-
-    try {
-      if (!user) {
-        throw new Error("User not authenticated");
-      }
-
-      // Get the user's time zone
-      const userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-
-      // If this is a recurring event, handle it using the cloud function
-      if (
-        eventData.recurrence &&
-        eventData.recurrence.daysOfWeek &&
-        eventData.recurrence.daysOfWeek.length > 0
-      ) {
-        // Calculate the time zone offsets for start time and end time
-        const startDateTime = new Date(`${startDate}T${eventData.startTime}`);
-        const endDateTime = new Date(`${startDate}T${eventData.endTime}`);
-        const startRecur = new Date(eventData.recurrence.startRecur);
-        const endRecur = new Date(eventData.recurrence.endRecur || startDate);
-        endRecur.setDate(endRecur.getDate() + 1);
-
-        const eventInput = {
-          title: eventData.title || "",
-          type: eventData.type || "No type",
-          typeId: eventData.typeId || "",
-          clientId: eventData.clientId || "",
-          clientName: eventData.clientName || "",
-          description: eventData.description || "",
-          fee: eventData.fee || 0,
-          // location: eventData.location || "",
-          startDate,
-          startTime: eventData.startTime,
-          endTime: eventData.endTime,
-          paid: eventData.paid,
-          recurrence: {
-            daysOfWeek: eventData.recurrence.daysOfWeek,
-            startRecur: startRecur.toISOString().split("T")[0] || startDate,
-            endRecur: endRecur.toISOString().split("T")[0],
-          },
-          userId: user.uid,
-          userTimeZone,
-        };
-
-        console.log(
-          "event data ready for cloud function for recurring bookings",
-          eventInput
-        );
-
-        // Make the axios call to your cloud function
-        // "https://us-central1-prune-94ad9.cloudfunctions.net/createRecurringBookingInstances"
-        // "http://127.0.0.1:5001/prune-94ad9/us-central1/createRecurringBookingInstances",
-        const result = await axios.post(
-          "https://us-central1-prune-94ad9.cloudfunctions.net/createRecurringBookingInstances",
-          eventInput
-        );
-
-        console.log("Recurring event instances created:", result.data);
-      } else {
-        let startDateTime = new Date(`${startDate}T${eventData.startTime}`);
-        let endDateTime = new Date(`${startDate}T${eventData.endTime}`);
-
-        if (eventData.startTime && eventData.endTime) {
-          const [startHour, startMinute] = eventData.startTime
-            .split(":")
-            .map(Number);
-          const [endHour, endMinute] = eventData.endTime.split(":").map(Number);
-
-          // Set the time in UTC
-          startDateTime.setHours(startHour, startMinute, 0, 0);
-          endDateTime.setHours(endHour, endMinute, 0, 0);
-
-          // Ensure end time is after the start time
-          if (endDateTime <= startDateTime) {
-            endDateTime.setDate(endDateTime.getDate() + 1);
-          }
+    startTransition(async () => {
+      setIsLoading(true);
+      try {
+        if (!user) {
+          throw new Error("User not authenticated");
         }
 
-        const startDay = startDateTime.toLocaleDateString("en-US", {
-          weekday: "long",
-        });
+        // Get the user's time zone
+        const userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
-        const endDay = endDateTime.toLocaleDateString("en-US", {
-          weekday: "long",
-        });
+        // If this is a recurring event, handle it using the cloud function
+        if (
+          eventData.recurrence &&
+          eventData.recurrence.daysOfWeek &&
+          eventData.recurrence.daysOfWeek.length > 0
+        ) {
+          // Calculate the time zone offsets for start time and end time
+          const startDateTime = new Date(`${startDate}T${eventData.startTime}`);
+          const endDateTime = new Date(`${startDate}T${eventData.endTime}`);
+          const startRecur = new Date(eventData.recurrence.startRecur);
+          const endRecur = new Date(eventData.recurrence.endRecur || startDate);
+          endRecur.setDate(endRecur.getDate() + 1);
 
-        // Create the event object for a single or background event
-        let event: EventInput = {
-          id: "",
-          title: eventData.title || "",
-          type: eventData.type || "",
-          typeId: eventData.typeId || "",
-          fee: eventData.fee || 0,
-          clientId: eventData.clientId || "",
-          clientName: eventData.clientName || "",
-          // location: eventData.location || "",
-          start: startDateTime,
-          end: endDateTime,
-          description: eventData.description || "",
-          display: "auto",
-          className: "",
-          isBackgroundEvent: false,
-          startDate: startDateTime,
-          startDay: startDay,
-          endDate: endDateTime,
-          endDay: endDay,
-          paid: eventData.paid,
-        };
+          const eventInput = {
+            title: eventData.title || "",
+            type: eventData.type || "No type",
+            typeId: eventData.typeId || "",
+            clientId: eventData.clientId || "",
+            clientName: eventData.clientName || "",
+            description: eventData.description || "",
+            fee: eventData.fee || 0,
+            // location: eventData.location || "",
+            startDate,
+            startTime: eventData.startTime,
+            endTime: eventData.endTime,
+            paid: eventData.paid,
+            recurrence: {
+              daysOfWeek: eventData.recurrence.daysOfWeek,
+              startRecur: startRecur.toISOString().split("T")[0] || startDate,
+              endRecur: endRecur.toISOString().split("T")[0],
+            },
+            userId: user.uid,
+            userTimeZone,
+          };
 
-        console.log("Single event data ready for Firestore:", event);
-        event = removeUndefinedFields(event);
+          console.log(
+            "event data ready for cloud function for recurring bookings",
+            eventInput
+          );
 
-        console.log("Event data before submitting to firebase:", event);
+          // Make the axios call to your cloud function
+          // "https://us-central1-prune-94ad9.cloudfunctions.net/createRecurringBookingInstances"
+          // "http://127.0.0.1:5001/prune-94ad9/us-central1/createRecurringBookingInstances",
 
-        await createFireStoreEvent(user.uid, event);
+          try {
+            const result = await axios.post(
+              "https://us-central1-prune-94ad9.cloudfunctions.net/createRecurringBookingInstances",
+              eventInput
+            );
 
-        console.log("Single event created in Firestore with ID:", event.id);
+            console.log("Recurring bookings instances created:", result.data);
+            toast.success("Recurring bookings added successfully");
+          } catch (error) {
+            console.error("Error saving recurring bookings:", error);
+            toast.error("Error adding recurring bookings");
+          }
+        } else {
+          let startDateTime = new Date(`${startDate}T${eventData.startTime}`);
+          let endDateTime = new Date(`${startDate}T${eventData.endTime}`);
+
+          if (eventData.startTime && eventData.endTime) {
+            const [startHour, startMinute] = eventData.startTime
+              .split(":")
+              .map(Number);
+            const [endHour, endMinute] = eventData.endTime
+              .split(":")
+              .map(Number);
+
+            // Set the time in UTC
+            startDateTime.setHours(startHour, startMinute, 0, 0);
+            endDateTime.setHours(endHour, endMinute, 0, 0);
+
+            // Ensure end time is after the start time
+            if (endDateTime <= startDateTime) {
+              endDateTime.setDate(endDateTime.getDate() + 1);
+            }
+          }
+
+          const startDay = startDateTime.toLocaleDateString("en-US", {
+            weekday: "long",
+          });
+
+          const endDay = endDateTime.toLocaleDateString("en-US", {
+            weekday: "long",
+          });
+
+          // Create the event object for a single or background event
+          let event: EventInput = {
+            id: "",
+            title: eventData.title || "",
+            type: eventData.type || "",
+            typeId: eventData.typeId || "",
+            fee: eventData.fee || 0,
+            clientId: eventData.clientId || "",
+            clientName: eventData.clientName || "",
+            // location: eventData.location || "",
+            start: startDateTime,
+            end: endDateTime,
+            description: eventData.description || "",
+            display: "auto",
+            className: "",
+            isBackgroundEvent: false,
+            startDate: startDateTime,
+            startDay: startDay,
+            endDate: endDateTime,
+            endDay: endDay,
+            paid: eventData.paid,
+          };
+
+          try {
+            console.log("Single event data ready for Firestore:", event);
+            event = removeUndefinedFields(event);
+
+            console.log("Event data before submitting to firebase:", event);
+
+            await createFireStoreEvent(user.uid, event);
+
+            console.log("Single event created in Firestore with ID:", event.id);
+            toast.success("Booking event added successfully");
+          } catch (error) {
+            console.error("Error saving event:", error);
+            toast.error("Error adding booking event");
+          }
+        }
+      } catch (error) {
+        console.error("Error saving event:", error);
+        toast.error("An error occurred while adding the event");
+      } finally {
+        await fetchEvents();
+        setIsLoading(false); // Stop loading
       }
-      // Fetch events again to update the list
-      await fetchEvents();
-    } catch (error) {
-      console.error("Error saving event:", error);
-    } finally {
-      setIsLoading(false); // Stop loading
-    }
+    });
   };
 
   const handleSort = (key: SortableKeys) => {
@@ -1056,6 +1077,7 @@ export default function BookingsView() {
 
                   <TableHead>Booking Type</TableHead>
                   <TableHead>Fee</TableHead>
+                  <TableHead>Payment</TableHead>
                   <TableHead>Notes</TableHead>
                   <TableHead>Actions</TableHead>
                 </TableRow>
@@ -1255,6 +1277,42 @@ export default function BookingsView() {
                         >
                           {formatFee(event.fee)}
                         </span>
+                      )}
+                    </TableCell>
+
+                    <TableCell>
+                      {editingCell?.id === event.id &&
+                      editingCell?.field === "paid" ? (
+                        <input
+                          type="checkbox"
+                          checked={editedValue === "true"}
+                          onChange={(e) =>
+                            setEditedValue(e.target.checked ? "true" : "false")
+                          }
+                          onBlur={handleBlur}
+                          autoFocus
+                        />
+                      ) : (
+                        <Switch
+                          checked={event.paid}
+                          onChange={() =>
+                            handleCellClick(
+                              event.id!,
+                              "paid",
+                              event.paid ? "true" : "false",
+                              !!event.recurrence
+                            )
+                          }
+                          className={`${
+                            event.paid ? "bg-blue-600" : "bg-gray-200"
+                          } relative inline-flex h-6 w-12 items-center rounded-full transition-colors focus:outline-none`}
+                        >
+                          <span
+                            className={`${
+                              event.paid ? "translate-x-6" : "translate-x-1"
+                            } inline-block h-4 w-4 transform bg-white rounded-full transition-transform`}
+                          />
+                        </Switch>
                       )}
                     </TableCell>
 
