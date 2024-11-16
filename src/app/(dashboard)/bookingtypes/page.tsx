@@ -8,8 +8,8 @@ export default function Page() {
   const title = "Booking Types";
   const description = "Manage your booking types here.";
   return (
-    <PageContainer>
-      <div className="space-y-4 mb-5">
+    <PageContainer scrollable>
+      <div className="space-y-4">
         <Heading title={title} description={description} />
         <Separator />
         <BookTypesView />
