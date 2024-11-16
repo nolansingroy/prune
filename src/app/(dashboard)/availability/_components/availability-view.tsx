@@ -691,7 +691,7 @@ export default function AvailabilityView() {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search by title or description"
-          className="mb-4"
+          className="mb-4 text-base input-no-zoom"
         />
       </div>
 

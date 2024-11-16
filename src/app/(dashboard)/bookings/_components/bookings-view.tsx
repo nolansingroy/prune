@@ -1004,7 +1004,7 @@ export default function BookingsView() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search by type, notes or client"
-            className="mb-4"
+            className="mb-4 text-base input-no-zoom"
           />
         </div>
 
