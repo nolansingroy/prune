@@ -39,7 +39,6 @@ import { EventInput } from "@/interfaces/types";
 import { Switch } from "@headlessui/react";
 import { fetchBookingTypes } from "@/lib/converters/bookingTypes";
 import { useAuth } from "@/context/AuthContext";
-import { B } from "@fullcalendar/core/internal-common";
 import { fetchClients } from "@/lib/converters/clients";
 
 interface EventFormDialogProps {
