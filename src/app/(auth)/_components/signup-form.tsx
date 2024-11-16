@@ -120,6 +120,7 @@ export default function SignupForm() {
                 placeholder="Max"
                 {...form.register("firstName")}
                 disabled={loading}
+                className="text-base" // Ensure font size is at least 16px
               />
               {form.formState.errors.firstName && (
                 <p className="text-destructive text-sm">
@@ -134,6 +135,7 @@ export default function SignupForm() {
                 placeholder="Robinson"
                 {...form.register("lastName")}
                 disabled={loading}
+                className="text-base" // Ensure font size is at least 16px
               />
               {form.formState.errors.lastName && (
                 <p className="text-destructive text-sm">
@@ -150,6 +152,7 @@ export default function SignupForm() {
               placeholder="m@example.com"
               {...form.register("email")}
               disabled={loading}
+              className="text-base" // Ensure font size is at least 16px
             />
             {form.formState.errors.email && (
               <p className="text-destructive text-sm">
@@ -164,6 +167,7 @@ export default function SignupForm() {
               type="password"
               {...form.register("password")}
               disabled={loading}
+              className="text-base" // Ensure font size is at least 16px
             />
             {form.formState.errors.password && (
               <p className="text-destructive text-sm">
