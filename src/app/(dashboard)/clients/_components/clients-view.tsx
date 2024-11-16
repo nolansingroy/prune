@@ -27,6 +27,7 @@ import {
 } from "@/components/ui/table";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { PhoneInput } from "@/components/ui/phone-input";
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 
 interface Client {
   docId: string;
@@ -166,141 +167,145 @@ export default function ClientsView() {
   }
 
   return (
-    <div className="space-y-6 bg-white dark:bg-primary-foreground p-6 rounded-lg shadow-sm border">
-      <h2 className="text-2xl font-semibold">
-        {editingClientId ? "Edit Client" : "Add Client"}
-      </h2>
+    <div className="space-y-4">
+      <div className="space-y-6 bg-white dark:bg-primary-foreground p-6 rounded-lg shadow-sm border">
+        <h2 className="text-2xl font-semibold">
+          {editingClientId ? "Edit Client" : "Add Client"}
+        </h2>
+        <div className="space-y-4">
+          {/* Form to add/edit client */}
+          <div className="space-y-2">
+            <Label>First Name</Label>
+            <Input
+              name="firstName"
+              value={newClientData.firstName}
+              onChange={handleInputChange}
+              className="w-full"
+            />
+          </div>
 
-      <div className="space-y-4">
-        {/* Form to add/edit client */}
-        <div className="space-y-2">
-          <Label>First Name</Label>
-          <Input
-            name="firstName"
-            value={newClientData.firstName}
-            onChange={handleInputChange}
-            className="w-full"
-          />
-        </div>
+          <div className="space-y-2">
+            <Label>Last Name</Label>
+            <Input
+              name="lastName"
+              value={newClientData.lastName}
+              onChange={handleInputChange}
+              className="w-full"
+            />
+          </div>
 
-        <div className="space-y-2">
-          <Label>Last Name</Label>
-          <Input
-            name="lastName"
-            value={newClientData.lastName}
-            onChange={handleInputChange}
-            className="w-full"
-          />
-        </div>
-
-        <div className="space-y-2">
-          <Label>Status</Label>
-          <select
-            name="status"
-            value={newClientData.status}
-            onChange={handleInputChange}
-            className="border border-gray-300 rounded-lg p-2 w-full"
-          >
-            <option value="active">Active</option>
-            <option value="pending">Pending</option>
-            <option value="deactivated">Deactivated</option>
-          </select>
-        </div>
-
-        <div className="space-y-2">
-          <Label>Email</Label>
-          <Input
-            name="email"
-            value={newClientData.email}
-            onChange={handleInputChange}
-            className="w-full"
-          />
-        </div>
-
-        <div className="space-y-2">
-          <Label>Phone</Label>
-          <PhoneInput
-            defaultCountry="US"
-            name="phoneNumber"
-            value={newClientData.phoneNumber}
-            onChange={(value) =>
-              setNewClientData((prev) => ({ ...prev, phoneNumber: value }))
-            }
-            className="w-full"
-          />
-        </div>
-
-        {/* Buttons */}
-        <div className="flex space-x-4">
-          <Button
-            variant={"rebusPro"}
-            className="mt-4"
-            onClick={handleSaveClient}
-          >
-            {editingClientId ? "Update Client" : "Add Client"}
-          </Button>
-
-          {editingClientId && (
-            <Button
-              className="mt-4"
-              variant="secondary"
-              onClick={() => {
-                setEditingClientId(null);
-                setNewClientData(initialClientData);
-              }}
+          <div className="space-y-2">
+            <Label>Status</Label>
+            <select
+              name="status"
+              value={newClientData.status}
+              onChange={handleInputChange}
+              className="border border-gray-300 rounded-lg p-2 w-full"
             >
-              Cancel
+              <option value="active">Active</option>
+              <option value="pending">Pending</option>
+              <option value="deactivated">Deactivated</option>
+            </select>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Email</Label>
+            <Input
+              name="email"
+              value={newClientData.email}
+              onChange={handleInputChange}
+              className="w-full"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label>Phone</Label>
+            <PhoneInput
+              defaultCountry="US"
+              name="phoneNumber"
+              value={newClientData.phoneNumber}
+              onChange={(value) =>
+                setNewClientData((prev) => ({ ...prev, phoneNumber: value }))
+              }
+              className="w-full"
+            />
+          </div>
+
+          {/* Buttons */}
+          <div className="flex space-x-4">
+            <Button
+              variant={"rebusPro"}
+              className="mt-4"
+              onClick={handleSaveClient}
+            >
+              {editingClientId ? "Update Client" : "Add Client"}
             </Button>
+
+            {editingClientId && (
+              <Button
+                className="mt-4"
+                variant="secondary"
+                onClick={() => {
+                  setEditingClientId(null);
+                  setNewClientData(initialClientData);
+                }}
+              >
+                Cancel
+              </Button>
+            )}
+          </div>
+        </div>
+
+        {/* Clients List */}
+        <div className="mt-6">
+          <h2 className="text-xl font-semibold">Clients</h2>
+          {clients.length > 0 ? (
+            <ScrollArea className="h-[calc(80vh-220px)] rounded-md border md:h-full md:max-h-full grid">
+              <Table className="mt-4">
+                <TableHeader>
+                  <TableRow>
+                    <TableCell>First Name</TableCell>
+                    <TableCell>Last Name</TableCell>
+                    <TableCell>Email</TableCell>
+                    <TableCell>Phone</TableCell>
+                    <TableCell>Status</TableCell>
+                    {/* <TableCell>Rate</TableCell> */}
+                    <TableCell>Actions</TableCell>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {clients.map((client) => (
+                    <TableRow key={client.docId}>
+                      <TableCell>{client.firstName}</TableCell>
+                      <TableCell>{client.lastName}</TableCell>
+                      <TableCell>{client.email}</TableCell>
+                      <TableCell>{client.phoneNumber}</TableCell>
+                      <TableCell>{client.status}</TableCell>
+                      {/* <TableCell>{client.defaultRate || "N/A"}</TableCell> */}
+                      <TableCell>
+                        <Button
+                          className="mr-2"
+                          onClick={() => handleEditClient(client)}
+                        >
+                          Edit
+                        </Button>
+                        <Button
+                          variant="destructive"
+                          onClick={() => handleDeleteClient(client.docId)}
+                        >
+                          Delete
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+              <ScrollBar orientation="horizontal" />
+            </ScrollArea>
+          ) : (
+            <p>No clients available.</p>
           )}
         </div>
-      </div>
-
-      {/* Clients List */}
-      <div className="mt-6">
-        <h2 className="text-xl font-semibold">Clients</h2>
-        {clients.length > 0 ? (
-          <Table className="mt-4">
-            <TableHeader>
-              <TableRow>
-                <TableCell>First Name</TableCell>
-                <TableCell>Last Name</TableCell>
-                <TableCell>Email</TableCell>
-                <TableCell>Phone</TableCell>
-                <TableCell>Status</TableCell>
-                {/* <TableCell>Rate</TableCell> */}
-                <TableCell>Actions</TableCell>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {clients.map((client) => (
-                <TableRow key={client.docId}>
-                  <TableCell>{client.firstName}</TableCell>
-                  <TableCell>{client.lastName}</TableCell>
-                  <TableCell>{client.email}</TableCell>
-                  <TableCell>{client.phoneNumber}</TableCell>
-                  <TableCell>{client.status}</TableCell>
-                  {/* <TableCell>{client.defaultRate || "N/A"}</TableCell> */}
-                  <TableCell>
-                    <Button
-                      className="mr-2"
-                      onClick={() => handleEditClient(client)}
-                    >
-                      Edit
-                    </Button>
-                    <Button
-                      variant="destructive"
-                      onClick={() => handleDeleteClient(client.docId)}
-                    >
-                      Delete
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        ) : (
-          <p>No clients available.</p>
-        )}
       </div>
     </div>
   );
