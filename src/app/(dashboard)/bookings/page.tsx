@@ -1,12 +1,11 @@
 import { Metadata } from "next";
-import PageContainer from "@/components/layout/page-container";
 
-import BookingsView from "./_components/bookings-view";
+import BookingsListviewPage from "./_components/bookings-listview-page";
+
+export const metadata: Metadata = {
+  title: "Dashboard : Bookings",
+};
 
 export default function Page() {
-  return (
-    <PageContainer scrollable={false}>
-      <BookingsView />
-    </PageContainer>
-  );
+  return <BookingsListviewPage />;
 }

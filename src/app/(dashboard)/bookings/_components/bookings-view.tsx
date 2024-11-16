@@ -955,9 +955,9 @@ export default function BookingsView() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-start justify-between">
         <Heading title={title} description={description} />
-        <div className="flex items-center">
+        <div className="flex items-center pt-4 sm:pt-0">
           <Badge
             className="mr-2 py-0 px-1"
             style={{
@@ -977,16 +977,18 @@ export default function BookingsView() {
 
       <Separator />
 
-      <div className="w-full relative flex flex-col h-screen">
-        <Input
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search by type, notes or client"
-          className="mb-4"
-        />
+      <div className="space-y-4">
+        <div className="flex flex-wrap items-center gap-4">
+          <Input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search by type, notes or client"
+            className="mb-4"
+          />
+        </div>
 
         <div className="space-y-4">
-          <ScrollArea className="h-[calc(80vh-220px)] rounded-md border md:h-[calc(90dvh-240px)]">
+          <ScrollArea className="h-[calc(80vh-220px)] rounded-md border md:h-[calc(90dvh-240px)] grid">
             {isLoading && (
               <div className="flex items-center justify-center min-h-screen">
                 <LoadingSpinner className="w-10 h-10" />
