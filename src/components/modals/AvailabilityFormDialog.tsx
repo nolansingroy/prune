@@ -216,6 +216,7 @@ const AvailabilityDialog: React.FC<AvailabilityDialogProps> = ({
               onChange={(e: ChangeEvent<HTMLInputElement>) =>
                 setTitle(e.target.value)
               }
+              className="text-base input-no-zoom" // Apply custom class
             />
           </div>
           <div>
@@ -227,6 +228,7 @@ const AvailabilityDialog: React.FC<AvailabilityDialogProps> = ({
               onChange={(e: ChangeEvent<HTMLInputElement>) =>
                 setDescription(e.target.value)
               }
+              className="text-base input-no-zoom" // Apply custom class
             />
           </div>
 
@@ -241,7 +243,7 @@ const AvailabilityDialog: React.FC<AvailabilityDialogProps> = ({
                   variant="outline"
                   role="combobox"
                   aria-expanded={open}
-                  className="w-[200px] justify-between"
+                  className="w-[200px] justify-between text-base input-no-zoom" // Apply custom class
                   onClick={() => setOpen(!open)} // Toggle popover on click
                 >
                   {location
@@ -258,7 +260,7 @@ const AvailabilityDialog: React.FC<AvailabilityDialogProps> = ({
                     value={location}
                     onValueChange={handleLocationInputChange}
                     onKeyDown={handleLocationInputKeyPress} // Handle keyboard input
-                    className="h-9"
+                    className="h-9 text-base input-no-zoom" // Apply custom class
                   />
                   <CommandList>
                     <CommandEmpty>No locations found.</CommandEmpty>
@@ -337,7 +339,12 @@ const AvailabilityDialog: React.FC<AvailabilityDialogProps> = ({
             <Label className="block text-sm font-medium text-gray-700">
               Date
             </Label>
-            <Input type="date" value={date} onChange={handleDateChange} />
+            <Input
+              type="date"
+              value={date}
+              onChange={handleDateChange}
+              className="text-base input-no-zoom" // Apply custom class
+            />
           </div>
 
           <div className="flex items-center space-x-6">
@@ -351,7 +358,7 @@ const AvailabilityDialog: React.FC<AvailabilityDialogProps> = ({
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                   setStartTime(e.target.value)
                 }
-                className="w-32 px-2 py-2 text-center rounded-md border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                className="w-32 px-2 py-2 text-center rounded-md border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm text-base input-no-zoom" // Apply custom class
               />
             </div>
             <div className="flex flex-col">
@@ -364,7 +371,7 @@ const AvailabilityDialog: React.FC<AvailabilityDialogProps> = ({
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                   setEndTime(e.target.value)
                 }
-                className="w-32 px-2 py-2 text-center rounded-md border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                className="w-32 px-2 py-2 text-center rounded-md border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm text-base input-no-zoom" // Apply custom class
               />
             </div>
           </div>
@@ -407,6 +414,7 @@ const AvailabilityDialog: React.FC<AvailabilityDialogProps> = ({
                       setStartRecur(e.target.value)
                     }
                     disabled // Disable manual input
+                    className="text-base input-no-zoom" // Apply custom class
                   />
                 </div>
                 <div className="flex flex-col">
@@ -419,6 +427,7 @@ const AvailabilityDialog: React.FC<AvailabilityDialogProps> = ({
                     onChange={(e: ChangeEvent<HTMLInputElement>) =>
                       setEndRecur(e.target.value)
                     }
+                    className="text-base input-no-zoom" // Apply custom class
                   />
                 </div>
               </div>

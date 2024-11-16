@@ -341,3 +341,10 @@ input {
   font-weight: bold; /* Bold text */
   color: #f44336; /* Red color for unpaid status */
 }
+
+/* Custom input class to prevent zooming on mobile while keeping text size consistent */
+.input-no-zoom {
+  font-size: 16px; /* Prevent zooming on mobile */
+  transform: scale(0.875); /* Scale down the text size */
+  transform-origin: left; /* Ensure the text scales from the left */
+}

@@ -566,7 +566,7 @@ const CreateBookingsFormDialog: React.FC<CreateBookingsFormDialogProps> = ({
                     variant="outline"
                     role="combobox"
                     aria-expanded={clientsPopoverOpen}
-                    className="w-[200px] justify-between"
+                    className="w-[200px] justify-between text-base input-no-zoom" // Apply custom class
                     onClick={() => setClientsPopoverOpen(!clientsPopoverOpen)} // Toggle popover on click
                   >
                     {client
@@ -583,7 +583,7 @@ const CreateBookingsFormDialog: React.FC<CreateBookingsFormDialogProps> = ({
                       value={client}
                       onValueChange={handleClientInputChange}
                       onKeyDown={handleClientInputKeyPress} // Handle keyboard input
-                      className="h-9"
+                      className="h-9 text-base input-no-zoom" // Apply custom class
                     />
                     <CommandList>
                       <CommandEmpty>No clients found.</CommandEmpty>
@@ -618,9 +618,6 @@ const CreateBookingsFormDialog: React.FC<CreateBookingsFormDialogProps> = ({
               <Label className="block text-sm font-medium text-gray-700">
                 Payment Status
               </Label>
-              {/* <p className="mt-2 text-sm text-gray-500">
-              Toggle to set the event as Paid or Unpaid.
-            </p> */}
               <div className="flex items-center space-x-2">
                 <span className="text-sm font-medium text-gray-700">
                   {paid ? "Paid" : "Unpaid"}
@@ -657,7 +654,7 @@ const CreateBookingsFormDialog: React.FC<CreateBookingsFormDialogProps> = ({
                     variant="outline"
                     role="combobox"
                     aria-expanded={bookingsPopoverOpen}
-                    className="w-[200px] justify-between"
+                    className="w-[200px] justify-between text-base input-no-zoom" // Apply custom class
                     onClick={() => setBookingsPopoverOpen(!bookingsPopoverOpen)} // Toggle popover on click
                   >
                     {bookingType
@@ -675,7 +672,7 @@ const CreateBookingsFormDialog: React.FC<CreateBookingsFormDialogProps> = ({
                       value={bookingType}
                       onValueChange={handelBookingTypeInputChange}
                       onKeyDown={handelBookingTypeInputKeyPress} // Handle keyboard input
-                      className="h-9"
+                      className="h-9 text-base input-no-zoom" // Apply custom class
                     />
                     <CommandList>
                       <CommandEmpty>No types found.</CommandEmpty>
@@ -722,20 +719,10 @@ const CreateBookingsFormDialog: React.FC<CreateBookingsFormDialogProps> = ({
                 onChange={(e: ChangeEvent<HTMLInputElement>) =>
                   handleBookingFeeInputChange(e.target.value)
                 }
+                className="text-base input-no-zoom" // Apply custom class
               />
             </div>
           </div>
-          {/* <div>
-            <Label className="block text-sm font-medium text-gray-700">
-              Booking Title
-            </Label>
-            <Input
-              value={title}
-              onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                setTitle(e.target.value)
-              }
-            />
-          </div> */}
           <div>
             <Label className="block text-sm font-medium text-gray-700">
               Notes
@@ -745,69 +732,9 @@ const CreateBookingsFormDialog: React.FC<CreateBookingsFormDialogProps> = ({
               onChange={(e: ChangeEvent<HTMLInputElement>) =>
                 setDescription(e.target.value)
               }
+              className="text-base input-no-zoom" // Apply custom class
             />
           </div>
-          {/* location input */}
-          {/* <div>
-            <Label className="block text-sm font-medium text-gray-700">
-              Location
-            </Label>
-            <Popover
-              open={locationPopoverOpen}
-              onOpenChange={setLocationPopoverOpen}
-            >
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  role="combobox"
-                  aria-expanded={locationPopoverOpen}
-                  className="w-[200px] justify-between"
-                  onClick={() => setLocationPopoverOpen(!open)} // Toggle popover on click
-                >
-                  {location
-                    ? presetLocations.find((loc) => loc.value === location)
-                        ?.label || location
-                    : "Select location..."}
-                  <CaretSortIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-[200px] p-0 popover-above-modal">
-                <Command>
-                  <CommandInput
-                    placeholder="Search location..."
-                    value={location}
-                    onValueChange={handleLocationInputChange}
-                    onKeyDown={handleLocationInputKeyPress} // Handle keyboard input
-                    className="h-9"
-                  />
-                  <CommandList>
-                    <CommandEmpty>No locations found.</CommandEmpty>
-                    <CommandGroup>
-                      {filteredLocations.map((loc) => (
-                        <CommandItem
-                          key={loc.value}
-                          value={loc.value}
-                          onSelect={() => {
-                            handleLocationSelect(loc.value); // Set location
-                            setLocationPopoverOpen(false); // Close the popover after selection
-                          }}
-                        >
-                          {loc.label}
-                          <CheckIcon
-                            className={`ml-auto h-4 w-4 ${
-                              location === loc.value
-                                ? "opacity-100"
-                                : "opacity-0"
-                            }`}
-                          />
-                        </CommandItem>
-                      ))}
-                    </CommandGroup>
-                  </CommandList>
-                </Command>
-              </PopoverContent>
-            </Popover>
-          </div> */}
 
           {!editAll && (
             <div className="space-y-2">
@@ -836,7 +763,12 @@ const CreateBookingsFormDialog: React.FC<CreateBookingsFormDialogProps> = ({
             <Label className="block text-sm font-medium text-gray-700">
               Date
             </Label>
-            <Input type="date" value={date} onChange={handleDateChange} />
+            <Input
+              type="date"
+              value={date}
+              onChange={handleDateChange}
+              className="text-base input-no-zoom" // Apply custom class
+            />
           </div>
 
           <div className="flex items-center space-x-6">
@@ -850,7 +782,7 @@ const CreateBookingsFormDialog: React.FC<CreateBookingsFormDialogProps> = ({
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                   setStartTime(e.target.value)
                 }
-                className="w-32 px-2 py-2 text-center rounded-md border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                className="w-32 px-2 py-2 text-center rounded-md border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm text-base input-no-zoom" // Apply custom class
               />
             </div>
             <div className="flex flex-col">
@@ -863,7 +795,7 @@ const CreateBookingsFormDialog: React.FC<CreateBookingsFormDialogProps> = ({
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                   setEndTime(e.target.value)
                 }
-                className="w-32 px-2 py-2 text-center rounded-md border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                className="w-32 px-2 py-2 text-center rounded-md border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm text-base input-no-zoom" // Apply custom class
               />
             </div>
           </div>
@@ -906,6 +838,7 @@ const CreateBookingsFormDialog: React.FC<CreateBookingsFormDialogProps> = ({
                       setStartRecur(e.target.value)
                     }
                     disabled
+                    className="text-base input-no-zoom" // Apply custom class
                   />
                 </div>
                 <div className="flex flex-col">
@@ -918,6 +851,7 @@ const CreateBookingsFormDialog: React.FC<CreateBookingsFormDialogProps> = ({
                     onChange={(e: ChangeEvent<HTMLInputElement>) =>
                       setEndRecur(e.target.value)
                     }
+                    className="text-base input-no-zoom" // Apply custom class
                   />
                 </div>
               </div>

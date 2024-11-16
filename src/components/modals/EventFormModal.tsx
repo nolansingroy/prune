@@ -501,7 +501,7 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
                     variant="outline"
                     role="combobox"
                     aria-expanded={clientsPopoverOpen}
-                    className="w-[200px] justify-between"
+                    className="w-[200px] justify-between text-base input-no-zoom"
                     onClick={() => setClientsPopoverOpen(!clientsPopoverOpen)} // Toggle popover on click
                   >
                     {client
@@ -518,7 +518,7 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
                       value={client}
                       onValueChange={handleClientInputChange}
                       onKeyDown={handleClientInputKeyPress} // Handle keyboard input
-                      className="h-9"
+                      className="h-9 text-base input-no-zoom"
                     />
                     <CommandList>
                       <CommandEmpty>No clients found.</CommandEmpty>
@@ -597,7 +597,7 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
                     variant="outline"
                     role="combobox"
                     aria-expanded={bookingsPopoverOpen}
-                    className="w-[200px] justify-between"
+                    className="w-[200px] justify-between text-base input-no-zoom"
                     onClick={() => setBookingsPopoverOpen(!bookingsPopoverOpen)} // Toggle popover on click
                   >
                     {bookingType
@@ -615,7 +615,7 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
                       value={bookingType}
                       onValueChange={handelBookingTypeInputChange}
                       onKeyDown={handelBookingTypeInputKeyPress} // Handle keyboard input
-                      className="h-9"
+                      className="h-9 text-base input-no-zoom"
                     />
                     <CommandList>
                       <CommandEmpty>No types found.</CommandEmpty>
@@ -661,6 +661,7 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
                 onChange={(e: ChangeEvent<HTMLInputElement>) =>
                   handleBookingFeeInputChange(e.target.value)
                 }
+                className="text-base input-no-zoom"
               />
             </div>
           </div>
@@ -678,6 +679,7 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
                 onChange={(e: ChangeEvent<HTMLInputElement>) =>
                   setTitle(e.target.value)
                 }
+                className="text-base input-no-zoom"
               />
             </div>
           )}
@@ -690,6 +692,7 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
               onChange={(e: ChangeEvent<HTMLInputElement>) =>
                 setDescription(e.target.value)
               }
+              className="text-base input-no-zoom"
             />
           </div>
           {/* Location Input */}
@@ -828,6 +831,7 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
                       setStartRecur(e.target.value)
                     }
                     disabled
+                    className="text-base input-no-zoom"
                   />
                 </div>
                 <div className="flex flex-col">
@@ -840,6 +844,7 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
                     onChange={(e: ChangeEvent<HTMLInputElement>) =>
                       setEndRecur(e.target.value)
                     }
+                    className="text-base input-no-zoom"
                   />
                 </div>
               </div>
@@ -855,7 +860,7 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
               type="date"
               value={date}
               onChange={handleDateChange}
-              className="px-2 py-2 text-center rounded-md border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+              className="px-2 py-2 text-center rounded-md border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm text-base input-no-zoom"
             />
           </div>
 
@@ -870,7 +875,7 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
                 onChange={(e: ChangeEvent<HTMLInputElement>) =>
                   setStartTime(e.target.value)
                 }
-                className="w-32 px-2 py-2 text-center rounded-md border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                className="w-32 px-2 py-2 text-center rounded-md border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm text-base input-no-zoom"
               />
             </div>
             <div className="flex flex-col">
@@ -883,7 +888,7 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
                 onChange={(e: ChangeEvent<HTMLInputElement>) =>
                   setEndTime(e.target.value)
                 }
-                className="w-32 px-2 py-2 text-center rounded-md border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                className="w-32 px-2 py-2 text-center rounded-md border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm text-base input-no-zoom"
               />
             </div>
           </div>
