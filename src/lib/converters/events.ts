@@ -185,6 +185,8 @@ export async function updateFireStoreEvent(
     updated_at: Timestamp.now().toDate(),
   };
 
+  console.log("Updating Firestore with:", { userId, eventId, event });
+
   await updateDoc(eventDocRef, updatedEvent);
 }
 

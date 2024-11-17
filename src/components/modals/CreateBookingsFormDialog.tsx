@@ -626,7 +626,7 @@ const CreateBookingsFormDialog: React.FC<CreateBookingsFormDialogProps> = ({
                   checked={paid}
                   onChange={setPaid}
                   className={`${
-                    paid ? "bg-blue-600" : "bg-gray-200"
+                    paid ? "bg-rebus-green" : "bg-gray-200"
                   } relative inline-flex h-8 w-16 items-center rounded-full transition-colors focus:outline-none`}
                 >
                   <span

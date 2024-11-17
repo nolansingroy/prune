@@ -64,7 +64,7 @@ import {
   startOfYear,
   subDays,
 } from "date-fns";
-import { Switch } from "@/components/ui/switch";
+import { Switch } from "@headlessui/react";
 
 const formatFee = (fee: number): string => {
   return new Intl.NumberFormat("en-US", {
@@ -324,9 +324,9 @@ export default function BookingsView() {
       }
       let updates: any = {};
 
-      if (field === "paid") {
-        updates[field] = editedValue === "true";
-      }
+      // if (field === "paid") {
+      //   updates[field] = editedValue === "true";
+      // }
 
       if (field === "clientName") {
         if (currentEvent.clientName !== editedValue) {
@@ -974,6 +974,31 @@ export default function BookingsView() {
     }
   };
 
+  const handleTogglePaid = async (id: string) => {
+    console.log("Toggling paid status for event ID:", id);
+
+    // Optimistically update the UI
+    const updatedEvents = events.map((event) =>
+      event.id === id ? { ...event, paid: !event.paid } : event
+    );
+    setEvents(updatedEvents);
+
+    // Update Firestore
+    const eventToUpdate = updatedEvents.find((event) => event.id === id);
+    if (eventToUpdate) {
+      try {
+        await updateFireStoreEvent(user?.uid!, id, {
+          paid: eventToUpdate.paid,
+        });
+        console.log("Paid status updated successfully");
+      } catch (error) {
+        console.error("Error updating paid status:", error);
+        // Revert state on failure
+        setEvents(events);
+      }
+    }
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-start justify-between">
@@ -1281,39 +1306,25 @@ export default function BookingsView() {
                     </TableCell>
 
                     <TableCell>
-                      {editingCell?.id === event.id &&
-                      editingCell?.field === "paid" ? (
-                        <input
-                          type="checkbox"
-                          checked={editedValue === "true"}
-                          onChange={(e) =>
-                            setEditedValue(e.target.checked ? "true" : "false")
+                      <Switch
+                        checked={event.paid}
+                        onChange={() => {
+                          if (event.id) {
+                            handleTogglePaid(event.id);
+                          } else {
+                            console.error("No event ID found");
                           }
-                          onBlur={handleBlur}
-                          autoFocus
-                        />
-                      ) : (
-                        <Switch
-                          checked={event.paid}
-                          onChange={() =>
-                            handleCellClick(
-                              event.id!,
-                              "paid",
-                              event.paid ? "true" : "false",
-                              !!event.recurrence
-                            )
-                          }
+                        }}
+                        className={`${
+                          event.paid ? "bg-rebus-green" : "bg-gray-200"
+                        } relative inline-flex h-6 w-10 items-center rounded-full transition-colors focus:outline-none`}
+                      >
+                        <span
                           className={`${
-                            event.paid ? "bg-blue-600" : "bg-gray-200"
-                          } relative inline-flex h-6 w-12 items-center rounded-full transition-colors focus:outline-none`}
-                        >
-                          <span
-                            className={`${
-                              event.paid ? "translate-x-6" : "translate-x-1"
-                            } inline-block h-4 w-4 transform bg-white rounded-full transition-transform`}
-                          />
-                        </Switch>
-                      )}
+                            event.paid ? "translate-x-5" : "translate-x-1"
+                          } inline-block h-4 w-4 transform bg-white rounded-full transition-transform`}
+                        />
+                      </Switch>
                     </TableCell>
 
                     <TableCell>
