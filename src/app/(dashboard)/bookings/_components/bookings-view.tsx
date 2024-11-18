@@ -769,12 +769,12 @@ export default function BookingsView() {
             console.log("Single event created in Firestore with ID:", event.id);
             toast.success("Booking event added successfully");
           } catch (error) {
-            console.error("Error saving event:", error);
+            console.error("Error saving event single:", error);
             toast.error("Error adding booking event");
           }
         }
       } catch (error) {
-        console.error("Error saving event:", error);
+        console.error("Error saving event outer:", error);
         toast.error("An error occurred while adding the event");
       } finally {
         await fetchEvents();

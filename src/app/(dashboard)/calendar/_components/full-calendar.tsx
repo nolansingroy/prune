@@ -55,9 +55,9 @@ export default function FullCalendarComponent({}) {
   const [events, setEvents] = useState<EventInput[]>([]);
   const [userStartTime, setUserStartTime] = useState("07:00:00");
 
-  useEffect(() => {
-    console.log("Calendar re-rendered with key:", calendarKey); // Log calendar re-render
-  }, [calendarKey]);
+  // useEffect(() => {
+  //   // console.log("Calendar re-rendered with key:", calendarKey); // Log calendar re-render
+  // }, [calendarKey]);
 
   const {
     events: fetchedEvents,
@@ -144,7 +144,7 @@ export default function FullCalendarComponent({}) {
             }
             return event;
           });
-          console.log("Updated Events:", updatedEvents); // Log updated events
+          // console.log("Updated Events:", updatedEvents); // Log updated events
           return updatedEvents;
         });
 
@@ -199,7 +199,7 @@ export default function FullCalendarComponent({}) {
             }
             return event;
           });
-          console.log("Updated Events:", updatedEvents); // Log updated events
+          // console.log("Updated Events:", updatedEvents); // Log updated events
           return updatedEvents;
         });
       }
@@ -214,7 +214,7 @@ export default function FullCalendarComponent({}) {
     const defaultStartTimeLocal = new Date(selectInfo.startStr);
     const defaultEndTimeLocal = new Date(selectInfo.endStr);
 
-    console.log("Select Info start date:", defaultStartTimeLocal);
+    // console.log("Select Info start date:", defaultStartTimeLocal);
 
     // Derive the day of the week from startDate
     const defaultStartDay = defaultStartTimeLocal.toLocaleDateString("en-US", {
@@ -822,13 +822,13 @@ export default function FullCalendarComponent({}) {
               eventClick={handleEventClick} // Handle event click to open dialog
               navLinks={true}
               navLinkDayClick={(date) => {
-                console.log("Clicked day:", date);
+                // console.log("Clicked day:", date);
                 calendarRef.current
                   ?.getApi()
                   .changeView("timeGridDay", date.toISOString());
               }}
               navLinkWeekClick={(weekStartDate) => {
-                console.log("Clicked week:", weekStartDate);
+                // console.log("Clicked week:", weekStartDate);
                 calendarRef.current
                   ?.getApi()
                   .changeView("timeGridWeek", weekStartDate.toISOString());

@@ -63,6 +63,19 @@ interface AvailabilityDialogProps {
 //   { value: "location5", label: "Location 5" },
 // ];
 
+// Those bellow values are initialize like this to prevent the safari bug for not inputing date and time values.
+
+const today = new Date();
+const formattedDate = today.toLocaleDateString("en-CA"); // YYYY-MM-DD format
+
+const startTimeToday = new Date(today.setHours(8, 0, 0, 0))
+  .toLocaleTimeString("en-US", { hour12: false })
+  .substring(0, 5); // "08:00"
+
+const endTimeToday = new Date(today.setHours(9, 0, 0, 0))
+  .toLocaleTimeString("en-US", { hour12: false })
+  .substring(0, 5); // "09:00"
+
 const AvailabilityDialog: React.FC<AvailabilityDialogProps> = ({
   isOpen,
   onClose,
@@ -73,14 +86,14 @@ const AvailabilityDialog: React.FC<AvailabilityDialogProps> = ({
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   // const [location, setLocation] = useState("");
-  const [date, setDate] = useState("");
+  const [date, setDate] = useState(formattedDate);
   const [isBackgroundEvent, setIsBackgroundEvent] = useState(true);
-  const [startTime, setStartTime] = useState("");
-  const [endTime, setEndTime] = useState("");
+  const [startTime, setStartTime] = useState(startTimeToday);
+  const [endTime, setEndTime] = useState(endTimeToday);
   const [isRecurring, setIsRecurring] = useState(false);
   const [daysOfWeek, setDaysOfWeek] = useState<number[]>([]);
-  const [startRecur, setStartRecur] = useState("");
-  const [endRecur, setEndRecur] = useState("");
+  const [startRecur, setStartRecur] = useState(formattedDate);
+  const [endRecur, setEndRecur] = useState(formattedDate);
   const [open, setOpen] = useState(false);
   // const [filteredLocations, setFilteredLocations] = useState(presetLocations);
 
@@ -151,6 +164,9 @@ const AvailabilityDialog: React.FC<AvailabilityDialogProps> = ({
     };
 
     console.log("Event passed from availability dialog", eventData);
+    console.log("date from availability dialog", eventData.date);
+    console.log("start time from availability dialog", eventData.startTime);
+    console.log("end time from availability dialog", eventData.endTime);
     onSave(eventData);
     handleClose();
   };
@@ -159,14 +175,14 @@ const AvailabilityDialog: React.FC<AvailabilityDialogProps> = ({
     setTitle("");
     setDescription("");
     // setLocation("");
-    setDate("");
+    setDate(formattedDate);
     setIsBackgroundEvent(true);
-    setStartTime("");
-    setEndTime("");
+    setStartTime(startTimeToday);
+    setEndTime(endTimeToday);
     setIsRecurring(false); // Reset to false to avoid unintended recurring events
     setDaysOfWeek([]);
-    setStartRecur("");
-    setEndRecur("");
+    setStartRecur(formattedDate);
+    setEndRecur(formattedDate);
     onClose();
   };
 
@@ -206,7 +222,7 @@ const AvailabilityDialog: React.FC<AvailabilityDialogProps> = ({
               : "Create a new availability event"}
           </DialogDescription>
         </DialogHeader>
-        <div className="space-y-4">
+        <form className="space-y-4">
           <div>
             <Label className="block text-sm font-medium text-gray-700">
               Title
@@ -321,7 +337,7 @@ const AvailabilityDialog: React.FC<AvailabilityDialogProps> = ({
             <div className="flex items-center space-x-2">
               <Checkbox
                 checked={isRecurring}
-                onCheckedChange={(checked) =>
+                onCheckedChange={(checked: any) =>
                   setIsRecurring(checked !== "indeterminate" && checked)
                 }
                 id="recurringEventCheckbox"
@@ -340,6 +356,11 @@ const AvailabilityDialog: React.FC<AvailabilityDialogProps> = ({
               Date
             </Label>
             <Input
+              aria-autocomplete="none"
+              // id="search"
+              // name="search"
+              // autoComplete="off"
+              // placeholder="yyyy-mm-dd"
               type="date"
               value={date}
               onChange={handleDateChange}
@@ -353,9 +374,11 @@ const AvailabilityDialog: React.FC<AvailabilityDialogProps> = ({
                 Start Time
               </Label>
               <Input
+                // id="search"
+                // name="search"
                 type="time"
                 value={startTime}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                onChange={(e: ChangeEvent<HTMLInputElement>) =>
                   setStartTime(e.target.value)
                 }
                 className="w-32 px-2 py-2 text-center rounded-md border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm text-base input-no-zoom" // Apply custom class
@@ -366,9 +389,11 @@ const AvailabilityDialog: React.FC<AvailabilityDialogProps> = ({
                 End Time
               </Label>
               <Input
+                // id="search"
+                // name="search"
                 type="time"
                 value={endTime}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                onChange={(e: ChangeEvent<HTMLInputElement>) =>
                   setEndTime(e.target.value)
                 }
                 className="w-32 px-2 py-2 text-center rounded-md border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm text-base input-no-zoom" // Apply custom class
@@ -387,7 +412,7 @@ const AvailabilityDialog: React.FC<AvailabilityDialogProps> = ({
                     <div key={day} className="flex flex-col items-center">
                       <Checkbox
                         checked={daysOfWeek.includes(day)}
-                        onCheckedChange={(checked) =>
+                        onCheckedChange={(checked: any) =>
                           setDaysOfWeek((prev) =>
                             checked
                               ? [...prev, day]
@@ -408,6 +433,8 @@ const AvailabilityDialog: React.FC<AvailabilityDialogProps> = ({
                     Start Recurrence
                   </Label>
                   <Input
+                    // id="search"
+                    // name="search"
                     type="date"
                     value={startRecur}
                     onChange={(e: ChangeEvent<HTMLInputElement>) =>
@@ -422,6 +449,8 @@ const AvailabilityDialog: React.FC<AvailabilityDialogProps> = ({
                     End Recurrence
                   </Label>
                   <Input
+                    // id="search"
+                    // name="search"
                     type="date"
                     value={endRecur}
                     onChange={(e: ChangeEvent<HTMLInputElement>) =>
@@ -433,7 +462,7 @@ const AvailabilityDialog: React.FC<AvailabilityDialogProps> = ({
               </div>
             </>
           )}
-        </div>
+        </form>
 
         <DialogFooter className="flex flex-col space-y-2 sm:flex-row sm:space-y-0 sm:space-x-2">
           <Button

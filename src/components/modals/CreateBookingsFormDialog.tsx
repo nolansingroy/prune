@@ -779,7 +779,7 @@ const CreateBookingsFormDialog: React.FC<CreateBookingsFormDialogProps> = ({
               <Input
                 type="time"
                 value={startTime}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                onChange={(e: ChangeEvent<HTMLInputElement>) =>
                   setStartTime(e.target.value)
                 }
                 className="w-32 px-2 py-2 text-center rounded-md border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm text-base input-no-zoom" // Apply custom class
@@ -792,7 +792,7 @@ const CreateBookingsFormDialog: React.FC<CreateBookingsFormDialogProps> = ({
               <Input
                 type="time"
                 value={endTime}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                onChange={(e: ChangeEvent<HTMLInputElement>) =>
                   setEndTime(e.target.value)
                 }
                 className="w-32 px-2 py-2 text-center rounded-md border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm text-base input-no-zoom" // Apply custom class
