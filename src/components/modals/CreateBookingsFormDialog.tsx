@@ -94,6 +94,17 @@ interface CreateBookingsFormDialogProps {
 //   { value: "location5", label: "Location 5" },
 // ];
 
+const today = new Date();
+const formattedDate = today.toLocaleDateString("en-CA"); // YYYY-MM-DD format
+
+const startTimeToday = new Date(today.setHours(8, 0, 0, 0))
+  .toLocaleTimeString("en-US", { hour12: false })
+  .substring(0, 5); // "08:00"
+
+const endTimeToday = new Date(today.setHours(9, 0, 0, 0))
+  .toLocaleTimeString("en-US", { hour12: false })
+  .substring(0, 5); // "09:00"
+
 const CreateBookingsFormDialog: React.FC<CreateBookingsFormDialogProps> = ({
   isOpen,
   onClose,
@@ -108,13 +119,13 @@ const CreateBookingsFormDialog: React.FC<CreateBookingsFormDialogProps> = ({
   const { user } = useAuth();
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [date, setDate] = useState("");
-  const [startTime, setStartTime] = useState("");
-  const [endTime, setEndTime] = useState("");
+  const [date, setDate] = useState(formattedDate);
+  const [startTime, setStartTime] = useState(startTimeToday);
+  const [endTime, setEndTime] = useState(endTimeToday);
   const [isRecurring, setIsRecurring] = useState(false);
   const [daysOfWeek, setDaysOfWeek] = useState<number[]>([]);
-  const [startRecur, setStartRecur] = useState("");
-  const [endRecur, setEndRecur] = useState("");
+  const [startRecur, setStartRecur] = useState(formattedDate);
+  const [endRecur, setEndRecur] = useState(formattedDate);
   // Location state
   // const [location, setLocation] = useState("");
   // const [locationPopoverOpen, setLocationPopoverOpen] = useState(false);
@@ -343,7 +354,10 @@ const CreateBookingsFormDialog: React.FC<CreateBookingsFormDialogProps> = ({
         : updatedEventData // Update only changed fields
       : newEventData; // Create new event
 
-    console.log("Event data to passed from CreatBookingsDialog", eventData);
+    console.log("Event passed from bookings dialog", eventData);
+    console.log("date from bookings dialog", eventData.date);
+    console.log("start time from bookings dialog", eventData.startTime);
+    console.log("end time from bookings dialog", eventData.endTime);
 
     onSave(eventData, event?.id);
     handleClose();
@@ -353,13 +367,13 @@ const CreateBookingsFormDialog: React.FC<CreateBookingsFormDialogProps> = ({
     setTitle("");
     setDescription("");
     // setLocation("");
-    setDate("");
-    setStartTime("");
-    setEndTime("");
+    setDate(formattedDate);
+    setStartTime(startTimeToday);
+    setEndTime(endTimeToday);
     setIsRecurring(false); // Reset to false to avoid unintended recurring events
     setDaysOfWeek([]);
-    setStartRecur("");
-    setEndRecur("");
+    setStartRecur(formattedDate);
+    setEndRecur(formattedDate);
     setBookingType("");
     setTypeId("");
     setBookingFee("");
