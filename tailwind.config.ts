@@ -65,6 +65,8 @@ const config = {
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
         },
+        // rebusPro colors
+        "rebus-green": "#1fce88",
       },
       borderRadius: {
         lg: "var(--radius)",

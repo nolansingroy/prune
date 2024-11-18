@@ -359,9 +359,10 @@ export default function AvailabilityView() {
       ? new Date(eventData.date).toISOString().split("T")[0]
       : new Date().toISOString().split("T")[0];
 
-    setIsLoading(true);
+    // setIsLoading(true);
 
     startTransition(async () => {
+      setIsLoading(true);
       try {
         if (!user) {
           throw new Error("User not authenticated");
@@ -690,7 +691,7 @@ export default function AvailabilityView() {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search by title or description"
-          className="mb-4"
+          className="mb-4 text-base input-no-zoom"
         />
       </div>
 
