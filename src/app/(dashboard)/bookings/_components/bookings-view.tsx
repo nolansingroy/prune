@@ -65,6 +65,7 @@ import {
   subDays,
 } from "date-fns";
 import { Switch } from "@headlessui/react";
+import { StatusFilter } from "@/components/status-filter";
 
 const formatFee = (fee: number): string => {
   return new Intl.NumberFormat("en-US", {
@@ -107,6 +108,7 @@ export default function BookingsView() {
     to: new Date(9999, 11, 31), // Far future date
   });
   const [selectedLabel, setSelectedLabel] = useState<string>("Future");
+  const [statusFilter, setStatusFilter] = useState<string>("");
 
   const fetchEvents = useCallback(async () => {
     if (!user) {
@@ -210,6 +212,12 @@ export default function BookingsView() {
         break;
     }
 
+    if (statusFilter === "paid") {
+      filteredEvents = filteredEvents.filter((event) => event.paid);
+    } else if (statusFilter === "unpaid") {
+      filteredEvents = filteredEvents.filter((event) => !event.paid);
+    }
+
     setEvents(filteredEvents);
   };
 
@@ -223,6 +231,11 @@ export default function BookingsView() {
   const handleLabelSelect = (label: string) => {
     setSelectedLabel(label);
     filterEvents(label);
+  };
+
+  const handleStatusFilterChange = (value: string) => {
+    setStatusFilter(value);
+    filterEvents(selectedLabel);
   };
 
   const handleDateSelect = (range: { from: Date; to: Date }) => {
@@ -1018,6 +1031,8 @@ export default function BookingsView() {
             onDateSelect={handleDateSelect} // Use the updated handler
             onLabelSelect={handleLabelSelect} // Pass the handler
           />
+
+          <StatusFilter />
         </div>
       </div>
 
