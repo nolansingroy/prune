@@ -359,9 +359,10 @@ export default function AvailabilityView() {
       ? new Date(eventData.date).toISOString().split("T")[0]
       : new Date().toISOString().split("T")[0];
 
-    setIsLoading(true);
+    // setIsLoading(true);
 
     startTransition(async () => {
+      setIsLoading(true);
       try {
         if (!user) {
           throw new Error("User not authenticated");
@@ -684,16 +685,18 @@ export default function AvailabilityView() {
   };
 
   return (
-    <div className="w-full relative flex flex-col h-screen">
-      <Input
-        value={search}
-        onChange={(e) => setSearch(e.target.value)}
-        placeholder="Search by title or description"
-        className="mb-4"
-      />
+    <div className="space-y-4">
+      <div className="flex flex-wrap items-center gap-4">
+        <Input
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Search by title or description"
+          className="mb-4 text-base input-no-zoom"
+        />
+      </div>
 
       <div className="space-y-4">
-        <ScrollArea className="h-[calc(80vh-220px)] rounded-md border md:h-[calc(90dvh-240px)]">
+        <ScrollArea className="h-[calc(80vh-220px)] rounded-md border md:h-[calc(90dvh-240px)] grid">
           {isLoading && (
             <div className="flex items-center justify-center min-h-screen">
               <LoadingSpinner className="w-10 h-10" />
@@ -772,35 +775,8 @@ export default function AvailabilityView() {
                       onCheckedChange={() => toggleRowSelection(event.id!)}
                     />
                   </TableCell>
-
-                  {/* <TableCell>
-                  {editingCell?.id === event.id &&
-                  editingCell?.field === "startDate" ? (
-                    <input
-                      type="date"
-                      value={editedValue}
-                      onChange={handleInputChange}
-                      onBlur={handleBlur}
-                      autoFocus
-                    />
-                  ) : (
-                    <div
-                      onClick={() =>
-                        handleCellClick(
-                          event.id!,
-                          "startDate",
-                          event.startDate.toISOString().split("T")[0],
-                          !!event.recurrence
-                        )
-                      }
-                    >
-                      {event.startDate.toLocaleDateString()}
-                    </div>
-                  )}
-                </TableCell> */}
                   <TableCell>{event.startDate.toLocaleDateString()}</TableCell>
                   <TableCell>{event.startDay}</TableCell>
-
                   <TableCell>
                     {editingCell?.id === event.id &&
                     editingCell?.field === "start" ? (
@@ -828,7 +804,6 @@ export default function AvailabilityView() {
                       </div>
                     )}
                   </TableCell>
-
                   <TableCell>
                     {editingCell?.id === event.id &&
                     editingCell?.field === "end" ? (
@@ -856,7 +831,6 @@ export default function AvailabilityView() {
                       </div>
                     )}
                   </TableCell>
-
                   <TableCell>
                     {(() => {
                       const duration = moment.duration(
@@ -879,7 +853,6 @@ export default function AvailabilityView() {
                       return formattedDuration.trim();
                     })()}
                   </TableCell>
-
                   <TableCell>
                     {editingCell?.id === event.id &&
                     editingCell?.field === "title" ? (
@@ -904,7 +877,6 @@ export default function AvailabilityView() {
                       </div>
                     )}
                   </TableCell>
-
                   <TableCell>
                     {editingCell?.id === event.id &&
                     editingCell?.field === "description" ? (
@@ -929,7 +901,6 @@ export default function AvailabilityView() {
                       </div>
                     )}
                   </TableCell>
-
                   <TableCell>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
@@ -938,11 +909,6 @@ export default function AvailabilityView() {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent>
-                        {/* Clone Option */}
-                        {/* <DropdownMenuItem onClick={() => handleCloneClick(event)}>
-                        Clone
-                      </DropdownMenuItem> */}
-                        {/*  Delete Option */}
                         <DropdownMenuItem
                           onClick={() => handleDeleteClick(event.id!)}
                         >
@@ -961,14 +927,6 @@ export default function AvailabilityView() {
 
       <div className="flex justify-between mt-4 p-4">
         <span>{`${selectedRows.size} of ${events.length} row(s) selected`}</span>
-        {/* <div className="pr-16">
-          <Button
-            onClick={deleteSelectedEvents}
-            disabled={selectedRows.size === 0}
-          >
-            Delete Selected
-          </Button>
-        </div> */}
       </div>
 
       {selectedRows.size > 0 && (

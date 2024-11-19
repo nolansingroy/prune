@@ -111,9 +111,10 @@ export default function LoginForm() {
             <Label htmlFor="email">Email</Label>
             <Input
               id="email"
-              type="text" // Changed from "email" to "text"
+              type="text"
               {...register("email")}
               disabled={loading}
+              className="text-base" // Ensure font size is at least 16px
             />
             {errors.email && (
               <p className="text-destructive text-sm">{errors.email.message}</p>
@@ -145,6 +146,7 @@ export default function LoginForm() {
                       placeholder="Enter your email"
                       {...register("email")}
                       disabled={loading}
+                      className="text-base" // Ensure font size is at least 16px
                     />
                   </div>
                   <DialogFooter>
@@ -160,6 +162,7 @@ export default function LoginForm() {
               type="password"
               {...register("password")}
               disabled={loading}
+              className="text-base" // Ensure font size is at least 16px
             />
             {errors.password && (
               <p className="text-destructive text-sm">

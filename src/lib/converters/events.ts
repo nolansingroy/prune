@@ -121,7 +121,7 @@ export async function fetchFirestoreEvents(
     return [];
   }
 
-  console.log("Fetching events...");
+  // console.log("Fetching events...");
   const q = query(eventRef(userUid.uid));
   const querySnapshot = await getDocs(q);
   console.log(
@@ -150,7 +150,7 @@ export async function fetchFirestoreEvents(
     })
   );
 
-  console.log("Events fetched:", eventsData);
+  // console.log("Events fetched:", eventsData);
   return eventsData;
 }
 
@@ -185,6 +185,8 @@ export async function updateFireStoreEvent(
     updated_at: Timestamp.now().toDate(),
   };
 
+  console.log("Updating Firestore with:", { userId, eventId, event });
+
   await updateDoc(eventDocRef, updatedEvent);
 }
 
@@ -203,7 +205,7 @@ export const fetchBookingsListviewEvents = async (
   const q = query(
     eventRef(userId),
     where("isBackgroundEvent", "==", false),
-    where("start", ">=", today), // Fetch events starting from today onwards
+    // where("start", ">=", today), // Fetch events starting from today onwards
     orderBy("start", "asc") // Ascending order
   );
 
@@ -294,7 +296,7 @@ export const fetchAvailabilitiesListviewEvents = async (
 
   querySnapshot.docs.forEach((doc) => {
     const data = doc.data();
-    console.log("Event data:", data);
+    // console.log("Event data:", data);
     const start =
       data.start instanceof Timestamp
         ? data.start.toDate()

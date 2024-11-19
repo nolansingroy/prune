@@ -20,6 +20,7 @@ import {
   TableHeader,
 } from "@/components/ui/table";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 
 const initialBookingData: BookingTypes = {
   docId: "",
@@ -103,157 +104,168 @@ export default function BookTypesView() {
   }
 
   return (
-    <div className="space-y-6 bg-white dark:bg-primary-foreground p-6 rounded-lg shadow-sm border">
-      <h2 className="text-2xl font-semibold">
-        {editingBookingId ? "Edit Booking type" : "Create Booking type"}
-      </h2>
-      <div className="space-y-4">
-        <Label className="block text-lg font-medium text-gray-700">Name</Label>
-        <Input
-          value={newBookingData.name}
-          onChange={(e: ChangeEvent<HTMLInputElement>) =>
-            setNewBookingData({ ...newBookingData, name: e.target.value })
-          }
-          placeholder="Enter booking type name"
-        />
-        <Label className="block text-lg font-medium text-gray-700">
-          Default Duration (minutes)
-        </Label>
-        <Input
-          type="number"
-          value={newBookingData.duration || ""}
-          onChange={(e: ChangeEvent<HTMLInputElement>) =>
-            setNewBookingData({
-              ...newBookingData,
-              duration: Number(e.target.value),
-            })
-          }
-          placeholder="Enter duration (e.g., 30, 60)"
-        />
-
-        <Label className="block text-lg font-medium text-gray-700">
-          Fee (USD)
-        </Label>
-        <Input
-          type="number"
-          value={newBookingData.fee || ""}
-          onChange={(e: ChangeEvent<HTMLInputElement>) =>
-            setNewBookingData({
-              ...newBookingData,
-              fee: Number(e.target.value),
-            })
-          }
-          placeholder="Enter fee (e.g., 100)"
-        />
-
-        <div className="flex gap-6 items-center">
+    <div className="space-y-4">
+      <div className="space-y-6 bg-white dark:bg-primary-foreground p-6 rounded-lg shadow-sm border">
+        <h2 className="text-2xl font-semibold">
+          {editingBookingId ? "Edit Booking type" : "Create Booking type"}
+        </h2>
+        <div className="space-y-4">
           <Label className="block text-lg font-medium text-gray-700">
-            Color
+            Name
           </Label>
-          <div className="relative inline-block">
-            <div className="w-10 h-10 rounded-full overflow-hidden border border-gray-300 relative">
-              <Input
-                type="color"
-                value={newBookingData.color}
-                onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                  setNewBookingData({
-                    ...newBookingData,
-                    color: e.target.value,
-                  })
-                }
-                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-              />
-              <div
-                className="absolute inset-0 w-full h-full rounded-full pointer-events-none"
-                style={{ backgroundColor: newBookingData.color }}
-              ></div>
+          <Input
+            value={newBookingData.name}
+            onChange={(e: ChangeEvent<HTMLInputElement>) =>
+              setNewBookingData({ ...newBookingData, name: e.target.value })
+            }
+            placeholder="Enter booking type name"
+          />
+          <Label className="block text-lg font-medium text-gray-700">
+            Default Duration (minutes)
+          </Label>
+          <Input
+            type="number"
+            value={newBookingData.duration || ""}
+            onChange={(e: ChangeEvent<HTMLInputElement>) =>
+              setNewBookingData({
+                ...newBookingData,
+                duration: Number(e.target.value),
+              })
+            }
+            placeholder="Enter duration (e.g., 30, 60)"
+          />
+
+          <Label className="block text-lg font-medium text-gray-700">
+            Fee (USD)
+          </Label>
+          <Input
+            type="number"
+            value={newBookingData.fee || ""}
+            onChange={(e: ChangeEvent<HTMLInputElement>) =>
+              setNewBookingData({
+                ...newBookingData,
+                fee: Number(e.target.value),
+              })
+            }
+            placeholder="Enter fee (e.g., 100)"
+          />
+
+          <div className="flex gap-6 items-center">
+            <Label className="block text-lg font-medium text-gray-700">
+              Color
+            </Label>
+            <div className="relative inline-block">
+              <div className="w-10 h-10 rounded-full overflow-hidden border border-gray-300 relative">
+                <Input
+                  type="color"
+                  value={newBookingData.color}
+                  onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                    setNewBookingData({
+                      ...newBookingData,
+                      color: e.target.value,
+                    })
+                  }
+                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                />
+                <div
+                  className="absolute inset-0 w-full h-full rounded-full pointer-events-none"
+                  style={{ backgroundColor: newBookingData.color }}
+                ></div>
+              </div>
             </div>
           </div>
-        </div>
 
-        {/* Buttons */}
-        <div className="flex space-x-4">
-          <Button
-            variant={"rebusPro"}
-            className="mt-4"
-            onClick={handleSaveBookingType}
-          >
-            {editingBookingId ? "Update Booking Type" : "Add Booking Type"}
-          </Button>
-
-          {editingBookingId && (
+          {/* Buttons */}
+          <div className="flex space-x-4">
             <Button
+              variant={"rebusPro"}
               className="mt-4"
-              variant="secondary"
-              onClick={() => {
-                setEditingBookingId(null);
-                setNewBookingData(initialBookingData);
-              }}
+              onClick={handleSaveBookingType}
             >
-              Cancel
+              {editingBookingId ? "Update Booking Type" : "Add Booking Type"}
             </Button>
-          )}
-        </div>
 
-        {/* Clients List */}
-        <div className="mt-6">
-          <h2 className="text-xl font-semibold">Booking Types</h2>
-          {bookingTypes.length > 0 ? (
-            <Table className="mt-4">
-              <TableHeader>
-                <TableRow>
-                  <TableCell>Color</TableCell>
-                  <TableCell>Name</TableCell>
-                  <TableCell>Duration</TableCell>
-                  <TableCell>Fee</TableCell>
-                  <TableCell>Actions</TableCell>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {bookingTypes.map((type) => (
-                  <TableRow key={type.docId}>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <div
-                          className="w-4 h-4 rounded-full"
-                          style={{ backgroundColor: type.color }}
-                        ></div>
-                        {/* <span>{type.color}</span> */}
-                      </div>
-                    </TableCell>
-                    <TableCell>{type.name}</TableCell>
-                    <TableCell>{`${type.duration} minutes`}</TableCell>
-                    <TableCell>
-                      {type.fee !== undefined && type.fee !== null
-                        ? new Intl.NumberFormat("en-US", {
-                            style: "currency",
-                            currency: "USD",
-                            minimumFractionDigits: 2,
-                            maximumFractionDigits: 2,
-                          }).format(type.fee)
-                        : "N/A"}
-                    </TableCell>
-                    <TableCell>
-                      <Button
-                        className="mr-2"
-                        onClick={() => handleEditBookingType(type)}
-                      >
-                        Edit
-                      </Button>
-                      <Button
-                        variant="destructive"
-                        onClick={() => handleDeleteBookingType(type.docId!)}
-                      >
-                        Delete
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          ) : (
-            <p>No Booking Types available.</p>
-          )}
+            {editingBookingId && (
+              <Button
+                className="mt-4"
+                variant="secondary"
+                onClick={() => {
+                  setEditingBookingId(null);
+                  setNewBookingData(initialBookingData);
+                }}
+              >
+                Cancel
+              </Button>
+            )}
+          </div>
+
+          {/* Clients List */}
+          <div className="mt-6">
+            <h2 className="text-xl font-semibold">Booking Types</h2>
+            {bookingTypes.length > 0 ? (
+              <div className="mt-4">
+                <ScrollArea className="h-[calc(80vh-220px)] rounded-md border md:h-full md:max-h-full grid">
+                  <Table className="mt-4">
+                    <TableHeader>
+                      <TableRow>
+                        <TableCell>Color</TableCell>
+                        <TableCell>Name</TableCell>
+                        <TableCell>Duration</TableCell>
+                        <TableCell>Fee</TableCell>
+                        <TableCell>Actions</TableCell>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {bookingTypes.map((type) => (
+                        <TableRow key={type.docId}>
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              <div
+                                className="w-4 h-4 rounded-full"
+                                style={{ backgroundColor: type.color }}
+                              ></div>
+                              {/* <span>{type.color}</span> */}
+                            </div>
+                          </TableCell>
+                          <TableCell>{type.name}</TableCell>
+                          <TableCell>{`${type.duration} minutes`}</TableCell>
+                          <TableCell>
+                            {type.fee !== undefined && type.fee !== null
+                              ? new Intl.NumberFormat("en-US", {
+                                  style: "currency",
+                                  currency: "USD",
+                                  minimumFractionDigits: 2,
+                                  maximumFractionDigits: 2,
+                                }).format(type.fee)
+                              : "N/A"}
+                          </TableCell>
+                          <TableCell>
+                            <Button
+                              className="mr-2"
+                              onClick={() => handleEditBookingType(type)}
+                            >
+                              Edit
+                            </Button>
+                            <Button
+                              variant="destructive"
+                              onClick={() =>
+                                handleDeleteBookingType(type.docId!)
+                              }
+                            >
+                              Delete
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                  <ScrollBar orientation="horizontal" />
+                </ScrollArea>
+              </div>
+            ) : (
+              <p>No Booking Types available.</p>
+            )}
+          </div>
         </div>
       </div>
     </div>

@@ -73,8 +73,9 @@ export default async function RootLayout({
           enableSystem
           disableTransitionOnChange
         > */}
-        <Toaster />
         <AuthProvider user={user}>{children}</AuthProvider>
+        <Toaster />
+
         <ConfirmationDialog />
         <Script
           id="microsoft-clarity"

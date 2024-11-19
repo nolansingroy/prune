@@ -6,8 +6,10 @@ const config = {
   content: [
     "./pages/**/*.{ts,tsx}",
     "./components/**/*.{ts,tsx}",
+    "./constants/**/*.{ts,tsx}",
     "./app/**/*.{ts,tsx}",
     "./src/**/*.{ts,tsx}",
+    "./sections/**/*.{ts,tsx}",
   ],
   prefix: "",
   theme: {
@@ -20,16 +22,6 @@ const config = {
     },
     extend: {
       colors: {
-        "fc-bg-event": "rgba(173, 216, 230, 0.5)",
-        "custom-cream": "#F2F1EC",
-        "custom-mid-blue": "#81C3C9",
-        "custom-fade-blue": "#336B89",
-        "custom-dark-blue": "#003F5C",
-        "custom-light-blue": "#9CDFE5",
-        "custom-purple": "#6B81E8",
-        "custom-green": "#7ED957",
-        "custom-grey": "#303434",
-        "custom-black": "#000000",
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
@@ -73,6 +65,8 @@ const config = {
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
         },
+        // rebusPro colors
+        "rebus-green": "#1fce88",
       },
       borderRadius: {
         lg: "var(--radius)",

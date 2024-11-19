@@ -36,6 +36,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import {
   Table,
@@ -45,12 +46,25 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Heading } from "@/components/ui/heading";
+import { Separator } from "@/components/ui/separator";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { Trash2 } from "lucide-react";
 import { DataTableSkeleton } from "@/components/loaders/data-table-skeleton";
 import useConfirmationStore from "@/lib/store/confirmationStore";
 import { toast } from "sonner";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import { CalendarDatePicker } from "@/components/ui/calendar-date-picker";
+import {
+  endOfMonth,
+  endOfWeek,
+  endOfYear,
+  startOfMonth,
+  startOfWeek,
+  startOfYear,
+  subDays,
+} from "date-fns";
+import { Switch } from "@headlessui/react";
 
 const formatFee = (fee: number): string => {
   return new Intl.NumberFormat("en-US", {
@@ -61,10 +75,14 @@ const formatFee = (fee: number): string => {
 };
 type SortableKeys = "start" | "end" | "title" | "startDate";
 
+const title = "My bookings";
+const description = "Manage your bookings here.";
+
 export default function BookingsView() {
   const { openConfirmation } = useConfirmationStore();
   const [loading, startTransition] = useTransition();
   const { user } = useAuth();
+  const [allEvents, setAllEvents] = useState<EventInput[]>([]);
   const [events, setEvents] = useState<EventInput[]>([]);
   const [selectedRows, setSelectedRows] = useState<Set<string>>(new Set());
   const [editingCell, setEditingCell] = useState<{
@@ -84,16 +102,145 @@ export default function BookingsView() {
     []
   );
   const [types, setTypes] = useState<{ docId: string; name: string }[]>([]);
+  const [selectedDateRange, setSelectedDateRange] = useState({
+    from: new Date(), // Today's date
+    to: new Date(9999, 11, 31), // Far future date
+  });
+  const [selectedLabel, setSelectedLabel] = useState<string>("Future");
 
   const fetchEvents = useCallback(async () => {
     if (!user) {
       return;
     } else {
       const eventList = await fetchBookingsListviewEvents(user.uid);
-      setEvents(eventList);
+      setAllEvents(eventList); // Store all events
+      filterEvents("Future", eventList); // Initialize displayed events with "Future" events
       setIsLoading(false);
     }
   }, [user]);
+
+  const filterEvents = (
+    label: string,
+    eventsToFilter: EventInput[] = allEvents
+  ) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    let filteredEvents = eventsToFilter;
+
+    switch (label) {
+      case "Today":
+        filteredEvents = eventsToFilter.filter(
+          (event) => event.start >= today && event.start < subDays(today, -1)
+        );
+        break;
+      case "Yesterday":
+        const yesterday = subDays(today, 1);
+        filteredEvents = eventsToFilter.filter(
+          (event) => event.start >= yesterday && event.start < today
+        );
+        break;
+      case "This Week":
+        const startOfThisWeek = startOfWeek(today, { weekStartsOn: 1 });
+        const endOfThisWeek = endOfWeek(today, { weekStartsOn: 1 });
+        filteredEvents = eventsToFilter.filter(
+          (event) =>
+            event.start >= startOfThisWeek && event.start <= endOfThisWeek
+        );
+        break;
+      case "Last Week":
+        const startOfLastWeek = subDays(
+          startOfWeek(today, { weekStartsOn: 1 }),
+          7
+        );
+        const endOfLastWeek = subDays(endOfWeek(today, { weekStartsOn: 1 }), 7);
+        filteredEvents = eventsToFilter.filter(
+          (event) =>
+            event.start >= startOfLastWeek && event.start <= endOfLastWeek
+        );
+        break;
+      case "Last 7 Days":
+        const last7Days = subDays(today, 6);
+        filteredEvents = eventsToFilter.filter(
+          (event) => event.start >= last7Days && event.start <= today
+        );
+        break;
+      case "This Month":
+        const startOfThisMonth = startOfMonth(today);
+        const endOfThisMonth = endOfMonth(today);
+        filteredEvents = eventsToFilter.filter(
+          (event) =>
+            event.start >= startOfThisMonth && event.start <= endOfThisMonth
+        );
+        break;
+      case "Last Month":
+        const startOfLastMonth = startOfMonth(subDays(today, today.getDate()));
+        const endOfLastMonth = endOfMonth(subDays(today, today.getDate()));
+        filteredEvents = eventsToFilter.filter(
+          (event) =>
+            event.start >= startOfLastMonth && event.start <= endOfLastMonth
+        );
+        break;
+      case "This Year":
+        const startOfThisYear = startOfYear(today);
+        const endOfThisYear = endOfYear(today);
+        filteredEvents = eventsToFilter.filter(
+          (event) =>
+            event.start >= startOfThisYear && event.start <= endOfThisYear
+        );
+        break;
+      case "Last Year":
+        const startOfLastYear = startOfYear(subDays(today, 365));
+        const endOfLastYear = endOfYear(subDays(today, 365));
+        filteredEvents = eventsToFilter.filter(
+          (event) =>
+            event.start >= startOfLastYear && event.start <= endOfLastYear
+        );
+        break;
+      case "Future":
+        filteredEvents = eventsToFilter.filter((event) => event.start >= today);
+        break;
+      case "Past":
+        filteredEvents = eventsToFilter.filter((event) => event.start < today);
+        break;
+      case "All Time":
+        filteredEvents = eventsToFilter;
+        break;
+      default:
+        break;
+    }
+
+    setEvents(filteredEvents);
+  };
+
+  const filterEventsByDateRange = (from: Date, to: Date) => {
+    const filteredEvents = allEvents.filter(
+      (event) => event.start >= from && event.start <= to
+    );
+    setEvents(filteredEvents);
+  };
+
+  const handleLabelSelect = (label: string) => {
+    setSelectedLabel(label);
+    filterEvents(label);
+  };
+
+  const handleDateSelect = (range: { from: Date; to: Date }) => {
+    setSelectedDateRange(range);
+    setSelectedLabel("Custom"); // Set the label to "Custom" when a manual date range is selected
+    filterEventsByDateRange(range.from, range.to);
+  };
+
+  const getColorWithOpacity = (color: string, opacity: number) => {
+    const hex = color.replace("#", "");
+    const r = parseInt(hex.substring(0, 2), 16);
+    const g = parseInt(hex.substring(2, 4), 16);
+    const b = parseInt(hex.substring(4, 6), 16);
+    return `rgba(${r}, ${g}, ${b}, ${opacity})`;
+  };
+
+  const color = "#007bff"; // Example color, replace with your desired color
+  const colorWithOpacity = getColorWithOpacity(color, 0.2);
 
   const fetchAllClients = useCallback(async () => {
     if (user) {
@@ -176,6 +323,10 @@ export default function BookingsView() {
         return;
       }
       let updates: any = {};
+
+      // if (field === "paid") {
+      //   updates[field] = editedValue === "true";
+      // }
 
       if (field === "clientName") {
         if (currentEvent.clientName !== editedValue) {
@@ -488,132 +639,148 @@ export default function BookingsView() {
       ? new Date(eventData.date).toISOString().split("T")[0]
       : new Date().toISOString().split("T")[0];
 
-    setIsLoading(true); // Start loading
-
-    try {
-      if (!user) {
-        throw new Error("User not authenticated");
-      }
-
-      // Get the user's time zone
-      const userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-
-      // If this is a recurring event, handle it using the cloud function
-      if (
-        eventData.recurrence &&
-        eventData.recurrence.daysOfWeek &&
-        eventData.recurrence.daysOfWeek.length > 0
-      ) {
-        // Calculate the time zone offsets for start time and end time
-        const startDateTime = new Date(`${startDate}T${eventData.startTime}`);
-        const endDateTime = new Date(`${startDate}T${eventData.endTime}`);
-        const startRecur = new Date(eventData.recurrence.startRecur);
-        const endRecur = new Date(eventData.recurrence.endRecur || startDate);
-        endRecur.setDate(endRecur.getDate() + 1);
-
-        const eventInput = {
-          title: eventData.title || "",
-          type: eventData.type || "No type",
-          typeId: eventData.typeId || "",
-          clientId: eventData.clientId || "",
-          clientName: eventData.clientName || "",
-          description: eventData.description || "",
-          fee: eventData.fee || 0,
-          // location: eventData.location || "",
-          startDate,
-          startTime: eventData.startTime,
-          endTime: eventData.endTime,
-          paid: eventData.paid,
-          recurrence: {
-            daysOfWeek: eventData.recurrence.daysOfWeek,
-            startRecur: startRecur.toISOString().split("T")[0] || startDate,
-            endRecur: endRecur.toISOString().split("T")[0],
-          },
-          userId: user.uid,
-          userTimeZone,
-        };
-
-        console.log(
-          "event data ready for cloud function for recurring bookings",
-          eventInput
-        );
-
-        // Make the axios call to your cloud function
-        // "https://us-central1-prune-94ad9.cloudfunctions.net/createRecurringBookingInstances"
-        // "http://127.0.0.1:5001/prune-94ad9/us-central1/createRecurringBookingInstances",
-        const result = await axios.post(
-          "https://us-central1-prune-94ad9.cloudfunctions.net/createRecurringBookingInstances",
-          eventInput
-        );
-
-        console.log("Recurring event instances created:", result.data);
-      } else {
-        let startDateTime = new Date(`${startDate}T${eventData.startTime}`);
-        let endDateTime = new Date(`${startDate}T${eventData.endTime}`);
-
-        if (eventData.startTime && eventData.endTime) {
-          const [startHour, startMinute] = eventData.startTime
-            .split(":")
-            .map(Number);
-          const [endHour, endMinute] = eventData.endTime.split(":").map(Number);
-
-          // Set the time in UTC
-          startDateTime.setHours(startHour, startMinute, 0, 0);
-          endDateTime.setHours(endHour, endMinute, 0, 0);
-
-          // Ensure end time is after the start time
-          if (endDateTime <= startDateTime) {
-            endDateTime.setDate(endDateTime.getDate() + 1);
-          }
+    startTransition(async () => {
+      setIsLoading(true);
+      try {
+        if (!user) {
+          throw new Error("User not authenticated");
         }
 
-        const startDay = startDateTime.toLocaleDateString("en-US", {
-          weekday: "long",
-        });
+        // Get the user's time zone
+        const userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
-        const endDay = endDateTime.toLocaleDateString("en-US", {
-          weekday: "long",
-        });
+        // If this is a recurring event, handle it using the cloud function
+        if (
+          eventData.recurrence &&
+          eventData.recurrence.daysOfWeek &&
+          eventData.recurrence.daysOfWeek.length > 0
+        ) {
+          // Calculate the time zone offsets for start time and end time
+          const startDateTime = new Date(`${startDate}T${eventData.startTime}`);
+          const endDateTime = new Date(`${startDate}T${eventData.endTime}`);
+          const startRecur = new Date(eventData.recurrence.startRecur);
+          const endRecur = new Date(eventData.recurrence.endRecur || startDate);
+          endRecur.setDate(endRecur.getDate() + 1);
 
-        // Create the event object for a single or background event
-        let event: EventInput = {
-          id: "",
-          title: eventData.title || "",
-          type: eventData.type || "",
-          typeId: eventData.typeId || "",
-          fee: eventData.fee || 0,
-          clientId: eventData.clientId || "",
-          clientName: eventData.clientName || "",
-          // location: eventData.location || "",
-          start: startDateTime,
-          end: endDateTime,
-          description: eventData.description || "",
-          display: "auto",
-          className: "",
-          isBackgroundEvent: false,
-          startDate: startDateTime,
-          startDay: startDay,
-          endDate: endDateTime,
-          endDay: endDay,
-          paid: eventData.paid,
-        };
+          const eventInput = {
+            title: eventData.title || "",
+            type: eventData.type || "No type",
+            typeId: eventData.typeId || "",
+            clientId: eventData.clientId || "",
+            clientName: eventData.clientName || "",
+            description: eventData.description || "",
+            fee: eventData.fee || 0,
+            // location: eventData.location || "",
+            startDate,
+            startTime: eventData.startTime,
+            endTime: eventData.endTime,
+            paid: eventData.paid,
+            recurrence: {
+              daysOfWeek: eventData.recurrence.daysOfWeek,
+              startRecur: startRecur.toISOString().split("T")[0] || startDate,
+              endRecur: endRecur.toISOString().split("T")[0],
+            },
+            userId: user.uid,
+            userTimeZone,
+          };
 
-        console.log("Single event data ready for Firestore:", event);
-        event = removeUndefinedFields(event);
+          console.log(
+            "event data ready for cloud function for recurring bookings",
+            eventInput
+          );
 
-        console.log("Event data before submitting to firebase:", event);
+          // Make the axios call to your cloud function
+          // "https://us-central1-prune-94ad9.cloudfunctions.net/createRecurringBookingInstances"
+          // "http://127.0.0.1:5001/prune-94ad9/us-central1/createRecurringBookingInstances",
 
-        await createFireStoreEvent(user.uid, event);
+          try {
+            const result = await axios.post(
+              "https://us-central1-prune-94ad9.cloudfunctions.net/createRecurringBookingInstances",
+              eventInput
+            );
 
-        console.log("Single event created in Firestore with ID:", event.id);
+            console.log("Recurring bookings instances created:", result.data);
+            toast.success("Recurring bookings added successfully");
+          } catch (error) {
+            console.error("Error saving recurring bookings:", error);
+            toast.error("Error adding recurring bookings");
+          }
+        } else {
+          let startDateTime = new Date(`${startDate}T${eventData.startTime}`);
+          let endDateTime = new Date(`${startDate}T${eventData.endTime}`);
+
+          if (eventData.startTime && eventData.endTime) {
+            const [startHour, startMinute] = eventData.startTime
+              .split(":")
+              .map(Number);
+            const [endHour, endMinute] = eventData.endTime
+              .split(":")
+              .map(Number);
+
+            // Set the time in UTC
+            startDateTime.setHours(startHour, startMinute, 0, 0);
+            endDateTime.setHours(endHour, endMinute, 0, 0);
+
+            // Ensure end time is after the start time
+            if (endDateTime <= startDateTime) {
+              endDateTime.setDate(endDateTime.getDate() + 1);
+            }
+          }
+
+          const startDay = startDateTime.toLocaleDateString("en-US", {
+            weekday: "long",
+          });
+
+          const endDay = endDateTime.toLocaleDateString("en-US", {
+            weekday: "long",
+          });
+
+          // Create the event object for a single or background event
+          let event: EventInput = {
+            id: "",
+            title: eventData.title || "",
+            type: eventData.type || "",
+            typeId: eventData.typeId || "",
+            fee: eventData.fee || 0,
+            clientId: eventData.clientId || "",
+            clientName: eventData.clientName || "",
+            // location: eventData.location || "",
+            start: startDateTime,
+            end: endDateTime,
+            description: eventData.description || "",
+            display: "auto",
+            className: "",
+            isBackgroundEvent: false,
+            startDate: startDateTime,
+            startDay: startDay,
+            endDate: endDateTime,
+            endDay: endDay,
+            paid: eventData.paid,
+          };
+
+          try {
+            console.log("Single event data ready for Firestore:", event);
+            event = removeUndefinedFields(event);
+
+            console.log("Event data before submitting to firebase:", event);
+
+            await createFireStoreEvent(user.uid, event);
+
+            console.log("Single event created in Firestore with ID:", event.id);
+            toast.success("Booking event added successfully");
+          } catch (error) {
+            console.error("Error saving event single:", error);
+            toast.error("Error adding booking event");
+          }
+        }
+      } catch (error) {
+        console.error("Error saving event outer:", error);
+        toast.error("An error occurred while adding the event");
+      } finally {
+        await fetchEvents();
+        setIsLoading(false); // Stop loading
       }
-      // Fetch events again to update the list
-      await fetchEvents();
-    } catch (error) {
-      console.error("Error saving event:", error);
-    } finally {
-      setIsLoading(false); // Stop loading
-    }
+    });
   };
 
   const handleSort = (key: SortableKeys) => {
@@ -807,103 +974,154 @@ export default function BookingsView() {
     }
   };
 
+  const handleTogglePaid = async (id: string) => {
+    console.log("Toggling paid status for event ID:", id);
+
+    // Optimistically update the UI
+    const updatedEvents = events.map((event) =>
+      event.id === id ? { ...event, paid: !event.paid } : event
+    );
+    setEvents(updatedEvents);
+
+    // Update Firestore
+    const eventToUpdate = updatedEvents.find((event) => event.id === id);
+    if (eventToUpdate) {
+      try {
+        await updateFireStoreEvent(user?.uid!, id, {
+          paid: eventToUpdate.paid,
+        });
+        console.log("Paid status updated successfully");
+      } catch (error) {
+        console.error("Error updating paid status:", error);
+        // Revert state on failure
+        setEvents(events);
+      }
+    }
+  };
+
   return (
-    <div className="w-full relative flex flex-col h-screen">
-      <Input
-        value={search}
-        onChange={(e) => setSearch(e.target.value)}
-        placeholder="Search by type, notes or client"
-        className="mb-4"
-      />
+    <div className="space-y-4">
+      <div className="flex flex-wrap items-start justify-between">
+        <Heading title={title} description={description} />
+        <div className="flex items-center pt-4 sm:pt-0">
+          <Badge
+            className="mr-2 py-0 px-1"
+            style={{
+              backgroundColor: colorWithOpacity,
+              color: color,
+            }}
+          >
+            <span className="text-sm font-bold">{selectedLabel}</span>
+          </Badge>
+          <CalendarDatePicker
+            date={selectedDateRange}
+            onDateSelect={handleDateSelect} // Use the updated handler
+            onLabelSelect={handleLabelSelect} // Pass the handler
+          />
+        </div>
+      </div>
+
+      <Separator />
 
       <div className="space-y-4">
-        <ScrollArea className="h-[calc(80vh-220px)] rounded-md border md:h-[calc(90dvh-240px)]">
-          {isLoading && (
-            <div className="flex items-center justify-center min-h-screen">
-              <LoadingSpinner className="w-10 h-10" />
-            </div>
-          )}
-          <Table className="relative">
-            <TableHeader>
-              <TableRow>
-                <TableHead>
-                  <Checkbox
-                    checked={selectedRows.size === filteredEvents.length}
-                    onCheckedChange={(checked: any) =>
-                      handleSelectAllChange(!!checked)
-                    }
-                  />
-                </TableHead>
+        <div className="flex flex-wrap items-center gap-4">
+          <Input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search by type, notes or client"
+            className="mb-4 text-base input-no-zoom"
+          />
+        </div>
 
-                <TableHead>
-                  <div className="flex items-center">
-                    Date
-                    <button onClick={() => handleSort("startDate")}>
-                      {sortConfig.key === "startDate" &&
-                      sortConfig.direction === "asc" ? (
-                        <CaretSortIcon className="rotate-180" />
-                      ) : (
-                        <CaretSortIcon />
-                      )}
-                    </button>
-                  </div>
-                </TableHead>
-
-                <TableHead>Day</TableHead>
-
-                <TableHead>
-                  <div className="flex items-center">
-                    Start Time
-                    <button onClick={() => handleSort("start")}>
-                      {sortConfig.key === "start" &&
-                      sortConfig.direction === "asc" ? (
-                        <CaretSortIcon className="rotate-180" />
-                      ) : (
-                        <CaretSortIcon />
-                      )}
-                    </button>
-                  </div>
-                </TableHead>
-
-                <TableHead>
-                  <div className="flex items-center">
-                    End Time
-                    <button onClick={() => handleSort("end")}>
-                      {sortConfig.key === "end" &&
-                      sortConfig.direction === "asc" ? (
-                        <CaretSortIcon className="rotate-180" />
-                      ) : (
-                        <CaretSortIcon />
-                      )}
-                    </button>
-                  </div>
-                </TableHead>
-
-                <TableHead>Duration</TableHead>
-
-                <TableHead>Client</TableHead>
-
-                <TableHead>Booking Type</TableHead>
-                <TableHead>Fee</TableHead>
-                <TableHead>Notes</TableHead>
-                <TableHead>Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-
-            <TableBody>
-              {filteredEvents.map((event) => (
-                <TableRow key={event.id || ""}>
-                  <TableCell>
+        <div className="space-y-4">
+          <ScrollArea className="h-[calc(80vh-220px)] rounded-md border md:h-[calc(90dvh-240px)] grid">
+            {isLoading && (
+              <div className="flex items-center justify-center min-h-screen">
+                <LoadingSpinner className="w-10 h-10" />
+              </div>
+            )}
+            <Table className="relative">
+              <TableHeader>
+                <TableRow>
+                  <TableHead>
                     <Checkbox
-                      checked={selectedRows.has(event.id || "")}
-                      onCheckedChange={() => toggleRowSelection(event.id!)}
+                      checked={selectedRows.size === filteredEvents.length}
+                      onCheckedChange={(checked: any) =>
+                        handleSelectAllChange(!!checked)
+                      }
                     />
-                  </TableCell>
+                  </TableHead>
 
-                  {/* <TableCell>{event.startDate.toLocaleDateString()}</TableCell> */}
+                  <TableHead>
+                    <div className="flex items-center">
+                      Date
+                      <button onClick={() => handleSort("startDate")}>
+                        {sortConfig.key === "startDate" &&
+                        sortConfig.direction === "asc" ? (
+                          <CaretSortIcon className="rotate-180" />
+                        ) : (
+                          <CaretSortIcon />
+                        )}
+                      </button>
+                    </div>
+                  </TableHead>
 
-                  {/* Display the date and make it editable */}
-                  {/* <TableCell>
+                  <TableHead>Day</TableHead>
+
+                  <TableHead>
+                    <div className="flex items-center">
+                      Start Time
+                      <button onClick={() => handleSort("start")}>
+                        {sortConfig.key === "start" &&
+                        sortConfig.direction === "asc" ? (
+                          <CaretSortIcon className="rotate-180" />
+                        ) : (
+                          <CaretSortIcon />
+                        )}
+                      </button>
+                    </div>
+                  </TableHead>
+
+                  <TableHead>
+                    <div className="flex items-center">
+                      End Time
+                      <button onClick={() => handleSort("end")}>
+                        {sortConfig.key === "end" &&
+                        sortConfig.direction === "asc" ? (
+                          <CaretSortIcon className="rotate-180" />
+                        ) : (
+                          <CaretSortIcon />
+                        )}
+                      </button>
+                    </div>
+                  </TableHead>
+
+                  <TableHead>Duration</TableHead>
+
+                  <TableHead>Client</TableHead>
+
+                  <TableHead>Booking Type</TableHead>
+                  <TableHead>Fee</TableHead>
+                  <TableHead>Payment</TableHead>
+                  <TableHead>Notes</TableHead>
+                  <TableHead>Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+
+              <TableBody>
+                {filteredEvents.map((event) => (
+                  <TableRow key={event.id || ""}>
+                    <TableCell>
+                      <Checkbox
+                        checked={selectedRows.has(event.id || "")}
+                        onCheckedChange={() => toggleRowSelection(event.id!)}
+                      />
+                    </TableCell>
+
+                    {/* <TableCell>{event.startDate.toLocaleDateString()}</TableCell> */}
+
+                    {/* Display the date and make it editable */}
+                    {/* <TableCell>
                   {editingCell?.id === event.id &&
                   editingCell?.field === "startDate" ? (
                     <input
@@ -928,221 +1146,245 @@ export default function BookingsView() {
                     </div>
                   )}
                 </TableCell> */}
-                  <TableCell>{event.startDate.toLocaleDateString()}</TableCell>
-                  <TableCell>{event.startDay}</TableCell>
+                    <TableCell>
+                      {event.startDate.toLocaleDateString()}
+                    </TableCell>
+                    <TableCell>{event.startDay}</TableCell>
 
-                  <TableCell>
-                    {editingCell?.id === event.id &&
-                    editingCell?.field === "start" ? (
-                      <input
-                        type="time"
-                        value={editedValue}
-                        onChange={handleInputChange}
-                        onBlur={handleBlur}
-                        step="900"
-                        autoFocus
-                      />
-                    ) : (
-                      <div
-                        onClick={() => {
-                          handleCellClick(
-                            event.id!,
-                            "start",
-                            displayTime(event.start),
-                            !!event.recurrence
-                          );
-                          setEditedValue(displayTime(event.start));
-                        }}
-                      >
-                        {displayTimeWithAmPm(event.start)}
-                      </div>
-                    )}
-                  </TableCell>
-
-                  <TableCell>
-                    {editingCell?.id === event.id &&
-                    editingCell?.field === "end" ? (
-                      <input
-                        type="time"
-                        value={editedValue}
-                        onChange={handleInputChange}
-                        onBlur={handleBlur}
-                        step="900"
-                        autoFocus
-                      />
-                    ) : (
-                      <div
-                        onClick={() => {
-                          handleCellClick(
-                            event.id!,
-                            "end",
-                            displayTime(event.end),
-                            !!event.recurrence
-                          );
-                          setEditedValue(displayTime(event.end));
-                        }}
-                      >
-                        {displayTimeWithAmPm(event.end)}
-                      </div>
-                    )}
-                  </TableCell>
-
-                  <TableCell>
-                    {(() => {
-                      const duration = moment.duration(
-                        moment(event.end).diff(moment(event.start))
-                      );
-                      const hours = Math.floor(duration.asHours());
-                      const minutes = duration.minutes();
-
-                      let formattedDuration = "";
-                      if (hours > 0) {
-                        formattedDuration += `${hours} h `;
-                      }
-                      if (minutes > 0) {
-                        formattedDuration += `${minutes} m`;
-                      }
-                      if (hours === 0 && minutes === 0) {
-                        formattedDuration = "0 m";
-                      }
-
-                      return formattedDuration.trim();
-                    })()}
-                  </TableCell>
-
-                  <TableCell>
-                    {editingCell?.id === event.id &&
-                    editingCell?.field === "clientName" ? (
-                      <Input
-                        value={editedValue}
-                        onChange={handleInputChange}
-                        onBlur={handleBlur}
-                        autoFocus
-                      />
-                    ) : (
-                      <span
-                        onClick={() =>
-                          handleCellClick(
-                            event.id!,
-                            "clientName",
-                            event.clientName,
-                            !!event.recurrence
-                          )
-                        }
-                      >
-                        {event.clientName}
-                      </span>
-                    )}
-                  </TableCell>
-
-                  <TableCell>
-                    {editingCell?.id === event.id &&
-                    editingCell?.field === "type" ? (
-                      <Input
-                        value={editedValue}
-                        onChange={handleInputChange}
-                        onBlur={handleBlur}
-                        autoFocus
-                      />
-                    ) : (
-                      <span
-                        onClick={() =>
-                          handleCellClick(
-                            event.id!,
-                            "type",
-                            event.type,
-                            !!event.recurrence
-                          )
-                        }
-                      >
-                        {event.type}
-                      </span>
-                    )}
-                  </TableCell>
-
-                  <TableCell>
-                    {editingCell?.id === event.id &&
-                    editingCell?.field === "fee" ? (
-                      <Input
-                        value={editedValue}
-                        onChange={handleInputChange}
-                        onBlur={handleBlur}
-                        autoFocus
-                      />
-                    ) : (
-                      <span
-                        onClick={() =>
-                          handleCellClick(
-                            event.id!,
-                            "fee",
-                            event.fee.toString(),
-                            !!event.recurrence
-                          )
-                        }
-                      >
-                        {formatFee(event.fee)}
-                      </span>
-                    )}
-                  </TableCell>
-
-                  <TableCell>
-                    {editingCell?.id === event.id &&
-                    editingCell?.field === "description" ? (
-                      <input
-                        value={editedValue}
-                        onChange={handleInputChange}
-                        onBlur={handleBlur}
-                        autoFocus
-                      />
-                    ) : (
-                      <div
-                        onClick={() =>
-                          handleCellClick(
-                            event.id!,
-                            "description",
-                            event.description || "",
-                            !!event.recurrence
-                          )
-                        }
-                      >
-                        {event.description || "No description"}
-                      </div>
-                    )}
-                  </TableCell>
-
-                  <TableCell>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost">
-                          <DotsHorizontalIcon />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent>
-                        {/* Clone Option */}
-                        <DropdownMenuItem
-                          onClick={() => handleCloneClick(event)}
+                    <TableCell>
+                      {editingCell?.id === event.id &&
+                      editingCell?.field === "start" ? (
+                        <input
+                          type="time"
+                          value={editedValue}
+                          onChange={handleInputChange}
+                          onBlur={handleBlur}
+                          step="900"
+                          autoFocus
+                        />
+                      ) : (
+                        <div
+                          onClick={() => {
+                            handleCellClick(
+                              event.id!,
+                              "start",
+                              displayTime(event.start),
+                              !!event.recurrence
+                            );
+                            setEditedValue(displayTime(event.start));
+                          }}
                         >
-                          Clone
-                        </DropdownMenuItem>
-                        {/*  Delete Option */}
-                        <DropdownMenuItem
-                          onClick={() => handleDeleteClick(event.id!)}
-                        >
-                          Delete
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-          <ScrollBar orientation="horizontal" />
-        </ScrollArea>
+                          {displayTimeWithAmPm(event.start)}
+                        </div>
+                      )}
+                    </TableCell>
 
-        <div className="flex justify-between mt-4 p-4">
-          <span>{`${selectedRows.size} of ${events.length} row(s) selected`}</span>
-          {/* <div className="pr-16">
+                    <TableCell>
+                      {editingCell?.id === event.id &&
+                      editingCell?.field === "end" ? (
+                        <input
+                          type="time"
+                          value={editedValue}
+                          onChange={handleInputChange}
+                          onBlur={handleBlur}
+                          step="900"
+                          autoFocus
+                        />
+                      ) : (
+                        <div
+                          onClick={() => {
+                            handleCellClick(
+                              event.id!,
+                              "end",
+                              displayTime(event.end),
+                              !!event.recurrence
+                            );
+                            setEditedValue(displayTime(event.end));
+                          }}
+                        >
+                          {displayTimeWithAmPm(event.end)}
+                        </div>
+                      )}
+                    </TableCell>
+
+                    <TableCell>
+                      {(() => {
+                        const duration = moment.duration(
+                          moment(event.end).diff(moment(event.start))
+                        );
+                        const hours = Math.floor(duration.asHours());
+                        const minutes = duration.minutes();
+
+                        let formattedDuration = "";
+                        if (hours > 0) {
+                          formattedDuration += `${hours} h `;
+                        }
+                        if (minutes > 0) {
+                          formattedDuration += `${minutes} m`;
+                        }
+                        if (hours === 0 && minutes === 0) {
+                          formattedDuration = "0 m";
+                        }
+
+                        return formattedDuration.trim();
+                      })()}
+                    </TableCell>
+
+                    <TableCell>
+                      {editingCell?.id === event.id &&
+                      editingCell?.field === "clientName" ? (
+                        <Input
+                          value={editedValue}
+                          onChange={handleInputChange}
+                          onBlur={handleBlur}
+                          autoFocus
+                        />
+                      ) : (
+                        <span
+                          onClick={() =>
+                            handleCellClick(
+                              event.id!,
+                              "clientName",
+                              event.clientName,
+                              !!event.recurrence
+                            )
+                          }
+                        >
+                          {event.clientName}
+                        </span>
+                      )}
+                    </TableCell>
+
+                    <TableCell>
+                      {editingCell?.id === event.id &&
+                      editingCell?.field === "type" ? (
+                        <Input
+                          value={editedValue}
+                          onChange={handleInputChange}
+                          onBlur={handleBlur}
+                          autoFocus
+                        />
+                      ) : (
+                        <span
+                          onClick={() =>
+                            handleCellClick(
+                              event.id!,
+                              "type",
+                              event.type,
+                              !!event.recurrence
+                            )
+                          }
+                        >
+                          {event.type}
+                        </span>
+                      )}
+                    </TableCell>
+
+                    <TableCell>
+                      {editingCell?.id === event.id &&
+                      editingCell?.field === "fee" ? (
+                        <Input
+                          value={editedValue}
+                          onChange={handleInputChange}
+                          onBlur={handleBlur}
+                          autoFocus
+                        />
+                      ) : (
+                        <span
+                          onClick={() =>
+                            handleCellClick(
+                              event.id!,
+                              "fee",
+                              event.fee.toString(),
+                              !!event.recurrence
+                            )
+                          }
+                        >
+                          {formatFee(event.fee)}
+                        </span>
+                      )}
+                    </TableCell>
+
+                    <TableCell>
+                      <Switch
+                        checked={event.paid}
+                        onChange={() => {
+                          if (event.id) {
+                            handleTogglePaid(event.id);
+                          } else {
+                            console.error("No event ID found");
+                          }
+                        }}
+                        className={`${
+                          event.paid ? "bg-rebus-green" : "bg-gray-200"
+                        } relative inline-flex h-6 w-10 items-center rounded-full transition-colors focus:outline-none`}
+                      >
+                        <span
+                          className={`${
+                            event.paid ? "translate-x-5" : "translate-x-1"
+                          } inline-block h-4 w-4 transform bg-white rounded-full transition-transform`}
+                        />
+                      </Switch>
+                    </TableCell>
+
+                    <TableCell>
+                      {editingCell?.id === event.id &&
+                      editingCell?.field === "description" ? (
+                        <input
+                          value={editedValue}
+                          onChange={handleInputChange}
+                          onBlur={handleBlur}
+                          autoFocus
+                        />
+                      ) : (
+                        <div
+                          onClick={() =>
+                            handleCellClick(
+                              event.id!,
+                              "description",
+                              event.description || "",
+                              !!event.recurrence
+                            )
+                          }
+                        >
+                          {event.description || "No description"}
+                        </div>
+                      )}
+                    </TableCell>
+
+                    <TableCell>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost">
+                            <DotsHorizontalIcon />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent>
+                          {/* Clone Option */}
+                          <DropdownMenuItem
+                            onClick={() => handleCloneClick(event)}
+                          >
+                            Clone
+                          </DropdownMenuItem>
+                          {/*  Delete Option */}
+                          <DropdownMenuItem
+                            onClick={() => handleDeleteClick(event.id!)}
+                          >
+                            Delete
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+            <ScrollBar orientation="horizontal" />
+          </ScrollArea>
+
+          <div className="flex justify-between mt-4 p-4">
+            <span>{`${selectedRows.size} of ${events.length} row(s) selected`}</span>
+            {/* <div className="pr-16">
             <Button
               onClick={deleteSelectedEvents}
               disabled={selectedRows.size === 0}
@@ -1150,36 +1392,37 @@ export default function BookingsView() {
               Delete Selected
             </Button>
           </div> */}
+          </div>
         </div>
-      </div>
 
-      {selectedRows.size > 0 && (
-        <div className="fixed bottom-[calc(4rem+30px)] right-4">
+        {selectedRows.size > 0 && (
+          <div className="fixed bottom-[calc(4rem+30px)] right-4">
+            <button
+              className="p-4 bg-black text-white rounded-full shadow-lg hover:bg-blue-500 focus:outline-none"
+              onClick={deleteSelectedEvents}
+            >
+              <Trash2 className="h-6 w-6" />
+            </button>
+          </div>
+        )}
+
+        <div className="fixed bottom-[calc(1.5rem+10px)] right-4">
           <button
-            className="p-4 bg-black text-white rounded-full shadow-lg hover:bg-blue-500 focus:outline-none"
-            onClick={deleteSelectedEvents}
+            className="p-4 bg-blue-600 text-white rounded-full shadow-lg hover:bg-blue-500 focus:outline-none"
+            onClick={() => setIsDialogOpen(true)}
           >
-            <Trash2 className="h-6 w-6" />
+            <PlusCircledIcon className="h-6 w-6" />
           </button>
         </div>
-      )}
 
-      <div className="fixed bottom-[calc(1.5rem+10px)] right-4">
-        <button
-          className="p-4 bg-blue-600 text-white rounded-full shadow-lg hover:bg-blue-500 focus:outline-none"
-          onClick={() => setIsDialogOpen(true)}
-        >
-          <PlusCircledIcon className="h-6 w-6" />
-        </button>
+        <CreateBookingsFormDialog
+          isOpen={isDialogOpen}
+          onClose={() => setIsDialogOpen(false)}
+          onSave={handleSaveEvent}
+          showDateSelector={true}
+          event={editingEvent}
+        />
       </div>
-
-      <CreateBookingsFormDialog
-        isOpen={isDialogOpen}
-        onClose={() => setIsDialogOpen(false)}
-        onSave={handleSaveEvent}
-        showDateSelector={true}
-        event={editingEvent}
-      />
     </div>
   );
 }

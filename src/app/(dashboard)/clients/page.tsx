@@ -8,8 +8,8 @@ export default function Page() {
   const title = "Clients";
   const description = "Manage your clients here.";
   return (
-    <PageContainer>
-      <div className="space-y-4 mb-5">
+    <PageContainer scrollable>
+      <div className="space-y-4">
         <Heading title={title} description={description} />
         <Separator />
         <ClientsView />
