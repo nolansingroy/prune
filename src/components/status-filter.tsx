@@ -51,21 +51,20 @@ export function StatusFilter({
   filterEvents,
   selectedLabel,
   allEvents,
-  selectedDateRange, // Accept as a prop
+  selectedDateRange,
 }: StatusFilterProps) {
   const [open, setOpen] = React.useState(false);
 
   const handleReset = () => {
-    setValue(""); // Reset the value to the default (empty string)
+    setValue("");
 
-    // If a custom date range is selected, respect it
     if (selectedLabel === "Custom") {
       filterEvents("Custom", allEvents, "", selectedDateRange);
     } else {
       filterEvents(selectedLabel, allEvents, "", defaultDateRange);
     }
 
-    setOpen(false); // Close the popover
+    setOpen(false);
   };
 
   return (
@@ -99,7 +98,7 @@ export function StatusFilter({
                     allEvents,
                     currentValue,
                     defaultDateRange
-                  ); // Apply the selected status filter
+                  );
                   setOpen(false);
                 }}
               >
