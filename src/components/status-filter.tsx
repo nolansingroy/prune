@@ -28,16 +28,21 @@ const statuses = [
   },
 ];
 
+// dummy date range to satisfy the function signature
+const defaultDateRange = { from: new Date(), to: new Date() };
+
 interface StatusFilterProps {
   value: string;
   setValue: (value: string) => void;
   filterEvents: (
     label: string,
     eventsToFilter: EventInput[],
-    status: string
+    status: string,
+    dateRange: { from: Date; to: Date }
   ) => void;
   selectedLabel: string;
   allEvents: EventInput[];
+  selectedDateRange: { from: Date; to: Date }; // Add this prop
 }
 
 export function StatusFilter({
@@ -46,12 +51,20 @@ export function StatusFilter({
   filterEvents,
   selectedLabel,
   allEvents,
+  selectedDateRange, // Accept as a prop
 }: StatusFilterProps) {
   const [open, setOpen] = React.useState(false);
 
   const handleReset = () => {
     setValue(""); // Reset the value to the default (empty string)
-    filterEvents(selectedLabel, allEvents, ""); // Pass an empty string for the status
+
+    // If a custom date range is selected, respect it
+    if (selectedLabel === "Custom") {
+      filterEvents("Custom", allEvents, "", selectedDateRange);
+    } else {
+      filterEvents(selectedLabel, allEvents, "", defaultDateRange);
+    }
+
     setOpen(false); // Close the popover
   };
 
@@ -81,7 +94,12 @@ export function StatusFilter({
                 value={status.value}
                 onSelect={(currentValue) => {
                   setValue(currentValue);
-                  filterEvents(selectedLabel, allEvents, currentValue); // Apply the selected status filter
+                  filterEvents(
+                    selectedLabel,
+                    allEvents,
+                    currentValue,
+                    defaultDateRange
+                  ); // Apply the selected status filter
                   setOpen(false);
                 }}
               >

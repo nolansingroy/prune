@@ -124,7 +124,8 @@ export default function BookingsView() {
   const filterEvents = (
     label: string,
     eventsToFilter: EventInput[] = allEvents,
-    status: string = statusFilter
+    status: string = statusFilter,
+    dateRange: { from: Date; to: Date } = selectedDateRange
   ) => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -208,6 +209,12 @@ export default function BookingsView() {
         break;
       case "All Time":
         filteredEvents = eventsToFilter;
+        break;
+      case "Custom":
+        filteredEvents = eventsToFilter.filter(
+          (event) =>
+            event.start >= dateRange.from && event.start <= dateRange.to
+        );
         break;
       default:
         break;
@@ -1021,23 +1028,34 @@ export default function BookingsView() {
     console.log("Toggling paid status for event ID:", id);
 
     // Optimistically update the UI
-    const updatedEvents = events.map((event) =>
+    const updatedAllEvents = allEvents.map((event) =>
       event.id === id ? { ...event, paid: !event.paid } : event
     );
-    setEvents(updatedEvents);
+    setAllEvents(updatedAllEvents);
+
+    // Update the filtered events based on the new allEvents state
+    filterEvents(
+      selectedLabel,
+      updatedAllEvents,
+      statusFilter,
+      selectedDateRange
+    );
 
     // Update Firestore
-    const eventToUpdate = updatedEvents.find((event) => event.id === id);
+    const eventToUpdate = updatedAllEvents.find((event) => event.id === id);
     if (eventToUpdate) {
       try {
         await updateFireStoreEvent(user?.uid!, id, {
           paid: eventToUpdate.paid,
         });
         console.log("Paid status updated successfully");
+        toast.success("Paid status updated successfully");
       } catch (error) {
         console.error("Error updating paid status:", error);
+        toast.error("Error updating paid status");
         // Revert state on failure
-        setEvents(events);
+        setAllEvents(allEvents);
+        filterEvents(selectedLabel, allEvents, statusFilter, selectedDateRange);
       }
     }
   };
@@ -1066,8 +1084,9 @@ export default function BookingsView() {
             value={statusFilter}
             setValue={handleStatusFilterChange}
             filterEvents={filterEvents}
-            selectedLabel={selectedLabel} // Pass the selected label (e.g., "Payment Status")
+            selectedLabel={selectedLabel}
             allEvents={allEvents}
+            selectedDateRange={selectedDateRange} // Pass the date range
           />
         </div>
       </div>
