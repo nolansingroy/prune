@@ -65,6 +65,7 @@ import {
   subDays,
 } from "date-fns";
 import { Switch } from "@headlessui/react";
+import { StatusFilter } from "@/components/status-filter";
 
 const formatFee = (fee: number): string => {
   return new Intl.NumberFormat("en-US", {
@@ -107,6 +108,7 @@ export default function BookingsView() {
     to: new Date(9999, 11, 31), // Far future date
   });
   const [selectedLabel, setSelectedLabel] = useState<string>("Future");
+  const [statusFilter, setStatusFilter] = useState<string>("");
 
   const fetchEvents = useCallback(async () => {
     if (!user) {
@@ -121,7 +123,10 @@ export default function BookingsView() {
 
   const filterEvents = (
     label: string,
-    eventsToFilter: EventInput[] = allEvents
+    eventsToFilter: EventInput[] = allEvents,
+    status: string = statusFilter,
+    dateRange: { from: Date; to: Date } = selectedDateRange,
+    searchTerm: string = search
   ) => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -206,29 +211,88 @@ export default function BookingsView() {
       case "All Time":
         filteredEvents = eventsToFilter;
         break;
+      case "Custom":
+        filteredEvents = eventsToFilter.filter(
+          (event) =>
+            event.start >= dateRange.from && event.start <= dateRange.to
+        );
+        break;
       default:
         break;
+    }
+
+    if (status) {
+      filteredEvents = filteredEvents.filter((event) =>
+        status === "paid" ? event.paid : !event.paid
+      );
+    }
+
+    if (searchTerm) {
+      filteredEvents = filteredEvents.filter(
+        (event) =>
+          event.type.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          (event.description ?? "")
+            .toLowerCase()
+            .includes(searchTerm.toLowerCase()) ||
+          (event.clientName ?? "")
+            .toLowerCase()
+            .includes(searchTerm.toLowerCase())
+      );
+    }
+
+    setEvents(filteredEvents);
+  };
+
+  const applyFilters = (status: string, range: { from: Date; to: Date }) => {
+    let filteredEvents = allEvents;
+
+    // Filter by status
+    if (status) {
+      filteredEvents = filteredEvents.filter((event) =>
+        status === "paid" ? event.paid : !event.paid
+      );
+    }
+
+    if (range.from && range.to) {
+      filteredEvents = filteredEvents.filter(
+        (event) => event.start >= range.from && event.start <= range.to
+      );
     }
 
     setEvents(filteredEvents);
   };
 
   const filterEventsByDateRange = (from: Date, to: Date) => {
-    const filteredEvents = allEvents.filter(
+    let filteredEvents = allEvents.filter(
       (event) => event.start >= from && event.start <= to
     );
+
+    if (statusFilter) {
+      filteredEvents = filteredEvents.filter((event) =>
+        statusFilter === "paid" ? event.paid : !event.paid
+      );
+    }
     setEvents(filteredEvents);
+  };
+
+  const handleStatusFilterChange = (filter: string) => {
+    setStatusFilter(filter);
+    if (filter === "") {
+      filterEvents(selectedLabel, allEvents, "", selectedDateRange, search); // Pass search term
+    } else {
+      filterEvents(selectedLabel, allEvents, filter, selectedDateRange, search); // Pass search term
+    }
   };
 
   const handleLabelSelect = (label: string) => {
     setSelectedLabel(label);
-    filterEvents(label);
+    filterEvents(label, allEvents, statusFilter, selectedDateRange, search); // Pass search term
   };
 
   const handleDateSelect = (range: { from: Date; to: Date }) => {
     setSelectedDateRange(range);
-    setSelectedLabel("Custom"); // Set the label to "Custom" when a manual date range is selected
-    filterEventsByDateRange(range.from, range.to);
+    setSelectedLabel("Custom"); // Update label to "Custom"
+    filterEvents("Custom", allEvents, statusFilter, range, search); // Pass search term
   };
 
   const getColorWithOpacity = (color: string, opacity: number) => {
@@ -291,6 +355,16 @@ export default function BookingsView() {
 
     fetchData();
   }, [fetchEvents, fetchAllClients, fetchAllBookingTypes]);
+
+  useEffect(() => {
+    filterEvents(
+      selectedLabel,
+      allEvents,
+      statusFilter,
+      selectedDateRange,
+      search
+    );
+  }, [search, selectedLabel, statusFilter, selectedDateRange, allEvents]);
 
   const handleCellClick = (
     id: string,
@@ -880,7 +954,7 @@ export default function BookingsView() {
   const handleSelectAllChange = (checked: boolean) => {
     if (checked) {
       const newSelectedRows = new Set<string>();
-      filteredEvents.forEach((event) => {
+      events.forEach((event) => {
         if (event.id) newSelectedRows.add(event.id);
       });
       setSelectedRows(newSelectedRows);
@@ -929,12 +1003,12 @@ export default function BookingsView() {
     });
   };
 
-  const filteredEvents = events.filter(
-    (event) =>
-      event.type.toLowerCase().includes(search.toLowerCase()) ||
-      (event.description ?? "").toLowerCase().includes(search.toLowerCase()) ||
-      (event.clientName ?? "").toLowerCase().includes(search.toLowerCase())
-  );
+  // const filteredEvents = events.filter(
+  //   (event) =>
+  //     event.type.toLowerCase().includes(search.toLowerCase()) ||
+  //     (event.description ?? "").toLowerCase().includes(search.toLowerCase()) ||
+  //     (event.clientName ?? "").toLowerCase().includes(search.toLowerCase())
+  // );
 
   // Function to clone the event
   const handleCloneClick = async (event: EventInput) => {
@@ -965,7 +1039,7 @@ export default function BookingsView() {
       // Update local state
       setEvents((prevEvents: EventInput[]) => [
         ...prevEvents,
-        { ...sanitizedEventData, id: eventRef.id } as EventInput, // Assign the newly generated id
+        { ...sanitizedEventData, id: eventRef.id } as EventInput, //
       ]);
 
       console.log("Event cloned successfully");
@@ -978,46 +1052,77 @@ export default function BookingsView() {
     console.log("Toggling paid status for event ID:", id);
 
     // Optimistically update the UI
-    const updatedEvents = events.map((event) =>
+    const updatedAllEvents = allEvents.map((event) =>
       event.id === id ? { ...event, paid: !event.paid } : event
     );
-    setEvents(updatedEvents);
+    setAllEvents(updatedAllEvents);
 
-    // Update Firestore
-    const eventToUpdate = updatedEvents.find((event) => event.id === id);
+    // Update the filtered events based on the new allEvents state
+    filterEvents(
+      selectedLabel,
+      updatedAllEvents,
+      statusFilter,
+      selectedDateRange,
+      search
+    );
+
+    const eventToUpdate = updatedAllEvents.find((event) => event.id === id);
     if (eventToUpdate) {
       try {
         await updateFireStoreEvent(user?.uid!, id, {
           paid: eventToUpdate.paid,
         });
         console.log("Paid status updated successfully");
+        toast.success("Paid status updated successfully");
       } catch (error) {
         console.error("Error updating paid status:", error);
-        // Revert state on failure
-        setEvents(events);
+        toast.error("Error updating paid status");
+        // Reverting state on failure
+        setAllEvents(allEvents);
+        filterEvents(
+          selectedLabel,
+          allEvents,
+          statusFilter,
+          selectedDateRange,
+          search
+        );
       }
     }
   };
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-start justify-between">
+      <div className="flex flex-wrap items-center justify-between">
         <Heading title={title} description={description} />
-        <div className="flex items-center pt-4 sm:pt-0">
-          <Badge
-            className="mr-2 py-0 px-1"
-            style={{
-              backgroundColor: colorWithOpacity,
-              color: color,
-            }}
-          >
-            <span className="text-sm font-bold">{selectedLabel}</span>
-          </Badge>
-          <CalendarDatePicker
-            date={selectedDateRange}
-            onDateSelect={handleDateSelect} // Use the updated handler
-            onLabelSelect={handleLabelSelect} // Pass the handler
-          />
+        <div className="flex items-center pt-4 lg:pt-0 gap-3">
+          <div className="flex flex-wrap gap-3">
+            <div className="flex flex-row">
+              <Badge
+                className="mr-2 py-0 px-1"
+                style={{
+                  backgroundColor: colorWithOpacity,
+                  color: color,
+                }}
+              >
+                <span className="text-sm font-bold">{selectedLabel}</span>
+              </Badge>
+              <CalendarDatePicker
+                date={selectedDateRange}
+                onDateSelect={handleDateSelect}
+                onLabelSelect={handleLabelSelect}
+              />
+            </div>
+
+            <StatusFilter
+              value={statusFilter}
+              setValue={handleStatusFilterChange}
+              filterEvents={filterEvents}
+              selectedLabel={selectedLabel}
+              allEvents={allEvents}
+              selectedDateRange={selectedDateRange}
+              search={search}
+            />
+          </div>
         </div>
       </div>
 
@@ -1045,7 +1150,7 @@ export default function BookingsView() {
                 <TableRow>
                   <TableHead>
                     <Checkbox
-                      checked={selectedRows.size === filteredEvents.length}
+                      checked={selectedRows.size === events.length}
                       onCheckedChange={(checked: any) =>
                         handleSelectAllChange(!!checked)
                       }
@@ -1109,7 +1214,7 @@ export default function BookingsView() {
               </TableHeader>
 
               <TableBody>
-                {filteredEvents.map((event) => (
+                {events.map((event) => (
                   <TableRow key={event.id || ""}>
                     <TableCell>
                       <Checkbox
