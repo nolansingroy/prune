@@ -15,6 +15,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { EventInput } from "@/interfaces/types";
 
 const statuses = [
   {
@@ -27,13 +28,32 @@ const statuses = [
   },
 ];
 
-type StatusFilterProps = {
+interface StatusFilterProps {
   value: string;
   setValue: (value: string) => void;
-};
+  filterEvents: (
+    label: string,
+    eventsToFilter: EventInput[],
+    status: string
+  ) => void;
+  selectedLabel: string;
+  allEvents: EventInput[];
+}
 
-export function StatusFilter({ value, setValue }: StatusFilterProps) {
+export function StatusFilter({
+  value,
+  setValue,
+  filterEvents,
+  selectedLabel,
+  allEvents,
+}: StatusFilterProps) {
   const [open, setOpen] = React.useState(false);
+
+  const handleReset = () => {
+    setValue(""); // Reset the value to the default (empty string)
+    filterEvents(selectedLabel, allEvents, ""); // Pass an empty string for the status
+    setOpen(false); // Close the popover
+  };
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -60,7 +80,8 @@ export function StatusFilter({ value, setValue }: StatusFilterProps) {
                 key={status.value}
                 value={status.value}
                 onSelect={(currentValue) => {
-                  setValue(currentValue === value ? "" : currentValue);
+                  setValue(currentValue);
+                  filterEvents(selectedLabel, allEvents, currentValue); // Apply the selected status filter
                   setOpen(false);
                 }}
               >
@@ -74,6 +95,12 @@ export function StatusFilter({ value, setValue }: StatusFilterProps) {
               </CommandItem>
             ))}
           </CommandGroup>
+          {/* Reset Button */}
+          <div className="border-t px-4 py-2">
+            <Button variant="outline" className="w-full" onClick={handleReset}>
+              Reset Filter
+            </Button>
+          </div>
         </Command>
       </PopoverContent>
     </Popover>

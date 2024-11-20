@@ -123,7 +123,8 @@ export default function BookingsView() {
 
   const filterEvents = (
     label: string,
-    eventsToFilter: EventInput[] = allEvents
+    eventsToFilter: EventInput[] = allEvents,
+    status: string = statusFilter
   ) => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -212,20 +213,54 @@ export default function BookingsView() {
         break;
     }
 
-    if (statusFilter === "paid") {
-      filteredEvents = filteredEvents.filter((event) => event.paid);
-    } else if (statusFilter === "unpaid") {
-      filteredEvents = filteredEvents.filter((event) => !event.paid);
+    if (status) {
+      filteredEvents = filteredEvents.filter((event) =>
+        status === "paid" ? event.paid : !event.paid
+      );
+    }
+
+    setEvents(filteredEvents);
+  };
+
+  const applyFilters = (status: string, range: { from: Date; to: Date }) => {
+    let filteredEvents = allEvents;
+
+    // Filter by status
+    if (status) {
+      filteredEvents = filteredEvents.filter((event) =>
+        status === "paid" ? event.paid : !event.paid
+      );
+    }
+
+    if (range.from && range.to) {
+      filteredEvents = filteredEvents.filter(
+        (event) => event.start >= range.from && event.start <= range.to
+      );
     }
 
     setEvents(filteredEvents);
   };
 
   const filterEventsByDateRange = (from: Date, to: Date) => {
-    const filteredEvents = allEvents.filter(
+    let filteredEvents = allEvents.filter(
       (event) => event.start >= from && event.start <= to
     );
+
+    if (statusFilter) {
+      filteredEvents = filteredEvents.filter((event) =>
+        statusFilter === "paid" ? event.paid : !event.paid
+      );
+    }
     setEvents(filteredEvents);
+  };
+
+  const handleStatusFilterChange = (filter: string) => {
+    setStatusFilter(filter);
+    if (filter === "") {
+      filterEvents(selectedLabel); // Show all events if no status filter is applied
+    } else {
+      applyFilters(filter, selectedDateRange);
+    }
   };
 
   const handleLabelSelect = (label: string) => {
@@ -233,15 +268,10 @@ export default function BookingsView() {
     filterEvents(label);
   };
 
-  const handleStatusFilterChange = (value: string) => {
-    setStatusFilter(value);
-    filterEvents(selectedLabel);
-  };
-
   const handleDateSelect = (range: { from: Date; to: Date }) => {
     setSelectedDateRange(range);
-    setSelectedLabel("Custom"); // Set the label to "Custom" when a manual date range is selected
-    filterEventsByDateRange(range.from, range.to);
+    setSelectedLabel("Custom"); // Update label to "Custom"
+    applyFilters(statusFilter, range);
   };
 
   const getColorWithOpacity = (color: string, opacity: number) => {
@@ -1032,7 +1062,13 @@ export default function BookingsView() {
             onLabelSelect={handleLabelSelect} // Pass the handler
           />
 
-          <StatusFilter />
+          <StatusFilter
+            value={statusFilter}
+            setValue={handleStatusFilterChange}
+            filterEvents={filterEvents}
+            selectedLabel={selectedLabel} // Pass the selected label (e.g., "Payment Status")
+            allEvents={allEvents}
+          />
         </div>
       </div>
 
