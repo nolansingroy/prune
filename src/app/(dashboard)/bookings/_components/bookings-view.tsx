@@ -125,7 +125,8 @@ export default function BookingsView() {
     label: string,
     eventsToFilter: EventInput[] = allEvents,
     status: string = statusFilter,
-    dateRange: { from: Date; to: Date } = selectedDateRange
+    dateRange: { from: Date; to: Date } = selectedDateRange,
+    searchTerm: string = search
   ) => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -226,6 +227,19 @@ export default function BookingsView() {
       );
     }
 
+    if (searchTerm) {
+      filteredEvents = filteredEvents.filter(
+        (event) =>
+          event.type.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          (event.description ?? "")
+            .toLowerCase()
+            .includes(searchTerm.toLowerCase()) ||
+          (event.clientName ?? "")
+            .toLowerCase()
+            .includes(searchTerm.toLowerCase())
+      );
+    }
+
     setEvents(filteredEvents);
   };
 
@@ -264,21 +278,21 @@ export default function BookingsView() {
   const handleStatusFilterChange = (filter: string) => {
     setStatusFilter(filter);
     if (filter === "") {
-      filterEvents(selectedLabel); // Show all events if no status filter is applied
+      filterEvents(selectedLabel, allEvents, "", selectedDateRange, search); // Pass search term
     } else {
-      applyFilters(filter, selectedDateRange);
+      filterEvents(selectedLabel, allEvents, filter, selectedDateRange, search); // Pass search term
     }
   };
 
   const handleLabelSelect = (label: string) => {
     setSelectedLabel(label);
-    filterEvents(label);
+    filterEvents(label, allEvents, statusFilter, selectedDateRange, search); // Pass search term
   };
 
   const handleDateSelect = (range: { from: Date; to: Date }) => {
     setSelectedDateRange(range);
     setSelectedLabel("Custom"); // Update label to "Custom"
-    applyFilters(statusFilter, range);
+    filterEvents("Custom", allEvents, statusFilter, range, search); // Pass search term
   };
 
   const getColorWithOpacity = (color: string, opacity: number) => {
@@ -341,6 +355,16 @@ export default function BookingsView() {
 
     fetchData();
   }, [fetchEvents, fetchAllClients, fetchAllBookingTypes]);
+
+  useEffect(() => {
+    filterEvents(
+      selectedLabel,
+      allEvents,
+      statusFilter,
+      selectedDateRange,
+      search
+    );
+  }, [search, selectedLabel, statusFilter, selectedDateRange, allEvents]);
 
   const handleCellClick = (
     id: string,
@@ -930,7 +954,7 @@ export default function BookingsView() {
   const handleSelectAllChange = (checked: boolean) => {
     if (checked) {
       const newSelectedRows = new Set<string>();
-      filteredEvents.forEach((event) => {
+      events.forEach((event) => {
         if (event.id) newSelectedRows.add(event.id);
       });
       setSelectedRows(newSelectedRows);
@@ -979,12 +1003,12 @@ export default function BookingsView() {
     });
   };
 
-  const filteredEvents = events.filter(
-    (event) =>
-      event.type.toLowerCase().includes(search.toLowerCase()) ||
-      (event.description ?? "").toLowerCase().includes(search.toLowerCase()) ||
-      (event.clientName ?? "").toLowerCase().includes(search.toLowerCase())
-  );
+  // const filteredEvents = events.filter(
+  //   (event) =>
+  //     event.type.toLowerCase().includes(search.toLowerCase()) ||
+  //     (event.description ?? "").toLowerCase().includes(search.toLowerCase()) ||
+  //     (event.clientName ?? "").toLowerCase().includes(search.toLowerCase())
+  // );
 
   // Function to clone the event
   const handleCloneClick = async (event: EventInput) => {
@@ -1015,7 +1039,7 @@ export default function BookingsView() {
       // Update local state
       setEvents((prevEvents: EventInput[]) => [
         ...prevEvents,
-        { ...sanitizedEventData, id: eventRef.id } as EventInput, // Assign the newly generated id
+        { ...sanitizedEventData, id: eventRef.id } as EventInput, //
       ]);
 
       console.log("Event cloned successfully");
@@ -1038,10 +1062,10 @@ export default function BookingsView() {
       selectedLabel,
       updatedAllEvents,
       statusFilter,
-      selectedDateRange
+      selectedDateRange,
+      search
     );
 
-    // Update Firestore
     const eventToUpdate = updatedAllEvents.find((event) => event.id === id);
     if (eventToUpdate) {
       try {
@@ -1053,41 +1077,52 @@ export default function BookingsView() {
       } catch (error) {
         console.error("Error updating paid status:", error);
         toast.error("Error updating paid status");
-        // Revert state on failure
+        // Reverting state on failure
         setAllEvents(allEvents);
-        filterEvents(selectedLabel, allEvents, statusFilter, selectedDateRange);
+        filterEvents(
+          selectedLabel,
+          allEvents,
+          statusFilter,
+          selectedDateRange,
+          search
+        );
       }
     }
   };
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-start justify-between">
+      <div className="flex flex-wrap items-center justify-between">
         <Heading title={title} description={description} />
-        <div className="flex items-center pt-4 sm:pt-0">
-          <Badge
-            className="mr-2 py-0 px-1"
-            style={{
-              backgroundColor: colorWithOpacity,
-              color: color,
-            }}
-          >
-            <span className="text-sm font-bold">{selectedLabel}</span>
-          </Badge>
-          <CalendarDatePicker
-            date={selectedDateRange}
-            onDateSelect={handleDateSelect} // Use the updated handler
-            onLabelSelect={handleLabelSelect} // Pass the handler
-          />
+        <div className="flex items-center pt-4 lg:pt-0 gap-3">
+          <div className="flex flex-wrap gap-3">
+            <div className="flex flex-row">
+              <Badge
+                className="mr-2 py-0 px-1"
+                style={{
+                  backgroundColor: colorWithOpacity,
+                  color: color,
+                }}
+              >
+                <span className="text-sm font-bold">{selectedLabel}</span>
+              </Badge>
+              <CalendarDatePicker
+                date={selectedDateRange}
+                onDateSelect={handleDateSelect}
+                onLabelSelect={handleLabelSelect}
+              />
+            </div>
 
-          <StatusFilter
-            value={statusFilter}
-            setValue={handleStatusFilterChange}
-            filterEvents={filterEvents}
-            selectedLabel={selectedLabel}
-            allEvents={allEvents}
-            selectedDateRange={selectedDateRange} // Pass the date range
-          />
+            <StatusFilter
+              value={statusFilter}
+              setValue={handleStatusFilterChange}
+              filterEvents={filterEvents}
+              selectedLabel={selectedLabel}
+              allEvents={allEvents}
+              selectedDateRange={selectedDateRange}
+              search={search}
+            />
+          </div>
         </div>
       </div>
 
@@ -1115,7 +1150,7 @@ export default function BookingsView() {
                 <TableRow>
                   <TableHead>
                     <Checkbox
-                      checked={selectedRows.size === filteredEvents.length}
+                      checked={selectedRows.size === events.length}
                       onCheckedChange={(checked: any) =>
                         handleSelectAllChange(!!checked)
                       }
@@ -1179,7 +1214,7 @@ export default function BookingsView() {
               </TableHeader>
 
               <TableBody>
-                {filteredEvents.map((event) => (
+                {events.map((event) => (
                   <TableRow key={event.id || ""}>
                     <TableCell>
                       <Checkbox

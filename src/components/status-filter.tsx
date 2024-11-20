@@ -28,9 +28,6 @@ const statuses = [
   },
 ];
 
-// dummy date range to satisfy the function signature
-const defaultDateRange = { from: new Date(), to: new Date() };
-
 interface StatusFilterProps {
   value: string;
   setValue: (value: string) => void;
@@ -38,11 +35,13 @@ interface StatusFilterProps {
     label: string,
     eventsToFilter: EventInput[],
     status: string,
-    dateRange: { from: Date; to: Date }
+    dateRange: { from: Date; to: Date },
+    search: string
   ) => void;
   selectedLabel: string;
   allEvents: EventInput[];
-  selectedDateRange: { from: Date; to: Date }; // Add this prop
+  selectedDateRange: { from: Date; to: Date };
+  search: string;
 }
 
 export function StatusFilter({
@@ -52,18 +51,25 @@ export function StatusFilter({
   selectedLabel,
   allEvents,
   selectedDateRange,
+  search,
 }: StatusFilterProps) {
   const [open, setOpen] = React.useState(false);
 
   const handleReset = () => {
     setValue("");
+    filterEvents(selectedLabel, allEvents, "", selectedDateRange, search);
+    setOpen(false);
+  };
 
-    if (selectedLabel === "Custom") {
-      filterEvents("Custom", allEvents, "", selectedDateRange);
-    } else {
-      filterEvents(selectedLabel, allEvents, "", defaultDateRange);
-    }
-
+  const handleSelect = (currentValue: string) => {
+    setValue(currentValue);
+    filterEvents(
+      selectedLabel,
+      allEvents,
+      currentValue,
+      selectedDateRange,
+      search
+    );
     setOpen(false);
   };
 
@@ -71,7 +77,7 @@ export function StatusFilter({
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <Button
-          variant="secondary"
+          variant="outline"
           role="combobox"
           aria-expanded={open}
           className="w-[200px] justify-between"
@@ -91,16 +97,7 @@ export function StatusFilter({
               <CommandItem
                 key={status.value}
                 value={status.value}
-                onSelect={(currentValue) => {
-                  setValue(currentValue);
-                  filterEvents(
-                    selectedLabel,
-                    allEvents,
-                    currentValue,
-                    defaultDateRange
-                  );
-                  setOpen(false);
-                }}
+                onSelect={() => handleSelect(status.value)}
               >
                 {status.label}
                 <CheckIcon
@@ -113,8 +110,12 @@ export function StatusFilter({
             ))}
           </CommandGroup>
           {/* Reset Button */}
-          <div className="border-t px-4 py-2">
-            <Button variant="outline" className="w-full" onClick={handleReset}>
+          <div className="border-t px-1 py-2">
+            <Button
+              variant="expandIcon"
+              className="w-full h-1/2"
+              onClick={handleReset}
+            >
               Reset Filter
             </Button>
           </div>
