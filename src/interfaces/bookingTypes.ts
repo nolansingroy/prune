@@ -3,7 +3,7 @@ import { Timestamp } from "firebase/firestore";
 export type BookingTypes = {
   docId?: string; // Make docId optional
   name: string;
-  duration: number;
+  // duration: number;
   fee: number;
   color: string;
   created_at?: Timestamp; // Firestore timestamp
