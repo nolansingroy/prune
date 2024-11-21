@@ -110,7 +110,7 @@ export default function BookTypesView() {
         </h2>
         {!editingBookingId && (
           <span className="text-sm text-muted-foreground">
-            your clients will see this name on event reminders
+            you will need to create at least one booking type
           </span>
         )}
         <div className="space-y-4">
