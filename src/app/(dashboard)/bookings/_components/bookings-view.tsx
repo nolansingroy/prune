@@ -1020,7 +1020,7 @@ export default function BookingsView() {
       // Remove any undefined fields from the cloned event (like exceptions)
       const { id, ...clonedEventData } = {
         ...event,
-        description: `${event.type} (Clone)`, // Optional: Append "Clone" to the description
+        description: `${event.description} (Clone)`, // Optional: Append "Clone" to the description
         created_at: new Date(), // Update creation timestamp
       };
 
