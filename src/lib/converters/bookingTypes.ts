@@ -39,7 +39,7 @@ const bookingTypesConverter: FirestoreDataConverter<BookingTypes> = {
     return {
       docId: snapshot.id,
       name: data.name || "No name", // Provide a fallback for missing fields
-      duration: data.duration || 0,
+      // duration: data.duration || 0,
       fee: data.fee || 0,
       color: data.color || "#000000",
       created_at: data.created_at,

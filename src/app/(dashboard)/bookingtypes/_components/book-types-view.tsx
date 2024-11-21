@@ -25,7 +25,7 @@ import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 const initialBookingData: BookingTypes = {
   docId: "",
   name: "",
-  duration: 0,
+  // duration: 0,
   fee: 0,
   color: "#000000",
 };
@@ -72,7 +72,6 @@ export default function BookTypesView() {
       }
 
       if (actionType === "edit") {
-        // Update booking type in Firestore
         await updateBookingType(user.uid, newBookingData);
         fetchTypes();
         setNewBookingData(initialBookingData);
@@ -106,9 +105,14 @@ export default function BookTypesView() {
   return (
     <div className="space-y-4">
       <div className="space-y-6 bg-white dark:bg-primary-foreground p-6 rounded-lg shadow-sm border">
-        <h2 className="text-2xl font-semibold">
-          {editingBookingId ? "Edit Booking type" : "Create Booking type"}
+        <h2 className="text-2xl font-semibold tracking-tight">
+          {editingBookingId ? `Edit Booking type` : `Create Booking type`}
         </h2>
+        {!editingBookingId && (
+          <span className="text-sm text-muted-foreground">
+            your clients will see this name on event reminders
+          </span>
+        )}
         <div className="space-y-4">
           <Label className="block text-lg font-medium text-gray-700">
             Name
@@ -118,9 +122,9 @@ export default function BookTypesView() {
             onChange={(e: ChangeEvent<HTMLInputElement>) =>
               setNewBookingData({ ...newBookingData, name: e.target.value })
             }
-            placeholder="Enter booking type name"
+            placeholder="e.g. On Ice Training"
           />
-          <Label className="block text-lg font-medium text-gray-700">
+          {/* <Label className="block text-lg font-medium text-gray-700">
             Default Duration (minutes)
           </Label>
           <Input
@@ -133,10 +137,10 @@ export default function BookTypesView() {
               })
             }
             placeholder="Enter duration (e.g., 30, 60)"
-          />
+          /> */}
 
           <Label className="block text-lg font-medium text-gray-700">
-            Fee (USD)
+            Default Fee (USD)
           </Label>
           <Input
             type="number"
@@ -147,7 +151,7 @@ export default function BookTypesView() {
                 fee: Number(e.target.value),
               })
             }
-            placeholder="Enter fee (e.g., 100)"
+            placeholder="e.g. 100"
           />
 
           <div className="flex gap-6 items-center">
@@ -210,7 +214,7 @@ export default function BookTypesView() {
                       <TableRow>
                         <TableCell>Color</TableCell>
                         <TableCell>Name</TableCell>
-                        <TableCell>Duration</TableCell>
+                        {/* <TableCell>Duration</TableCell> */}
                         <TableCell>Fee</TableCell>
                         <TableCell>Actions</TableCell>
                       </TableRow>
@@ -228,7 +232,7 @@ export default function BookTypesView() {
                             </div>
                           </TableCell>
                           <TableCell>{type.name}</TableCell>
-                          <TableCell>{`${type.duration} minutes`}</TableCell>
+                          {/* <TableCell>{`${type.duration} minutes`}</TableCell> */}
                           <TableCell>
                             {type.fee !== undefined && type.fee !== null
                               ? new Intl.NumberFormat("en-US", {
