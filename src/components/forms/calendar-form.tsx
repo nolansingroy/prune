@@ -28,7 +28,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@headlessui/react";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 
 type CalendarFormProps = {
   onClose: () => void;
@@ -70,7 +70,7 @@ type TCalendarForm = {
   startRecur: string;
   endRecur: string;
   paid: boolean;
-  bookingFee: string;
+  fee: string;
 };
 
 export default function CalendarForm({
@@ -81,20 +81,20 @@ export default function CalendarForm({
   isLoading,
 }: CalendarFormProps) {
   const { user } = useAuth();
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
+  // const [title, setTitle] = useState("");
+  // const [description, setDescription] = useState("");
 
   const [date, setDate] = useState("");
-  const [isBackgroundEvent, setIsBackgroundEvent] = useState(true);
+
   const [startTime, setStartTime] = useState("");
   const [endTime, setEndTime] = useState("");
-  const [isRecurring, setIsRecurring] = useState(false);
-  const [daysOfWeek, setDaysOfWeek] = useState<number[]>([]);
-  const [startRecur, setStartRecur] = useState("");
-  const [endRecur, setEndRecur] = useState("");
-  const [paid, setPaid] = useState(false); // Defaults to false (Unpaid)
+  // const [isRecurring, setIsRecurring] = useState(false);
+  // const [daysOfWeek, setDaysOfWeek] = useState<number[]>([]);
+  // const [startRecur, setStartRecur] = useState("");
+  // const [endRecur, setEndRecur] = useState("");
+  // const [paid, setPaid] = useState(false);
   // booking fee state
-  const [bookingFee, setBookingFee] = useState<string>("");
+  // const [bookingFee, setBookingFee] = useState<string>("");
 
   const [bookingsPopoverOpen, setBookingsPopoverOpen] = useState(false);
   const [bookingType, setBookingType] = useState("");
@@ -121,10 +121,30 @@ export default function CalendarForm({
     register,
     setValue,
     reset,
+    control,
     watch,
     formState: { isSubmitting, errors },
     handleSubmit,
-  } = useForm<TCalendarForm>();
+  } = useForm<TCalendarForm>({
+    defaultValues: {
+      title: "",
+      description: "",
+      date: "",
+      isBackgroundEvent: true,
+      startTime: "",
+      endTime: "",
+      isRecurring: false,
+      daysOfWeek: [],
+      startRecur: "",
+      endRecur: "",
+      paid: false,
+      fee: "",
+    },
+  });
+
+  const isBackgroundEvent = watch("isBackgroundEvent");
+  const paid = watch("paid");
+  const isRecurring = watch("isRecurring");
 
   useEffect(() => {
     if (event) {
@@ -147,7 +167,8 @@ export default function CalendarForm({
               .substring(0, 5)
           : ""
       );
-      setStartRecur(
+      setValue(
+        "startRecur",
         event.startDate ? event.startDate.toISOString().split("T")[0] : ""
       );
       // }
@@ -156,8 +177,8 @@ export default function CalendarForm({
 
   // handle startRecur change when date changes
   useEffect(() => {
-    setStartRecur(date);
-  }, [date]);
+    setValue("startRecur", date);
+  }, [date, setValue]);
 
   const fetchBookings = useCallback(async () => {
     if (user) {
@@ -238,55 +259,53 @@ export default function CalendarForm({
   }, [client, clients]);
 
   const handleSave = (e: MouseEvent<HTMLButtonElement>) => {
-    e.preventDefault();
-
-    const eventData = {
-      title: !isBackgroundEvent ? bookingType : title,
-      type: !isBackgroundEvent ? bookingType : "",
-      typeId: !isBackgroundEvent ? typeId : "",
-      fee: !isBackgroundEvent ? parseFloat(bookingFee) : 0,
-      clientId: !isBackgroundEvent ? clientId : "",
-      clientName: !isBackgroundEvent ? client : "",
-      description,
-      // location,
-      isBackgroundEvent,
-      date: showDateSelector ? date : undefined,
-      startTime,
-      endTime,
-      paid,
-      recurrence: isRecurring
-        ? {
-            daysOfWeek,
-            startTime,
-            endTime,
-            startRecur,
-            endRecur,
-          }
-        : undefined,
-    };
-
-    console.log("Event data to passed from dialoge:", eventData);
+    // e.preventDefault();
+    // const eventData = {
+    //   title: !isBackgroundEvent ? bookingType : title,
+    //   type: !isBackgroundEvent ? bookingType : "",
+    //   typeId: !isBackgroundEvent ? typeId : "",
+    //   fee: !isBackgroundEvent ? parseFloat(bookingFee) : 0,
+    //   clientId: !isBackgroundEvent ? clientId : "",
+    //   clientName: !isBackgroundEvent ? client : "",
+    //   description,
+    //   // location,
+    //   isBackgroundEvent,
+    //   date: showDateSelector ? date : undefined,
+    //   startTime,
+    //   endTime,
+    //   paid,
+    //   recurrence: isRecurring
+    //     ? {
+    //         daysOfWeek,
+    //         startTime,
+    //         endTime,
+    //         startRecur,
+    //         endRecur,
+    //       }
+    //     : undefined,
+    // };
+    // console.log("Event data to passed from dialoge:", eventData);
     // onSave(eventData);
     // handleClose();
   };
 
   const handleClose = () => {
-    setTitle("");
-    setDescription("");
+    setValue("title", "");
+    setValue("description", "");
     setDate("");
-    setIsBackgroundEvent(true);
+    setValue("isBackgroundEvent", true);
     setStartTime("");
     setEndTime("");
-    setIsRecurring(false);
-    setDaysOfWeek([]);
-    setStartRecur("");
-    setEndRecur("");
+    setValue("isRecurring", false);
+    setValue("daysOfWeek", []);
+    setValue("startRecur", "");
+    setValue("endRecur", "");
     setBookingType("");
     setTypeId("");
-    setBookingFee("");
+    setValue("fee", "");
     setClient("");
     setClientId("");
-    setPaid(false);
+    setValue("paid", false);
     onClose();
   };
 
@@ -301,13 +320,13 @@ export default function CalendarForm({
     console.log("type selected:", value);
     setBookingType(value);
     setTypeId(docId);
-    setBookingFee(fee.toString());
+    setValue("fee", fee.toString());
     setBookingsPopoverOpen(false); // Close the popover after selection
   };
 
   const handelBookingTypeInputChange = (value: string) => {
     setBookingType(value);
-    setBookingFee("");
+    setValue("fee", "");
 
     const filtered = filteredBookings.filter((book) =>
       book.label.toLowerCase().includes(value.toLowerCase())
@@ -336,7 +355,7 @@ export default function CalendarForm({
   // Fee input functions
 
   const handleBookingFeeInputChange = (value: string) => {
-    setBookingFee(value);
+    setValue("fee", value);
   };
 
   // client functions
@@ -384,7 +403,7 @@ export default function CalendarForm({
 
     // If the event is recurring, set the start recurrence date to the selected date
     if (isRecurring) {
-      setStartRecur(selectedDate);
+      setValue("startRecur", selectedDate);
     }
   };
   return (
@@ -401,12 +420,12 @@ export default function CalendarForm({
 
         <div className="space-y-2">
           <div className="flex items-center">
-            <input
+            <Input
+              id="eventTypeBooking"
               type="radio"
-              name="eventType"
               value="availability"
               checked={isBackgroundEvent}
-              onChange={() => setIsBackgroundEvent(true)}
+              onChange={() => setValue("isBackgroundEvent", true)}
               className="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500"
             />
             <span className="ml-2 text-sm font-medium text-gray-700">
@@ -414,12 +433,12 @@ export default function CalendarForm({
             </span>
           </div>
           <div className="flex items-center">
-            <input
+            <Input
+              id="eventTypeAvailability"
               type="radio"
-              name="eventType"
               value="booking"
               checked={!isBackgroundEvent}
-              onChange={() => setIsBackgroundEvent(false)}
+              onChange={() => setValue("isBackgroundEvent", false)}
               className="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500"
             />
             <span className="ml-2 text-sm font-medium text-gray-700">
@@ -448,6 +467,7 @@ export default function CalendarForm({
             >
               <PopoverTrigger asChild>
                 <Button
+                  id="client"
                   variant="outline"
                   role="combobox"
                   aria-expanded={clientsPopoverOpen}
@@ -498,19 +518,21 @@ export default function CalendarForm({
           </div>
 
           <div className="space-y-2">
-            <Label className="block text-sm font-medium text-gray-700">
+            <Label
+              className="block text-sm font-medium text-gray-700"
+              htmlFor="paid"
+            >
               Payment Status
             </Label>
-            {/* <p className="mt-2 text-sm text-gray-500">
-        Toggle to set the event as Paid or Unpaid.
-      </p> */}
             <div className="flex items-center space-x-2">
               <span className="text-sm font-medium text-gray-700">
                 {paid ? "Paid" : "Unpaid"}
               </span>
               <Switch
+                id="paid"
+                {...register("paid")}
                 checked={paid}
-                onChange={setPaid}
+                onChange={() => setValue("paid", !paid)}
                 className={`${
                   paid ? "bg-rebus-green" : "bg-gray-200"
                 } relative inline-flex h-8 w-16 items-center rounded-full transition-colors focus:outline-none`}
@@ -530,7 +552,10 @@ export default function CalendarForm({
       {!isBackgroundEvent && (
         <div className="space-y-4">
           <div className="space-y-1">
-            <Label className="block text-sm font-medium text-gray-700">
+            <Label
+              className="block text-sm font-medium text-gray-700"
+              htmlFor="bookingType"
+            >
               Select or type in Custom Booking Type
             </Label>
             <Popover
@@ -542,6 +567,7 @@ export default function CalendarForm({
             >
               <PopoverTrigger asChild>
                 <Button
+                  id="bookingType"
                   variant="outline"
                   role="combobox"
                   aria-expanded={bookingsPopoverOpen}
@@ -600,12 +626,16 @@ export default function CalendarForm({
 
           {/* Booking Fee Input */}
           <div className="space-y-2">
-            <Label className="block text-sm font-medium text-gray-700">
+            <Label
+              className="block text-sm font-medium text-gray-700"
+              htmlFor="fee"
+            >
               Fee
             </Label>
             <Input
+              id="fee"
               type="number"
-              value={bookingFee || ""}
+              {...register("fee")}
               onChange={(e: ChangeEvent<HTMLInputElement>) =>
                 handleBookingFeeInputChange(e.target.value)
               }
@@ -619,7 +649,10 @@ export default function CalendarForm({
         {/* Title Input */}
         {isBackgroundEvent && (
           <div className="space-y-2">
-            <Label className="block text-sm font-medium text-gray-700">
+            <Label
+              className="block text-sm font-medium text-gray-700"
+              htmlFor="title"
+            >
               Title
             </Label>
             <Input
@@ -637,92 +670,39 @@ export default function CalendarForm({
           </div>
         )}
         <div>
-          <Label className="block text-sm font-medium text-gray-700">
+          <Label
+            className="block text-sm font-medium text-gray-700"
+            htmlFor="description"
+          >
             Notes
           </Label>
           <Input
-            value={description}
+            id="description"
+            {...register("description")}
+            // value={description}
             onChange={(e: ChangeEvent<HTMLInputElement>) =>
-              setDescription(e.target.value)
+              setValue("description", e.target.value)
             }
             className="text-base input-no-zoom"
           />
         </div>
-        {/* Location Input */}
-        {/* <div>
-      <Label className="block text-sm font-medium text-gray-700">
-        Location
-      </Label>
-      <Popover
-        open={locationPopoverOpen}
-        onOpenChange={setLocationPopoverOpen}
-      >
-        <PopoverTrigger asChild>
-          <Button
-            variant="outline"
-            role="combobox"
-            aria-expanded={locationPopoverOpen}
-            className="w-[200px] justify-between"
-            onClick={() => setLocationPopoverOpen(!open)} // Toggle popover on click
-          >
-            {location
-              ? presetLocations.find((loc) => loc.value === location)
-                  ?.label || location
-              : "Select location..."}
-            <CaretSortIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-          </Button>
-        </PopoverTrigger>
-        <PopoverContent className="w-[200px] p-0 popover-above-modal">
-          <Command>
-            <CommandInput
-              placeholder="Search location..."
-              value={location}
-              onValueChange={handleLocationInputChange}
-              onKeyDown={handleLocationInputKeyPress} // Handle keyboard input
-              className="h-9"
-            />
-            <CommandList>
-              <CommandEmpty>No locations found.</CommandEmpty>
-              <CommandGroup>
-                {filteredLocations.map((loc) => (
-                  <CommandItem
-                    key={loc.value}
-                    value={loc.value}
-                    onSelect={() => {
-                      handleLocationSelect(loc.value); // Set location
-                      setLocationPopoverOpen(false); // Close the popover after selection
-                    }}
-                  >
-                    {loc.label}
-                    <CheckIcon
-                      className={`ml-auto h-4 w-4 ${
-                        location === loc.value
-                          ? "opacity-100"
-                          : "opacity-0"
-                      }`}
-                    />
-                  </CommandItem>
-                ))}
-              </CommandGroup>
-            </CommandList>
-          </Command>
-        </PopoverContent>
-      </Popover>
-    </div> */}
-
         {/* Recurring Event Toggle (Single Event / Recurring Event) */}
         <div className="space-y-2">
-          <Label className="block text-sm font-medium text-gray-700">
+          <Label
+            className="block text-sm font-medium text-gray-700"
+            htmlFor="recurringEvent"
+          >
             Recurring Event
           </Label>
           <div className="space-y-2">
             <div className="flex items-center">
-              <input
+              <Input
+                id="recurringEventSingle"
                 type="radio"
-                name="recurringEvent"
+                // name="recurringEvent"
                 value="single"
                 checked={!isRecurring}
-                onChange={() => setIsRecurring(false)}
+                onChange={() => setValue("isRecurring", false)}
                 className="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500"
               />
               <span className="ml-2 text-sm font-medium text-gray-700">
@@ -730,12 +710,13 @@ export default function CalendarForm({
               </span>
             </div>
             <div className="flex items-center">
-              <input
+              <Input
+                id="recurringEventRecurring"
                 type="radio"
-                name="recurringEvent"
+                // name="recurringEvent"
                 value="recurring"
                 checked={isRecurring}
-                onChange={() => setIsRecurring(true)}
+                onChange={() => setValue("isRecurring", true)}
                 className="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500"
               />
               <span className="ml-2 text-sm font-medium text-gray-700">
@@ -749,53 +730,74 @@ export default function CalendarForm({
         {isRecurring && (
           <>
             <div>
-              <Label className="block text-sm font-medium text-gray-700">
+              <Label
+                className="block text-sm font-medium text-gray-700"
+                htmlFor="daysOfWeek"
+              >
                 Days of Week
               </Label>
               <div className="flex space-x-2">
-                {[0, 1, 2, 3, 4, 5, 6].map((day) => (
-                  <div key={day} className="flex flex-col items-center">
-                    <Checkbox
-                      checked={daysOfWeek.includes(day)}
-                      onCheckedChange={(checked) =>
-                        setDaysOfWeek((prev) =>
-                          checked
-                            ? [...prev, day]
-                            : prev.filter((d) => d !== day)
-                        )
-                      }
-                    />
-                    <Label className="mt-1">
-                      {["Su", "M", "T", "W", "Th", "F", "Sa"][day]}
-                    </Label>
-                  </div>
-                ))}
+                <Controller
+                  name="daysOfWeek"
+                  control={control}
+                  render={({ field }) => (
+                    <>
+                      {[0, 1, 2, 3, 4, 5, 6].map((day) => (
+                        <div key={day} className="flex flex-col items-center">
+                          <Checkbox
+                            checked={field.value.includes(day)}
+                            onCheckedChange={(checked) =>
+                              field.onChange(
+                                checked
+                                  ? [...field.value, day]
+                                  : field.value.filter((d: number) => d !== day)
+                              )
+                            }
+                          />
+                          <Label className="mt-1">
+                            {["Su", "M", "T", "W", "Th", "F", "Sa"][day]}
+                          </Label>
+                        </div>
+                      ))}
+                    </>
+                  )}
+                />
               </div>
             </div>
             <div className="flex space-x-4">
               <div className="flex flex-col">
-                <Label className="block text-sm font-medium text-gray-700">
+                <Label
+                  className="block text-sm font-medium text-gray-700"
+                  htmlFor="startRecur"
+                >
                   Start Recurrence
                 </Label>
                 <Input
+                  id="startRecur"
                   type="date"
-                  value={startRecur}
+                  {...register("startRecur")}
+                  // value={startRecur}
                   onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                    setStartRecur(e.target.value)
+                    setValue("startRecur", e.target.value)
                   }
                   disabled
                   className="text-base input-no-zoom"
                 />
               </div>
               <div className="flex flex-col">
-                <Label className="block text-sm font-medium text-gray-700">
+                <Label
+                  className="block text-sm font-medium text-gray-700"
+                  htmlFor="endRecur"
+                >
                   End Recurrence
                 </Label>
                 <Input
+                  id="endRecur"
                   type="date"
-                  value={endRecur}
+                  {...register("endRecur")}
+                  // value={endRecur}
                   onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                    setEndRecur(e.target.value)
+                    setValue("endRecur", e.target.value)
                   }
                   className="text-base input-no-zoom"
                 />
