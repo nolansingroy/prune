@@ -106,6 +106,8 @@ export default function CalendarForm({
     register,
     setValue,
     reset,
+    // getValues responsable for getting the form values
+    getValues,
     control,
     watch,
     formState: { isSubmitting, errors },
@@ -377,7 +379,13 @@ export default function CalendarForm({
     }
   };
   return (
-    <form className="space-y-3" onSubmit={handleSubmit(handleSave)}>
+    <form
+      className="space-y-3"
+      action={async () => {
+        const formValues = getValues();
+        console.log("formValues", formValues);
+      }}
+    >
       {/* Event Type Toggle (Create Availability / Create Booking) */}
 
       <div className="space-y-2">
