@@ -81,21 +81,6 @@ export default function CalendarForm({
   isLoading,
 }: CalendarFormProps) {
   const { user } = useAuth();
-  // const [title, setTitle] = useState("");
-  // const [description, setDescription] = useState("");
-
-  const [date, setDate] = useState("");
-
-  const [startTime, setStartTime] = useState("");
-  const [endTime, setEndTime] = useState("");
-  // const [isRecurring, setIsRecurring] = useState(false);
-  // const [daysOfWeek, setDaysOfWeek] = useState<number[]>([]);
-  // const [startRecur, setStartRecur] = useState("");
-  // const [endRecur, setEndRecur] = useState("");
-  // const [paid, setPaid] = useState(false);
-  // booking fee state
-  // const [bookingFee, setBookingFee] = useState<string>("");
-
   const [bookingsPopoverOpen, setBookingsPopoverOpen] = useState(false);
   const [bookingType, setBookingType] = useState("");
   const [bookingTypes, setBookingTypes] = useState<
@@ -145,22 +130,26 @@ export default function CalendarForm({
   const isBackgroundEvent = watch("isBackgroundEvent");
   const paid = watch("paid");
   const isRecurring = watch("isRecurring");
+  const date = watch("date");
 
   useEffect(() => {
     if (event) {
-      setDate(
+      setValue(
+        "date",
         event.startDate
           ? event.startDate.toLocaleDateString("en-CA") // Formats date as YYYY-MM-DD in local time
           : ""
       );
-      setStartTime(
+      setValue(
+        "startTime",
         event.start
           ? event.start
               .toLocaleTimeString("en-US", { hour12: false })
               .substring(0, 5)
           : ""
       );
-      setEndTime(
+      setValue(
+        "endTime",
         event.end
           ? event.end
               .toLocaleTimeString("en-US", { hour12: false })
@@ -258,7 +247,8 @@ export default function CalendarForm({
     }
   }, [client, clients]);
 
-  const handleSave = (e: MouseEvent<HTMLButtonElement>) => {
+  const handleSave = (data: TCalendarForm) => {
+    console.log("Event data to passed from dialoge:", data);
     // e.preventDefault();
     // const eventData = {
     //   title: !isBackgroundEvent ? bookingType : title,
@@ -292,20 +282,20 @@ export default function CalendarForm({
   const handleClose = () => {
     setValue("title", "");
     setValue("description", "");
-    setDate("");
+    setValue("date", "");
     setValue("isBackgroundEvent", true);
-    setStartTime("");
-    setEndTime("");
+    setValue("startTime", "");
+    setValue("endTime", "");
     setValue("isRecurring", false);
     setValue("daysOfWeek", []);
     setValue("startRecur", "");
     setValue("endRecur", "");
+    setValue("fee", "");
+    setValue("paid", false);
     setBookingType("");
     setTypeId("");
-    setValue("fee", "");
     setClient("");
     setClientId("");
-    setValue("paid", false);
     onClose();
   };
 
@@ -399,7 +389,7 @@ export default function CalendarForm({
   // handle the date change
   const handleDateChange = (e: ChangeEvent<HTMLInputElement>) => {
     const selectedDate = e.target.value;
-    setDate(selectedDate);
+    setValue("date", selectedDate);
 
     // If the event is recurring, set the start recurrence date to the selected date
     if (isRecurring) {
@@ -407,7 +397,7 @@ export default function CalendarForm({
     }
   };
   return (
-    <form className="space-y-3">
+    <form className="space-y-3" onSubmit={handleSubmit(handleSave)}>
       {/* Event Type Toggle (Create Availability / Create Booking) */}
 
       <div className="space-y-2">
@@ -808,12 +798,17 @@ export default function CalendarForm({
 
         {/* Date and Time Inputs */}
         <div>
-          <Label className="block text-sm font-medium text-gray-700">
+          <Label
+            className="block text-sm font-medium text-gray-700"
+            htmlFor="date"
+          >
             Date
           </Label>
           <Input
+            id="date"
             type="date"
-            value={date}
+            {...register("date")}
+            // value={date}
             onChange={handleDateChange}
             className="px-2 py-2 text-center rounded-md border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm text-base input-no-zoom"
           />
@@ -821,27 +816,37 @@ export default function CalendarForm({
 
         <div className="flex items-center space-x-6">
           <div className="flex flex-col">
-            <Label className="text-sm font-medium text-gray-700">
+            <Label
+              className="text-sm font-medium text-gray-700"
+              htmlFor="startTime"
+            >
               Start Time
             </Label>
             <Input
+              id="startTime"
+              {...register("startTime")}
               type="time"
-              value={startTime}
+              // value={startTime}
               onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                setStartTime(e.target.value)
+                setValue("startTime", e.target.value)
               }
               className="w-32 px-2 py-2 text-center rounded-md border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm text-base input-no-zoom"
             />
           </div>
           <div className="flex flex-col">
-            <Label className="text-sm font-medium text-gray-700">
+            <Label
+              className="text-sm font-medium text-gray-700"
+              htmlFor="endTime"
+            >
               End Time
             </Label>
             <Input
+              id="endTime"
+              {...register("endTime")}
               type="time"
-              value={endTime}
+              // value={endTime}
               onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                setEndTime(e.target.value)
+                setValue("endTime", e.target.value)
               }
               className="w-32 px-2 py-2 text-center rounded-md border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm text-base input-no-zoom"
             />
@@ -861,7 +866,7 @@ export default function CalendarForm({
         <Button
           variant="rebusPro"
           type="submit"
-          onClick={handleSave}
+          // onClick={handleSave}
           disabled={isLoading}
         >
           Save
