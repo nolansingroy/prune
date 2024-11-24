@@ -114,13 +114,25 @@ export default function CalendarForm({
     defaultValues: {
       title: "",
       description: "",
-      date: "",
+      date: event?.startDate
+        ? event.startDate.toLocaleDateString("en-CA") // Formats date as YYYY-MM-DD in local time
+        : "",
       isBackgroundEvent: true,
-      startTime: "",
-      endTime: "",
+      startTime: event?.start
+        ? event.start
+            .toLocaleTimeString("en-US", { hour12: false })
+            .substring(0, 5)
+        : "",
+      endTime: event?.end
+        ? event.end
+            .toLocaleTimeString("en-US", { hour12: false })
+            .substring(0, 5)
+        : "",
       isRecurring: false,
       daysOfWeek: [],
-      startRecur: "",
+      startRecur: event?.startDate
+        ? event.startDate.toISOString().split("T")[0]
+        : "",
       endRecur: "",
       paid: false,
       fee: "",
@@ -131,38 +143,6 @@ export default function CalendarForm({
   const paid = watch("paid");
   const isRecurring = watch("isRecurring");
   const date = watch("date");
-
-  useEffect(() => {
-    if (event) {
-      setValue(
-        "date",
-        event.startDate
-          ? event.startDate.toLocaleDateString("en-CA") // Formats date as YYYY-MM-DD in local time
-          : ""
-      );
-      setValue(
-        "startTime",
-        event.start
-          ? event.start
-              .toLocaleTimeString("en-US", { hour12: false })
-              .substring(0, 5)
-          : ""
-      );
-      setValue(
-        "endTime",
-        event.end
-          ? event.end
-              .toLocaleTimeString("en-US", { hour12: false })
-              .substring(0, 5)
-          : ""
-      );
-      setValue(
-        "startRecur",
-        event.startDate ? event.startDate.toISOString().split("T")[0] : ""
-      );
-      // }
-    }
-  }, [event]);
 
   // handle startRecur change when date changes
   useEffect(() => {
