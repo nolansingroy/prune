@@ -435,7 +435,8 @@ export default function CalendarForm({
               className="block text-sm font-medium text-gray-700"
               htmlFor="client"
             >
-              Select or type in Client
+              Select or type in Client{" "}
+              <span className="text-destructive">*</span>
             </Label>
             <Popover
               open={clientsPopoverOpen}
@@ -764,7 +765,7 @@ export default function CalendarForm({
                   className="block text-sm font-medium text-gray-700"
                   htmlFor="startRecur"
                 >
-                  Start Recurrence
+                  Start Recurrence <span className="text-destructive">*</span>
                 </Label>
                 <Input
                   id="startRecur"
@@ -788,7 +789,7 @@ export default function CalendarForm({
                   className="block text-sm font-medium text-gray-700"
                   htmlFor="endRecur"
                 >
-                  End Recurrence
+                  End Recurrence <span className="text-destructive">*</span>
                 </Label>
                 <Input
                   id="endRecur"
@@ -816,7 +817,7 @@ export default function CalendarForm({
             className="block text-sm font-medium text-gray-700"
             htmlFor="date"
           >
-            Date
+            Date <span className="text-destructive">*</span>
           </Label>
           <Input
             id="date"
@@ -837,7 +838,7 @@ export default function CalendarForm({
               className="text-sm font-medium text-gray-700"
               htmlFor="startTime"
             >
-              Start Time
+              Start Time <span className="text-destructive">*</span>
             </Label>
             <Input
               id="startTime"
@@ -861,7 +862,7 @@ export default function CalendarForm({
               className="text-sm font-medium text-gray-700"
               htmlFor="endTime"
             >
-              End Time
+              End Time <span className="text-destructive">*</span>
             </Label>
             <Input
               id="endTime"
