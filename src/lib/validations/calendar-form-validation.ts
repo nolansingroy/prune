@@ -32,6 +32,7 @@ export const calendarFormSchema = z
     fee: z.string().optional(),
   })
   .superRefine((data, ctx) => {
+    //-------- recurring validations --------//
     if (data.isRecurring) {
       // Validate `endRecur` only when `isRecurring` is true
       if (!data.endRecur) {
@@ -49,18 +50,18 @@ export const calendarFormSchema = z
         });
       }
     }
+
+    //-------- is booking event checks --------//
+    if (!data.isBackgroundEvent) {
+      // Validate `clientName` only when `isBackgroundEvent` is false
+      if (!data.clientName || data.clientName.length === 0) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["clientName"],
+          message: "Client name is required",
+        });
+      }
+    }
   });
 
 export type TCalendarForm = z.infer<typeof calendarFormSchema>;
-
-// .superRefine((data, ctx) => {
-//   if (!data.isBackgroundEvent) {
-//     if (!data.clientName) {
-//       ctx.addIssue({
-//         code: z.ZodIssueCode.custom,
-//         message: "Client is required",
-//         path: ["client"],
-//       });
-//     }
-//   }
-// });

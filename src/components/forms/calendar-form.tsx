@@ -83,7 +83,7 @@ export default function CalendarForm({
 
   // clients state
   const [clientsPopoverOpen, setClientsPopoverOpen] = useState(false);
-  const [client, setClient] = useState("");
+  // const [client, setClient] = useState("");
   const [clients, setClients] = useState<
     { value: string; label: string; docId: string }[]
   >([]);
@@ -130,6 +130,7 @@ export default function CalendarForm({
       endRecur: "",
       paid: false,
       fee: "",
+      clientName: "",
     },
   });
 
@@ -207,16 +208,17 @@ export default function CalendarForm({
 
   // Update filtered clients when client changes
   useEffect(() => {
-    if (client === "") {
+    const clientName = watch("clientName");
+    if (clientName === "") {
       setFilteredClients(clients); // Reset to full list when input is cleared
     } else {
       setFilteredClients(
         clients.filter((cli) =>
-          cli.label.toLowerCase().includes(client.toLowerCase())
+          cli.label.toLowerCase().includes(clientName!.toLowerCase())
         )
       );
     }
-  }, [client, clients]);
+  }, [watch, clients]);
 
   const handleSave = (data: TCalendarForm) => {
     console.log("Event data to passed from dialoge:", data);
@@ -265,7 +267,7 @@ export default function CalendarForm({
     setValue("paid", false);
     setBookingType("");
     setTypeId("");
-    setClient("");
+    setValue("clientName", "");
     setClientId("");
     onClose();
   };
@@ -324,13 +326,13 @@ export default function CalendarForm({
   const handleClientSelect = (value: string, docId: string) => {
     console.log("Client id selected:", docId);
     console.log("Client selected:", value);
-    setClient(value);
+    setValue("clientName", value);
     setClientId(docId);
     setClientsPopoverOpen(false);
   };
 
   const handleClientInputChange = (value: string) => {
-    setClient(value);
+    setValue("clientName", value);
 
     const filtered = clients.filter((cli) =>
       cli.label.toLowerCase().includes(value.toLowerCase())
@@ -343,7 +345,7 @@ export default function CalendarForm({
   ) => {
     if (event.key === "Enter") {
       // handle the case where the user presses enter on a client name that is not in the list
-      handleClientSelect(client, "");
+      handleClientSelect(watch("clientName")!, "");
       // close the popover
       setClientsPopoverOpen(false);
     }
@@ -351,8 +353,8 @@ export default function CalendarForm({
 
   // handle the case where the user clicks outside the popover and typed a client name that is not in the list and clicked outside the popover
   const handlePopoverCloseClient = () => {
-    if (!filteredClients.find((cli) => cli.value === client)) {
-      handleClientSelect(client, ""); // Set the client with the typed name if it's not in the list
+    if (!filteredClients.find((cli) => cli.value === watch("clientName"))) {
+      handleClientSelect(watch("clientName")!, ""); // Set the client with the typed name if it's not in the list
     }
     setClientsPopoverOpen(false);
   };
@@ -451,9 +453,10 @@ export default function CalendarForm({
                   className="w-[200px] justify-between text-base input-no-zoom"
                   onClick={() => setClientsPopoverOpen(!clientsPopoverOpen)} // Toggle popover on click
                 >
-                  {client
-                    ? filteredClients.find((cli) => cli.value === client)
-                        ?.label || client
+                  {watch("clientName")
+                    ? filteredClients.find(
+                        (cli) => cli.value === watch("clientName")
+                      )?.label || watch("clientName")
                     : "Select client..."}
                   <CaretSortIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                 </Button>
@@ -462,7 +465,7 @@ export default function CalendarForm({
                 <Command>
                   <CommandInput
                     placeholder="Search clients..."
-                    value={client}
+                    value={watch("clientName")}
                     onValueChange={handleClientInputChange}
                     onKeyDown={handleClientInputKeyPress} // Handle keyboard input
                     className="h-9 text-base input-no-zoom"
@@ -482,7 +485,9 @@ export default function CalendarForm({
                           {cli.label}
                           <CheckIcon
                             className={`ml-auto h-4 w-4 ${
-                              client === cli.value ? "opacity-100" : "opacity-0"
+                              watch("clientName") === cli.value
+                                ? "opacity-100"
+                                : "opacity-0"
                             }`}
                           />
                         </CommandItem>
@@ -492,6 +497,11 @@ export default function CalendarForm({
                 </Command>
               </PopoverContent>
             </Popover>
+            {errors.clientName && (
+              <p className="text-destructive text-xs">
+                {errors.clientName.message}
+              </p>
+            )}
           </div>
 
           <div className="space-y-2">
@@ -642,7 +652,7 @@ export default function CalendarForm({
               className="text-base input-no-zoom"
             />
             {errors.title && (
-              <p className="text-destructive text-sm">{errors.title.message}</p>
+              <p className="text-destructive text-xs">{errors.title.message}</p>
             )}
           </div>
         )}
@@ -663,7 +673,7 @@ export default function CalendarForm({
             className="text-base input-no-zoom"
           />
           {errors.description && (
-            <p className="text-destructive text-sm">
+            <p className="text-destructive text-xs">
               {errors.description.message}
             </p>
           )}
@@ -768,7 +778,7 @@ export default function CalendarForm({
                   className="text-base input-no-zoom"
                 />
                 {errors.startRecur && (
-                  <p className="text-destructive text-sm">
+                  <p className="text-destructive text-xs">
                     {errors.startRecur.message}
                   </p>
                 )}
@@ -791,7 +801,7 @@ export default function CalendarForm({
                   className="text-base input-no-zoom"
                 />
                 {errors.endRecur && (
-                  <p className="text-destructive text-sm">
+                  <p className="text-destructive text-xs">
                     {errors.endRecur.message}
                   </p>
                 )}
@@ -817,7 +827,7 @@ export default function CalendarForm({
             className="px-2 py-2 text-center rounded-md border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm text-base input-no-zoom"
           />
           {errors.date && (
-            <p className="text-destructive text-sm">{errors.date.message}</p>
+            <p className="text-destructive text-xs">{errors.date.message}</p>
           )}
         </div>
 
@@ -841,7 +851,7 @@ export default function CalendarForm({
             />
 
             {errors.startTime && (
-              <p className="text-destructive text-sm">
+              <p className="text-destructive text-xs">
                 {errors.startTime.message}
               </p>
             )}
@@ -865,7 +875,7 @@ export default function CalendarForm({
             />
 
             {errors.endTime && (
-              <p className="text-destructive text-sm">
+              <p className="text-destructive text-xs">
                 {errors.endTime.message}
               </p>
             )}
