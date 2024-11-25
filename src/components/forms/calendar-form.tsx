@@ -29,6 +29,11 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@headlessui/react";
 import { useForm, Controller } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import {
+  calendarFormSchema,
+  TCalendarForm,
+} from "@/lib/validations/calendar-form-validation";
 
 type CalendarFormProps = {
   onClose: () => void;
@@ -58,20 +63,20 @@ type CalendarFormProps = {
   isLoading?: boolean;
 };
 
-type TCalendarForm = {
-  title: string;
-  description: string;
-  date: string;
-  isBackgroundEvent: boolean;
-  startTime: string;
-  endTime: string;
-  isRecurring: boolean;
-  daysOfWeek: number[];
-  startRecur: string;
-  endRecur: string;
-  paid: boolean;
-  fee: string;
-};
+// type TCalendarForm = {
+//   title: string;
+//   description: string;
+//   date: string;
+//   isBackgroundEvent: boolean;
+//   startTime: string;
+//   endTime: string;
+//   isRecurring: boolean;
+//   daysOfWeek: number[];
+//   startRecur: string;
+//   endRecur: string;
+//   paid: boolean;
+//   fee: string;
+// };
 
 export default function CalendarForm({
   onClose,
@@ -106,6 +111,7 @@ export default function CalendarForm({
     register,
     setValue,
     reset,
+    trigger,
     // getValues responsable for getting the form values
     getValues,
     control,
@@ -113,6 +119,7 @@ export default function CalendarForm({
     formState: { isSubmitting, errors },
     handleSubmit,
   } = useForm<TCalendarForm>({
+    resolver: zodResolver(calendarFormSchema),
     defaultValues: {
       title: "",
       description: "",
@@ -384,6 +391,15 @@ export default function CalendarForm({
       action={async () => {
         const formValues = getValues();
         console.log("formValues", formValues);
+        //server function starts from here
+        // first thing to do is to validate the form fields client side using the trigger function from react-hook-form
+        const isValid = await trigger();
+        // if the form is not valid, return
+        if (!isValid) {
+          return;
+        }
+        // const formValues = getValues();
+        // console.log("formValues", formValues);
       }}
     >
       {/* Event Type Toggle (Create Availability / Create Booking) */}
@@ -663,6 +679,11 @@ export default function CalendarForm({
             }
             className="text-base input-no-zoom"
           />
+          {errors.description && (
+            <p className="text-destructive text-sm">
+              {errors.description.message}
+            </p>
+          )}
         </div>
         {/* Recurring Event Toggle (Single Event / Recurring Event) */}
         <div className="space-y-2">
@@ -723,12 +744,14 @@ export default function CalendarForm({
                       {[0, 1, 2, 3, 4, 5, 6].map((day) => (
                         <div key={day} className="flex flex-col items-center">
                           <Checkbox
-                            checked={field.value.includes(day)}
+                            checked={field.value?.includes(day) ?? false}
                             onCheckedChange={(checked) =>
                               field.onChange(
                                 checked
-                                  ? [...field.value, day]
-                                  : field.value.filter((d: number) => d !== day)
+                                  ? [...(field.value || []), day]
+                                  : (field.value || []).filter(
+                                      (d: number) => d !== day
+                                    )
                               )
                             }
                           />
@@ -761,6 +784,11 @@ export default function CalendarForm({
                   disabled
                   className="text-base input-no-zoom"
                 />
+                {errors.startRecur && (
+                  <p className="text-destructive text-sm">
+                    {errors.startRecur.message}
+                  </p>
+                )}
               </div>
               <div className="flex flex-col">
                 <Label
@@ -779,6 +807,11 @@ export default function CalendarForm({
                   }
                   className="text-base input-no-zoom"
                 />
+                {errors.endRecur && (
+                  <p className="text-destructive text-sm">
+                    {errors.endRecur.message}
+                  </p>
+                )}
               </div>
             </div>
           </>
@@ -800,6 +833,9 @@ export default function CalendarForm({
             onChange={handleDateChange}
             className="px-2 py-2 text-center rounded-md border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm text-base input-no-zoom"
           />
+          {errors.date && (
+            <p className="text-destructive text-sm">{errors.date.message}</p>
+          )}
         </div>
 
         <div className="flex items-center space-x-6">
@@ -820,6 +856,12 @@ export default function CalendarForm({
               }
               className="w-32 px-2 py-2 text-center rounded-md border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm text-base input-no-zoom"
             />
+
+            {errors.startTime && (
+              <p className="text-destructive text-sm">
+                {errors.startTime.message}
+              </p>
+            )}
           </div>
           <div className="flex flex-col">
             <Label
@@ -838,6 +880,12 @@ export default function CalendarForm({
               }
               className="w-32 px-2 py-2 text-center rounded-md border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm text-base input-no-zoom"
             />
+
+            {errors.endTime && (
+              <p className="text-destructive text-sm">
+                {errors.endTime.message}
+              </p>
+            )}
           </div>
         </div>
       </div>
