@@ -20,10 +20,7 @@ export const calendarFormSchema = z
       .string()
       .regex(/^\d{4}-\d{2}-\d{2}$/, "Start recurrence is required")
       .optional(),
-    endRecur: z
-      .string()
-      .regex(/^\d{4}-\d{2}-\d{2}$/, "End recurrence wrong format")
-      .optional(),
+    endRecur: z.string().optional(), // No regex here
     type: z.string().optional(),
     typeId: z.string().optional(),
     clientName: z.string().optional(),
@@ -34,18 +31,19 @@ export const calendarFormSchema = z
     daysOfWeek: z.array(z.number()).optional(),
     fee: z.string().optional(),
   })
-  .refine(
-    (data) => {
-      if (data.isRecurring && !data.endRecur) {
-        return false;
+  .superRefine((data, ctx) => {
+    if (data.isRecurring) {
+      // Validate `endRecur` only when `isRecurring` is true
+      if (!data.endRecur || !/^\d{4}-\d{2}-\d{2}$/.test(data.endRecur)) {
+        ctx.addIssue({
+          code: "custom", // Required to specify the type of error
+          path: ["endRecur"],
+          message:
+            "End recurrence is required and must be in the correct format (YYYY-MM-DD).",
+        });
       }
-      return true;
-    },
-    {
-      message: "End recurrence is required when the event is recurring",
-      path: ["endRecur"],
     }
-  );
+  });
 
 export type TCalendarForm = z.infer<typeof calendarFormSchema>;
 

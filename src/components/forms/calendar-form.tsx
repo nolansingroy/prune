@@ -63,21 +63,6 @@ type CalendarFormProps = {
   isLoading?: boolean;
 };
 
-// type TCalendarForm = {
-//   title: string;
-//   description: string;
-//   date: string;
-//   isBackgroundEvent: boolean;
-//   startTime: string;
-//   endTime: string;
-//   isRecurring: boolean;
-//   daysOfWeek: number[];
-//   startRecur: string;
-//   endRecur: string;
-//   paid: boolean;
-//   fee: string;
-// };
-
 export default function CalendarForm({
   onClose,
   onSave,
@@ -178,7 +163,6 @@ export default function CalendarForm({
       });
       setBookingTypes(presetBookings);
       setFilteredBookings(presetBookings);
-      // console.log("Booking types from firebase:", types);
     }
   }, [user]);
 
@@ -189,8 +173,6 @@ export default function CalendarForm({
       let presetClients: { value: string; label: string; docId: string }[] = [];
       clients.forEach((cli) => {
         presetClients.push({
-          // value: cli.docId,
-          // label: cli.docId,
           value: cli.firstName + " " + cli.lastName,
           label: cli.firstName + " " + cli.lastName,
           docId: cli.docId,
@@ -396,6 +378,7 @@ export default function CalendarForm({
         const isValid = await trigger();
         // if the form is not valid, return
         if (!isValid) {
+          console.log("the error is", errors);
           return;
         }
         // const formValues = getValues();
