@@ -297,7 +297,7 @@ export default function FullCalendarComponent({}) {
     setEditAll(false);
   };
 
-  const handleSave = ({
+  const handleSave = async ({
     title,
     type,
     typeId,
@@ -333,8 +333,8 @@ export default function FullCalendarComponent({}) {
       startRecur: string;
       endRecur: string;
     };
-  }) => {
-    if (!selectInfo) return;
+  }): Promise<void> => {
+    if (!selectInfo) return Promise.resolve();
 
     let calendarApi = selectInfo.view.calendar;
     calendarApi.unselect();
@@ -554,12 +554,12 @@ export default function FullCalendarComponent({}) {
         console.error("Error saving event:", error);
         toast.error("An error occurred while adding the event");
       } finally {
+        console.log("handle save finished");
         await fetchEvents();
         setIsLoading(false);
       }
     });
-
-    // handleDialogClose();
+    return Promise.resolve();
   };
 
   const handleUpdatEventFormDialog = (eventData: {

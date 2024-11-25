@@ -35,20 +35,12 @@ interface EventFormDialogProps {
       startRecur: string;
       endRecur: string;
     };
-  }) => void;
+  }) => Promise<void>;
   showDateSelector?: boolean;
   event?: EventInput | null;
   editAll?: boolean;
   isLoading?: boolean;
 }
-
-// const presetLocations = [
-//   { value: "Kraken 1", label: "Kraken 1" },
-//   { value: "Kraken 2", label: "Kraken 2" },
-//   { value: "Kraken 3", label: "Kraken 3" },
-//   { value: "location4", label: "Location 4" },
-//   { value: "location5", label: "Location 5" },
-// ];
 
 const EventFormDialog: React.FC<EventFormDialogProps> = ({
   isOpen,

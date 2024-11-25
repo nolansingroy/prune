@@ -1,3 +1,5 @@
+"use client";
+
 import { useAuth } from "@/context/AuthContext";
 import { EventInput } from "@/interfaces/types";
 import { fetchBookingTypes } from "@/lib/converters/bookingTypes";
@@ -57,7 +59,7 @@ type CalendarFormProps = {
       startRecur: string;
       endRecur: string;
     };
-  }) => void;
+  }) => Promise<void>;
   showDateSelector?: boolean;
   event?: EventInput | null;
   isLoading?: boolean;
@@ -373,16 +375,14 @@ export default function CalendarForm({
     <form
       className="space-y-3"
       action={async () => {
-        //server function starts from here
-        // first thing to do is to validate the form fields client side using the trigger function from react-hook-form
         const isValid = await trigger();
-        // if the form is not valid, return
         if (!isValid) {
-          console.log("the error is", errors);
+          console.log("The error is", errors);
           return;
         }
+
         const formValues = getValues();
-        console.log("formValues", formValues);
+        console.log("Form values:", formValues);
 
         const eventData = {
           title: !isBackgroundEvent ? bookingType : formValues.title!,
@@ -408,9 +408,17 @@ export default function CalendarForm({
             : undefined,
         };
 
-        console.log("Event data to passed from dialoge:", eventData);
-        onSave(eventData);
-        handleClose();
+        console.log("Event data passed from dialog:", eventData);
+
+        try {
+          // Wait for the onSave action to complete
+          await onSave(eventData);
+          console.log("onSave finished successfully, closing dialog");
+          handleClose(); // Only close the dialog after onSave finishes
+        } catch (error) {
+          console.error("Error in onSave:", error);
+          // Optional: Show an error toast or message
+        }
       }}
     >
       {/* Event Type Toggle (Create Availability / Create Booking) */}
