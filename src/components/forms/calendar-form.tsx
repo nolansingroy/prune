@@ -373,8 +373,6 @@ export default function CalendarForm({
     <form
       className="space-y-3"
       action={async () => {
-        const formValues = getValues();
-        console.log("formValues", formValues);
         //server function starts from here
         // first thing to do is to validate the form fields client side using the trigger function from react-hook-form
         const isValid = await trigger();
@@ -383,8 +381,36 @@ export default function CalendarForm({
           console.log("the error is", errors);
           return;
         }
-        // const formValues = getValues();
-        // console.log("formValues", formValues);
+        const formValues = getValues();
+        console.log("formValues", formValues);
+
+        const eventData = {
+          title: !isBackgroundEvent ? bookingType : formValues.title!,
+          type: !isBackgroundEvent ? bookingType : "",
+          typeId: !isBackgroundEvent ? typeId : "",
+          fee: !isBackgroundEvent ? parseFloat(formValues.fee!) : 0,
+          clientId: !isBackgroundEvent ? clientId : "",
+          clientName: !isBackgroundEvent ? formValues.clientName! : "",
+          description: formValues.description!,
+          isBackgroundEvent: formValues.isBackgroundEvent!,
+          date: showDateSelector ? formValues.date! : undefined,
+          startTime: formValues.startTime!,
+          endTime: formValues.endTime!,
+          paid: formValues.paid!,
+          recurrence: isRecurring
+            ? {
+                daysOfWeek: formValues.daysOfWeek!,
+                startTime: formValues.startTime!,
+                endTime: formValues.endTime!,
+                startRecur: formValues.startRecur!,
+                endRecur: formValues.endRecur!,
+              }
+            : undefined,
+        };
+
+        console.log("Event data to passed from dialoge:", eventData);
+        onSave(eventData);
+        handleClose();
       }}
     >
       {/* Event Type Toggle (Create Availability / Create Booking) */}
