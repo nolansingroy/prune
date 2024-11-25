@@ -36,6 +36,8 @@ import {
   calendarFormSchema,
   TCalendarForm,
 } from "@/lib/validations/calendar-form-validation";
+import FormButton from "../buttons/form-submit-btn";
+import FormCancelButton from "../buttons/form-cancel-btn";
 
 type CalendarFormProps = {
   onClose: () => void;
@@ -414,7 +416,7 @@ export default function CalendarForm({
           // Wait for the onSave action to complete
           await onSave(eventData);
           console.log("onSave finished successfully, closing dialog");
-          handleClose(); // Only close the dialog after onSave finishes
+          // handleClose(); // Only close the dialog after onSave finishes
         } catch (error) {
           console.error("Error in onSave:", error);
           // Optional: Show an error toast or message
@@ -919,22 +921,8 @@ export default function CalendarForm({
       </div>
 
       <div className="flex flex-col space-y-2 pt-5 sm:flex-row sm:justify-end sm:space-y-0 sm:space-x-2 sm:pt-5">
-        <Button
-          variant="secondary"
-          type="button"
-          onClick={handleClose}
-          disabled={isLoading}
-        >
-          Cancel
-        </Button>
-        <Button
-          variant="rebusPro"
-          type="submit"
-          // onClick={handleSave}
-          disabled={isLoading}
-        >
-          Save
-        </Button>
+        <FormCancelButton onClick={handleClose}>Cancel</FormCancelButton>
+        <FormButton>Save</FormButton>
       </div>
     </form>
   );

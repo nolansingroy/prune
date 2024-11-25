@@ -555,6 +555,7 @@ export default function FullCalendarComponent({}) {
         toast.error("An error occurred while adding the event");
       } finally {
         console.log("handle save finished");
+        handleDialogClose();
         await fetchEvents();
         setIsLoading(false);
       }
@@ -589,6 +590,7 @@ export default function FullCalendarComponent({}) {
     console.log("updating information triggered");
 
     startTransition(async () => {
+      setIsLoading(true);
       await updatEventFormDialog(eventData, userId!);
       await fetchEvents();
       setIsLoading(false);
