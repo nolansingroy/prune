@@ -4,13 +4,7 @@ import { useAuth } from "@/context/AuthContext";
 import { EventInput } from "@/interfaces/types";
 import { fetchBookingTypes } from "@/lib/converters/bookingTypes";
 import { fetchClients } from "@/lib/converters/clients";
-import React, {
-  useState,
-  ChangeEvent,
-  MouseEvent,
-  useEffect,
-  useCallback,
-} from "react";
+import React, { useState, ChangeEvent, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { CaretSortIcon, CheckIcon } from "@radix-ui/react-icons";
@@ -224,39 +218,7 @@ export default function CalendarForm({
     }
   }, [watch, clients]);
 
-  const handleSave = (data: TCalendarForm) => {
-    console.log("Event data to passed from dialoge:", data);
-    // e.preventDefault();
-    // const eventData = {
-    //   title: !isBackgroundEvent ? bookingType : title,
-    //   type: !isBackgroundEvent ? bookingType : "",
-    //   typeId: !isBackgroundEvent ? typeId : "",
-    //   fee: !isBackgroundEvent ? parseFloat(bookingFee) : 0,
-    //   clientId: !isBackgroundEvent ? clientId : "",
-    //   clientName: !isBackgroundEvent ? client : "",
-    //   description,
-    //   // location,
-    //   isBackgroundEvent,
-    //   date: showDateSelector ? date : undefined,
-    //   startTime,
-    //   endTime,
-    //   paid,
-    //   recurrence: isRecurring
-    //     ? {
-    //         daysOfWeek,
-    //         startTime,
-    //         endTime,
-    //         startRecur,
-    //         endRecur,
-    //       }
-    //     : undefined,
-    // };
-    // console.log("Event data to passed from dialoge:", eventData);
-    // onSave(eventData);
-    // handleClose();
-  };
-
-  const handleClose = () => {
+  const resetValues = () => {
     setValue("title", "");
     setValue("description", "");
     setValue("date", "");
@@ -273,7 +235,15 @@ export default function CalendarForm({
     setTypeId("");
     setValue("clientName", "");
     setClientId("");
+  };
+
+  const handleCancel = () => {
+    resetValues();
     onClose();
+  };
+
+  const handleFormSubmitted = () => {
+    resetValues();
   };
 
   // booking type functions
@@ -416,7 +386,7 @@ export default function CalendarForm({
           // Wait for the onSave action to complete
           await onSave(eventData);
           console.log("onSave finished successfully, closing dialog");
-          // handleClose(); // Only close the dialog after onSave finishes
+          // handleFormSubmitted();
         } catch (error) {
           console.error("Error in onSave:", error);
           // Optional: Show an error toast or message
@@ -921,7 +891,7 @@ export default function CalendarForm({
       </div>
 
       <div className="flex flex-col space-y-2 pt-5 sm:flex-row sm:justify-end sm:space-y-0 sm:space-x-2 sm:pt-5">
-        <FormCancelButton onClick={handleClose}>Cancel</FormCancelButton>
+        <FormCancelButton onClick={handleCancel}>Cancel</FormCancelButton>
         <FormButton>Save</FormButton>
       </div>
     </form>
