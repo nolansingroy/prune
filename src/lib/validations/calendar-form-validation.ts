@@ -4,22 +4,10 @@ export const calendarFormSchema = z
   .object({
     title: z.string().optional(),
     description: z.string().optional(),
-    date: z
-      .string()
-      .regex(/^\d{4}-\d{2}-\d{2}$/, "Date wrong format")
-      .optional(),
-    startTime: z
-      .string()
-      .regex(/^\d{2}:\d{2}$/, "Start time wrong format")
-      .optional(),
-    endTime: z
-      .string()
-      .regex(/^\d{2}:\d{2}$/, "End time wrong format")
-      .optional(),
-    startRecur: z
-      .string()
-      .regex(/^\d{4}-\d{2}-\d{2}$/, "Start recurrence is required")
-      .optional(),
+    date: z.string().optional(),
+    startTime: z.string().optional(),
+    endTime: z.string().optional(),
+    startRecur: z.string().optional(),
     endRecur: z.string().optional(), // No regex here
     type: z.string().optional(),
     typeId: z.string().optional(),
@@ -49,9 +37,25 @@ export const calendarFormSchema = z
           message: "End recurrence wrong format",
         });
       }
+
+      if (!data.startRecur) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["startRecur"],
+          message: "Start recurrence is required",
+        });
+      }
+
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(data.startRecur!)) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["startRecur"],
+          message: "Start recurrence wrong format",
+        });
+      }
     }
 
-    //-------- is booking event checks --------//
+    //-------- is booking event validations --------//
     if (!data.isBackgroundEvent) {
       // Validate `clientName` only when `isBackgroundEvent` is false
       if (!data.clientName || data.clientName.length === 0) {
@@ -61,6 +65,58 @@ export const calendarFormSchema = z
           message: "Client name is required",
         });
       }
+    }
+
+    //-------- date validations --------//
+    if (!data.date) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["date"],
+        message: "Date is required",
+      });
+    }
+
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(data.date!)) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["date"],
+        message: "Date wrong format",
+      });
+    }
+
+    //-------- startTime validations --------//
+    if (!data.startTime) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["startTime"],
+        message: "Start time is required",
+      });
+    }
+
+    if (!/^\d{2}:\d{2}$/.test(data.startTime!)) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["startTime"],
+        message: "Start time wrong format",
+      });
+    }
+
+    //-------- endTime validations --------//
+
+    if (!data.endTime) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["endTime"],
+        message: "End time is required",
+      });
+    }
+
+    if (!/^\d{2}:\d{2}$/.test(data.endTime!)) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["endTime"],
+        message: "End time wrong format",
+      });
     }
   });
 
