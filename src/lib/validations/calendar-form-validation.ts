@@ -34,11 +34,18 @@ export const calendarFormSchema = z
   .superRefine((data, ctx) => {
     if (data.isRecurring) {
       // Validate `endRecur` only when `isRecurring` is true
-      if (!data.endRecur || !/^\d{4}-\d{2}-\d{2}$/.test(data.endRecur)) {
+      if (!data.endRecur) {
         ctx.addIssue({
           code: "custom", // Required to specify the type of error
           path: ["endRecur"],
           message: "End recurrence is required",
+        });
+      }
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(data.endRecur!)) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["endRecur"],
+          message: "End recurrence wrong format",
         });
       }
     }
