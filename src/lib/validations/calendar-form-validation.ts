@@ -38,8 +38,7 @@ export const calendarFormSchema = z
         ctx.addIssue({
           code: "custom", // Required to specify the type of error
           path: ["endRecur"],
-          message:
-            "End recurrence is required and must be in the correct format (YYYY-MM-DD).",
+          message: "End recurrence is required",
         });
       }
     }
