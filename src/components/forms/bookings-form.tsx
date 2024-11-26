@@ -81,8 +81,7 @@ interface BookingsFormProps {
       clientId: string;
       clientName: string;
       description: string;
-      // location: string;
-      isBackgroundEvent: boolean; // Automatically false for regular bookings
+      isBackgroundEvent: boolean;
       originalEventId: string;
       date?: string;
       startTime: string;
@@ -213,7 +212,7 @@ export default function BookingsForm({
   // const [daysOfWeek, setDaysOfWeek] = useState<number[]>([]);
 
   useEffect(() => {
-    console.log("Event in CreateBookingsDialog", event);
+    // console.log("Event in CreateBookingsDialog", event);
     console.log("eventId : " + originalEventId);
     if (event) {
       setOriginalEventId(event._def?.extendedProps?.originalEventId || "");
@@ -243,12 +242,12 @@ export default function BookingsForm({
       //         .substring(0, 5)
       //     : ""
       // );
-      if (event.recurrence) {
-        // setIsRecurring(true);
-        // setDaysOfWeek(event.recurrence.daysOfWeek || []);
-        // setStartRecur(event.recurrence.startRecur || "");
-        // setEndRecur(event.recurrence.endRecur || "");
-      }
+      // if (event.recurrence) {
+      // setIsRecurring(true);
+      // setDaysOfWeek(event.recurrence.daysOfWeek || []);
+      // setStartRecur(event.recurrence.startRecur || "");
+      // setEndRecur(event.recurrence.endRecur || "");
+      // }
     }
   }, [event, isOpen, originalEventId]);
 
@@ -290,8 +289,6 @@ export default function BookingsForm({
       let presetClients: { value: string; label: string; docId: string }[] = [];
       clients.forEach((cli) => {
         presetClients.push({
-          // value: cli.docId,
-          // label: cli.docId,
           value: cli.firstName + " " + cli.lastName,
           label: cli.firstName + " " + cli.lastName,
           docId: cli.docId,
@@ -402,9 +399,7 @@ export default function BookingsForm({
   //   handleClose();
   // };
 
-  const handleClose = () => {
-    // setTitle("");
-    // setLocation("");
+  const resetValues = () => {
     setValue("description", "");
     setValue("date", formattedDate);
     setValue("startTime", startTimeToday);
@@ -419,7 +414,15 @@ export default function BookingsForm({
     setValue("clientName", "");
     setClientId("");
     setValue("paid", false);
+  };
+
+  const handleClose = () => {
+    resetValues();
     onClose();
+  };
+
+  const handleFormSubmitted = () => {
+    resetValues();
   };
 
   // booking type functions
@@ -461,7 +464,7 @@ export default function BookingsForm({
   // handle the case where the user clicks outside the popover and typed a client name that is not in the list and clicked outside the popover
   const handlePopoverCloseBooking = () => {
     if (!filteredBookings.find((book) => book.value === bookingType)) {
-      handleBookingTypeSelect(bookingType, 0, "", ""); // Set the client with the typed name if it's not in the list
+      handleBookingTypeSelect(bookingType, 0, "", "");
     }
     setClientsPopoverOpen(false);
   };
