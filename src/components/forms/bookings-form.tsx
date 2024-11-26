@@ -195,13 +195,14 @@ export default function BookingsForm({
   });
 
   const paid = watch("paid");
+  const isRecurring = watch("isRecurring");
 
-  const [title, setTitle] = useState("");
+  // const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [date, setDate] = useState(formattedDate);
   const [startTime, setStartTime] = useState(startTimeToday);
   const [endTime, setEndTime] = useState(endTimeToday);
-  const [isRecurring, setIsRecurring] = useState(false);
+  // const [isRecurring, setIsRecurring] = useState(false);
   const [daysOfWeek, setDaysOfWeek] = useState<number[]>([]);
   const [startRecur, setStartRecur] = useState(formattedDate);
   const [endRecur, setEndRecur] = useState(formattedDate);
@@ -215,7 +216,7 @@ export default function BookingsForm({
     console.log("eventId : " + originalEventId);
     if (event) {
       setOriginalEventId(event._def?.extendedProps?.originalEventId || "");
-      setTitle(event.title || "");
+      // setTitle(event.title || "");
       // setValue("clientName",event.clientName || "");
       setClientId(event.clientId || "");
       setBookingType(event.type || "");
@@ -242,7 +243,7 @@ export default function BookingsForm({
           : ""
       );
       if (event.recurrence) {
-        setIsRecurring(true);
+        // setIsRecurring(true);
         setDaysOfWeek(event.recurrence.daysOfWeek || []);
         setStartRecur(event.recurrence.startRecur || "");
         setEndRecur(event.recurrence.endRecur || "");
@@ -401,13 +402,13 @@ export default function BookingsForm({
   // };
 
   const handleClose = () => {
-    setTitle("");
+    // setTitle("");
     setDescription("");
     // setLocation("");
     setDate(formattedDate);
     setStartTime(startTimeToday);
     setEndTime(endTimeToday);
-    setIsRecurring(false); // Reset to false to avoid unintended recurring events
+    setValue("isRecurring", false); // Reset to false to avoid unintended recurring events
     setDaysOfWeek([]);
     setStartRecur(formattedDate);
     setEndRecur(formattedDate);
@@ -682,7 +683,10 @@ export default function BookingsForm({
             </div>
 
             <div className="space-y-1">
-              <Label className="block text-sm font-medium text-gray-700">
+              <Label
+                className="block text-sm font-medium text-gray-700"
+                htmlFor="bookingType"
+              >
                 Select or type in Custom Booking Type
               </Label>
               <Popover
@@ -694,6 +698,7 @@ export default function BookingsForm({
               >
                 <PopoverTrigger asChild>
                   <Button
+                    id="bookingType"
                     variant="outline"
                     role="combobox"
                     aria-expanded={bookingsPopoverOpen}
@@ -753,12 +758,16 @@ export default function BookingsForm({
 
             {/* Booking Fee Input */}
             <div className="space-y-2">
-              <Label className="block text-sm font-medium text-gray-700">
+              <Label
+                className="block text-sm font-medium text-gray-700"
+                htmlFor="fee"
+              >
                 Fee
               </Label>
               <Input
+                id="fee"
                 type="number"
-                value={bookingFee || ""}
+                {...register("fee")}
                 onChange={(e: ChangeEvent<HTMLInputElement>) =>
                   handleBookingFeeInputChange(e.target.value)
                 }
@@ -766,34 +775,51 @@ export default function BookingsForm({
               />
             </div>
           </div>
+
           <div>
-            <Label className="block text-sm font-medium text-gray-700">
+            <Label
+              className="block text-sm font-medium text-gray-700"
+              htmlFor="description"
+            >
               Notes
             </Label>
             <Input
-              value={description}
+              id="description"
+              {...register("description")}
               onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                setDescription(e.target.value)
+                setValue("description", e.target.value)
               }
               className="text-base input-no-zoom" // Apply custom class
             />
+            {errors.description && (
+              <p className="text-destructive text-xs">
+                {errors.description.message}
+              </p>
+            )}
           </div>
 
           {!editAll && (
             <div className="space-y-2">
-              <Label className="block text-sm font-medium text-gray-700">
+              <Label
+                className="block text-sm font-medium text-gray-700"
+                htmlFor="recurringEvent"
+              >
                 Recurring Booking
               </Label>
               <div className="flex items-center space-x-2">
                 <Checkbox
+                  id="recurringEvent"
+                  {...register("isRecurring")}
                   checked={isRecurring}
                   onCheckedChange={(checked: any) =>
-                    setIsRecurring(checked !== "indeterminate" && checked)
+                    setValue(
+                      "isRecurring",
+                      checked !== "indeterminate" && checked
+                    )
                   }
-                  id="recurringBookingCheckbox"
                 />
                 <Label
-                  htmlFor="recurringBookingCheckbox"
+                  htmlFor="recurringEvent"
                   className="text-sm font-medium text-gray-700"
                 >
                   Is Recurring
