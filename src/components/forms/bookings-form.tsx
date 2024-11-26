@@ -49,6 +49,12 @@ import FormDeleteButton from "../buttons/form-delete-btn";
 import FormDeleteSeriesButton from "../buttons/form-delete-series-btn";
 import FormCancelButton from "../buttons/form-cancel-btn";
 import FormSubmitButton from "../buttons/form-submit-btn";
+import { zodResolver } from "@hookform/resolvers/zod";
+import {
+  bookingsFormSchema,
+  TBookingsForm,
+} from "@/lib/validations/bookings-form-validations";
+import { useForm, Controller } from "react-hook-form";
 
 const today = new Date();
 const formattedDate = today.toLocaleDateString("en-CA"); // YYYY-MM-DD format
@@ -111,25 +117,10 @@ export default function BookingsForm({
   isLoading,
 }: BookingsFormProps) {
   const { user } = useAuth();
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [date, setDate] = useState(formattedDate);
-  const [startTime, setStartTime] = useState(startTimeToday);
-  const [endTime, setEndTime] = useState(endTimeToday);
-  const [isRecurring, setIsRecurring] = useState(false);
-  const [daysOfWeek, setDaysOfWeek] = useState<number[]>([]);
-  const [startRecur, setStartRecur] = useState(formattedDate);
-  const [endRecur, setEndRecur] = useState(formattedDate);
-  // Location state
-  // const [location, setLocation] = useState("");
-  // const [locationPopoverOpen, setLocationPopoverOpen] = useState(false);
-  // const [filteredLocations, setFilteredLocations] = useState(presetLocations);
-  // Payment status state
-  const [paid, setPaid] = useState(false); // Defaults to false (Unpaid)
-  // booking fee state
+
+  const [bookingColor, setBookingColor] = useState<string>("");
+  const [originalEventId, setOriginalEventId] = useState<string>("");
   const [bookingFee, setBookingFee] = useState<string>("");
-  // Booking type state
-  const [bookingsPopoverOpen, setBookingsPopoverOpen] = useState(false);
   const [bookingType, setBookingType] = useState("");
   const [bookingTypes, setBookingTypes] = useState<
     {
@@ -150,11 +141,10 @@ export default function BookingsForm({
     }[]
   >([]);
   const [typeId, setTypeId] = useState<string>("");
-  const [bookingColor, setBookingColor] = useState<string>("");
 
   // clients state
   const [clientsPopoverOpen, setClientsPopoverOpen] = useState(false);
-  const [client, setClient] = useState("");
+  // const [client, setClient] = useState("");
   const [clients, setClients] = useState<
     { value: string; label: string; docId: string }[]
   >([]);
@@ -162,7 +152,63 @@ export default function BookingsForm({
     { value: string; label: string; docId: string }[]
   >([]);
   const [clientId, setClientId] = useState<string>("");
-  const [originalEventId, setOriginalEventId] = useState<string>("");
+
+  const {
+    register,
+    setValue,
+    reset,
+    trigger,
+    // getValues responsable for getting the form values
+    getValues,
+    control,
+    watch,
+    formState: { isSubmitting, errors },
+    handleSubmit,
+  } = useForm<TBookingsForm>({
+    resolver: zodResolver(bookingsFormSchema),
+    defaultValues: {
+      title: event?.title ? event.title : "",
+      description: event ? event.description : "",
+      date: event?.startDate
+        ? event.startDate.toLocaleDateString("en-CA") // Formats date as YYYY-MM-DD in local time
+        : "",
+      startTime: event?.start
+        ? event.start
+            .toLocaleTimeString("en-US", { hour12: false })
+            .substring(0, 5)
+        : "",
+      endTime: event?.end
+        ? event.end
+            .toLocaleTimeString("en-US", { hour12: false })
+            .substring(0, 5)
+        : "",
+      isRecurring: false,
+      daysOfWeek: [],
+      startRecur: event?.startDate
+        ? event.startDate.toISOString().split("T")[0]
+        : "",
+      endRecur: "",
+      paid: event?.paid ? event.paid : false,
+      fee: event?.fee ? event.fee.toString() : "",
+      clientName: event?.clientName ? event.clientName : "",
+    },
+  });
+
+  const paid = watch("paid");
+
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [date, setDate] = useState(formattedDate);
+  const [startTime, setStartTime] = useState(startTimeToday);
+  const [endTime, setEndTime] = useState(endTimeToday);
+  const [isRecurring, setIsRecurring] = useState(false);
+  const [daysOfWeek, setDaysOfWeek] = useState<number[]>([]);
+  const [startRecur, setStartRecur] = useState(formattedDate);
+  const [endRecur, setEndRecur] = useState(formattedDate);
+  // Payment status state
+  // const [paid, setPaid] = useState(false); // Defaults to false (Unpaid)
+  // booking fee state
+  const [bookingsPopoverOpen, setBookingsPopoverOpen] = useState(false);
 
   useEffect(() => {
     console.log("Event in CreateBookingsDialog", event);
@@ -170,14 +216,14 @@ export default function BookingsForm({
     if (event) {
       setOriginalEventId(event._def?.extendedProps?.originalEventId || "");
       setTitle(event.title || "");
-      setClient(event.clientName || "");
+      // setValue("clientName",event.clientName || "");
       setClientId(event.clientId || "");
       setBookingType(event.type || "");
       setTypeId(event.typeId || "");
       setDescription(event.description || "");
       setBookingFee(event.fee ? event.fee.toString() : "");
       // setLocation(event.location || "");
-      setPaid(event.paid || false);
+      // setPaid(event.paid || false);
       setDate(
         event.startDate
           ? event.startDate.toLocaleDateString("en-CA") // Formats date as YYYY-MM-DD in local time
@@ -202,7 +248,7 @@ export default function BookingsForm({
         setEndRecur(event.recurrence.endRecur || "");
       }
     }
-  }, [event, isOpen]);
+  }, [event, isOpen, originalEventId]);
 
   // handle startRecur change when date changes
   useEffect(() => {
@@ -255,10 +301,6 @@ export default function BookingsForm({
     }
   }, [user]);
 
-  // useEffect(() => {
-  //   console.log("booking type", bookingType);
-  // }, [bookingType]);
-
   // fetch booking types
   useEffect(() => {
     fetchBookings();
@@ -285,77 +327,78 @@ export default function BookingsForm({
 
   // Update filtered clients when client changes
   useEffect(() => {
-    if (client === "") {
+    const clientName = watch("clientName");
+    if (clientName === "") {
       setFilteredClients(clients); // Reset to full list when input is cleared
     } else {
       setFilteredClients(
         clients.filter((cli) =>
-          cli.label.toLowerCase().includes(client.toLowerCase())
+          cli.label.toLowerCase().includes(clientName!.toLowerCase())
         )
       );
     }
-  }, [client, clients]);
+  }, [watch, clients]);
 
-  const handleSave = (e: MouseEvent<HTMLButtonElement>) => {
-    console.log("handle Save triggered...");
-    e.preventDefault();
+  // const handleSave = (e: MouseEvent<HTMLButtonElement>) => {
+  //   console.log("handle Save triggered...");
+  //   e.preventDefault();
 
-    const originalEvent = event || {}; // Use an empty object if event is null
+  //   const originalEvent = event || {}; // Use an empty object if event is null
 
-    const getUpdatedValues = (original: any, updated: any) => {
-      return Object.keys(updated).reduce((acc, key) => {
-        if (updated[key] !== original[key]) {
-          acc[key] = updated[key];
-        }
-        return acc;
-      }, {} as any);
-    };
+  //   const getUpdatedValues = (original: any, updated: any) => {
+  //     return Object.keys(updated).reduce((acc, key) => {
+  //       if (updated[key] !== original[key]) {
+  //         acc[key] = updated[key];
+  //       }
+  //       return acc;
+  //     }, {} as any);
+  //   };
 
-    // Initial event data
-    let newEventData = {
-      id: eventId,
-      title: bookingType,
-      type: bookingType,
-      typeId: typeId || "",
-      fee: parseFloat(bookingFee),
-      clientId: clientId || "",
-      clientName: client || "",
-      description: description,
-      // location: location,
-      isBackgroundEvent: false, // Always false for regular bookings
-      date: showDateSelector ? date : undefined,
-      startTime,
-      endTime,
-      paid,
-      recurrence: isRecurring
-        ? {
-            daysOfWeek,
-            startTime,
-            endTime,
-            startRecur,
-            endRecur,
-          }
-        : undefined,
-    };
+  //   // Initial event data
+  //   let newEventData = {
+  //     id: eventId,
+  //     title: bookingType,
+  //     type: bookingType,
+  //     typeId: typeId || "",
+  //     fee: parseFloat(bookingFee),
+  //     clientId: clientId || "",
+  //     clientName: client || "",
+  //     description: description,
+  //     // location: location,
+  //     isBackgroundEvent: false, // Always false for regular bookings
+  //     date: showDateSelector ? date : undefined,
+  //     startTime,
+  //     endTime,
+  //     paid,
+  //     recurrence: isRecurring
+  //       ? {
+  //           daysOfWeek,
+  //           startTime,
+  //           endTime,
+  //           startRecur,
+  //           endRecur,
+  //         }
+  //       : undefined,
+  //   };
 
-    // here you can handle any update case you want
+  //   // here you can handle any update case you want
 
-    const updatedEventData = getUpdatedValues(originalEvent, newEventData);
+  //   const updatedEventData = getUpdatedValues(originalEvent, newEventData);
 
-    const eventData = eventId
-      ? editAll
-        ? newEventData // Update all fields
-        : updatedEventData // Update only changed fields
-      : newEventData; // Create new event
+  //   const eventData = eventId
+  //     ? editAll
+  //       ? newEventData // Update all fields
+  //       : updatedEventData // Update only changed fields
+  //     : newEventData; // Create new event
 
-    console.log("Event passed from bookings dialog", eventData);
-    console.log("date from bookings dialog", eventData.date);
-    console.log("start time from bookings dialog", eventData.startTime);
-    console.log("end time from bookings dialog", eventData.endTime);
+  //   console.log("Event passed from bookings dialog", eventData);
+  //   console.log("date from bookings dialog", eventData.date);
+  //   console.log("start time from bookings dialog", eventData.startTime);
+  //   console.log("end time from bookings dialog", eventData.endTime);
 
-    onSave(eventData, event?.id);
-    handleClose();
-  };
+  //   onSave(eventData, event?.id);
+  //   handleClose();
+  // };
 
   const handleClose = () => {
     setTitle("");
@@ -371,35 +414,11 @@ export default function BookingsForm({
     setBookingType("");
     setTypeId("");
     setBookingFee("");
-    setClient("");
+    setValue("clientName", "");
     setClientId("");
-    setPaid(false);
+    setValue("paid", false);
     onClose();
   };
-
-  // location functions
-
-  // const handleLocationSelect = (currentValue: string) => {
-  //   setLocation(currentValue);
-  //   setLocationPopoverOpen(false);
-  // };
-
-  // const handleLocationInputChange = (value: string) => {
-  //   setLocation(value);
-
-  //   const filtered = presetLocations.filter((loc) =>
-  //     loc.label.toLowerCase().includes(value.toLowerCase())
-  //   );
-  //   setFilteredLocations(filtered);
-  // };
-
-  // const handleLocationInputKeyPress = (
-  //   event: React.KeyboardEvent<HTMLInputElement>
-  // ) => {
-  //   if (event.key === "Enter") {
-  //     setLocationPopoverOpen(false);
-  //   }
-  // };
 
   // booking type functions
   const handleBookingTypeSelect = (
@@ -455,13 +474,13 @@ export default function BookingsForm({
   const handleClientSelect = (value: string, docId: string) => {
     console.log("Client id selected:", docId);
     console.log("Client selected:", value);
-    setClient(value);
+    setValue("clientName", value);
     setClientId(docId);
     setClientsPopoverOpen(false);
   };
 
   const handleClientInputChange = (value: string) => {
-    setClient(value);
+    setValue("clientName", value);
 
     const filtered = clients.filter((cli) =>
       cli.label.toLowerCase().includes(value.toLowerCase())
@@ -474,7 +493,7 @@ export default function BookingsForm({
   ) => {
     if (event.key === "Enter") {
       // handle the case where the user presses enter on a client name that is not in the list
-      handleClientSelect(client, "");
+      handleClientSelect(watch("clientName")!, "");
       // close the popover
       setClientsPopoverOpen(false);
     }
@@ -482,8 +501,8 @@ export default function BookingsForm({
 
   // handle the case where the user clicks outside the popover and typed a client name that is not in the list and clicked outside the popover
   const handlePopoverClose = () => {
-    if (!filteredClients.find((cli) => cli.value === client)) {
-      handleClientSelect(client, ""); // Set the client with the typed name if it's not in the list
+    if (!filteredClients.find((cli) => cli.value === watch("clientName"))) {
+      handleClientSelect(watch("clientName")!, ""); // Set the client with the typed name if it's not in the list
     }
     setClientsPopoverOpen(false);
   };
@@ -555,12 +574,16 @@ export default function BookingsForm({
           )}
         </div>
       </DialogHeader>
-      <form>
+      <form className="space-y-3">
         <div className="space-y-4">
           <div className="space-y-4">
             <div className="space-y-1">
-              <Label className="block text-sm font-medium text-gray-700">
-                Select or type in Client
+              <Label
+                className="block text-sm font-medium text-gray-700"
+                htmlFor="client"
+              >
+                Select or type in Client{" "}
+                <span className="text-destructive">*</span>
               </Label>
               <Popover
                 open={clientsPopoverOpen}
@@ -571,15 +594,17 @@ export default function BookingsForm({
               >
                 <PopoverTrigger asChild>
                   <Button
+                    id="client"
                     variant="outline"
                     role="combobox"
                     aria-expanded={clientsPopoverOpen}
                     className="w-[200px] justify-between text-base input-no-zoom" // Apply custom class
                     onClick={() => setClientsPopoverOpen(!clientsPopoverOpen)} // Toggle popover on click
                   >
-                    {client
-                      ? filteredClients.find((cli) => cli.value === client)
-                          ?.label || client
+                    {watch("clientName")
+                      ? filteredClients.find(
+                          (cli) => cli.value === watch("clientName")
+                        )?.label || watch("clientName")
                       : "Select client..."}
                     <CaretSortIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                   </Button>
@@ -588,7 +613,7 @@ export default function BookingsForm({
                   <Command>
                     <CommandInput
                       placeholder="Search clients..."
-                      value={client}
+                      value={watch("clientName")}
                       onValueChange={handleClientInputChange}
                       onKeyDown={handleClientInputKeyPress} // Handle keyboard input
                       className="h-9 text-base input-no-zoom" // Apply custom class
@@ -608,7 +633,7 @@ export default function BookingsForm({
                             {cli.label}
                             <CheckIcon
                               className={`ml-auto h-4 w-4 ${
-                                client === cli.value
+                                watch("clientName") === cli.value
                                   ? "opacity-100"
                                   : "opacity-0"
                               }`}
@@ -620,10 +645,18 @@ export default function BookingsForm({
                   </Command>
                 </PopoverContent>
               </Popover>
+              {errors.clientName && (
+                <p className="text-destructive text-xs">
+                  {errors.clientName.message}
+                </p>
+              )}
             </div>
 
             <div className="space-y-2">
-              <Label className="block text-sm font-medium text-gray-700">
+              <Label
+                className="block text-sm font-medium text-gray-700"
+                htmlFor="paid"
+              >
                 Payment Status
               </Label>
               <div className="flex items-center space-x-2">
@@ -631,8 +664,10 @@ export default function BookingsForm({
                   {paid ? "Paid" : "Unpaid"}
                 </span>
                 <Switch
+                  id="paid"
+                  {...register("paid")}
                   checked={paid}
-                  onChange={setPaid}
+                  onChange={() => setValue("paid", !paid)}
                   className={`${
                     paid ? "bg-rebus-green" : "bg-gray-200"
                   } relative inline-flex h-8 w-16 items-center rounded-full transition-colors focus:outline-none`}
