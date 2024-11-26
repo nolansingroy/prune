@@ -10,7 +10,7 @@ type FormButtonProps = {
   isLoading?: boolean;
 };
 
-export default function FormCancelButton({
+export default function FormDeleteSeriesButton({
   children,
   className,
   onClick,
@@ -22,8 +22,7 @@ export default function FormCancelButton({
       type="button"
       onClick={onClick}
       disabled={pending || isLoading}
-      variant="outline"
-      // size="sm"
+      variant="destructive"
       className={cn("", className)}
     >
       {children}
