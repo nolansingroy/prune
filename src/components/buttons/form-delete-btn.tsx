@@ -20,7 +20,6 @@ export default function FormDeleteButton({
       onClick={onClick}
       disabled={pending}
       variant="destructive"
-      // size="sm"
       className={cn("", className)}
     >
       {children}

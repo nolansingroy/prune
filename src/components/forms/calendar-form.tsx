@@ -30,8 +30,8 @@ import {
   calendarFormSchema,
   TCalendarForm,
 } from "@/lib/validations/calendar-form-validation";
-import FormButton from "../buttons/form-submit-btn";
 import FormCancelButton from "../buttons/form-cancel-btn";
+import FormSubmitButton from "../buttons/form-submit-btn";
 
 type CalendarFormProps = {
   onClose: () => void;
@@ -892,7 +892,7 @@ export default function CalendarForm({
 
       <div className="flex flex-col space-y-2 pt-5 sm:flex-row sm:justify-end sm:space-y-0 sm:space-x-2">
         <FormCancelButton onClick={handleCancel}>Cancel</FormCancelButton>
-        <FormButton>Save</FormButton>
+        <FormSubmitButton>Save</FormSubmitButton>
       </div>
     </form>
   );

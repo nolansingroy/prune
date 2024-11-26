@@ -45,6 +45,10 @@ import { Switch } from "@headlessui/react";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/context/AuthContext";
+import FormDeleteButton from "../buttons/form-delete-btn";
+import FormDeleteSeriesButton from "../buttons/form-delete-series-btn";
+import FormCancelButton from "../buttons/form-cancel-btn";
+import FormSubmitButton from "../buttons/form-submit-btn";
 
 const today = new Date();
 const formattedDate = today.toLocaleDateString("en-CA"); // YYYY-MM-DD format
@@ -883,7 +887,17 @@ export default function BookingsForm({
                     : "mt-0 sm:mt-0"
                 )}
               >
-                <Button
+                <FormDeleteButton
+                  onClick={() => handleDeleteSingle(event?.id || "")}
+                  className={cn(
+                    event.recurrence || originalEventId
+                      ? "sm:text-sm sm:p-2"
+                      : ""
+                  )}
+                >
+                  Delete booking
+                </FormDeleteButton>
+                {/* <Button
                   variant="destructive"
                   onClick={() => handleDeleteSingle(event?.id || "")}
                   disabled={isLoading}
@@ -894,14 +908,12 @@ export default function BookingsForm({
                   )}
                 >
                   Delete booking
-                </Button>
+                </Button> */}
               </div>
 
               {(event.recurrence || originalEventId) && (
-                <Button
-                  variant="destructive"
+                <FormDeleteSeriesButton
                   onClick={() => handleDeleteSeries(event?.id || "")}
-                  disabled={isLoading}
                   className={cn(
                     event.recurrence || originalEventId
                       ? "sm:text-sm sm:p-2"
@@ -909,26 +921,42 @@ export default function BookingsForm({
                   )}
                 >
                   Delete series
-                </Button>
+                </FormDeleteSeriesButton>
+
+                // <Button
+                //   variant="destructive"
+                //   onClick={() => handleDeleteSeries(event?.id || "")}
+                //   disabled={isLoading}
+                //   className={cn(
+                //     event.recurrence || originalEventId
+                //       ? "sm:text-sm sm:p-2"
+                //       : ""
+                //   )}
+                // >
+                //   Delete series
+                // </Button>
               )}
             </div>
           )}
           <div className="flex flex-col-reverse space-y-2 sm:flex-row sm:space-y-0 sm:space-x-2 gap-2 sm:gap-0">
-            <Button
+            <FormCancelButton onClick={handleClose}>Cancel</FormCancelButton>
+            {/* <Button
               type="button"
               variant="outline"
               onClick={handleClose}
               disabled={isLoading}
             >
               Cancel
-            </Button>
-            <Button
+            </Button> */}
+
+            <FormSubmitButton>Save</FormSubmitButton>
+            {/* <Button
               variant="rebusPro"
               onClick={handleSave}
               disabled={isLoading}
             >
               Save
-            </Button>
+            </Button> */}
           </div>
         </div>
       </form>

@@ -6,16 +6,19 @@ import { cn } from "@/lib/utils";
 type FormButtonProps = {
   children: React.ReactNode;
   className?: string;
+  onClick?: () => void;
 };
 
 export default function FormSubmitButton({
   children,
   className,
+  onClick,
 }: FormButtonProps) {
   const { pending } = useFormStatus();
   return (
     <Button
       type="submit"
+      onClick={onClick}
       disabled={pending}
       variant="rebusPro"
       // size="sm"
