@@ -890,7 +890,7 @@ export default function CalendarForm({
         </div>
       </div>
 
-      <div className="flex flex-col space-y-2 pt-5 sm:flex-row sm:justify-end sm:space-y-0 sm:space-x-2 sm:pt-5">
+      <div className="flex flex-col space-y-2 pt-5 sm:flex-row sm:justify-end sm:space-y-0 sm:space-x-2">
         <FormCancelButton onClick={handleCancel}>Cancel</FormCancelButton>
         <FormButton>Save</FormButton>
       </div>
