@@ -35,7 +35,7 @@ interface CreateBookingsFormDialogProps {
       };
     },
     eventId?: string
-  ) => void;
+  ) => Promise<void>;
   showDateSelector?: boolean;
   event?: EventInput | null;
   editAll?: boolean;

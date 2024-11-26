@@ -7,19 +7,21 @@ type FormButtonProps = {
   children: React.ReactNode;
   className?: string;
   onClick?: () => void;
+  isLoading?: boolean;
 };
 
 export default function FormCancelButton({
   children,
   className,
   onClick,
+  isLoading,
 }: FormButtonProps) {
   const { pending } = useFormStatus();
   return (
     <Button
       type="button"
       onClick={onClick}
-      disabled={pending}
+      disabled={pending || isLoading}
       variant="outline"
       // size="sm"
       className={cn("", className)}

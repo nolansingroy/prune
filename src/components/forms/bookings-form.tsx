@@ -96,7 +96,7 @@ interface BookingsFormProps {
       };
     },
     eventId?: string
-  ) => void;
+  ) => Promise<void>;
   showDateSelector?: boolean;
   event?: EventInput | null;
   editAll?: boolean;
@@ -115,8 +115,8 @@ export default function BookingsForm({
   eventId,
   isLoading,
 }: BookingsFormProps) {
+  let actionType = editAll ? "edit" : "add";
   const { user } = useAuth();
-
   const [bookingColor, setBookingColor] = useState<string>("");
   const [originalEventId, setOriginalEventId] = useState<string>("");
   const [bookingsPopoverOpen, setBookingsPopoverOpen] = useState(false);
@@ -579,7 +579,86 @@ export default function BookingsForm({
           )}
         </div>
       </DialogHeader>
-      <form className="space-y-3">
+      <form
+        className="space-y-3"
+        action={async () => {
+          const isValid = await trigger();
+          if (!isValid) {
+            console.log("The error is", errors);
+            return;
+          }
+
+          const formValues = getValues();
+          console.log("Form values:", formValues);
+
+          const originalEvent = event || {}; // Use an empty object if event is null
+
+          const getUpdatedValues = (original: any, updated: any) => {
+            return Object.keys(updated).reduce((acc, key) => {
+              if (updated[key] !== original[key]) {
+                acc[key] = updated[key];
+              }
+              return acc;
+            }, {} as any);
+          };
+
+          // Initial event data
+          let newEventData = {
+            id: eventId,
+            title: bookingType,
+            type: bookingType,
+            typeId: typeId || "",
+            fee: parseFloat(formValues.fee!) || 0,
+            clientId: clientId || "",
+            clientName: formValues.clientName || "",
+            description: formValues.description || "",
+            isBackgroundEvent: false, // Always false for regular bookings
+            date: showDateSelector ? formValues.date : undefined,
+            startTime: formValues.startTime!,
+            endTime: formValues.endTime!,
+            paid: formValues.paid!,
+            recurrence: isRecurring
+              ? {
+                  daysOfWeek: formValues.daysOfWeek!,
+                  startTime: formValues.startTime!,
+                  endTime: formValues.endTime!,
+                  startRecur: formValues.startRecur!,
+                  endRecur: formValues.endRecur!,
+                }
+              : undefined,
+          };
+
+          // here you can handle any update case you want
+
+          const updatedEventData = getUpdatedValues(
+            originalEvent,
+            newEventData
+          );
+
+          const eventData = eventId
+            ? editAll
+              ? newEventData // Update all fields
+              : updatedEventData // Update only changed fields
+            : newEventData; // Create new event
+
+          console.log("Event passed from bookings dialog", eventData);
+          console.log("date from bookings dialog", eventData.date);
+          console.log("start time from bookings dialog", eventData.startTime);
+          console.log("end time from bookings dialog", eventData.endTime);
+
+          try {
+            await onSave(eventData, event?.id);
+            console.log("onSave finished successfully, closing dialog");
+
+            // if the actionType is add, then close the dialog else do nothing because the edit dialog will be closed by the parent component
+            if (actionType === "add") {
+              handleClose();
+            }
+          } catch (error) {
+            console.error("Error in onSave:", error);
+          }
+        }}
+      >
         <div className="space-y-4">
           <div className="space-y-4">
             <div className="space-y-1">
@@ -1011,6 +1090,7 @@ export default function BookingsForm({
               >
                 <FormDeleteButton
                   onClick={() => handleDeleteSingle(event?.id || "")}
+                  isLoading={isLoading}
                   className={cn(
                     event.recurrence || originalEventId
                       ? "sm:text-sm sm:p-2"
@@ -1019,22 +1099,11 @@ export default function BookingsForm({
                 >
                   Delete booking
                 </FormDeleteButton>
-                {/* <Button
-                  variant="destructive"
-                  onClick={() => handleDeleteSingle(event?.id || "")}
-                  disabled={isLoading}
-                  className={cn(
-                    event.recurrence || originalEventId
-                      ? "sm:text-sm sm:p-2"
-                      : ""
-                  )}
-                >
-                  Delete booking
-                </Button> */}
               </div>
 
               {(event.recurrence || originalEventId) && (
                 <FormDeleteSeriesButton
+                  isLoading={isLoading}
                   onClick={() => handleDeleteSeries(event?.id || "")}
                   className={cn(
                     event.recurrence || originalEventId
@@ -1044,41 +1113,14 @@ export default function BookingsForm({
                 >
                   Delete series
                 </FormDeleteSeriesButton>
-
-                // <Button
-                //   variant="destructive"
-                //   onClick={() => handleDeleteSeries(event?.id || "")}
-                //   disabled={isLoading}
-                //   className={cn(
-                //     event.recurrence || originalEventId
-                //       ? "sm:text-sm sm:p-2"
-                //       : ""
-                //   )}
-                // >
-                //   Delete series
-                // </Button>
               )}
             </div>
           )}
           <div className="flex flex-col-reverse space-y-2 sm:flex-row sm:space-y-0 sm:space-x-2 gap-2 sm:gap-0">
-            <FormCancelButton onClick={handleClose}>Cancel</FormCancelButton>
-            {/* <Button
-              type="button"
-              variant="outline"
-              onClick={handleClose}
-              disabled={isLoading}
-            >
+            <FormCancelButton onClick={handleClose} isLoading={isLoading}>
               Cancel
-            </Button> */}
-
-            <FormSubmitButton>Save</FormSubmitButton>
-            {/* <Button
-              variant="rebusPro"
-              onClick={handleSave}
-              disabled={isLoading}
-            >
-              Save
-            </Button> */}
+            </FormCancelButton>
+            <FormSubmitButton isLoading={isLoading}>Save</FormSubmitButton>
           </div>
         </div>
       </form>

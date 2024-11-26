@@ -582,7 +582,7 @@ export default function FullCalendarComponent({}) {
       startRecur: string; // YYYY-MM-DD
       endRecur: string; // YYYY-MM-DD
     };
-  }) => {
+  }): Promise<void> => {
     const userId = user?.uid;
     if (!user) {
       throw new Error("User not authenticated");
@@ -592,9 +592,12 @@ export default function FullCalendarComponent({}) {
     startTransition(async () => {
       setIsLoading(true);
       await updatEventFormDialog(eventData, userId!);
+      handleDialogClose();
       await fetchEvents();
       setIsLoading(false);
     });
+
+    return Promise.resolve();
   };
 
   const handleDeleteEventFromDialog = async (

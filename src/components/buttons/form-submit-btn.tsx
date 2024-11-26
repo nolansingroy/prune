@@ -7,19 +7,21 @@ type FormButtonProps = {
   children: React.ReactNode;
   className?: string;
   onClick?: () => void;
+  isLoading?: boolean;
 };
 
 export default function FormSubmitButton({
   children,
   className,
   onClick,
+  isLoading,
 }: FormButtonProps) {
   const { pending } = useFormStatus();
   return (
     <Button
       type="submit"
       onClick={onClick}
-      disabled={pending}
+      disabled={pending || isLoading}
       variant="rebusPro"
       // size="sm"
       className={cn("", className)}
