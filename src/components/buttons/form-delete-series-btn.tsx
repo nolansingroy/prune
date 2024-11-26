@@ -17,6 +17,7 @@ export default function FormDeleteSeriesButton({
   const { pending } = useFormStatus();
   return (
     <Button
+      type="button"
       onClick={onClick}
       disabled={pending}
       variant="destructive"
