@@ -143,7 +143,6 @@ export default function BookingsForm({
 
   // clients state
   const [clientsPopoverOpen, setClientsPopoverOpen] = useState(false);
-  // const [client, setClient] = useState("");
   const [clients, setClients] = useState<
     { value: string; label: string; docId: string }[]
   >([]);
@@ -197,57 +196,12 @@ export default function BookingsForm({
   const isRecurring = watch("isRecurring");
   const date = watch("date");
 
-  // const [title, setTitle] = useState("");
-  // const [description, setDescription] = useState("");
-  // const [date, setDate] = useState(formattedDate);
-  // const [bookingFee, setBookingFee] = useState<string>("");
-  // const [isRecurring, setIsRecurring] = useState(false);
-  // booking fee state
-  // Payment status state
-  // const [paid, setPaid] = useState(false); // Defaults to false (Unpaid)
-  // const [startTime, setStartTime] = useState(startTimeToday);
-  // const [endTime, setEndTime] = useState(endTimeToday);
-  // const [startRecur, setStartRecur] = useState(formattedDate);
-  // const [endRecur, setEndRecur] = useState(formattedDate);
-  // const [daysOfWeek, setDaysOfWeek] = useState<number[]>([]);
-
   useEffect(() => {
-    // console.log("Event in CreateBookingsDialog", event);
-    console.log("eventId : " + originalEventId);
     if (event) {
       setOriginalEventId(event._def?.extendedProps?.originalEventId || "");
-      // setTitle(event.title || "");
-      // setValue("clientName",event.clientName || "");
       setClientId(event.clientId || "");
       setBookingType(event.type || "");
       setTypeId(event.typeId || "");
-      // setDescription(event.description || "");
-      // setBookingFee(event.fee ? event.fee.toString() : "");
-      // setLocation(event.location || "");
-      // setPaid(event.paid || false);
-      // setDate(
-      //   event.startDate
-      //     ? event.startDate.toLocaleDateString("en-CA") // Formats date as YYYY-MM-DD in local time
-      //     : ""
-      // );
-      // setStartTime(
-      //   event.start
-      //     .toLocaleTimeString("en-US", { hour12: false })
-      //     .substring(0, 5)
-      // );
-      // setEndTime(
-      //   event.end
-      //     ? event.end
-      //         .toLocaleTimeString("en-US", { hour12: false })
-      //         .substring(0, 5)
-      //     : ""
-      // );
-      // if (event.recurrence) {
-      // setIsRecurring(true);
-      // setDaysOfWeek(event.recurrence.daysOfWeek || []);
-      // setStartRecur(event.recurrence.startRecur || "");
-      // setEndRecur(event.recurrence.endRecur || "");
-      // }
     }
   }, [event, isOpen, originalEventId]);
 
@@ -278,7 +232,6 @@ export default function BookingsForm({
       });
       setBookingTypes(presetBookings);
       setFilteredBookings(presetBookings);
-      // console.log("Booking types from firebase:", types);
     }
   }, [user]);
 
@@ -338,67 +291,6 @@ export default function BookingsForm({
     }
   }, [watch, clients]);
 
-  // const handleSave = (e: MouseEvent<HTMLButtonElement>) => {
-  //   console.log("handle Save triggered...");
-  //   e.preventDefault();
-
-  //   const originalEvent = event || {}; // Use an empty object if event is null
-
-  //   const getUpdatedValues = (original: any, updated: any) => {
-  //     return Object.keys(updated).reduce((acc, key) => {
-  //       if (updated[key] !== original[key]) {
-  //         acc[key] = updated[key];
-  //       }
-  //       return acc;
-  //     }, {} as any);
-  //   };
-
-  //   // Initial event data
-  //   let newEventData = {
-  //     id: eventId,
-  //     title: bookingType,
-  //     type: bookingType,
-  //     typeId: typeId || "",
-  //     fee: parseFloat(bookingFee),
-  //     clientId: clientId || "",
-  //     clientName: client || "",
-  //     description: description,
-  //     // location: location,
-  //     isBackgroundEvent: false, // Always false for regular bookings
-  //     date: showDateSelector ? date : undefined,
-  //     startTime,
-  //     endTime,
-  //     paid,
-  //     recurrence: isRecurring
-  //       ? {
-  //           daysOfWeek,
-  //           startTime,
-  //           endTime,
-  //           startRecur,
-  //           endRecur,
-  //         }
-  //       : undefined,
-  //   };
-
-  //   // here you can handle any update case you want
-
-  //   const updatedEventData = getUpdatedValues(originalEvent, newEventData);
-
-  //   const eventData = eventId
-  //     ? editAll
-  //       ? newEventData // Update all fields
-  //       : updatedEventData // Update only changed fields
-  //     : newEventData; // Create new event
-
-  //   console.log("Event passed from bookings dialog", eventData);
-  //   console.log("date from bookings dialog", eventData.date);
-  //   console.log("start time from bookings dialog", eventData.startTime);
-  //   console.log("end time from bookings dialog", eventData.endTime);
-
-  //   onSave(eventData, event?.id);
-  //   handleClose();
-  // };
-
   const resetValues = () => {
     setValue("description", "");
     setValue("date", formattedDate);
@@ -438,7 +330,7 @@ export default function BookingsForm({
     setTypeId(docId);
     setValue("fee", fee.toString());
     setBookingColor(color);
-    setBookingsPopoverOpen(false); // Close the popover after selection
+    setBookingsPopoverOpen(false);
   };
 
   const handelBookingTypeInputChange = (value: string) => {
@@ -967,7 +859,7 @@ export default function BookingsForm({
                 onChange={(e: ChangeEvent<HTMLInputElement>) =>
                   setValue("endTime", e.target.value)
                 }
-                className="w-32 px-2 py-2 text-center rounded-md border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm text-base input-no-zoom" // Apply custom class
+                className="w-32 px-2 py-2 text-center rounded-md border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm text-base input-no-zoom"
               />
 
               {errors.endTime && (

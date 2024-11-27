@@ -704,7 +704,7 @@ export default function BookingsView() {
       startRecur: string; // YYYY-MM-DD
       endRecur: string; // YYYY-MM-DD
     };
-  }) => {
+  }): Promise<void> => {
     console.log("handleSaveEvent called from create bookings"); // Add this line
 
     //First format the start and end date based on the event selection
@@ -855,6 +855,7 @@ export default function BookingsView() {
         setIsLoading(false); // Stop loading
       }
     });
+    return Promise.resolve();
   };
 
   const handleSort = (key: SortableKeys) => {

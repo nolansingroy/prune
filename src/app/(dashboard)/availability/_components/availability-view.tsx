@@ -341,7 +341,6 @@ export default function AvailabilityView() {
   const handleSaveEvent = (eventData: {
     title: string;
     description: string;
-    // location: string;
     isBackgroundEvent: boolean;
     date?: string;
     startTime: string;
@@ -351,7 +350,7 @@ export default function AvailabilityView() {
       startRecur: string; // YYYY-MM-DD
       endRecur: string; // YYYY-MM-DD
     };
-  }) => {
+  }): Promise<void> => {
     console.log("handleSaveEvent called from create Availability");
 
     // First format the start date and end date based on the event selection
@@ -499,6 +498,7 @@ export default function AvailabilityView() {
         setIsLoading(false); // Stop loading
       }
     });
+    return Promise.resolve();
   };
 
   const handleSort = (key: SortableKeys) => {
@@ -954,7 +954,7 @@ export default function AvailabilityView() {
         onClose={() => setIsDialogOpen(false)}
         onSave={handleSaveEvent}
         event={editingEvent}
-        isLoading={loading}
+        isLoading={isLoading}
       />
     </div>
   );
