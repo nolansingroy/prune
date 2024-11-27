@@ -859,7 +859,7 @@ export default function BookingsForm({
                 onChange={(e: ChangeEvent<HTMLInputElement>) =>
                   setValue("endTime", e.target.value)
                 }
-                className="w-32 px-2 py-2 text-center rounded-md border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm text-base input-no-zoom" // Apply custom class
+                className="w-32 px-2 py-2 text-center rounded-md border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm text-base input-no-zoom"
               />
 
               {errors.endTime && (
