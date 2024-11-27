@@ -31,7 +31,7 @@ interface AvailabilityDialogProps {
       startRecur: string;
       endRecur: string;
     };
-  }) => void;
+  }) => Promise<void>;
   event?: Omit<EventInput, "fee"> | null;
   isLoading?: boolean;
 }

@@ -31,7 +31,7 @@ interface AvailabilityFormProps {
       startRecur: string;
       endRecur: string;
     };
-  }) => void;
+  }) => Promise<void>;
   event?: Omit<EventInput, "fee"> | null;
   isLoading?: boolean;
 }
@@ -199,7 +199,49 @@ export default function AvailabilitiesForm({
   };
 
   return (
-    <form className="space-y-4">
+    <form
+      className="space-y-4"
+      action={async () => {
+        const isValid = await trigger();
+        if (!isValid) {
+          console.log("The error is", errors);
+          return;
+        }
+
+        const formValues = getValues();
+        console.log("Form values:", formValues);
+
+        const eventData = {
+          title: formValues.title || "",
+          description: formValues.description || "",
+          isBackgroundEvent: true,
+          date: formValues.date!,
+          startTime: formValues.startTime!,
+          endTime: formValues.endTime!,
+          recurrence: isRecurring
+            ? {
+                daysOfWeek: formValues.daysOfWeek!,
+                startTime: formValues.startTime!,
+                endTime: formValues.endTime!,
+                startRecur: formValues.startRecur!,
+                endRecur: formValues.endRecur!,
+              }
+            : undefined,
+        };
+
+        console.log("Event passed from availability dialog", eventData);
+
+        try {
+          // Wait for the onSave action to complete
+          await onSave(eventData);
+          console.log("onSave finished successfully, closing dialog");
+          handleClose();
+        } catch (error) {
+          console.error("Error in onSave:", error);
+          // Optional: Show an error toast or message
+        }
+      }}
+    >
       <div>
         <Label
           className="block text-sm font-medium text-gray-700"
