@@ -918,18 +918,19 @@ export default function BookingsView() {
   };
 
   const handleDeleteClick = async (eventId: string) => {
-    const confirmDelet = async () => {
+    const confirmDelete = async () => {
       try {
-        const batch = writeBatch(db); // Create a Firestore batch operation
+        const batch = writeBatch(db);
         const eventRef = doc(db, "users", user?.uid ?? "", "events", eventId);
-
-        batch.delete(eventRef); // Add delete operation to batch
-
-        // Commit the batch to execute the delete
+        batch.delete(eventRef);
         await batch.commit();
 
-        // Update the local state to remove the deleted event
-        setEvents((prev) => prev.filter((event) => event.id !== eventId));
+        // Update local state
+        setAllEvents((prev) => prev.filter((event) => event.id !== eventId));
+        filterEvents(
+          selectedLabel,
+          allEvents.filter((event) => event.id !== eventId)
+        );
 
         console.log("Event deleted successfully");
       } catch (error) {
@@ -944,7 +945,7 @@ export default function BookingsView() {
       actionLabel: "Delete",
       onAction: () => {
         startTransition(async () => {
-          await confirmDelet();
+          await confirmDelete();
           toast.success("Booking event deleted successfully");
         });
       },
@@ -982,9 +983,13 @@ export default function BookingsView() {
         batch.delete(docRef);
       });
       await batch.commit();
-      setEvents(
-        events.filter((event) => event.id && !selectedRows.has(event.id))
+
+      // Update local state
+      const updatedEvents = allEvents.filter(
+        (event) => !selectedRows.has(event.id!)
       );
+      setAllEvents(updatedEvents);
+      filterEvents(selectedLabel, updatedEvents);
       setSelectedRows(new Set());
     };
 
@@ -1490,14 +1495,6 @@ export default function BookingsView() {
 
           <div className="flex justify-between mt-4 p-4">
             <span>{`${selectedRows.size} of ${events.length} row(s) selected`}</span>
-            {/* <div className="pr-16">
-            <Button
-              onClick={deleteSelectedEvents}
-              disabled={selectedRows.size === 0}
-            >
-              Delete Selected
-            </Button>
-          </div> */}
           </div>
         </div>
 
