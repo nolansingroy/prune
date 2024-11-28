@@ -35,6 +35,7 @@ import {
 } from "@/lib/helpers/calendar";
 import { DecodedIdToken } from "next-firebase-auth-edge/lib/auth";
 import PageContainer from "@/components/layout/page-container";
+import { cloudFunctions } from "@/constants/data";
 
 // type FullCalendarProps = {
 //   events: EventInput[];
@@ -390,11 +391,9 @@ export default function FullCalendarComponent({}) {
               eventInput
             );
 
-            //"http://127.0.0.1:5001/prune-94ad9/us-central1/createRecurringAvailabilityInstances"
-
             try {
               const result = await axios.post(
-                "https://us-central1-prune-94ad9.cloudfunctions.net/createRecurringAvailabilityInstances",
+                cloudFunctions.recurringAvailabilitiesProd,
                 eventInput
               );
               console.log(
@@ -434,11 +433,9 @@ export default function FullCalendarComponent({}) {
               eventInput
             );
 
-            //"http://127.0.0.1:5001/prune-94ad9/us-central1/createRecurringBookingInstances"
-
             try {
               const result = await axios.post(
-                "https://us-central1-prune-94ad9.cloudfunctions.net/createRecurringBookingInstances",
+                cloudFunctions.recurringBookingsProd,
                 eventInput
               );
               console.log("Recurring bookings instances created:", result.data);

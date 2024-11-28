@@ -62,6 +62,7 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
           event={event}
           onClose={onClose}
           onSave={onSave}
+          isLoading={isLoading}
         />
       </DialogContent>
     </Dialog>
