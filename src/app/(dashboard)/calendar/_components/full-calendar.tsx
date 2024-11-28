@@ -29,10 +29,14 @@ import { toast } from "sonner";
 import { getDoc } from "firebase/firestore";
 import {
   handleEventDidMount,
-  removeUndefinedFields,
   renderEventContent,
-  updatEventFormDialog,
 } from "@/lib/helpers/calendar";
+import { removeUndefinedFields } from "@/lib/helpers/global";
+import {
+  handleRecurringEvent,
+  handleSingleEvent,
+  updatEventFormDialog,
+} from "@/lib/helpers/events";
 import { DecodedIdToken } from "next-firebase-auth-edge/lib/auth";
 import PageContainer from "@/components/layout/page-container";
 import { cloudFunctions } from "@/constants/data";
@@ -306,7 +310,6 @@ export default function FullCalendarComponent({}) {
     clientId,
     clientName,
     description,
-    // location,
     isBackgroundEvent,
     date,
     startTime,
@@ -320,7 +323,6 @@ export default function FullCalendarComponent({}) {
     description: string;
     clientId: string;
     clientName: string;
-    // location: string;
     isBackgroundEvent: boolean;
     startTime: string;
     endTime: string;
@@ -345,7 +347,7 @@ export default function FullCalendarComponent({}) {
       : new Date(selectInfo.startStr).toISOString().split("T")[0];
 
     startTransition(async () => {
-      setIsLoading(true); // Start loading
+      setIsLoading(true);
       try {
         if (!user) {
           throw new Error("User not authenticated");
@@ -354,197 +356,77 @@ export default function FullCalendarComponent({}) {
         // Get the user's time zone
         const userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
-        // If this is a recurring event, handle it using the cloud function
         if (
           recurrence &&
           recurrence.daysOfWeek &&
           recurrence.daysOfWeek.length > 0
         ) {
-          // Calculate the time zone offsets for start time and end time
-          const startDateTime = new Date(`${startDate}T${startTime}`);
-          const endDateTime = new Date(`${startDate}T${endTime}`);
-          const startRecur = new Date(recurrence.startRecur);
-          const endRecur = new Date(recurrence.endRecur || startDate);
-          endRecur.setDate(endRecur.getDate() + 1);
-
-          // Prepare the event input for the cloud function
-
-          if (isBackgroundEvent) {
-            const eventInput = {
-              title: title || "",
-              description: description || "",
-              // location: location || "",
-              startDate,
-              startTime,
-              endTime,
-              recurrence: {
-                daysOfWeek: recurrence.daysOfWeek,
-                startRecur: startRecur.toISOString().split("T")[0] || startDate,
-                endRecur: endRecur.toISOString().split("T")[0],
-              },
-              userId: user.uid,
-              userTimeZone,
-            };
-
-            console.log(
-              "event data ready for cloud function for background event",
-              eventInput
-            );
-
-            try {
-              const result = await axios.post(
-                cloudFunctions.recurringAvailabilitiesProd,
-                eventInput
-              );
-              console.log(
-                "Recurring availability instances created:",
-                result.data
-              );
-              toast.success("Recurring availability added successfully");
-            } catch (error) {
-              console.error("Error saving recurring event:", error);
-              toast.error("Error adding recurring availability");
-            }
-          } else {
-            const eventInput = {
-              title: title || "",
-              type: type || "No type",
-              typeId: typeId || "",
-              clientId: clientId || "",
-              clientName: clientName || "",
-              description: description || "",
-              fee: fee || 0,
-              // location: location || "",
+          try {
+            const result = await handleRecurringEvent({
+              title,
+              type,
+              typeId,
+              fee,
+              clientId,
+              clientName,
+              description,
+              isBackgroundEvent,
               startDate,
               startTime,
               endTime,
               paid,
-              recurrence: {
-                daysOfWeek: recurrence.daysOfWeek,
-                startRecur: startRecur.toISOString().split("T")[0] || startDate,
-                endRecur: endRecur.toISOString().split("T")[0],
-              },
-              userId: user.uid,
+              recurrence,
               userTimeZone,
-            };
-
-            console.log(
-              "event data ready for cloud function for recurring bookings",
-              eventInput
+              user,
+            });
+            console.log("Recurring instances created:", result);
+            toast.success(
+              isBackgroundEvent
+                ? "Recurring availability added successfully"
+                : "Recurring bookings added successfully"
             );
-
-            try {
-              const result = await axios.post(
-                cloudFunctions.recurringBookingsProd,
-                eventInput
-              );
-              console.log("Recurring bookings instances created:", result.data);
-              toast.success("Recurring bookings added successfully");
-            } catch (error) {
-              console.error("Error saving recurring event:", error);
-              toast.error("Error adding recurring bookings");
-            }
+          } catch (error) {
+            console.error("Error saving recurring event:", error);
+            toast.error(
+              isBackgroundEvent
+                ? "Error adding recurring availability"
+                : "Error adding recurring bookings"
+            );
           }
         } else {
-          // Handle single or background event directly on the client side
+          // Handle single booking or background event directly on the client side
           // Parse the start and end times
 
-          let startDateTime = new Date(selectInfo.startStr);
-          let endDateTime = new Date(selectInfo.startStr);
-
-          if (startTime && endTime) {
-            const [startHour, startMinute] = startTime.split(":").map(Number);
-            const [endHour, endMinute] = endTime.split(":").map(Number);
-
-            startDateTime.setHours(startHour, startMinute, 0, 0);
-            endDateTime.setHours(endHour, endMinute, 0, 0);
-
-            if (endDateTime <= startDateTime) {
-              endDateTime.setDate(endDateTime.getDate() + 1);
-            }
-          }
-
-          const startDay = startDateTime.toLocaleDateString("en-US", {
-            weekday: "long",
-          });
-
-          const endDay = endDateTime.toLocaleDateString("en-US", {
-            weekday: "long",
-          });
-
-          if (isBackgroundEvent) {
-            // Create the event object for a booking or availability event
-            let event: EventInput = {
-              id: "",
+          try {
+            const event = await handleSingleEvent({
               title,
               type,
               typeId,
               fee,
               clientId,
               clientName,
-              // location,
-              start: startDateTime,
-              end: endDateTime,
               description,
-              display: "inverse-background",
-              className: "custom-bg-event",
               isBackgroundEvent,
-              startDate: startDateTime,
-              startDay: startDay,
-              endDate: endDateTime,
-              endDay: endDay,
+              startTime,
+              endTime,
+              selectInfo,
               paid,
-            };
+              user,
+            });
 
-            try {
-              console.log("Single event data ready for Firestore:", event);
-              event = removeUndefinedFields(event);
-              console.log("Event data before submitting to firebase:", event);
-
-              await createFireStoreEvent(user.uid, event);
-              setEvents((prevEvents) => [...prevEvents, event]);
-              toast.success("Availability event added successfully");
-            } catch (error) {
-              console.error("Error saving event:", error);
-              toast.error(
-                "An error occurred while adding the availability event"
-              );
-            }
-          } else {
-            let event: EventInput = {
-              id: "",
-              title,
-              type,
-              typeId,
-              fee,
-              clientId,
-              clientName,
-              // location,
-              start: startDateTime,
-              end: endDateTime,
-              description,
-              display: "auto",
-              className: "",
-              isBackgroundEvent,
-              startDate: startDateTime,
-              startDay: startDay,
-              endDate: endDateTime,
-              endDay: endDay,
-              paid,
-            };
-
-            try {
-              console.log("Single event data ready for Firestore:", event);
-              event = removeUndefinedFields(event);
-              console.log("Event data before submitting to firebase:", event);
-
-              await createFireStoreEvent(user.uid, event);
-              setEvents((prevEvents) => [...prevEvents, event]);
-              toast.success("Booking event added successfully");
-            } catch (error) {
-              console.error("Error saving event:", error);
-              toast.error("An error occurred while adding the booking event");
-            }
+            setEvents((prevEvents) => [...prevEvents, event]);
+            toast.success(
+              isBackgroundEvent
+                ? "Availability event added successfully"
+                : "Booking event added successfully"
+            );
+          } catch (error) {
+            console.error("Error saving event:", error);
+            toast.error(
+              isBackgroundEvent
+                ? "An error occurred while adding the availability event"
+                : "An error occurred while adding the booking event"
+            );
           }
         }
       } catch (error) {
