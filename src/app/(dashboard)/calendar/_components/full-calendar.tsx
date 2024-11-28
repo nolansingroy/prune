@@ -14,37 +14,23 @@ import useFetchEvents from "../../../../hooks/useFetchEvents";
 import { EventInput } from "../../../../interfaces/types";
 import { EventResizeDoneArg } from "@fullcalendar/interaction";
 import { EventDropArg } from "@fullcalendar/core";
-import axios from "axios";
 
 import CreateBookingsFormDialog from "@/components/modals/CreateBookingsFormDialog";
 
-import {
-  createFireStoreEvent,
-  deleteEvents,
-  updateFireStoreEvent,
-} from "@/lib/converters/events";
+import { deleteEvents, updateFireStoreEvent } from "@/lib/converters/events";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import useConfirmationStore from "@/lib/store/confirmationStore";
 import { toast } from "sonner";
-import { getDoc } from "firebase/firestore";
 import {
   handleEventDidMount,
   renderEventContent,
 } from "@/lib/helpers/calendar";
-import { removeUndefinedFields } from "@/lib/helpers/global";
 import {
   handleRecurringEvent,
   handleSingleEvent,
   updatEventFormDialog,
 } from "@/lib/helpers/events";
-import { DecodedIdToken } from "next-firebase-auth-edge/lib/auth";
 import PageContainer from "@/components/layout/page-container";
-import { cloudFunctions } from "@/constants/data";
-
-// type FullCalendarProps = {
-//   events: EventInput[];
-//   tokens: DecodedIdToken;
-// };
 
 export default function FullCalendarComponent({}) {
   const { user } = useAuth();
@@ -53,16 +39,11 @@ export default function FullCalendarComponent({}) {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectInfo, setSelectInfo] = useState<DateSelectArg | null>(null);
   const [editingEvent, setEditingEvent] = useState<EventInput | null>(null);
-  const [editAll, setEditAll] = useState(false); // New state to control if we're editing all instances
-  // const [isLoading, setIsLoading] = useState(false); // New loading state
-  const [calendarKey, setCalendarKey] = useState(0); // a stet variable to check if the calendar is re-rendered
+  const [editAll, setEditAll] = useState(false); // New state to control if we're editing
+  const [calendarKey, setCalendarKey] = useState(0); // a stet variable to check if the
   const [loading, startTransition] = useTransition();
   const [events, setEvents] = useState<EventInput[]>([]);
   const [userStartTime, setUserStartTime] = useState("07:00:00");
-
-  // useEffect(() => {
-  //   // console.log("Calendar re-rendered with key:", calendarKey); // Log calendar re-render
-  // }, [calendarKey]);
 
   const {
     events: fetchedEvents,
@@ -83,30 +64,8 @@ export default function FullCalendarComponent({}) {
     window.onload = () => {
       fetchEvents();
       fetchUserStartTime();
-
-      // setCalendarKey((prevKey) => {
-      //   const newKey = prevKey + 1;
-      //   console.log("Calendar Key Updated:", newKey); // Log calendar key update
-      //   return newKey;
-      // }); // Trigger the fetch events after the page has fully loaded
     };
   }, []);
-
-  // useEffect(() => {
-  //   const fetchUserStartTime = async () => {
-  //     const user = auth.currentUser;
-  //     if (user) {
-  //       const userDocRef = doc(db, "users", user.uid);
-  //       const userDoc = await getDoc(userDocRef);
-  //       if (userDoc.exists()) {
-  //         const userData = userDoc.data();
-  //         setUserStartTime(userData.calendarStartTime || "07:00:00");
-  //       }
-  //     }
-  //   };
-
-  //   fetchUserStartTime();
-  // }, []);
 
   // add event to firestore
   const handleEventResize = async (resizeInfo: EventResizeDoneArg) => {
@@ -204,7 +163,6 @@ export default function FullCalendarComponent({}) {
             }
             return event;
           });
-          // console.log("Updated Events:", updatedEvents); // Log updated events
           return updatedEvents;
         });
       }
@@ -218,8 +176,6 @@ export default function FullCalendarComponent({}) {
 
     const defaultStartTimeLocal = new Date(selectInfo.startStr);
     const defaultEndTimeLocal = new Date(selectInfo.endStr);
-
-    // console.log("Select Info start date:", defaultStartTimeLocal);
 
     // Derive the day of the week from startDate
     const defaultStartDay = defaultStartTimeLocal.toLocaleDateString("en-US", {
@@ -395,7 +351,6 @@ export default function FullCalendarComponent({}) {
           }
         } else {
           // Handle single booking or background event directly on the client side
-          // Parse the start and end times
 
           try {
             const event = await handleSingleEvent({
@@ -573,7 +528,7 @@ export default function FullCalendarComponent({}) {
               actionLabel: "Delete",
               onAction: () => {
                 startTransition(async () => {
-                  setIsLoading(true); // Start loading
+                  setIsLoading(true);
                   await deleteEvents(user.uid, validEventIds);
                   await closeActions();
                   setIsLoading(false);
@@ -581,7 +536,7 @@ export default function FullCalendarComponent({}) {
                 });
               },
               onCancel: () => {
-                setIsLoading(false); // Stop loading if canceled
+                setIsLoading(false);
               },
             });
           } else {
@@ -669,7 +624,6 @@ export default function FullCalendarComponent({}) {
       <div className="flex flex-col pb-4">
         <div className="flex-grow">
           <div className="py-0 px-3">
-            {/* <div className="calendar-container overflow-y-scroll "> */}
             <FullCalendar
               timeZone="local"
               key={calendarKey}
@@ -683,11 +637,11 @@ export default function FullCalendarComponent({}) {
                 rrulePlugin,
               ]}
               headerToolbar={{
-                left: "prev,next today", // Sticky header elements
+                left: "prev,next today",
                 center: "title",
                 right: "dayGridMonth,timeGridWeek,timeGridDay",
               }}
-              stickyHeaderDates={true} // Enables sticky headers for dates
+              stickyHeaderDates={true}
               height="auto"
               contentHeight="auto"
               slotDuration="00:15:00"
@@ -703,26 +657,24 @@ export default function FullCalendarComponent({}) {
               selectable={true}
               selectMirror={true}
               select={handleSelect}
-              eventClick={handleEventClick} // Handle event click to open dialog
+              eventClick={handleEventClick}
               navLinks={true}
               navLinkDayClick={(date) => {
-                // console.log("Clicked day:", date);
                 calendarRef.current
                   ?.getApi()
                   .changeView("timeGridDay", date.toISOString());
               }}
               navLinkWeekClick={(weekStartDate) => {
-                // console.log("Clicked week:", weekStartDate);
                 calendarRef.current
                   ?.getApi()
                   .changeView("timeGridWeek", weekStartDate.toISOString());
               }}
-              eventResize={handleEventResize} // Called when resizing an event
-              eventDidMount={handleEventDidMount} // Called after an event is rendered
+              eventResize={handleEventResize}
+              eventDidMount={handleEventDidMount}
               eventDrop={handleEventDrop}
               nowIndicator={true}
               eventContent={renderEventContent}
-              scrollTime="07:00:00" // Automatically scrolls to 7:00 AM on load
+              scrollTime="07:00:00"
               allDaySlot={false}
               views={{
                 dayGridMonth: {

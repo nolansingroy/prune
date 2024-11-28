@@ -124,8 +124,12 @@ export const handleSingleEvent = async ({
   paid: boolean;
   user: { uid: string };
 }): Promise<EventInput> => {
-  let startDateTime = new Date(selectInfo.startStr);
-  let endDateTime = new Date(selectInfo.startStr);
+  let startDateTime = new Date(date ? date : selectInfo.startStr);
+  let endDateTime = new Date(date ? date : selectInfo.startStr);
+
+  console.log("Start date:", date);
+  console.log("Start date:", startDateTime);
+  console.log("End date:", endDateTime);
 
   if (startTime && endTime) {
     const [startHour, startMinute] = startTime.split(":").map(Number);
