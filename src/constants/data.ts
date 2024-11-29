@@ -78,3 +78,15 @@ export const timezones = [
   "Australia/Sydney",
   "Pacific/Auckland",
 ];
+
+const cloudFunctionBaseURLTesting =
+  "http://127.0.0.1:5001/prune-94ad9/us-central1/";
+const cloudFunctionBaseURLProduction =
+  "https://us-central1-prune-94ad9.cloudfunctions.net/";
+
+export const cloudFunctions = {
+  recurringBookingsTest: `${cloudFunctionBaseURLTesting}createRecurringBookingInstances`,
+  recurringBookingsProd: `${cloudFunctionBaseURLProduction}createRecurringBookingInstances`,
+  recurringAvailabilitiesTest: `${cloudFunctionBaseURLTesting}createRecurringAvailabilityInstances`,
+  recurringAvailabilitiesProd: `${cloudFunctionBaseURLProduction}createRecurringAvailabilityInstances`,
+};
