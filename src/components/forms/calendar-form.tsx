@@ -355,6 +355,7 @@ export default function CalendarForm({
 
         const formValues = getValues();
         console.log("Form values:", formValues);
+        console.log("showDateSelector:", showDateSelector);
 
         const eventData = {
           title: !isBackgroundEvent ? bookingType : formValues.title!,
@@ -365,7 +366,7 @@ export default function CalendarForm({
           clientName: !isBackgroundEvent ? formValues.clientName! : "",
           description: formValues.description!,
           isBackgroundEvent: formValues.isBackgroundEvent!,
-          date: showDateSelector ? formValues.date! : undefined,
+          date: showDateSelector ? formValues.date : undefined,
           startTime: formValues.startTime!,
           endTime: formValues.endTime!,
           paid: formValues.paid!,

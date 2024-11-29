@@ -22,7 +22,6 @@ interface EventFormDialogProps {
     clientId: string;
     clientName: string;
     description: string;
-    // location: string;
     isBackgroundEvent: boolean;
     date?: string;
     startTime: string;
@@ -58,7 +57,7 @@ const EventFormDialog: React.FC<EventFormDialogProps> = ({
           <DialogTitle>Create Event</DialogTitle>
         </DialogHeader>
         <CalendarForm
-          showDateSelector={showDateSelector}
+          showDateSelector={true}
           event={event}
           onClose={onClose}
           onSave={onSave}

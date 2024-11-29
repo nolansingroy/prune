@@ -295,6 +295,8 @@ export default function FullCalendarComponent({}) {
   }): Promise<void> => {
     if (!selectInfo) return Promise.resolve();
 
+    console.log("date from full calendar component", date);
+
     let calendarApi = selectInfo.view.calendar;
     calendarApi.unselect();
 
@@ -358,6 +360,7 @@ export default function FullCalendarComponent({}) {
               type,
               typeId,
               fee,
+              date,
               clientId,
               clientName,
               description,

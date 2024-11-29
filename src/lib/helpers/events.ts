@@ -124,12 +124,12 @@ export const handleSingleEvent = async ({
   paid: boolean;
   user: { uid: string };
 }): Promise<EventInput> => {
-  let startDateTime = new Date(date ? date : selectInfo.startStr);
-  let endDateTime = new Date(date ? date : selectInfo.startStr);
-
-  console.log("Start date:", date);
-  console.log("Start date:", startDateTime);
-  console.log("End date:", endDateTime);
+  let startDateTime = new Date(
+    date ? `${date}T${startTime}:00` : selectInfo.startStr
+  );
+  let endDateTime = new Date(
+    date ? `${date}T${endTime}:00` : selectInfo.startStr
+  );
 
   if (startTime && endTime) {
     const [startHour, startMinute] = startTime.split(":").map(Number);
@@ -139,6 +139,7 @@ export const handleSingleEvent = async ({
     endDateTime.setHours(endHour, endMinute, 0, 0);
 
     if (endDateTime <= startDateTime) {
+      console.log("End time is before start time");
       endDateTime.setDate(endDateTime.getDate() + 1);
     }
   }
