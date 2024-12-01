@@ -124,21 +124,6 @@ export default function BookTypesView() {
             }
             placeholder="e.g. On Ice Training"
           />
-          {/* <Label className="block text-lg font-medium text-gray-700">
-            Default Duration (minutes)
-          </Label>
-          <Input
-            type="number"
-            value={newBookingData.duration || ""}
-            onChange={(e: ChangeEvent<HTMLInputElement>) =>
-              setNewBookingData({
-                ...newBookingData,
-                duration: Number(e.target.value),
-              })
-            }
-            placeholder="Enter duration (e.g., 30, 60)"
-          /> */}
-
           <Label className="block text-lg font-medium text-gray-700">
             Default Fee (USD)
           </Label>
