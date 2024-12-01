@@ -13,7 +13,7 @@ import {
 import parsePhoneNumberFromString, {
   parsePhoneNumberWithError,
 } from "libphonenumber-js";
-import React, { ChangeEvent, useEffect, useState } from "react";
+import React, { ChangeEvent, useCallback, useEffect, useState } from "react";
 import { db } from "../../../../../firebase";
 import { Input } from "@/components/ui/input"; // Input component
 import { Button } from "@/components/ui/button"; // Button component
@@ -25,31 +25,40 @@ import {
   TableBody,
   TableHeader,
 } from "@/components/ui/table";
+import {
+  clientsFormSchema,
+  TClientsForm,
+} from "@/lib/validations/clients-form-validations";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { PhoneInput } from "@/components/ui/phone-input";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { toast } from "sonner";
+import useConfirmationStore from "@/lib/store/confirmationStore";
+import { Client } from "@/interfaces/clients";
+import { useForm } from "react-hook-form";
 
-interface Client {
-  docId: string;
-  stripeId: string;
-  status: string;
-  active: boolean;
-  email: string;
-  phoneNumber: string;
-  deprecated: boolean;
-  // defaultRate?: number | null;
-  firstName: string;
-  lastName: string;
-  created_at?: Timestamp; // Firestore timestamp
-  updated_at?: Timestamp; // Firestore timestamp
-}
+// interface Client {
+//   docId: string;
+//   stripeId: string;
+//   status: string;
+//   active: boolean;
+//   email: string;
+//   phoneNumber: string;
+//   deprecated: boolean;
+//   // defaultRate?: number | null;
+//   firstName: string;
+//   lastName: string;
+//   created_at?: Timestamp; // Firestore timestamp
+//   updated_at?: Timestamp; // Firestore timestamp
+// }
 
-const initialClientData: Omit<Client, "docId"> = {
+const initialClientData: Client = {
+  docId: "",
   stripeId: "",
-  status: "active", // Default status to "active"
+  status: "active",
   active: true,
   deprecated: false,
-  // defaultRate: null,
   firstName: "",
   lastName: "",
   email: "",
@@ -64,6 +73,26 @@ export default function ClientsView() {
   const [editingClientId, setEditingClientId] = useState<string | null>(null); // Track if editing a client
   const [loading, setLoading] = useState(true); // Loading state to show while fetching
 
+  const {
+    register,
+    setValue,
+    reset,
+    trigger,
+    clearErrors,
+    // getValues responsable for getting the form values
+    getValues,
+    control,
+    watch,
+    formState: { isSubmitting, errors },
+    handleSubmit,
+  } = useForm<TClientsForm>({
+    resolver: zodResolver(clientsFormSchema),
+    defaultValues: {
+      ...initialClientData,
+      status: "active",
+    },
+  });
+
   // Handle form input changes
   const handleInputChange = (
     e: ChangeEvent<HTMLInputElement> | ChangeEvent<HTMLSelectElement>
@@ -76,7 +105,7 @@ export default function ClientsView() {
   };
 
   // Fetch clients from the Firestore subcollection
-  const fetchClients = async () => {
+  const fetchClients = useCallback(async () => {
     if (user) {
       const clientsCollectionRef = collection(db, "users", user.uid, "clients");
       const clientSnapshot = await getDocs(clientsCollectionRef);
@@ -89,12 +118,12 @@ export default function ClientsView() {
       setLoading(false);
       console.log("Clients fetched:", clientList); // Set loading to false after fetching
     }
-  };
+  }, [user]);
 
   // Fetch clients on component mount
   useEffect(() => {
     fetchClients();
-  }, [user]);
+  }, [fetchClients]);
 
   // Save or update client in the 'clients' subcollection
   const handleSaveClient = async () => {
@@ -133,7 +162,7 @@ export default function ClientsView() {
   // Set client for editing
   const handleEditClient = (client: Client) => {
     const parsedPhoneNumber = parsePhoneNumberFromString(
-      client.phoneNumber,
+      client.phoneNumber!,
       "US"
     );
     const formattedPhoneNumber = parsedPhoneNumber
