@@ -1,9 +1,15 @@
 import { z } from "zod";
 
 export const bookingtypeFormSchema = z.object({
-  name: z.string().optional(),
-  fee: z.number().optional(),
-  color: z.string().optional(),
+  name: z
+    .string()
+    .min(1, { message: "Name must be at least 1 character long" }),
+  fee: z.number().positive({ message: "Fee must be a positive number" }),
+  color: z
+    .string()
+    .regex(/^#([0-9A-F]{3}){1,2}$/i, {
+      message: "Color must be a valid hex value",
+    }),
 });
 
 export type TBookingtypeForm = z.infer<typeof bookingtypeFormSchema>;

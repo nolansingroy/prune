@@ -21,6 +21,12 @@ import {
 } from "@/components/ui/table";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
+import { useForm } from "react-hook-form";
+import {
+  bookingtypeFormSchema,
+  TBookingtypeForm,
+} from "@/lib/validations/bookingtypes-form-validations";
+import { zodResolver } from "@hookform/resolvers/zod";
 
 const initialBookingData: BookingTypes = {
   docId: "",
@@ -39,6 +45,26 @@ export default function BookTypesView() {
   const [editingBookingId, setEditingBookingId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   let actionType = editingBookingId ? "edit" : "add";
+
+  const {
+    register,
+    setValue,
+    reset,
+    trigger,
+    // getValues responsable for getting the form values
+    getValues,
+    control,
+    watch,
+    formState: { isSubmitting, errors },
+    handleSubmit,
+  } = useForm<TBookingtypeForm>({
+    resolver: zodResolver(bookingtypeFormSchema),
+    defaultValues: {
+      name: "",
+      fee: 0,
+      color: "#000000",
+    },
+  });
 
   const fetchTypes = useCallback(async () => {
     if (user) {
@@ -113,80 +139,86 @@ export default function BookTypesView() {
             you will need to create at least one booking type
           </span>
         )}
-        <div className="space-y-4">
-          <Label className="block text-lg font-medium text-gray-700">
-            Name
-          </Label>
-          <Input
-            value={newBookingData.name}
-            onChange={(e: ChangeEvent<HTMLInputElement>) =>
-              setNewBookingData({ ...newBookingData, name: e.target.value })
-            }
-            placeholder="e.g. On Ice Training"
-          />
-          <Label className="block text-lg font-medium text-gray-700">
-            Default Fee (USD)
-          </Label>
-          <Input
-            type="number"
-            value={newBookingData.fee || ""}
-            onChange={(e: ChangeEvent<HTMLInputElement>) =>
-              setNewBookingData({
-                ...newBookingData,
-                fee: Number(e.target.value),
-              })
-            }
-            placeholder="e.g. 100"
-          />
 
-          <div className="flex gap-6 items-center">
-            <Label className="block text-lg font-medium text-gray-700">
-              Color
+        <div className="space-y-4">
+          <form className="space-y-4">
+            <Label
+              className="block text-lg font-medium text-gray-700"
+              htmlFor="name"
+            >
+              Name <span className="text-destructive">*</span>
             </Label>
-            <div className="relative inline-block">
-              <div className="w-10 h-10 rounded-full overflow-hidden border border-gray-300 relative">
-                <Input
-                  type="color"
-                  value={newBookingData.color}
-                  onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                    setNewBookingData({
-                      ...newBookingData,
-                      color: e.target.value,
-                    })
-                  }
-                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                />
-                <div
-                  className="absolute inset-0 w-full h-full rounded-full pointer-events-none"
-                  style={{ backgroundColor: newBookingData.color }}
-                ></div>
+            <Input
+              value={newBookingData.name}
+              onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                setNewBookingData({ ...newBookingData, name: e.target.value })
+              }
+              placeholder="e.g. On Ice Training"
+            />
+            <Label className="block text-lg font-medium text-gray-700">
+              Default Fee (USD)
+            </Label>
+            <Input
+              type="number"
+              value={newBookingData.fee || ""}
+              onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                setNewBookingData({
+                  ...newBookingData,
+                  fee: Number(e.target.value),
+                })
+              }
+              placeholder="e.g. 100"
+            />
+
+            <div className="flex gap-6 items-center">
+              <Label className="block text-lg font-medium text-gray-700">
+                Color
+              </Label>
+              <div className="relative inline-block">
+                <div className="w-10 h-10 rounded-full overflow-hidden border border-gray-300 relative">
+                  <Input
+                    type="color"
+                    value={newBookingData.color}
+                    onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                      setNewBookingData({
+                        ...newBookingData,
+                        color: e.target.value,
+                      })
+                    }
+                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                  />
+                  <div
+                    className="absolute inset-0 w-full h-full rounded-full pointer-events-none"
+                    style={{ backgroundColor: newBookingData.color }}
+                  ></div>
+                </div>
               </div>
             </div>
-          </div>
 
-          {/* Buttons */}
-          <div className="flex space-x-4">
-            <Button
-              variant={"rebusPro"}
-              className="mt-4"
-              onClick={handleSaveBookingType}
-            >
-              {editingBookingId ? "Update Booking Type" : "Add Booking Type"}
-            </Button>
-
-            {editingBookingId && (
+            {/* Buttons */}
+            <div className="flex space-x-4">
               <Button
+                variant={"rebusPro"}
                 className="mt-4"
-                variant="secondary"
-                onClick={() => {
-                  setEditingBookingId(null);
-                  setNewBookingData(initialBookingData);
-                }}
+                onClick={handleSaveBookingType}
               >
-                Cancel
+                {editingBookingId ? "Update Booking Type" : "Add Booking Type"}
               </Button>
-            )}
-          </div>
+
+              {editingBookingId && (
+                <Button
+                  className="mt-4"
+                  variant="secondary"
+                  onClick={() => {
+                    setEditingBookingId(null);
+                    setNewBookingData(initialBookingData);
+                  }}
+                >
+                  Cancel
+                </Button>
+              )}
+            </div>
+          </form>
 
           {/* Clients List */}
           <div className="mt-6">
