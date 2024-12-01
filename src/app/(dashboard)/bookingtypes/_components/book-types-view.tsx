@@ -27,21 +27,20 @@ import {
   TBookingtypeForm,
 } from "@/lib/validations/bookingtypes-form-validations";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { toast } from "sonner";
+import useConfirmationStore from "@/lib/store/confirmationStore";
 
 const initialBookingData: BookingTypes = {
   docId: "",
   name: "",
-  // duration: 0,
-  fee: 0,
+  fee: undefined,
   color: "#000000",
 };
 
 export default function BookTypesView() {
+  const { openConfirmation } = useConfirmationStore();
   const { user } = useAuth();
   const [bookingTypes, setBookingTypes] = useState<BookingTypes[]>([]);
-  const [newBookingData, setNewBookingData] =
-    useState<BookingTypes>(initialBookingData);
-
   const [editingBookingId, setEditingBookingId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   let actionType = editingBookingId ? "edit" : "add";
@@ -51,6 +50,7 @@ export default function BookTypesView() {
     setValue,
     reset,
     trigger,
+    clearErrors,
     // getValues responsable for getting the form values
     getValues,
     control,
@@ -59,11 +59,7 @@ export default function BookTypesView() {
     handleSubmit,
   } = useForm<TBookingtypeForm>({
     resolver: zodResolver(bookingtypeFormSchema),
-    defaultValues: {
-      name: "",
-      fee: 0,
-      color: "#000000",
-    },
+    defaultValues: initialBookingData,
   });
 
   const fetchTypes = useCallback(async () => {
@@ -77,46 +73,52 @@ export default function BookTypesView() {
   }, [user]);
 
   useEffect(() => {
-    console.log("Component mounted or authUser.uid changed");
     fetchTypes();
-
     return () => {
-      console.log("Component unmounted");
       setBookingTypes([]);
     };
   }, [fetchTypes]);
 
-  const handleSaveBookingType = async () => {
+  const handleSaveBookingType = async (data: TBookingtypeForm) => {
     console.log("actionType:", actionType);
     if (user) {
-      const { docId, ...bookingDataWithoutId } = newBookingData;
+      const bookingData = { ...data, docId: editingBookingId || "" };
 
       if (actionType === "add") {
-        await addBookingType(user.uid, bookingDataWithoutId);
-        fetchTypes();
-        setNewBookingData(initialBookingData);
-      }
-
-      if (actionType === "edit") {
-        await updateBookingType(user.uid, newBookingData);
-        fetchTypes();
-        setNewBookingData(initialBookingData);
+        await addBookingType(user.uid, bookingData);
+      } else {
+        await updateBookingType(user.uid, bookingData);
         setEditingBookingId(null);
       }
+      fetchTypes();
+      reset();
     }
   };
 
   const handleEditBookingType = (type: BookingTypes) => {
-    console.log("Editing booking type:", type);
-    setNewBookingData(type);
     setEditingBookingId(type.docId!);
+    setValue("name", type.name);
+    setValue("fee", type.fee!);
+    setValue("color", type.color);
+    clearErrors();
   };
 
   const handleDeleteBookingType = async (id: string) => {
     if (user) {
       // Deleteing booking type from Firestore
-      await deleteBookingType(user.uid, id);
-      fetchTypes();
+
+      openConfirmation({
+        title: "Delete Confirmation",
+        description: "Are you sure you want to delete this booking type?",
+        cancelLabel: "Cancel",
+        actionLabel: "Delete",
+        onAction: async () => {
+          await deleteBookingType(user.uid, id);
+          toast.success("Booking type deleted successfully");
+          fetchTypes();
+        },
+        onCancel: () => {},
+      });
     }
   };
 
@@ -141,7 +143,10 @@ export default function BookTypesView() {
         )}
 
         <div className="space-y-4">
-          <form className="space-y-4">
+          <form
+            className="space-y-4"
+            onSubmit={handleSubmit(handleSaveBookingType)}
+          >
             <Label
               className="block text-lg font-medium text-gray-700"
               htmlFor="name"
@@ -149,26 +154,30 @@ export default function BookTypesView() {
               Name <span className="text-destructive">*</span>
             </Label>
             <Input
-              value={newBookingData.name}
-              onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                setNewBookingData({ ...newBookingData, name: e.target.value })
-              }
+              id="name"
+              type="text"
+              {...register("name")}
               placeholder="e.g. On Ice Training"
             />
-            <Label className="block text-lg font-medium text-gray-700">
-              Default Fee (USD)
+            {errors.name && (
+              <p className="text-destructive text-sm">{errors.name.message}</p>
+            )}
+
+            <Label
+              className="block text-lg font-medium text-gray-700"
+              htmlFor="fee"
+            >
+              Default Fee (USD) <span className="text-destructive">*</span>
             </Label>
             <Input
+              id="fee"
               type="number"
-              value={newBookingData.fee || ""}
-              onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                setNewBookingData({
-                  ...newBookingData,
-                  fee: Number(e.target.value),
-                })
-              }
+              {...register("fee", { valueAsNumber: true })}
               placeholder="e.g. 100"
             />
+            {errors.fee && (
+              <p className="text-destructive text-sm">{errors.fee.message}</p>
+            )}
 
             <div className="flex gap-6 items-center">
               <Label className="block text-lg font-medium text-gray-700">
@@ -178,40 +187,32 @@ export default function BookTypesView() {
                 <div className="w-10 h-10 rounded-full overflow-hidden border border-gray-300 relative">
                   <Input
                     type="color"
-                    value={newBookingData.color}
-                    onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                      setNewBookingData({
-                        ...newBookingData,
-                        color: e.target.value,
-                      })
-                    }
+                    {...register("color")}
                     className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                   />
                   <div
                     className="absolute inset-0 w-full h-full rounded-full pointer-events-none"
-                    style={{ backgroundColor: newBookingData.color }}
+                    style={{ backgroundColor: watch("color") }}
                   ></div>
                 </div>
               </div>
             </div>
+            {errors.color && (
+              <p className="text-destructive text-sm">{errors.color.message}</p>
+            )}
 
-            {/* Buttons */}
             <div className="flex space-x-4">
-              <Button
-                variant={"rebusPro"}
-                className="mt-4"
-                onClick={handleSaveBookingType}
-              >
+              <Button type="submit" variant={"rebusPro"} className="mt-4">
                 {editingBookingId ? "Update Booking Type" : "Add Booking Type"}
               </Button>
 
               {editingBookingId && (
                 <Button
                   className="mt-4"
-                  variant="secondary"
+                  variant="outline"
                   onClick={() => {
                     setEditingBookingId(null);
-                    setNewBookingData(initialBookingData);
+                    reset();
                   }}
                 >
                   Cancel
@@ -220,7 +221,6 @@ export default function BookTypesView() {
             </div>
           </form>
 
-          {/* Clients List */}
           <div className="mt-6">
             <h2 className="text-xl font-semibold">Booking Types</h2>
             {bookingTypes.length > 0 ? (
@@ -231,7 +231,6 @@ export default function BookTypesView() {
                       <TableRow>
                         <TableCell>Color</TableCell>
                         <TableCell>Name</TableCell>
-                        {/* <TableCell>Duration</TableCell> */}
                         <TableCell>Fee</TableCell>
                         <TableCell>Actions</TableCell>
                       </TableRow>
@@ -245,11 +244,9 @@ export default function BookTypesView() {
                                 className="w-4 h-4 rounded-full"
                                 style={{ backgroundColor: type.color }}
                               ></div>
-                              {/* <span>{type.color}</span> */}
                             </div>
                           </TableCell>
                           <TableCell>{type.name}</TableCell>
-                          {/* <TableCell>{`${type.duration} minutes`}</TableCell> */}
                           <TableCell>
                             {type.fee !== undefined && type.fee !== null
                               ? new Intl.NumberFormat("en-US", {

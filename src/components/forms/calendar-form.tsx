@@ -156,7 +156,7 @@ export default function CalendarForm({
         presetBookings.push({
           value: type.name,
           label: type.name,
-          fee: type.fee,
+          fee: type.fee!,
           docId: type.docId!,
         });
       });
