@@ -18,7 +18,7 @@ import {
 } from "firebase/firestore";
 import { getAnalytics } from "firebase/analytics";
 import { getStorage } from "firebase/storage";
-import { clientConfig } from "./config";
+import { clientConfig } from "./config/client-config";
 
 // Your web app's Firebase configuration
 const firebaseConfig = {

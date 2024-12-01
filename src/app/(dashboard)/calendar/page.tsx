@@ -4,14 +4,14 @@ import { cookies } from "next/headers";
 import { getTokens } from "next-firebase-auth-edge";
 import { notFound } from "next/navigation";
 import { fetchBookingsListviewEvents } from "@/lib/converters/events";
-import { clientConfig, serverConfig } from "../../../../config";
+import { authConfig } from "../../../../config/server-config";
 
 export default async function CalendarPage() {
   const tokens = await getTokens(cookies(), {
-    apiKey: clientConfig.apiKey,
-    cookieName: serverConfig.cookieName,
-    cookieSignatureKeys: serverConfig.cookieSignatureKeys,
-    serviceAccount: serverConfig.serviceAccount,
+    apiKey: authConfig.apiKey,
+    cookieName: authConfig.cookieName,
+    cookieSignatureKeys: authConfig.cookieSignatureKeys,
+    serviceAccount: authConfig.serviceAccount,
   });
 
   if (!tokens) {
@@ -20,8 +20,8 @@ export default async function CalendarPage() {
 
   console.log(tokens);
 
-  const result = await fetchBookingsListviewEvents(tokens.decodedToken.uid);
-  console.log(result);
+  // const result = await fetchBookingsListviewEvents(tokens.decodedToken.uid);
+  // console.log(result);
 
   return <FullCalendarComponent />;
 }
