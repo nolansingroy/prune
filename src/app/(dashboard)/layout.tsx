@@ -3,7 +3,7 @@ import AppSidebar from "@/components/layout/app-sidebar";
 import { getTokens } from "next-firebase-auth-edge";
 import { cookies } from "next/headers";
 import { notFound } from "next/navigation";
-import { clientConfig, serverConfig } from "../../../config";
+import { authConfig } from "../../../config/server-config";
 
 export const metadata: Metadata = {
   title: "Rebus Pro - Dashboard",

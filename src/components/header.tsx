@@ -14,8 +14,9 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { authLogout } from "../services/authService";
 import { doc, getDoc } from "firebase/firestore";
-import { db } from "../../firebase"; // Make sure the Firebase instance is correctly imported
+import { db, app } from "../../firebase"; // Make sure the Firebase instance is correctly imported
 import { useRouter } from "next/navigation";
+import { getAuth, signOut } from "firebase/auth";
 
 const Header = () => {
   const { authUser } = useFirebaseAuth();
@@ -42,7 +43,8 @@ const Header = () => {
 
   const handleLogOut = async () => {
     try {
-      await authLogout();
+      await signOut(getAuth(app));
+      await fetch("/api/logout");
       console.log("User logged out, redirecting...");
       router.push("/");
     } catch (error) {

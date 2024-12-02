@@ -24,8 +24,8 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { auth } from "../../../../firebase";
-import { signInWithEmailAndPassword } from "firebase/auth";
+import { app } from "../../../../firebase";
+import { getAuth, signInWithEmailAndPassword } from "firebase/auth";
 import { useRouter } from "next/navigation";
 import {
   LoginFormValues,
@@ -56,7 +56,7 @@ export default function LoginForm() {
     startTransition(async () => {
       try {
         const userCredential = await signInWithEmailAndPassword(
-          auth,
+          getAuth(app),
           data.email,
           data.password
         );
@@ -91,7 +91,7 @@ export default function LoginForm() {
         "Initiating password reset for email:",
         form.getValues("email")
       );
-      await resetPassword(form.getValues("email"), auth);
+      await resetPassword(form.getValues("email"), getAuth(app));
       setResetDialogOpen(false);
       toast.success("Password reset email sent");
     } catch (error: any) {}

@@ -746,23 +746,6 @@ export default function FullCalendarComponent({}) {
                       title: event.title,
                       type: event.type,
                       typeId: event.typeId,
-                      // location: event.location,
-                      // rrule: {
-                      //   freq: "weekly",
-                      //   interval: 1,
-                      //   byweekday: event.recurrence.daysOfWeek
-                      //     ? event.recurrence.daysOfWeek.map(
-                      //         (day) =>
-                      //           ["SU", "MO", "TU", "WE", "TH", "FR", "SA"][
-                      //             day
-                      //           ]
-                      //       )
-                      //     : undefined,
-                      //   dtstart: new Date(event.start).toISOString(),
-                      //   until: event.recurrence.endRecur
-                      //     ? new Date(event.recurrence.endRecur).toISOString()
-                      //     : undefined,
-                      // },
                       startTime: event.recurrence.startTime,
                       endTime: event.recurrence.endTime,
                       display: "inverse-background",
@@ -771,7 +754,6 @@ export default function FullCalendarComponent({}) {
                       color: "#C5C5C5",
                       duration: formattedDuration,
                       originalEventId: event.originalEventId,
-                      // className: "bg-event-mirror",
                     };
                   } else {
                     return {
@@ -779,23 +761,6 @@ export default function FullCalendarComponent({}) {
                       title: event.title,
                       type: event.type,
                       typeId: event.typeId,
-                      // location: event.location,
-                      // rrule: {
-                      //   freq: "weekly",
-                      //   interval: 1,
-                      //   byweekday: event.recurrence.daysOfWeek
-                      //     ? event.recurrence.daysOfWeek.map(
-                      //         (day) =>
-                      //           ["SU", "MO", "TU", "WE", "TH", "FR", "SA"][
-                      //             day
-                      //           ]
-                      //       )
-                      //     : undefined,
-                      //   dtstart: new Date(event.start).toISOString(),
-                      //   until: event.recurrence.endRecur
-                      //     ? new Date(event.recurrence.endRecur).toISOString()
-                      //     : undefined,
-                      // },
                       startTime: event.recurrence.startTime,
                       endTime: event.recurrence.endTime,
                       display: "auto",
@@ -813,13 +778,11 @@ export default function FullCalendarComponent({}) {
                       title: event.title,
                       type: event.type,
                       typeId: event.typeId,
-                      // location: event.location,
                       display: "inverse-background",
                       groupId: `1234`,
                       uniqueId: `${event.id}-${index}`,
                       color: "#C5C5C5",
                       originalEventId: event.originalEventId,
-                      // className: "bg-event-mirror",
                     };
                   } else {
                     return {
@@ -827,7 +790,6 @@ export default function FullCalendarComponent({}) {
                       title: event.title,
                       type: event.type,
                       typeId: event.typeId,
-                      // location: event.location,
                       display: "auto",
                       groupId: event.id,
                       uniqueId: `${event.id}-${index}`,
