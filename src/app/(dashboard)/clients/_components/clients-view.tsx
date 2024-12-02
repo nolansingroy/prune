@@ -1,17 +1,6 @@
 "use client";
 
 import { useAuth } from "@/context/AuthContext";
-import {
-  collection,
-  deleteDoc,
-  doc,
-  getDocs,
-  orderBy,
-  query,
-  serverTimestamp,
-  setDoc,
-  Timestamp,
-} from "firebase/firestore";
 import parsePhoneNumberFromString, {
   parsePhoneNumberWithError,
 } from "libphonenumber-js";

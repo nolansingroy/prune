@@ -310,10 +310,10 @@ export default function BookingsView() {
     if (user) {
       // Fetching clients from Firestore
       const clients = await fetchClients(user.uid);
-      //create an array of object with "key": name and value : join firstName field and lastName field
+      // an array of objects with "key": name and value: join firstName field and lastName field
       const clientsArray = clients.map((client) => {
         return {
-          docId: client.docId,
+          docId: client.docId || "", // Ensure docId is always a string
           fullName: client.firstName + " " + client.lastName,
         };
       });
