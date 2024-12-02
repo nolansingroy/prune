@@ -6,6 +6,8 @@ import {
   deleteDoc,
   doc,
   getDocs,
+  orderBy,
+  query,
   serverTimestamp,
   setDoc,
   Timestamp,
@@ -36,7 +38,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import useConfirmationStore from "@/lib/store/confirmationStore";
 import { Client } from "@/interfaces/clients";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 
 // interface Client {
 //   docId: string;
@@ -69,7 +71,7 @@ export default function ClientsView() {
   const { user } = useAuth();
   const [clients, setClients] = useState<Client[]>([]);
 
-  const [newClientData, setNewClientData] = useState(initialClientData); // Form data state
+  // const [newClientData, setNewClientData] = useState(initialClientData); // Form data state
   const [editingClientId, setEditingClientId] = useState<string | null>(null); // Track if editing a client
   const [loading, setLoading] = useState(true); // Loading state to show while fetching
 
@@ -93,22 +95,15 @@ export default function ClientsView() {
     },
   });
 
-  // Handle form input changes
-  const handleInputChange = (
-    e: ChangeEvent<HTMLInputElement> | ChangeEvent<HTMLSelectElement>
-  ) => {
-    const { name, value } = e.target;
-    setNewClientData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-  };
-
   // Fetch clients from the Firestore subcollection
   const fetchClients = useCallback(async () => {
     if (user) {
       const clientsCollectionRef = collection(db, "users", user.uid, "clients");
-      const clientSnapshot = await getDocs(clientsCollectionRef);
+      const clientsQuery = query(
+        clientsCollectionRef,
+        orderBy("created_at", "desc")
+      );
+      const clientSnapshot = await getDocs(clientsQuery);
       const clientList = clientSnapshot.docs.map((doc) => ({
         docId: doc.id,
         ...doc.data(),
@@ -123,39 +118,40 @@ export default function ClientsView() {
   // Fetch clients on component mount
   useEffect(() => {
     fetchClients();
+    return () => {
+      setClients([]);
+    };
   }, [fetchClients]);
 
   // Save or update client in the 'clients' subcollection
-  const handleSaveClient = async () => {
+  const handleSaveClient = async (data: TClientsForm) => {
     if (user) {
       const clientsCollectionRef = collection(db, "users", user.uid, "clients");
       const clientDocRef = editingClientId
         ? doc(clientsCollectionRef, editingClientId)
         : doc(clientsCollectionRef);
 
-      const formattedPhoneNumber = newClientData.phoneNumber
-        ? parsePhoneNumberWithError(
-            newClientData.phoneNumber,
-            "US"
-          ).formatNational()
+      const formattedPhoneNumber = data.phoneNumber
+        ? parsePhoneNumberWithError(data.phoneNumber, "US").formatNational()
         : "";
 
+      console.log("Phone Number:", data.phoneNumber);
+      console.log("Formatted Phone Number:", formattedPhoneNumber);
+
       const newClient = {
-        ...newClientData,
+        ...data,
         phoneNumber: formattedPhoneNumber,
-        status: newClientData.status || "active", // Default to "active" if status is not selected
-        created_at: editingClientId
-          ? newClientData.created_at
-          : serverTimestamp(),
+        status: data.status || "active", // Default to "active" if status is not selected
         updated_at: serverTimestamp(),
+        ...(editingClientId ? {} : { created_at: serverTimestamp() }), // Add created_at only for new clients
       };
 
       await setDoc(clientDocRef, newClient);
 
       // Refresh client list
       fetchClients();
-      setNewClientData(initialClientData); // Reset form data
-      setEditingClientId(null); // Exit edit mode
+      reset({ ...initialClientData, status: "active" });
+      setEditingClientId(null);
     }
   };
 
@@ -170,10 +166,12 @@ export default function ClientsView() {
       : client.phoneNumber;
 
     setEditingClientId(client.docId);
-    setNewClientData({
-      ...client,
-      phoneNumber: formattedPhoneNumber,
-    });
+    setValue("firstName", client.firstName);
+    setValue("lastName", client.lastName);
+    setValue("email", client.email!);
+    setValue("status", client.status as any);
+    setValue("phoneNumber", formattedPhoneNumber!);
+    clearErrors();
   };
 
   // Delete a client from the 'clients' subcollection
@@ -186,6 +184,17 @@ export default function ClientsView() {
       fetchClients();
     }
   };
+
+  // // Handle form input changes
+  // const handleInputChange = (
+  //   e: ChangeEvent<HTMLInputElement> | ChangeEvent<HTMLSelectElement>
+  // ) => {
+  //   const { name, value } = e.target;
+  //   setNewClientData((prev) => ({
+  //     ...prev,
+  //     [name]: value,
+  //   }));
+  // };
 
   if (loading) {
     return (
@@ -203,86 +212,144 @@ export default function ClientsView() {
         </h2>
         <div className="space-y-4">
           {/* Form to add/edit client */}
-          <div className="space-y-2">
-            <Label>First Name</Label>
-            <Input
-              name="firstName"
-              value={newClientData.firstName}
-              onChange={handleInputChange}
-              className="w-full"
-            />
-          </div>
+          <form
+            className="space-y-4"
+            onSubmit={handleSubmit(handleSaveClient, (errors) => {
+              console.log("Validation Errors:", errors);
+              console.log("Form Values:", getValues());
+            })}
+          >
+            <div className="space-y-2">
+              <Label htmlFor="firstName">
+                First Name <span className="text-destructive">*</span>
+              </Label>
+              <Input
+                id="firstName"
+                type="text"
+                {...register("firstName")}
+                className="w-full"
+              />
+              {errors.firstName && (
+                <p className="text-destructive text-sm">
+                  {errors.firstName.message}
+                </p>
+              )}
+            </div>
 
-          <div className="space-y-2">
-            <Label>Last Name</Label>
-            <Input
-              name="lastName"
-              value={newClientData.lastName}
-              onChange={handleInputChange}
-              className="w-full"
-            />
-          </div>
+            <div className="space-y-2">
+              <Label htmlFor="lastName">
+                Last Name <span className="text-destructive">*</span>
+              </Label>
+              <Input
+                id="lastName"
+                type="text"
+                {...register("lastName")}
+                className="w-full"
+              />
+              {errors.lastName && (
+                <p className="text-destructive text-sm">
+                  {errors.lastName.message}
+                </p>
+              )}
+            </div>
 
-          <div className="space-y-2">
-            <Label>Status</Label>
-            <select
-              name="status"
-              value={newClientData.status}
-              onChange={handleInputChange}
-              className="border border-gray-300 rounded-lg p-2 w-full"
-            >
-              <option value="active">Active</option>
-              <option value="pending">Pending</option>
-              <option value="deactivated">Deactivated</option>
-            </select>
-          </div>
-
-          <div className="space-y-2">
-            <Label>Email</Label>
-            <Input
-              name="email"
-              value={newClientData.email}
-              onChange={handleInputChange}
-              className="w-full"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label>Phone</Label>
-            <PhoneInput
-              defaultCountry="US"
-              name="phoneNumber"
-              value={newClientData.phoneNumber}
-              onChange={(value) =>
-                setNewClientData((prev) => ({ ...prev, phoneNumber: value }))
-              }
-              className="w-full"
-            />
-          </div>
-
-          {/* Buttons */}
-          <div className="flex space-x-4">
-            <Button
-              variant={"rebusPro"}
-              className="mt-4"
-              onClick={handleSaveClient}
-            >
-              {editingClientId ? "Update Client" : "Add Client"}
-            </Button>
-
-            {editingClientId && (
-              <Button
-                className="mt-4"
-                variant="secondary"
-                onClick={() => {
-                  setEditingClientId(null);
-                  setNewClientData(initialClientData);
-                }}
+            <div className="space-y-2">
+              <Label htmlFor="status">
+                Status <span className="text-destructive">*</span>
+              </Label>
+              <select
+                id="status"
+                {...register("status")}
+                className="border border-gray-300 rounded-lg p-2 w-full"
               >
-                Cancel
+                <option value="active">Active</option>
+                <option value="pending">Pending</option>
+                <option value="deactivated">Deactivated</option>
+              </select>
+              {errors.status && (
+                <p className="text-destructive text-sm">
+                  {errors.status.message}
+                </p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="email">
+                Email <span className="text-destructive">*</span>
+              </Label>
+              <Input
+                id="email"
+                type="email"
+                {...register("email")}
+                className="w-full"
+              />
+              {errors.email && (
+                <p className="text-destructive text-sm">
+                  {errors.email.message}
+                </p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="phoneNumber">
+                Phone <span className="text-destructive">*</span>
+              </Label>
+
+              <Controller
+                name="phoneNumber"
+                control={control}
+                render={({ field }) => (
+                  <PhoneInput
+                    defaultCountry="US"
+                    id="phoneNumber"
+                    {...field}
+                    onChange={(value) => field.onChange(value)}
+                    className="w-full"
+                  />
+                )}
+              />
+
+              {errors.phoneNumber && (
+                <p className="text-destructive text-sm">
+                  {errors.phoneNumber.message}
+                </p>
+              )}
+              {/* <PhoneInput
+                defaultCountry="US"
+                id="phoneNumber"
+                {...register("phoneNumber")}
+                onChange={(value) =>
+                  setValue("phoneNumber", value, { shouldValidate: true })
+                }
+                className="w-full"
+              /> */}
+            </div>
+
+            {/* Buttons */}
+            <div className="flex space-x-4">
+              <Button
+                type="submit"
+                variant={"rebusPro"}
+                className="mt-4"
+                // onClick={handleSaveClient}
+              >
+                {editingClientId ? "Update Client" : "Add Client"}
               </Button>
-            )}
-          </div>
+
+              {editingClientId && (
+                <Button
+                  className="mt-4"
+                  variant="outline"
+                  onClick={() => {
+                    setEditingClientId(null);
+                    reset({ ...initialClientData, status: "active" });
+                  }}
+                >
+                  Cancel
+                </Button>
+              )}
+            </div>
+          </form>
         </div>
 
         {/* Clients List */}
