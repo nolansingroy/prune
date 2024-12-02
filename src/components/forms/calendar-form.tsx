@@ -174,7 +174,7 @@ export default function CalendarForm({
         presetClients.push({
           value: cli.firstName + " " + cli.lastName,
           label: cli.firstName + " " + cli.lastName,
-          docId: cli.docId,
+          docId: cli.docId!,
         });
       });
       setClients(presetClients);

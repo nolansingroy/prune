@@ -225,7 +225,7 @@ export default function BookingsForm({
         presetBookings.push({
           value: type.name,
           label: type.name,
-          fee: type.fee,
+          fee: type.fee!,
           color: type.color,
           docId: type.docId!,
         });
@@ -244,7 +244,7 @@ export default function BookingsForm({
         presetClients.push({
           value: cli.firstName + " " + cli.lastName,
           label: cli.firstName + " " + cli.lastName,
-          docId: cli.docId,
+          docId: cli.docId!,
         });
       });
       setClients(presetClients);
