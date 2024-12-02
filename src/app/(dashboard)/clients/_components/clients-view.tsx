@@ -57,10 +57,10 @@ import { useForm, Controller } from "react-hook-form";
 
 const initialClientData: Client = {
   docId: "",
-  stripeId: "",
+  // stripeId: "",
   status: "active",
-  active: true,
-  deprecated: false,
+  // active: true,
+  // deprecated: false,
   firstName: "",
   lastName: "",
   email: "",
@@ -165,7 +165,7 @@ export default function ClientsView() {
       ? parsedPhoneNumber.number
       : client.phoneNumber;
 
-    setEditingClientId(client.docId);
+    setEditingClientId(client.docId!);
     setValue("firstName", client.firstName);
     setValue("lastName", client.lastName);
     setValue("email", client.email!);
@@ -387,7 +387,7 @@ export default function ClientsView() {
                         </Button>
                         <Button
                           variant="destructive"
-                          onClick={() => handleDeleteClient(client.docId)}
+                          onClick={() => handleDeleteClient(client.docId!)}
                         >
                           Delete
                         </Button>
