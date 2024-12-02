@@ -39,21 +39,12 @@ import { toast } from "sonner";
 import useConfirmationStore from "@/lib/store/confirmationStore";
 import { Client } from "@/interfaces/clients";
 import { useForm, Controller } from "react-hook-form";
-
-// interface Client {
-//   docId: string;
-//   stripeId: string;
-//   status: string;
-//   active: boolean;
-//   email: string;
-//   phoneNumber: string;
-//   deprecated: boolean;
-//   // defaultRate?: number | null;
-//   firstName: string;
-//   lastName: string;
-//   created_at?: Timestamp; // Firestore timestamp
-//   updated_at?: Timestamp; // Firestore timestamp
-// }
+import {
+  addClient,
+  deleteClient,
+  fetchClients,
+  updateClient,
+} from "@/lib/converters/clients";
 
 const initialClientData: Client = {
   docId: "",
@@ -68,12 +59,12 @@ const initialClientData: Client = {
 };
 
 export default function ClientsView() {
+  const { openConfirmation } = useConfirmationStore();
   const { user } = useAuth();
   const [clients, setClients] = useState<Client[]>([]);
-
-  // const [newClientData, setNewClientData] = useState(initialClientData); // Form data state
   const [editingClientId, setEditingClientId] = useState<string | null>(null); // Track if editing a client
-  const [loading, setLoading] = useState(true); // Loading state to show while fetching
+  const [loading, setLoading] = useState(true);
+  let actionType = editingClientId ? "edit" : "add";
 
   const {
     register,
@@ -96,41 +87,27 @@ export default function ClientsView() {
   });
 
   // Fetch clients from the Firestore subcollection
-  const fetchClients = useCallback(async () => {
+  const fetchAllClients = useCallback(async () => {
     if (user) {
-      const clientsCollectionRef = collection(db, "users", user.uid, "clients");
-      const clientsQuery = query(
-        clientsCollectionRef,
-        orderBy("created_at", "desc")
-      );
-      const clientSnapshot = await getDocs(clientsQuery);
-      const clientList = clientSnapshot.docs.map((doc) => ({
-        docId: doc.id,
-        ...doc.data(),
-      })) as Client[];
-
-      setClients(clientList);
+      const clients = await fetchClients(user.uid);
+      setClients(clients);
       setLoading(false);
-      console.log("Clients fetched:", clientList); // Set loading to false after fetching
+      console.log("Clients fetched:", clients); // Set loading to false after fetching
     }
   }, [user]);
 
   // Fetch clients on component mount
   useEffect(() => {
-    fetchClients();
+    fetchAllClients();
     return () => {
       setClients([]);
     };
-  }, [fetchClients]);
+  }, [fetchAllClients]);
 
   // Save or update client in the 'clients' subcollection
   const handleSaveClient = async (data: TClientsForm) => {
+    console.log("actionType:", actionType);
     if (user) {
-      const clientsCollectionRef = collection(db, "users", user.uid, "clients");
-      const clientDocRef = editingClientId
-        ? doc(clientsCollectionRef, editingClientId)
-        : doc(clientsCollectionRef);
-
       const formattedPhoneNumber = data.phoneNumber
         ? parsePhoneNumberWithError(data.phoneNumber, "US").formatNational()
         : "";
@@ -138,32 +115,49 @@ export default function ClientsView() {
       console.log("Phone Number:", data.phoneNumber);
       console.log("Formatted Phone Number:", formattedPhoneNumber);
 
-      const newClient = {
+      const clientData = {
         ...data,
+        docId: editingClientId || "",
         phoneNumber: formattedPhoneNumber,
-        status: data.status || "active", // Default to "active" if status is not selected
-        updated_at: serverTimestamp(),
-        ...(editingClientId ? {} : { created_at: serverTimestamp() }), // Add created_at only for new clients
+        status: data.status || "active",
       };
 
-      await setDoc(clientDocRef, newClient);
+      if (actionType === "add") {
+        await addClient(user.uid, clientData);
+      } else {
+        await updateClient(user.uid, clientData);
+        setEditingClientId(null);
+      }
+
+      fetchAllClients();
+      reset({ ...initialClientData, status: "active" });
+
+      // const clientsCollectionRef = collection(db, "users", user.uid, "clients");
+      // const clientDocRef = editingClientId
+      //   ? doc(clientsCollectionRef, editingClientId)
+      //   : doc(clientsCollectionRef);
+
+      // const newClient = {
+      //   ...data,
+
+      //   status: data.status || "active", // Default to "active" if status is not selected
+      //   updated_at: serverTimestamp(),
+      //   ...(editingClientId ? {} : { created_at: serverTimestamp() }), // Add created_at only for new clients
+      // };
+
+      // await setDoc(clientDocRef, newClient);
 
       // Refresh client list
-      fetchClients();
-      reset({ ...initialClientData, status: "active" });
-      setEditingClientId(null);
     }
   };
 
   // Set client for editing
   const handleEditClient = (client: Client) => {
-    const parsedPhoneNumber = parsePhoneNumberFromString(
-      client.phoneNumber!,
-      "US"
-    );
+    const phoneNumber = client.phoneNumber || "";
+    const parsedPhoneNumber = parsePhoneNumberFromString(phoneNumber, "US");
     const formattedPhoneNumber = parsedPhoneNumber
       ? parsedPhoneNumber.number
-      : client.phoneNumber;
+      : phoneNumber;
 
     setEditingClientId(client.docId!);
     setValue("firstName", client.firstName);
@@ -176,12 +170,30 @@ export default function ClientsView() {
 
   // Delete a client from the 'clients' subcollection
   const handleDeleteClient = async (clientId: string) => {
-    if (user) {
-      const clientDocRef = doc(db, "users", user.uid, "clients", clientId);
-      await deleteDoc(clientDocRef);
+    const clientName = clients.find((client) => client.docId === clientId);
+    const clientReference = `${clientName?.firstName} ${clientName?.lastName}`;
+    const clientFullName = clientReference || "this client";
+    console.log("Client Full Name:", clientFullName);
 
-      // Refresh client list after deletion
-      fetchClients();
+    if (user) {
+      openConfirmation({
+        title: "Delete Confirmation",
+        description: `Are you sure you want to delete ${clientFullName}?`,
+        cancelLabel: "Cancel",
+        actionLabel: "Delete",
+        onAction: async () => {
+          await deleteClient(user.uid, clientId);
+          toast.success("Client deleted successfully");
+          fetchAllClients();
+        },
+        onCancel: () => {},
+      });
+
+      // const clientDocRef = doc(db, "users", user.uid, "clients", clientId);
+      // await deleteDoc(clientDocRef);
+
+      // // Refresh client list after deletion
+      // fetchAllClients();
     }
   };
 

@@ -107,9 +107,12 @@ export default function BookTypesView() {
     if (user) {
       // Deleteing booking type from Firestore
 
+      const bookingType = bookingTypes.find((type) => type.docId === id);
+      const typeName = bookingType?.name || "this booking type";
+
       openConfirmation({
         title: "Delete Confirmation",
-        description: "Are you sure you want to delete this booking type?",
+        description: `Are you sure you want to delete ${typeName}?`,
         cancelLabel: "Cancel",
         actionLabel: "Delete",
         onAction: async () => {
@@ -145,7 +148,10 @@ export default function BookTypesView() {
         <div className="space-y-4">
           <form
             className="space-y-4"
-            onSubmit={handleSubmit(handleSaveBookingType)}
+            onSubmit={handleSubmit(handleSaveBookingType, (errors) => {
+              console.log("Validation Errors:", errors);
+              console.log("Form Values:", getValues());
+            })}
           >
             <Label
               className="block text-lg font-medium text-gray-700"
