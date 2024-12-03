@@ -3,6 +3,7 @@ import {
   EventClickArg,
   EventContentArg,
 } from "@fullcalendar/core";
+import { BadgeDollarSign, icons } from "lucide-react";
 import tippy from "tippy.js";
 import "tippy.js/dist/tippy.css";
 
@@ -47,7 +48,7 @@ export const checkOverlap = (
 export const handleEventDidMount = (info: {
   view: { calendar: any };
   event: any;
-  el: { classList: { add: (arg0: string) => void } };
+  el: HTMLElement;
 }) => {
   const calendarApi = info.view.calendar;
   const allEvents = calendarApi.getEvents();
@@ -55,6 +56,10 @@ export const handleEventDidMount = (info: {
   // Check for overlap with background events
   if (checkOverlap(info.event, allEvents)) {
     info.el.classList.add("overlap-event");
+  }
+
+  const { paid } = info.event.extendedProps;
+  if (paid) {
   }
 
   // add a popOver to the event here
@@ -77,7 +82,8 @@ export const renderEventContent = (eventInfo: EventContentArg) => {
 
   const backgroundColor = eventInfo.backgroundColor || "#000000";
 
-  const monthViw = eventInfo.view.type.includes("dayGridMonth");
+  const monthView = eventInfo.view.type.includes("dayGridMonth");
+  const weekView = eventInfo.view.type.includes("timeGridWeek");
 
   const classNames = eventInfo.event.classNames || [];
   const view = eventInfo.view.type;
@@ -85,6 +91,7 @@ export const renderEventContent = (eventInfo: EventContentArg) => {
   // console.log("==================================", eventInfo);
 
   if (isBackgroundEvent) {
+    return null;
   }
 
   if (classNames.includes("bg-event-mirror")) {
@@ -94,7 +101,8 @@ export const renderEventContent = (eventInfo: EventContentArg) => {
       </div>
     );
   }
-  if (monthViw) {
+
+  if (monthView) {
     const defaultStartTimeLocal = new Date(eventInfo.event.startStr);
     let formattedStartTime = defaultStartTimeLocal.toLocaleTimeString("en-US", {
       hour: "2-digit",
@@ -118,12 +126,64 @@ export const renderEventContent = (eventInfo: EventContentArg) => {
     );
   }
 
+  if (weekView) {
+    return (
+      <div className={`flex flex-col gap-1 items-start w-full overflow-hidden`}>
+        {/* <div className="flex items-center truncate w-full font-semibold">
+          <span className="text-xs">{eventInfo.timeText}</span>
+          <span className="text-xs truncate ml-2">{clientName}</span>
+        </div>
+        <div className="text-xs truncate">{description}</div> */}
+        <span
+          className={`${paid ? "underline" : ""}`}
+          ref={(el) => {
+            if (el) {
+              // Destroy existing tippy instance if it exists
+              const existingInstance = tippyInstances.get(eventInfo.event.id);
+              if (existingInstance) {
+                existingInstance.destroy();
+              }
+
+              // Create new tippy instance
+              const tippyInstance = tippy(el, {
+                trigger: "mouseenter", // Change trigger to 'mouseenter' for hover
+                touch: "hold",
+                allowHTML: true,
+                content: `
+                  <div class="tippy-content">
+                    <p class="${paid ? "paid-status" : "unpaid-status"}">
+                      <strong>${paid ? "Paid" : "Unpaid"}</strong>
+                    </p>
+                    <p><strong>Notes:</strong> ${description}</p>
+                  </div>
+                `,
+                theme: "custom", // Apply custom theme
+              });
+
+              // Store the new tippy instance in the Map
+              tippyInstances.set(eventInfo.event.id, tippyInstance);
+            }
+          }}
+        >
+          <span className="flex items-center truncate w-full font-bold">
+            {clientName || "No name"}
+            {paid && (
+              <span className="text-xs ml-2">
+                {<BadgeDollarSign height={20} width={20} />}
+              </span>
+            )}
+          </span>
+        </span>
+      </div>
+    );
+  }
+
   return (
     <>
       {!isBackgroundEvent && (
         <div>
           <span
-            className="underline"
+            className={`${paid ? "underline" : ""}`}
             ref={(el) => {
               if (el) {
                 // Destroy existing tippy instance if it exists
@@ -155,6 +215,11 @@ export const renderEventContent = (eventInfo: EventContentArg) => {
           >
             <span className="flex items-center truncate w-full font-bold">
               {clientName || "No name"}
+              {paid && (
+                <span className="text-xs ml-2">
+                  {<BadgeDollarSign height={20} width={20} />}
+                </span>
+              )}
             </span>
           </span>
         </div>

@@ -179,7 +179,7 @@ export default function BookTypesView() {
               id="fee"
               type="number"
               {...register("fee", { valueAsNumber: true })}
-              placeholder="e.g. 100"
+              placeholder="you will be able to override on individual bookings"
             />
             {errors.fee && (
               <p className="text-destructive text-sm">{errors.fee.message}</p>
