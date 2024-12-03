@@ -175,11 +175,14 @@ export default function BookTypesView() {
             >
               Default Fee (USD) <span className="text-destructive">*</span>
             </Label>
+            <span className="text-sm text-muted-foreground">
+              you will be able to override on individual bookings
+            </span>
             <Input
               id="fee"
               type="number"
               {...register("fee", { valueAsNumber: true })}
-              placeholder="you will be able to override on individual bookings"
+              placeholder="e.g. 100"
             />
             {errors.fee && (
               <p className="text-destructive text-sm">{errors.fee.message}</p>
