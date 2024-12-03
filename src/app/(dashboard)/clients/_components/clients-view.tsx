@@ -81,7 +81,7 @@ export default function ClientsView() {
       const clients = await fetchClients(user.uid);
       setClients(clients);
       setLoading(false);
-      console.log("Clients fetched:", clients); // Set loading to false after fetching
+      // console.log("Clients fetched:", clients); // Set loading to false after fetching
     }
   }, [user]);
 
@@ -95,14 +95,14 @@ export default function ClientsView() {
 
   // Save or update client in the 'clients' subcollection
   const handleSaveClient = async (data: TClientsForm) => {
-    console.log("actionType:", actionType);
+    // console.log("actionType:", actionType);
     if (user) {
       const formattedPhoneNumber = data.phoneNumber
         ? parsePhoneNumberWithError(data.phoneNumber, "US").formatNational()
         : "";
 
-      console.log("Phone Number:", data.phoneNumber);
-      console.log("Formatted Phone Number:", formattedPhoneNumber);
+      // console.log("Phone Number:", data.phoneNumber);
+      // console.log("Formatted Phone Number:", formattedPhoneNumber);
 
       const clientData = {
         ...data,
@@ -162,7 +162,7 @@ export default function ClientsView() {
     const clientName = clients.find((client) => client.docId === clientId);
     const clientReference = `${clientName?.firstName} ${clientName?.lastName}`;
     const clientFullName = clientReference || "this client";
-    console.log("Client Full Name:", clientFullName);
+    // console.log("Client Full Name:", clientFullName);
 
     if (user) {
       openConfirmation({
@@ -216,8 +216,8 @@ export default function ClientsView() {
           <form
             className="space-y-4"
             onSubmit={handleSubmit(handleSaveClient, (errors) => {
-              console.log("Validation Errors:", errors);
-              console.log("Form Values:", getValues());
+              // console.log("Validation Errors:", errors);
+              // console.log("Form Values:", getValues());
             })}
           >
             <div className="space-y-2">

@@ -77,7 +77,7 @@ export const handleRecurringEvent = async ({
         }),
   };
 
-  console.log("Recurring event data ready for Firestore:", eventInput);
+  // console.log("Recurring event data ready for Firestore:", eventInput);
 
   const url = isBackgroundEvent
     ? cloudFunctions.recurringAvailabilitiesProd
@@ -85,10 +85,10 @@ export const handleRecurringEvent = async ({
 
   try {
     const result = await axios.post(url, eventInput);
-    console.log("Recurring instances created:", result.data);
+    // console.log("Recurring instances created:", result.data);
     return result.data;
   } catch (error) {
-    console.error("Error saving recurring event:", error);
+    // console.error("Error saving recurring event:", error);
     throw error;
   }
 };
@@ -139,7 +139,7 @@ export const handleSingleEvent = async ({
     endDateTime.setHours(endHour, endMinute, 0, 0);
 
     if (endDateTime <= startDateTime) {
-      console.log("End time is before start time");
+      // console.log("End time is before start time");
       endDateTime.setDate(endDateTime.getDate() + 1);
     }
   }
@@ -174,14 +174,14 @@ export const handleSingleEvent = async ({
   };
 
   try {
-    console.log("Single event data ready for Firestore:", event);
+    // console.log("Single event data ready for Firestore:", event);
     const cleanedEvent = removeUndefinedFields(event);
-    console.log("Event data before submitting to firebase:", cleanedEvent);
+    // console.log("Event data before submitting to firebase:", cleanedEvent);
 
     await createFireStoreEvent(user.uid, cleanedEvent);
     return cleanedEvent;
   } catch (error) {
-    console.error("Error saving event:", error);
+    // console.error("Error saving event:", error);
     throw error;
   }
 };
@@ -237,7 +237,7 @@ export const updatEventFormDialog = async (
 
   try {
     if (!eventData.recurrence || eventData.recurrence.daysOfWeek.length === 0) {
-      console.log("updating event in firebase");
+      // console.log("updating event in firebase");
       if (!eventData.id) {
         throw new Error("Event ID is missing");
       }
@@ -263,14 +263,14 @@ export const updatEventFormDialog = async (
         await updateFireStoreEvent(userId!, eventData.id, eventInput);
         toast.success("Booking event updated successfully");
       } catch (error) {
-        console.error("Error saving event:", error);
+        // console.error("Error saving event:", error);
         toast.error("Error editing booking event");
       }
 
-      console.log("Single event updated in Firestore");
+      // console.log("Single event updated in Firestore");
     } else {
       // update the event in firebase instead of creating a new one
-      console.log("updating event in firebase recurring event");
+      // console.log("updating event in firebase recurring event");
       if (!eventData.id) {
         throw new Error("Event ID is missing");
       }
@@ -313,11 +313,11 @@ export const updatEventFormDialog = async (
         await updateFireStoreEvent(userId!, eventData.id, eventInput);
         toast.success("Booking event updated successfully");
       } catch (error) {
-        console.error("Error saving event:", error);
+        // console.error("Error saving event:", error);
         toast.error("Error editing booking event");
       }
     }
   } catch (error) {
-    console.error("Error saving event:", error);
+    // console.error("Error saving event:", error);
   }
 };

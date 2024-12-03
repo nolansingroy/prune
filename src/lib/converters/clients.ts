@@ -64,7 +64,7 @@ export async function fetchClients(uid: string): Promise<Client[]> {
     const clientsData = querySnapshot.docs.map((doc) => doc.data());
     return clientsData;
   } catch (error) {
-    console.error("Error fetching clients:", error);
+    // console.error("Error fetching clients:", error);
     return [];
   }
 }

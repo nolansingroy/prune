@@ -117,19 +117,19 @@ export async function fetchFirestoreEvents(
   userUid: User | null
 ): Promise<EventInput[]> {
   if (!userUid) {
-    console.warn("No authenticated user UID provided.");
+    // console.warn("No authenticated user UID provided.");
     return [];
   }
 
   // console.log("Fetching events...");
   const q = query(eventRef(userUid.uid));
   const querySnapshot = await getDocs(q);
-  console.log(
-    `Retrieved ${querySnapshot.docs.length} documents from Firestore.`
-  );
+  // console.log(
+  //   `Retrieved ${querySnapshot.docs.length} documents from Firestore.`
+  // );
 
   const checktimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-  console.log("Timezone: ", checktimezone);
+  // console.log("Timezone: ", checktimezone);
 
   const eventsData = await Promise.all(
     querySnapshot.docs.map(async (doc) => {
@@ -185,7 +185,7 @@ export async function updateFireStoreEvent(
     updated_at: Timestamp.now().toDate(),
   };
 
-  console.log("Updating Firestore with:", { userId, eventId, event });
+  // console.log("Updating Firestore with:", { userId, eventId, event });
 
   await updateDoc(eventDocRef, updatedEvent);
 }
@@ -195,7 +195,7 @@ export const fetchBookingsListviewEvents = async (
   userId: string
 ): Promise<EventInput[]> => {
   if (!userId) {
-    console.warn("No user ID provided.");
+    // console.warn("No user ID provided.");
     return [];
   }
   const today = new Date();
@@ -214,7 +214,7 @@ export const fetchBookingsListviewEvents = async (
 
   querySnapshot.docs.forEach((doc) => {
     const data = doc.data();
-    console.log("Event data:", data);
+    // console.log("Event data:", data);
     const start =
       data.start instanceof Timestamp
         ? data.start.toDate()
@@ -277,7 +277,7 @@ export const fetchAvailabilitiesListviewEvents = async (
   userId: string
 ): Promise<Omit<EventInput, "fee">[]> => {
   if (!userId) {
-    console.warn("No user ID provided.");
+    // console.warn("No user ID provided.");
     return [];
   }
   const today = new Date();
