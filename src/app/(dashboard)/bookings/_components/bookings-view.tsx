@@ -331,7 +331,7 @@ export default function BookingsView() {
           name: type.name,
         };
       });
-      console.log("Booking types fetched:", typesArray);
+      // console.log("Booking types fetched:", typesArray);
       setTypes(typesArray);
     }
   }, [user]);
@@ -414,10 +414,10 @@ export default function BookingsView() {
               clientId: matchedClient.docId,
               clientName: editedValue,
             };
-            console.log("Matched client:", matchedClient);
+            // console.log("Matched client:", matchedClient);
           } else {
             updates = { clientId: "", clientName: editedValue };
-            console.log("Client not found:", editedValue);
+            // console.log("Client not found:", editedValue);
           }
         }
       }
@@ -430,10 +430,10 @@ export default function BookingsView() {
           );
           if (matchedType) {
             updates = { typeId: matchedType.docId, type: editedValue };
-            console.log("Matched type:", matchedType);
+            // console.log("Matched type:", matchedType);
           } else {
             updates = { typeId: "", type: editedValue };
-            console.log("Type not found:", editedValue);
+            // console.log("Type not found:", editedValue);
           }
         }
       }
@@ -470,9 +470,9 @@ export default function BookingsView() {
               inputHours !== originalHours ||
               parseInt(minutes, 10) !== originalMinutes
             ) {
-              console.log(`Time changed for ${field}:`);
-              console.log(`Original time: ${originalHours}:${originalMinutes}`);
-              console.log(`New time: ${inputHours}:${minutes}`);
+              // console.log(`Time changed for ${field}:`);
+              // console.log(`Original time: ${originalHours}:${originalMinutes}`);
+              // console.log(`New time: ${inputHours}:${minutes}`);
 
               updatedTime.setHours(inputHours);
               updatedTime.setMinutes(parseInt(minutes, 10));
@@ -554,12 +554,12 @@ export default function BookingsView() {
                 };
               }
 
-              console.log(`Updated date: ${updatedDate}`);
-              console.log(`Updated day: ${updatedDay}`);
+              // console.log(`Updated date: ${updatedDate}`);
+              // console.log(`Updated day: ${updatedDay}`);
             } else {
-              console.log(`Time not changed for ${field}:`);
-              console.log(`Original time: ${originalHours}:${originalMinutes}`);
-              console.log(`New time: ${inputHours}:${minutes}`);
+              // console.log(`Time not changed for ${field}:`);
+              // console.log(`Original time: ${originalHours}:${originalMinutes}`);
+              // console.log(`New time: ${inputHours}:${minutes}`);
             }
           }
         } else {
@@ -605,8 +605,8 @@ export default function BookingsView() {
               updates.endDate = endTime.toDate();
               updates.endDay = endDay;
 
-              console.log(`Start date changed: ${updatedTime.toDate()}`);
-              console.log(`End date adjusted: ${endTime.toDate()}`);
+              // console.log(`Start date changed: ${updatedTime.toDate()}`);
+              // console.log(`End date adjusted: ${endTime.toDate()}`);
             } else if (field === "endDate") {
               updates = {
                 endDate: updatedTime.toDate(),
@@ -625,13 +625,13 @@ export default function BookingsView() {
               updates.startDate = startTime.toDate();
               updates.startDay = startDay;
 
-              console.log(`End date changed: ${updatedTime.toDate()}`);
-              console.log(`Start date adjusted: ${startTime.toDate()}`);
+              // console.log(`End date changed: ${updatedTime.toDate()}`);
+              // console.log(`Start date adjusted: ${startTime.toDate()}`);
             }
           } else {
-            console.log(`Date not changed for ${field}:`);
-            console.log(`Original date: ${originalDateString}`);
-            console.log(`New date: ${newDateString}`);
+            // console.log(`Date not changed for ${field}:`);
+            // console.log(`Original date: ${originalDateString}`);
+            // console.log(`New date: ${newDateString}`);
           }
         }
       } else if (field === "description") {
@@ -705,7 +705,7 @@ export default function BookingsView() {
       endRecur: string; // YYYY-MM-DD
     };
   }): Promise<void> => {
-    console.log("handleSaveEvent called from create bookings"); // Add this line
+    // console.log("handleSaveEvent called from create bookings"); // Add this line
 
     //First format the start and end date based on the event selection
 
@@ -758,10 +758,10 @@ export default function BookingsView() {
             userTimeZone,
           };
 
-          console.log(
-            "event data ready for cloud function for recurring bookings",
-            eventInput
-          );
+          // console.log(
+          //   "event data ready for cloud function for recurring bookings",
+          //   eventInput
+          // );
 
           // Make the axios call to your cloud function
           // "https://us-central1-prune-94ad9.cloudfunctions.net/createRecurringBookingInstances"
@@ -773,10 +773,10 @@ export default function BookingsView() {
               eventInput
             );
 
-            console.log("Recurring bookings instances created:", result.data);
+            // console.log("Recurring bookings instances created:", result.data);
             toast.success("Recurring bookings added successfully");
           } catch (error) {
-            console.error("Error saving recurring bookings:", error);
+            // console.error("Error saving recurring bookings:", error);
             toast.error("Error adding recurring bookings");
           }
         } else {
@@ -833,17 +833,17 @@ export default function BookingsView() {
           };
 
           try {
-            console.log("Single event data ready for Firestore:", event);
+            // console.log("Single event data ready for Firestore:", event);
             event = removeUndefinedFields(event);
 
-            console.log("Event data before submitting to firebase:", event);
+            // console.log("Event data before submitting to firebase:", event);
 
             await createFireStoreEvent(user.uid, event);
 
-            console.log("Single event created in Firestore with ID:", event.id);
+            // console.log("Single event created in Firestore with ID:", event.id);
             toast.success("Booking event added successfully");
           } catch (error) {
-            console.error("Error saving event single:", error);
+            // console.error("Error saving event single:", error);
             toast.error("Error adding booking event");
           }
         }
@@ -932,9 +932,9 @@ export default function BookingsView() {
           allEvents.filter((event) => event.id !== eventId)
         );
 
-        console.log("Event deleted successfully");
+        // console.log("Event deleted successfully");
       } catch (error) {
-        console.error("Error deleting event:", error);
+        // console.error("Error deleting event:", error);
       }
     };
 
@@ -1048,14 +1048,14 @@ export default function BookingsView() {
         { ...sanitizedEventData, id: eventRef.id } as EventInput, //
       ]);
 
-      console.log("Event cloned successfully");
+      // console.log("Event cloned successfully");
     } catch (error) {
-      console.error("Error cloning event:", error);
+      // console.error("Error cloning event:", error);
     }
   };
 
   const handleTogglePaid = async (id: string) => {
-    console.log("Toggling paid status for event ID:", id);
+    // console.log("Toggling paid status for event ID:", id);
 
     // Optimistically update the UI
     const updatedAllEvents = allEvents.map((event) =>
@@ -1078,10 +1078,10 @@ export default function BookingsView() {
         await updateFireStoreEvent(user?.uid!, id, {
           paid: eventToUpdate.paid,
         });
-        console.log("Paid status updated successfully");
+        // console.log("Paid status updated successfully");
         toast.success("Paid status updated successfully");
       } catch (error) {
-        console.error("Error updating paid status:", error);
+        // console.error("Error updating paid status:", error);
         toast.error("Error updating paid status");
         // Reverting state on failure
         setAllEvents(allEvents);

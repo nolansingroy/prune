@@ -68,7 +68,7 @@ export default function BookTypesView() {
       const types = await fetchBookingTypes(user.uid);
       setBookingTypes(types);
       setLoading(false);
-      console.log("Booking types from firebase:", types);
+      // console.log("Booking types from firebase:", types);
     }
   }, [user]);
 
@@ -80,7 +80,7 @@ export default function BookTypesView() {
   }, [fetchTypes]);
 
   const handleSaveBookingType = async (data: TBookingtypeForm) => {
-    console.log("actionType:", actionType);
+    // console.log("actionType:", actionType);
     if (user) {
       const bookingData = { ...data, docId: editingBookingId || "" };
 
@@ -149,8 +149,8 @@ export default function BookTypesView() {
           <form
             className="space-y-4"
             onSubmit={handleSubmit(handleSaveBookingType, (errors) => {
-              console.log("Validation Errors:", errors);
-              console.log("Form Values:", getValues());
+              // console.log("Validation Errors:", errors);
+              // console.log("Form Values:", getValues());
             })}
           >
             <Label

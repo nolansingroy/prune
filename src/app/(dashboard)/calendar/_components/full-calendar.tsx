@@ -120,7 +120,7 @@ export default function FullCalendarComponent({}) {
         // });
       }
     } catch (error) {
-      console.error("Error updating event in Firestore:", error);
+      // console.error("Error updating event in Firestore:", error);
     }
   };
 
@@ -167,7 +167,7 @@ export default function FullCalendarComponent({}) {
         });
       }
     } catch (error) {
-      console.error("Error updating event in Firestore:", error);
+      // console.error("Error updating event in Firestore:", error);
     }
   };
 
@@ -295,7 +295,7 @@ export default function FullCalendarComponent({}) {
   }): Promise<void> => {
     if (!selectInfo) return Promise.resolve();
 
-    console.log("date from full calendar component", date);
+    // console.log("date from full calendar component", date);
 
     let calendarApi = selectInfo.view.calendar;
     calendarApi.unselect();
@@ -337,14 +337,14 @@ export default function FullCalendarComponent({}) {
               userTimeZone,
               user,
             });
-            console.log("Recurring instances created:", result);
+            // console.log("Recurring instances created:", result);
             toast.success(
               isBackgroundEvent
                 ? "Recurring availability added successfully"
                 : "Recurring bookings added successfully"
             );
           } catch (error) {
-            console.error("Error saving recurring event:", error);
+            // console.error("Error saving recurring event:", error);
             toast.error(
               isBackgroundEvent
                 ? "Error adding recurring availability"
@@ -379,7 +379,7 @@ export default function FullCalendarComponent({}) {
                 : "Booking event added successfully"
             );
           } catch (error) {
-            console.error("Error saving event:", error);
+            // console.error("Error saving event:", error);
             toast.error(
               isBackgroundEvent
                 ? "An error occurred while adding the availability event"
@@ -388,10 +388,10 @@ export default function FullCalendarComponent({}) {
           }
         }
       } catch (error) {
-        console.error("Error saving event:", error);
+        // console.error("Error saving event:", error);
         toast.error("An error occurred while adding the event");
       } finally {
-        console.log("handle save finished");
+        // console.log("handle save finished");
         handleDialogClose();
         await fetchEvents();
         setIsLoading(false);
@@ -424,7 +424,7 @@ export default function FullCalendarComponent({}) {
     if (!user) {
       throw new Error("User not authenticated");
     }
-    console.log("updating information triggered");
+    // console.log("updating information triggered");
 
     startTransition(async () => {
       setIsLoading(true);
@@ -454,7 +454,7 @@ export default function FullCalendarComponent({}) {
     }
 
     try {
-      console.log("Deleting event from Firestore for event ID:", eventId);
+      // console.log("Deleting event from Firestore for event ID:", eventId);
       // construct the array
       let eventIds: string[] = [];
 
@@ -462,7 +462,7 @@ export default function FullCalendarComponent({}) {
       if (action === "single") {
         // make sure the array is empty
         eventIds = [eventId];
-        console.log("Events to delete (single):", eventIds);
+        // console.log("Events to delete (single):", eventIds);
 
         openConfirmation({
           title: "Delete Confirmation",
@@ -492,29 +492,29 @@ export default function FullCalendarComponent({}) {
           let foundOriginalEventId = event.originalEventId;
 
           if (foundOriginalEventId) {
-            console.log(
-              "original event id found (series) : ",
-              foundOriginalEventId
-            );
+            // console.log(
+            //   "original event id found (series) : ",
+            //   foundOriginalEventId
+            // );
             // get all the events with the same originalEventId
 
             const eventsToDelete = events
               .filter((event) => event.originalEventId === foundOriginalEventId)
               .map((event) => event.id);
 
-            console.log(
-              "(series) finding all the events that will be deleted",
-              eventsToDelete
-            );
+            // console.log(
+            //   "(series) finding all the events that will be deleted",
+            //   eventsToDelete
+            // );
 
             // update the eventIds array with all the found events with the same originalEventId and add the original event id to the eventIds array as well
 
             eventIds = [...eventsToDelete, foundOriginalEventId] as string[];
 
-            console.log(
-              "Events to delete (series) when the event to delete is not the original event :",
-              eventIds
-            );
+            // console.log(
+            //   "Events to delete (series) when the event to delete is not the original event :",
+            //   eventIds
+            // );
 
             // Filter out undefined values
             const validEventIds = eventIds.filter(
@@ -543,10 +543,10 @@ export default function FullCalendarComponent({}) {
               },
             });
           } else {
-            console.log(
-              "original event id not found (series) so this is the original event  : ",
-              foundOriginalEventId
-            );
+            // console.log(
+            //   "original event id not found (series) so this is the original event  : ",
+            //   foundOriginalEventId
+            // );
             // if the original event id is not found, then this event is the original event, in this case find all the events with the same originalEventId
 
             // assign the eventId to the foundOriginalEventId
@@ -556,19 +556,19 @@ export default function FullCalendarComponent({}) {
               .filter((event) => event.originalEventId === foundOriginalEventId)
               .map((event) => event.id);
 
-            console.log(
-              "(series) finding all the events that will be deleted",
-              eventsToDelete
-            );
+            // console.log(
+            //   "(series) finding all the events that will be deleted",
+            //   eventsToDelete
+            // );
 
             // update the eventIds array with all the found events with the same originalEventId and add the eventId to the eventIds array as well
 
             eventIds = [...eventsToDelete, foundOriginalEventId] as string[];
 
-            console.log(
-              "Events to delete (series) when the event to delete is the original event :",
-              eventIds
-            );
+            // console.log(
+            //   "Events to delete (series) when the event to delete is the original event :",
+            //   eventIds
+            // );
 
             // Filter out undefined values
             const validEventIds = eventIds.filter(
@@ -600,17 +600,17 @@ export default function FullCalendarComponent({}) {
         } else {
           // This case is not possible because the clicked event must have an id , but its here to debug if the clicked event does not have an id
           eventIds = [eventId];
-          console.log("Event object was not found (series) for: ", eventIds);
+          // console.log("Event object was not found (series) for: ", eventIds);
           setIsLoading(false); // Stop loading
           // await deleteEvents(user.uid, eventIds);
         }
       }
     } catch (error) {
-      console.error("Error deleting event:", error);
+      // console.error("Error deleting event:", error);
       setIsLoading(false); // Stop loading
       toast.error("An error occurred while deleting the event");
     } finally {
-      console.log("delete event success");
+      // console.log("delete event success");
     }
   };
 

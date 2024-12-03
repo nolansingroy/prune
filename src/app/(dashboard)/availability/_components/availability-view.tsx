@@ -134,9 +134,9 @@ export default function AvailabilityView() {
               inputHours !== originalHours ||
               parseInt(minutes, 10) !== originalMinutes
             ) {
-              console.log(`Time changed for ${field}:`);
-              console.log(`Original time: ${originalHours}:${originalMinutes}`);
-              console.log(`New time: ${inputHours}:${minutes}`);
+              // console.log(`Time changed for ${field}:`);
+              // console.log(`Original time: ${originalHours}:${originalMinutes}`);
+              // console.log(`New time: ${inputHours}:${minutes}`);
 
               updatedTime.setHours(inputHours);
               updatedTime.setMinutes(parseInt(minutes, 10));
@@ -216,12 +216,12 @@ export default function AvailabilityView() {
                 };
               }
 
-              console.log(`Updated date: ${updatedDate}`);
-              console.log(`Updated day: ${updatedDay}`);
+              // console.log(`Updated date: ${updatedDate}`);
+              // console.log(`Updated day: ${updatedDay}`);
             } else {
-              console.log(`Time not changed for ${field}:`);
-              console.log(`Original time: ${originalHours}:${originalMinutes}`);
-              console.log(`New time: ${inputHours}:${minutes}`);
+              // console.log(`Time not changed for ${field}:`);
+              // console.log(`Original time: ${originalHours}:${originalMinutes}`);
+              // console.log(`New time: ${inputHours}:${minutes}`);
             }
           }
         } else {
@@ -267,8 +267,8 @@ export default function AvailabilityView() {
               updates.endDate = endTime.toDate();
               updates.endDay = endDay;
 
-              console.log(`Start date changed: ${updatedTime.toDate()}`);
-              console.log(`End date adjusted: ${endTime.toDate()}`);
+              // console.log(`Start date changed: ${updatedTime.toDate()}`);
+              // console.log(`End date adjusted: ${endTime.toDate()}`);
             } else if (field === "endDate") {
               updates = {
                 endDate: updatedTime.toDate(),
@@ -287,13 +287,13 @@ export default function AvailabilityView() {
               updates.startDate = startTime.toDate();
               updates.startDay = startDay;
 
-              console.log(`End date changed: ${updatedTime.toDate()}`);
-              console.log(`Start date adjusted: ${startTime.toDate()}`);
+              // console.log(`End date changed: ${updatedTime.toDate()}`);
+              // console.log(`Start date adjusted: ${startTime.toDate()}`);
             }
           } else {
-            console.log(`Date not changed for ${field}:`);
-            console.log(`Original date: ${originalDateString}`);
-            console.log(`New date: ${newDateString}`);
+            // console.log(`Date not changed for ${field}:`);
+            // console.log(`Original date: ${originalDateString}`);
+            // console.log(`New date: ${newDateString}`);
           }
         }
       } else if (field === "title") {
@@ -351,7 +351,7 @@ export default function AvailabilityView() {
       endRecur: string; // YYYY-MM-DD
     };
   }): Promise<void> => {
-    console.log("handleSaveEvent called from create Availability");
+    // console.log("handleSaveEvent called from create Availability");
 
     // First format the start date and end date based on the event selection
     const startDate = eventData.date
@@ -398,17 +398,17 @@ export default function AvailabilityView() {
             userTimeZone,
           };
 
-          console.log(
-            "event data ready for cloud function for background event from availabity tab",
-            eventInput
-          );
+          // console.log(
+          //   "event data ready for cloud function for background event from availabity tab",
+          //   eventInput
+          // );
 
           try {
             const result = await axios.post(
               "https://us-central1-prune-94ad9.cloudfunctions.net/createRecurringAvailabilityInstances",
               eventInput
             );
-            console.log("Recurring event instances created:", result.data);
+            // console.log("Recurring event instances created:", result.data);
             toast.success("Recurring availability added successfully");
           } catch (error) {
             console.error("Error adding recurring event:", error);
@@ -468,29 +468,29 @@ export default function AvailabilityView() {
           };
 
           try {
-            console.log("Single event data ready for Firestore:", eventInput);
+            // console.log("Single event data ready for Firestore:", eventInput);
 
-            console.log(
-              "Event data before submitting to firebase:",
-              eventInput
-            );
+            // console.log(
+            //   "Event data before submitting to firebase:",
+            //   eventInput
+            // );
 
             await createFireStoreEvent(user.uid, eventInput);
 
-            console.log(
-              "Single event created in Firestore with ID:",
-              eventInput.id
-            );
+            // console.log(
+            //   "Single event created in Firestore with ID:",
+            //   eventInput.id
+            // );
             toast.success("Availability event added successfully");
           } catch (error) {
-            console.error("Error saving event:", error);
+            // console.error("Error saving event:", error);
             toast.error(
               "An error occurred while adding the availability event"
             );
           }
         }
       } catch (error) {
-        console.error("Error saving event:", error);
+        // console.error("Error saving event:", error);
         toast.error("An error occurred while adding the event");
       } finally {
         // Fetch events again to update the list
@@ -566,7 +566,7 @@ export default function AvailabilityView() {
         // Update the local state to remove the deleted event
         setEvents((prev) => prev.filter((event) => event.id !== eventId));
 
-        console.log("Event deleted successfully");
+        // console.log("Event deleted successfully");
       } catch (error) {
         console.error("Error deleting event:", error);
       }
@@ -678,7 +678,7 @@ export default function AvailabilityView() {
         { ...sanitizedEventData, id: eventRef.id } as EventInput, // Assign the newly generated id
       ]);
 
-      console.log("Event cloned successfully");
+      // console.log("Event cloned successfully");
     } catch (error) {
       console.error("Error cloning event:", error);
     }

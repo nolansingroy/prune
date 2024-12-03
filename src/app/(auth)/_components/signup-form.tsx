@@ -74,7 +74,7 @@ export default function SignupForm() {
           updated_at: Timestamp.now(),
         };
 
-        console.log("User data:", userData);
+        // console.log("User data:", userData);
         await createUser(userData);
 
         toast.success("Account created successfully, please login");
