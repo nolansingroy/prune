@@ -18,6 +18,7 @@ import {
 } from "firebase/firestore";
 import { getAnalytics } from "firebase/analytics";
 import { getStorage } from "firebase/storage";
+import { clientConfig } from "./config/client-config";
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
@@ -31,15 +32,15 @@ const firebaseConfig = {
 };
 
 // Initialize Firebase
-const app = initializeApp(firebaseConfig);
+const app = initializeApp(clientConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 const storage = getStorage(app);
 let analytics;
 
-if (typeof window !== "undefined") {
-  analytics = getAnalytics(app);
-}
+// if (typeof window !== "undefined") {
+//   analytics = getAnalytics(app);
+// }
 
 // Export all necessary Firebase functionalities
 export {

@@ -20,7 +20,7 @@ const useFetchEvents = () => {
     const user = auth.currentUser;
     const eventsData = await fetchFirestoreEvents(user);
     setEvents(eventsData);
-    console.log("Events set to state:", eventsData);
+    // console.log("Events set to state:", eventsData);
   }, []);
 
   const fetchUserStartTime = useCallback(async () => {
@@ -46,7 +46,7 @@ const useFetchEvents = () => {
       if (user) {
         fetchData();
       } else {
-        console.warn("No authenticated user found.");
+        // console.warn("No authenticated user found.");
         setIsLoading(false);
       }
     });

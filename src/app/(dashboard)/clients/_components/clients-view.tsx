@@ -1,19 +1,10 @@
 "use client";
 
 import { useAuth } from "@/context/AuthContext";
-import {
-  collection,
-  deleteDoc,
-  doc,
-  getDocs,
-  serverTimestamp,
-  setDoc,
-  Timestamp,
-} from "firebase/firestore";
 import parsePhoneNumberFromString, {
   parsePhoneNumberWithError,
 } from "libphonenumber-js";
-import React, { ChangeEvent, useEffect, useState } from "react";
+import React, { ChangeEvent, useCallback, useEffect, useState } from "react";
 import { db } from "../../../../../firebase";
 import { Input } from "@/components/ui/input"; // Input component
 import { Button } from "@/components/ui/button"; // Button component
@@ -25,31 +16,31 @@ import {
   TableBody,
   TableHeader,
 } from "@/components/ui/table";
+import {
+  clientsFormSchema,
+  TClientsForm,
+} from "@/lib/validations/clients-form-validations";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { PhoneInput } from "@/components/ui/phone-input";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { toast } from "sonner";
+import useConfirmationStore from "@/lib/store/confirmationStore";
+import { Client } from "@/interfaces/clients";
+import { useForm, Controller } from "react-hook-form";
+import {
+  addClient,
+  deleteClient,
+  fetchClients,
+  updateClient,
+} from "@/lib/converters/clients";
 
-interface Client {
-  docId: string;
-  stripeId: string;
-  status: string;
-  active: boolean;
-  email: string;
-  phoneNumber: string;
-  deprecated: boolean;
-  // defaultRate?: number | null;
-  firstName: string;
-  lastName: string;
-  created_at?: Timestamp; // Firestore timestamp
-  updated_at?: Timestamp; // Firestore timestamp
-}
-
-const initialClientData: Omit<Client, "docId"> = {
-  stripeId: "",
-  status: "active", // Default status to "active"
-  active: true,
-  deprecated: false,
-  // defaultRate: null,
+const initialClientData: Client = {
+  docId: "",
+  // stripeId: "",
+  status: "active",
+  // active: true,
+  // deprecated: false,
   firstName: "",
   lastName: "",
   email: "",
@@ -57,106 +48,154 @@ const initialClientData: Omit<Client, "docId"> = {
 };
 
 export default function ClientsView() {
+  const { openConfirmation } = useConfirmationStore();
   const { user } = useAuth();
   const [clients, setClients] = useState<Client[]>([]);
-
-  const [newClientData, setNewClientData] = useState(initialClientData); // Form data state
   const [editingClientId, setEditingClientId] = useState<string | null>(null); // Track if editing a client
-  const [loading, setLoading] = useState(true); // Loading state to show while fetching
+  const [loading, setLoading] = useState(true);
+  let actionType = editingClientId ? "edit" : "add";
 
-  // Handle form input changes
-  const handleInputChange = (
-    e: ChangeEvent<HTMLInputElement> | ChangeEvent<HTMLSelectElement>
-  ) => {
-    const { name, value } = e.target;
-    setNewClientData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-  };
+  const {
+    register,
+    setValue,
+    reset,
+    trigger,
+    clearErrors,
+    // getValues responsable for getting the form values
+    getValues,
+    control,
+    watch,
+    formState: { isSubmitting, errors },
+    handleSubmit,
+  } = useForm<TClientsForm>({
+    resolver: zodResolver(clientsFormSchema),
+    defaultValues: {
+      ...initialClientData,
+      status: "active",
+    },
+  });
 
   // Fetch clients from the Firestore subcollection
-  const fetchClients = async () => {
+  const fetchAllClients = useCallback(async () => {
     if (user) {
-      const clientsCollectionRef = collection(db, "users", user.uid, "clients");
-      const clientSnapshot = await getDocs(clientsCollectionRef);
-      const clientList = clientSnapshot.docs.map((doc) => ({
-        docId: doc.id,
-        ...doc.data(),
-      })) as Client[];
-
-      setClients(clientList);
+      const clients = await fetchClients(user.uid);
+      setClients(clients);
       setLoading(false);
-      console.log("Clients fetched:", clientList); // Set loading to false after fetching
+      // console.log("Clients fetched:", clients); // Set loading to false after fetching
     }
-  };
+  }, [user]);
 
   // Fetch clients on component mount
   useEffect(() => {
-    fetchClients();
-  }, [user]);
+    fetchAllClients();
+    return () => {
+      setClients([]);
+    };
+  }, [fetchAllClients]);
 
   // Save or update client in the 'clients' subcollection
-  const handleSaveClient = async () => {
+  const handleSaveClient = async (data: TClientsForm) => {
+    // console.log("actionType:", actionType);
     if (user) {
-      const clientsCollectionRef = collection(db, "users", user.uid, "clients");
-      const clientDocRef = editingClientId
-        ? doc(clientsCollectionRef, editingClientId)
-        : doc(clientsCollectionRef);
-
-      const formattedPhoneNumber = newClientData.phoneNumber
-        ? parsePhoneNumberWithError(
-            newClientData.phoneNumber,
-            "US"
-          ).formatNational()
+      const formattedPhoneNumber = data.phoneNumber
+        ? parsePhoneNumberWithError(data.phoneNumber, "US").formatNational()
         : "";
 
-      const newClient = {
-        ...newClientData,
+      // console.log("Phone Number:", data.phoneNumber);
+      // console.log("Formatted Phone Number:", formattedPhoneNumber);
+
+      const clientData = {
+        ...data,
+        docId: editingClientId || "",
         phoneNumber: formattedPhoneNumber,
-        status: newClientData.status || "active", // Default to "active" if status is not selected
-        created_at: editingClientId
-          ? newClientData.created_at
-          : serverTimestamp(),
-        updated_at: serverTimestamp(),
+        status: data.status || "active",
       };
 
-      await setDoc(clientDocRef, newClient);
+      if (actionType === "add") {
+        await addClient(user.uid, clientData);
+      } else {
+        await updateClient(user.uid, clientData);
+        setEditingClientId(null);
+      }
+
+      fetchAllClients();
+      reset({ ...initialClientData, status: "active" });
+
+      // const clientsCollectionRef = collection(db, "users", user.uid, "clients");
+      // const clientDocRef = editingClientId
+      //   ? doc(clientsCollectionRef, editingClientId)
+      //   : doc(clientsCollectionRef);
+
+      // const newClient = {
+      //   ...data,
+
+      //   status: data.status || "active", // Default to "active" if status is not selected
+      //   updated_at: serverTimestamp(),
+      //   ...(editingClientId ? {} : { created_at: serverTimestamp() }), // Add created_at only for new clients
+      // };
+
+      // await setDoc(clientDocRef, newClient);
 
       // Refresh client list
-      fetchClients();
-      setNewClientData(initialClientData); // Reset form data
-      setEditingClientId(null); // Exit edit mode
     }
   };
 
   // Set client for editing
   const handleEditClient = (client: Client) => {
-    const parsedPhoneNumber = parsePhoneNumberFromString(
-      client.phoneNumber,
-      "US"
-    );
+    const phoneNumber = client.phoneNumber || "";
+    const parsedPhoneNumber = parsePhoneNumberFromString(phoneNumber, "US");
     const formattedPhoneNumber = parsedPhoneNumber
       ? parsedPhoneNumber.number
-      : client.phoneNumber;
+      : phoneNumber;
 
-    setEditingClientId(client.docId);
-    setNewClientData({
-      ...client,
-      phoneNumber: formattedPhoneNumber,
-    });
+    setEditingClientId(client.docId!);
+    setValue("firstName", client.firstName);
+    setValue("lastName", client.lastName);
+    setValue("email", client.email!);
+    setValue("status", client.status as any);
+    setValue("phoneNumber", formattedPhoneNumber!);
+    clearErrors();
   };
 
   // Delete a client from the 'clients' subcollection
   const handleDeleteClient = async (clientId: string) => {
-    if (user) {
-      const clientDocRef = doc(db, "users", user.uid, "clients", clientId);
-      await deleteDoc(clientDocRef);
+    const clientName = clients.find((client) => client.docId === clientId);
+    const clientReference = `${clientName?.firstName} ${clientName?.lastName}`;
+    const clientFullName = clientReference || "this client";
+    // console.log("Client Full Name:", clientFullName);
 
-      // Refresh client list after deletion
-      fetchClients();
+    if (user) {
+      openConfirmation({
+        title: "Delete Confirmation",
+        description: `Are you sure you want to delete ${clientFullName}?`,
+        cancelLabel: "Cancel",
+        actionLabel: "Delete",
+        onAction: async () => {
+          await deleteClient(user.uid, clientId);
+          toast.success("Client deleted successfully");
+          fetchAllClients();
+        },
+        onCancel: () => {},
+      });
+
+      // const clientDocRef = doc(db, "users", user.uid, "clients", clientId);
+      // await deleteDoc(clientDocRef);
+
+      // // Refresh client list after deletion
+      // fetchAllClients();
     }
   };
+
+  // // Handle form input changes
+  // const handleInputChange = (
+  //   e: ChangeEvent<HTMLInputElement> | ChangeEvent<HTMLSelectElement>
+  // ) => {
+  //   const { name, value } = e.target;
+  //   setNewClientData((prev) => ({
+  //     ...prev,
+  //     [name]: value,
+  //   }));
+  // };
 
   if (loading) {
     return (
@@ -174,86 +213,144 @@ export default function ClientsView() {
         </h2>
         <div className="space-y-4">
           {/* Form to add/edit client */}
-          <div className="space-y-2">
-            <Label>First Name</Label>
-            <Input
-              name="firstName"
-              value={newClientData.firstName}
-              onChange={handleInputChange}
-              className="w-full"
-            />
-          </div>
+          <form
+            className="space-y-4"
+            onSubmit={handleSubmit(handleSaveClient, (errors) => {
+              // console.log("Validation Errors:", errors);
+              // console.log("Form Values:", getValues());
+            })}
+          >
+            <div className="space-y-2">
+              <Label htmlFor="firstName">
+                First Name <span className="text-destructive">*</span>
+              </Label>
+              <Input
+                id="firstName"
+                type="text"
+                {...register("firstName")}
+                className="w-full"
+              />
+              {errors.firstName && (
+                <p className="text-destructive text-sm">
+                  {errors.firstName.message}
+                </p>
+              )}
+            </div>
 
-          <div className="space-y-2">
-            <Label>Last Name</Label>
-            <Input
-              name="lastName"
-              value={newClientData.lastName}
-              onChange={handleInputChange}
-              className="w-full"
-            />
-          </div>
+            <div className="space-y-2">
+              <Label htmlFor="lastName">
+                Last Name <span className="text-destructive">*</span>
+              </Label>
+              <Input
+                id="lastName"
+                type="text"
+                {...register("lastName")}
+                className="w-full"
+              />
+              {errors.lastName && (
+                <p className="text-destructive text-sm">
+                  {errors.lastName.message}
+                </p>
+              )}
+            </div>
 
-          <div className="space-y-2">
-            <Label>Status</Label>
-            <select
-              name="status"
-              value={newClientData.status}
-              onChange={handleInputChange}
-              className="border border-gray-300 rounded-lg p-2 w-full"
-            >
-              <option value="active">Active</option>
-              <option value="pending">Pending</option>
-              <option value="deactivated">Deactivated</option>
-            </select>
-          </div>
-
-          <div className="space-y-2">
-            <Label>Email</Label>
-            <Input
-              name="email"
-              value={newClientData.email}
-              onChange={handleInputChange}
-              className="w-full"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label>Phone</Label>
-            <PhoneInput
-              defaultCountry="US"
-              name="phoneNumber"
-              value={newClientData.phoneNumber}
-              onChange={(value) =>
-                setNewClientData((prev) => ({ ...prev, phoneNumber: value }))
-              }
-              className="w-full"
-            />
-          </div>
-
-          {/* Buttons */}
-          <div className="flex space-x-4">
-            <Button
-              variant={"rebusPro"}
-              className="mt-4"
-              onClick={handleSaveClient}
-            >
-              {editingClientId ? "Update Client" : "Add Client"}
-            </Button>
-
-            {editingClientId && (
-              <Button
-                className="mt-4"
-                variant="secondary"
-                onClick={() => {
-                  setEditingClientId(null);
-                  setNewClientData(initialClientData);
-                }}
+            <div className="space-y-2">
+              <Label htmlFor="status">
+                Status <span className="text-destructive">*</span>
+              </Label>
+              <select
+                id="status"
+                {...register("status")}
+                className="border border-gray-300 rounded-lg p-2 w-full"
               >
-                Cancel
+                <option value="active">Active</option>
+                <option value="pending">Pending</option>
+                <option value="deactivated">Deactivated</option>
+              </select>
+              {errors.status && (
+                <p className="text-destructive text-sm">
+                  {errors.status.message}
+                </p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="email">
+                Email <span className="text-destructive">*</span>
+              </Label>
+              <Input
+                id="email"
+                type="email"
+                {...register("email")}
+                className="w-full"
+              />
+              {errors.email && (
+                <p className="text-destructive text-sm">
+                  {errors.email.message}
+                </p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="phoneNumber">
+                Phone <span className="text-destructive">*</span>
+              </Label>
+
+              <Controller
+                name="phoneNumber"
+                control={control}
+                render={({ field }) => (
+                  <PhoneInput
+                    defaultCountry="US"
+                    id="phoneNumber"
+                    {...field}
+                    onChange={(value) => field.onChange(value)}
+                    className="w-full"
+                  />
+                )}
+              />
+
+              {errors.phoneNumber && (
+                <p className="text-destructive text-sm">
+                  {errors.phoneNumber.message}
+                </p>
+              )}
+              {/* <PhoneInput
+                defaultCountry="US"
+                id="phoneNumber"
+                {...register("phoneNumber")}
+                onChange={(value) =>
+                  setValue("phoneNumber", value, { shouldValidate: true })
+                }
+                className="w-full"
+              /> */}
+            </div>
+
+            {/* Buttons */}
+            <div className="flex space-x-4">
+              <Button
+                type="submit"
+                variant={"rebusPro"}
+                className="mt-4"
+                // onClick={handleSaveClient}
+              >
+                {editingClientId ? "Update Client" : "Add Client"}
               </Button>
-            )}
-          </div>
+
+              {editingClientId && (
+                <Button
+                  className="mt-4"
+                  variant="outline"
+                  onClick={() => {
+                    setEditingClientId(null);
+                    reset({ ...initialClientData, status: "active" });
+                  }}
+                >
+                  Cancel
+                </Button>
+              )}
+            </div>
+          </form>
         </div>
 
         {/* Clients List */}
@@ -291,7 +388,7 @@ export default function ClientsView() {
                         </Button>
                         <Button
                           variant="destructive"
-                          onClick={() => handleDeleteClient(client.docId)}
+                          onClick={() => handleDeleteClient(client.docId!)}
                         >
                           Delete
                         </Button>

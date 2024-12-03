@@ -14,32 +14,23 @@ import useFetchEvents from "../../../../hooks/useFetchEvents";
 import { EventInput } from "../../../../interfaces/types";
 import { EventResizeDoneArg } from "@fullcalendar/interaction";
 import { EventDropArg } from "@fullcalendar/core";
-import axios from "axios";
 
 import CreateBookingsFormDialog from "@/components/modals/CreateBookingsFormDialog";
 
-import {
-  createFireStoreEvent,
-  deleteEvents,
-  updateFireStoreEvent,
-} from "@/lib/converters/events";
+import { deleteEvents, updateFireStoreEvent } from "@/lib/converters/events";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import useConfirmationStore from "@/lib/store/confirmationStore";
 import { toast } from "sonner";
-import { getDoc } from "firebase/firestore";
 import {
   handleEventDidMount,
-  removeUndefinedFields,
   renderEventContent,
-  updatEventFormDialog,
 } from "@/lib/helpers/calendar";
-import { DecodedIdToken } from "next-firebase-auth-edge/lib/auth";
+import {
+  handleRecurringEvent,
+  handleSingleEvent,
+  updatEventFormDialog,
+} from "@/lib/helpers/events";
 import PageContainer from "@/components/layout/page-container";
-
-// type FullCalendarProps = {
-//   events: EventInput[];
-//   tokens: DecodedIdToken;
-// };
 
 export default function FullCalendarComponent({}) {
   const { user } = useAuth();
@@ -48,16 +39,11 @@ export default function FullCalendarComponent({}) {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectInfo, setSelectInfo] = useState<DateSelectArg | null>(null);
   const [editingEvent, setEditingEvent] = useState<EventInput | null>(null);
-  const [editAll, setEditAll] = useState(false); // New state to control if we're editing all instances
-  // const [isLoading, setIsLoading] = useState(false); // New loading state
-  const [calendarKey, setCalendarKey] = useState(0); // a stet variable to check if the calendar is re-rendered
+  const [editAll, setEditAll] = useState(false); // New state to control if we're editing
+  const [calendarKey, setCalendarKey] = useState(0); // a stet variable to check if the
   const [loading, startTransition] = useTransition();
   const [events, setEvents] = useState<EventInput[]>([]);
   const [userStartTime, setUserStartTime] = useState("07:00:00");
-
-  // useEffect(() => {
-  //   // console.log("Calendar re-rendered with key:", calendarKey); // Log calendar re-render
-  // }, [calendarKey]);
 
   const {
     events: fetchedEvents,
@@ -78,30 +64,8 @@ export default function FullCalendarComponent({}) {
     window.onload = () => {
       fetchEvents();
       fetchUserStartTime();
-
-      // setCalendarKey((prevKey) => {
-      //   const newKey = prevKey + 1;
-      //   console.log("Calendar Key Updated:", newKey); // Log calendar key update
-      //   return newKey;
-      // }); // Trigger the fetch events after the page has fully loaded
     };
   }, []);
-
-  // useEffect(() => {
-  //   const fetchUserStartTime = async () => {
-  //     const user = auth.currentUser;
-  //     if (user) {
-  //       const userDocRef = doc(db, "users", user.uid);
-  //       const userDoc = await getDoc(userDocRef);
-  //       if (userDoc.exists()) {
-  //         const userData = userDoc.data();
-  //         setUserStartTime(userData.calendarStartTime || "07:00:00");
-  //       }
-  //     }
-  //   };
-
-  //   fetchUserStartTime();
-  // }, []);
 
   // add event to firestore
   const handleEventResize = async (resizeInfo: EventResizeDoneArg) => {
@@ -156,7 +120,7 @@ export default function FullCalendarComponent({}) {
         // });
       }
     } catch (error) {
-      console.error("Error updating event in Firestore:", error);
+      // console.error("Error updating event in Firestore:", error);
     }
   };
 
@@ -199,12 +163,11 @@ export default function FullCalendarComponent({}) {
             }
             return event;
           });
-          // console.log("Updated Events:", updatedEvents); // Log updated events
           return updatedEvents;
         });
       }
     } catch (error) {
-      console.error("Error updating event in Firestore:", error);
+      // console.error("Error updating event in Firestore:", error);
     }
   };
 
@@ -213,8 +176,6 @@ export default function FullCalendarComponent({}) {
 
     const defaultStartTimeLocal = new Date(selectInfo.startStr);
     const defaultEndTimeLocal = new Date(selectInfo.endStr);
-
-    // console.log("Select Info start date:", defaultStartTimeLocal);
 
     // Derive the day of the week from startDate
     const defaultStartDay = defaultStartTimeLocal.toLocaleDateString("en-US", {
@@ -297,7 +258,7 @@ export default function FullCalendarComponent({}) {
     setEditAll(false);
   };
 
-  const handleSave = ({
+  const handleSave = async ({
     title,
     type,
     typeId,
@@ -305,7 +266,6 @@ export default function FullCalendarComponent({}) {
     clientId,
     clientName,
     description,
-    // location,
     isBackgroundEvent,
     date,
     startTime,
@@ -319,7 +279,6 @@ export default function FullCalendarComponent({}) {
     description: string;
     clientId: string;
     clientName: string;
-    // location: string;
     isBackgroundEvent: boolean;
     startTime: string;
     endTime: string;
@@ -333,8 +292,10 @@ export default function FullCalendarComponent({}) {
       startRecur: string;
       endRecur: string;
     };
-  }) => {
-    if (!selectInfo) return;
+  }): Promise<void> => {
+    if (!selectInfo) return Promise.resolve();
+
+    // console.log("date from full calendar component", date);
 
     let calendarApi = selectInfo.view.calendar;
     calendarApi.unselect();
@@ -344,7 +305,7 @@ export default function FullCalendarComponent({}) {
       : new Date(selectInfo.startStr).toISOString().split("T")[0];
 
     startTransition(async () => {
-      setIsLoading(true); // Start loading
+      setIsLoading(true);
       try {
         if (!user) {
           throw new Error("User not authenticated");
@@ -353,213 +314,90 @@ export default function FullCalendarComponent({}) {
         // Get the user's time zone
         const userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
-        // If this is a recurring event, handle it using the cloud function
         if (
           recurrence &&
           recurrence.daysOfWeek &&
           recurrence.daysOfWeek.length > 0
         ) {
-          // Calculate the time zone offsets for start time and end time
-          const startDateTime = new Date(`${startDate}T${startTime}`);
-          const endDateTime = new Date(`${startDate}T${endTime}`);
-          const startRecur = new Date(recurrence.startRecur);
-          const endRecur = new Date(recurrence.endRecur || startDate);
-          endRecur.setDate(endRecur.getDate() + 1);
-
-          // Prepare the event input for the cloud function
-
-          if (isBackgroundEvent) {
-            const eventInput = {
-              title: title || "",
-              description: description || "",
-              // location: location || "",
-              startDate,
-              startTime,
-              endTime,
-              recurrence: {
-                daysOfWeek: recurrence.daysOfWeek,
-                startRecur: startRecur.toISOString().split("T")[0] || startDate,
-                endRecur: endRecur.toISOString().split("T")[0],
-              },
-              userId: user.uid,
-              userTimeZone,
-            };
-
-            console.log(
-              "event data ready for cloud function for background event",
-              eventInput
-            );
-
-            //"http://127.0.0.1:5001/prune-94ad9/us-central1/createRecurringAvailabilityInstances"
-
-            try {
-              const result = await axios.post(
-                "https://us-central1-prune-94ad9.cloudfunctions.net/createRecurringAvailabilityInstances",
-                eventInput
-              );
-              console.log(
-                "Recurring availability instances created:",
-                result.data
-              );
-              toast.success("Recurring availability added successfully");
-            } catch (error) {
-              console.error("Error saving recurring event:", error);
-              toast.error("Error adding recurring availability");
-            }
-          } else {
-            const eventInput = {
-              title: title || "",
-              type: type || "No type",
-              typeId: typeId || "",
-              clientId: clientId || "",
-              clientName: clientName || "",
-              description: description || "",
-              fee: fee || 0,
-              // location: location || "",
+          try {
+            const result = await handleRecurringEvent({
+              title,
+              type,
+              typeId,
+              fee,
+              clientId,
+              clientName,
+              description,
+              isBackgroundEvent,
               startDate,
               startTime,
               endTime,
               paid,
-              recurrence: {
-                daysOfWeek: recurrence.daysOfWeek,
-                startRecur: startRecur.toISOString().split("T")[0] || startDate,
-                endRecur: endRecur.toISOString().split("T")[0],
-              },
-              userId: user.uid,
+              recurrence,
               userTimeZone,
-            };
-
-            console.log(
-              "event data ready for cloud function for recurring bookings",
-              eventInput
+              user,
+            });
+            // console.log("Recurring instances created:", result);
+            toast.success(
+              isBackgroundEvent
+                ? "Recurring availability added successfully"
+                : "Recurring bookings added successfully"
             );
-
-            //"http://127.0.0.1:5001/prune-94ad9/us-central1/createRecurringBookingInstances"
-
-            try {
-              const result = await axios.post(
-                "https://us-central1-prune-94ad9.cloudfunctions.net/createRecurringBookingInstances",
-                eventInput
-              );
-              console.log("Recurring bookings instances created:", result.data);
-              toast.success("Recurring bookings added successfully");
-            } catch (error) {
-              console.error("Error saving recurring event:", error);
-              toast.error("Error adding recurring bookings");
-            }
+          } catch (error) {
+            // console.error("Error saving recurring event:", error);
+            toast.error(
+              isBackgroundEvent
+                ? "Error adding recurring availability"
+                : "Error adding recurring bookings"
+            );
           }
         } else {
-          // Handle single or background event directly on the client side
-          // Parse the start and end times
+          // Handle single booking or background event directly on the client side
 
-          let startDateTime = new Date(selectInfo.startStr);
-          let endDateTime = new Date(selectInfo.startStr);
-
-          if (startTime && endTime) {
-            const [startHour, startMinute] = startTime.split(":").map(Number);
-            const [endHour, endMinute] = endTime.split(":").map(Number);
-
-            startDateTime.setHours(startHour, startMinute, 0, 0);
-            endDateTime.setHours(endHour, endMinute, 0, 0);
-
-            if (endDateTime <= startDateTime) {
-              endDateTime.setDate(endDateTime.getDate() + 1);
-            }
-          }
-
-          const startDay = startDateTime.toLocaleDateString("en-US", {
-            weekday: "long",
-          });
-
-          const endDay = endDateTime.toLocaleDateString("en-US", {
-            weekday: "long",
-          });
-
-          if (isBackgroundEvent) {
-            // Create the event object for a booking or availability event
-            let event: EventInput = {
-              id: "",
+          try {
+            const event = await handleSingleEvent({
               title,
               type,
               typeId,
               fee,
+              date,
               clientId,
               clientName,
-              // location,
-              start: startDateTime,
-              end: endDateTime,
               description,
-              display: "inverse-background",
-              className: "custom-bg-event",
               isBackgroundEvent,
-              startDate: startDateTime,
-              startDay: startDay,
-              endDate: endDateTime,
-              endDay: endDay,
+              startTime,
+              endTime,
+              selectInfo,
               paid,
-            };
+              user,
+            });
 
-            try {
-              console.log("Single event data ready for Firestore:", event);
-              event = removeUndefinedFields(event);
-              console.log("Event data before submitting to firebase:", event);
-
-              await createFireStoreEvent(user.uid, event);
-              setEvents((prevEvents) => [...prevEvents, event]);
-              toast.success("Availability event added successfully");
-            } catch (error) {
-              console.error("Error saving event:", error);
-              toast.error(
-                "An error occurred while adding the availability event"
-              );
-            }
-          } else {
-            let event: EventInput = {
-              id: "",
-              title,
-              type,
-              typeId,
-              fee,
-              clientId,
-              clientName,
-              // location,
-              start: startDateTime,
-              end: endDateTime,
-              description,
-              display: "auto",
-              className: "",
-              isBackgroundEvent,
-              startDate: startDateTime,
-              startDay: startDay,
-              endDate: endDateTime,
-              endDay: endDay,
-              paid,
-            };
-
-            try {
-              console.log("Single event data ready for Firestore:", event);
-              event = removeUndefinedFields(event);
-              console.log("Event data before submitting to firebase:", event);
-
-              await createFireStoreEvent(user.uid, event);
-              setEvents((prevEvents) => [...prevEvents, event]);
-              toast.success("Booking event added successfully");
-            } catch (error) {
-              console.error("Error saving event:", error);
-              toast.error("An error occurred while adding the booking event");
-            }
+            setEvents((prevEvents) => [...prevEvents, event]);
+            toast.success(
+              isBackgroundEvent
+                ? "Availability event added successfully"
+                : "Booking event added successfully"
+            );
+          } catch (error) {
+            // console.error("Error saving event:", error);
+            toast.error(
+              isBackgroundEvent
+                ? "An error occurred while adding the availability event"
+                : "An error occurred while adding the booking event"
+            );
           }
         }
       } catch (error) {
-        console.error("Error saving event:", error);
+        // console.error("Error saving event:", error);
         toast.error("An error occurred while adding the event");
       } finally {
+        // console.log("handle save finished");
+        handleDialogClose();
         await fetchEvents();
         setIsLoading(false);
       }
     });
-
-    // handleDialogClose();
+    return Promise.resolve();
   };
 
   const handleUpdatEventFormDialog = (eventData: {
@@ -581,18 +419,22 @@ export default function FullCalendarComponent({}) {
       startRecur: string; // YYYY-MM-DD
       endRecur: string; // YYYY-MM-DD
     };
-  }) => {
+  }): Promise<void> => {
     const userId = user?.uid;
     if (!user) {
       throw new Error("User not authenticated");
     }
-    console.log("updating information triggered");
+    // console.log("updating information triggered");
 
     startTransition(async () => {
+      setIsLoading(true);
       await updatEventFormDialog(eventData, userId!);
+      handleDialogClose();
       await fetchEvents();
       setIsLoading(false);
     });
+
+    return Promise.resolve();
   };
 
   const handleDeleteEventFromDialog = async (
@@ -612,7 +454,7 @@ export default function FullCalendarComponent({}) {
     }
 
     try {
-      console.log("Deleting event from Firestore for event ID:", eventId);
+      // console.log("Deleting event from Firestore for event ID:", eventId);
       // construct the array
       let eventIds: string[] = [];
 
@@ -620,7 +462,7 @@ export default function FullCalendarComponent({}) {
       if (action === "single") {
         // make sure the array is empty
         eventIds = [eventId];
-        console.log("Events to delete (single):", eventIds);
+        // console.log("Events to delete (single):", eventIds);
 
         openConfirmation({
           title: "Delete Confirmation",
@@ -650,29 +492,29 @@ export default function FullCalendarComponent({}) {
           let foundOriginalEventId = event.originalEventId;
 
           if (foundOriginalEventId) {
-            console.log(
-              "original event id found (series) : ",
-              foundOriginalEventId
-            );
+            // console.log(
+            //   "original event id found (series) : ",
+            //   foundOriginalEventId
+            // );
             // get all the events with the same originalEventId
 
             const eventsToDelete = events
               .filter((event) => event.originalEventId === foundOriginalEventId)
               .map((event) => event.id);
 
-            console.log(
-              "(series) finding all the events that will be deleted",
-              eventsToDelete
-            );
+            // console.log(
+            //   "(series) finding all the events that will be deleted",
+            //   eventsToDelete
+            // );
 
             // update the eventIds array with all the found events with the same originalEventId and add the original event id to the eventIds array as well
 
             eventIds = [...eventsToDelete, foundOriginalEventId] as string[];
 
-            console.log(
-              "Events to delete (series) when the event to delete is not the original event :",
-              eventIds
-            );
+            // console.log(
+            //   "Events to delete (series) when the event to delete is not the original event :",
+            //   eventIds
+            // );
 
             // Filter out undefined values
             const validEventIds = eventIds.filter(
@@ -689,7 +531,7 @@ export default function FullCalendarComponent({}) {
               actionLabel: "Delete",
               onAction: () => {
                 startTransition(async () => {
-                  setIsLoading(true); // Start loading
+                  setIsLoading(true);
                   await deleteEvents(user.uid, validEventIds);
                   await closeActions();
                   setIsLoading(false);
@@ -697,14 +539,14 @@ export default function FullCalendarComponent({}) {
                 });
               },
               onCancel: () => {
-                setIsLoading(false); // Stop loading if canceled
+                setIsLoading(false);
               },
             });
           } else {
-            console.log(
-              "original event id not found (series) so this is the original event  : ",
-              foundOriginalEventId
-            );
+            // console.log(
+            //   "original event id not found (series) so this is the original event  : ",
+            //   foundOriginalEventId
+            // );
             // if the original event id is not found, then this event is the original event, in this case find all the events with the same originalEventId
 
             // assign the eventId to the foundOriginalEventId
@@ -714,19 +556,19 @@ export default function FullCalendarComponent({}) {
               .filter((event) => event.originalEventId === foundOriginalEventId)
               .map((event) => event.id);
 
-            console.log(
-              "(series) finding all the events that will be deleted",
-              eventsToDelete
-            );
+            // console.log(
+            //   "(series) finding all the events that will be deleted",
+            //   eventsToDelete
+            // );
 
             // update the eventIds array with all the found events with the same originalEventId and add the eventId to the eventIds array as well
 
             eventIds = [...eventsToDelete, foundOriginalEventId] as string[];
 
-            console.log(
-              "Events to delete (series) when the event to delete is the original event :",
-              eventIds
-            );
+            // console.log(
+            //   "Events to delete (series) when the event to delete is the original event :",
+            //   eventIds
+            // );
 
             // Filter out undefined values
             const validEventIds = eventIds.filter(
@@ -758,17 +600,17 @@ export default function FullCalendarComponent({}) {
         } else {
           // This case is not possible because the clicked event must have an id , but its here to debug if the clicked event does not have an id
           eventIds = [eventId];
-          console.log("Event object was not found (series) for: ", eventIds);
+          // console.log("Event object was not found (series) for: ", eventIds);
           setIsLoading(false); // Stop loading
           // await deleteEvents(user.uid, eventIds);
         }
       }
     } catch (error) {
-      console.error("Error deleting event:", error);
+      // console.error("Error deleting event:", error);
       setIsLoading(false); // Stop loading
       toast.error("An error occurred while deleting the event");
     } finally {
-      console.log("delete event success");
+      // console.log("delete event success");
     }
   };
 
@@ -785,7 +627,6 @@ export default function FullCalendarComponent({}) {
       <div className="flex flex-col pb-4">
         <div className="flex-grow">
           <div className="py-0 px-3">
-            {/* <div className="calendar-container overflow-y-scroll "> */}
             <FullCalendar
               timeZone="local"
               key={calendarKey}
@@ -799,11 +640,11 @@ export default function FullCalendarComponent({}) {
                 rrulePlugin,
               ]}
               headerToolbar={{
-                left: "prev,next today", // Sticky header elements
+                left: "prev,next today",
                 center: "title",
                 right: "dayGridMonth,timeGridWeek,timeGridDay",
               }}
-              stickyHeaderDates={true} // Enables sticky headers for dates
+              stickyHeaderDates={true}
               height="auto"
               contentHeight="auto"
               slotDuration="00:15:00"
@@ -819,26 +660,24 @@ export default function FullCalendarComponent({}) {
               selectable={true}
               selectMirror={true}
               select={handleSelect}
-              eventClick={handleEventClick} // Handle event click to open dialog
+              eventClick={handleEventClick}
               navLinks={true}
               navLinkDayClick={(date) => {
-                // console.log("Clicked day:", date);
                 calendarRef.current
                   ?.getApi()
                   .changeView("timeGridDay", date.toISOString());
               }}
               navLinkWeekClick={(weekStartDate) => {
-                // console.log("Clicked week:", weekStartDate);
                 calendarRef.current
                   ?.getApi()
                   .changeView("timeGridWeek", weekStartDate.toISOString());
               }}
-              eventResize={handleEventResize} // Called when resizing an event
-              eventDidMount={handleEventDidMount} // Called after an event is rendered
+              eventResize={handleEventResize}
+              eventDidMount={handleEventDidMount}
               eventDrop={handleEventDrop}
               nowIndicator={true}
               eventContent={renderEventContent}
-              scrollTime="07:00:00" // Automatically scrolls to 7:00 AM on load
+              scrollTime="07:00:00"
               allDaySlot={false}
               views={{
                 dayGridMonth: {
@@ -907,23 +746,6 @@ export default function FullCalendarComponent({}) {
                       title: event.title,
                       type: event.type,
                       typeId: event.typeId,
-                      // location: event.location,
-                      // rrule: {
-                      //   freq: "weekly",
-                      //   interval: 1,
-                      //   byweekday: event.recurrence.daysOfWeek
-                      //     ? event.recurrence.daysOfWeek.map(
-                      //         (day) =>
-                      //           ["SU", "MO", "TU", "WE", "TH", "FR", "SA"][
-                      //             day
-                      //           ]
-                      //       )
-                      //     : undefined,
-                      //   dtstart: new Date(event.start).toISOString(),
-                      //   until: event.recurrence.endRecur
-                      //     ? new Date(event.recurrence.endRecur).toISOString()
-                      //     : undefined,
-                      // },
                       startTime: event.recurrence.startTime,
                       endTime: event.recurrence.endTime,
                       display: "inverse-background",
@@ -932,7 +754,6 @@ export default function FullCalendarComponent({}) {
                       color: "#C5C5C5",
                       duration: formattedDuration,
                       originalEventId: event.originalEventId,
-                      // className: "bg-event-mirror",
                     };
                   } else {
                     return {
@@ -940,23 +761,6 @@ export default function FullCalendarComponent({}) {
                       title: event.title,
                       type: event.type,
                       typeId: event.typeId,
-                      // location: event.location,
-                      // rrule: {
-                      //   freq: "weekly",
-                      //   interval: 1,
-                      //   byweekday: event.recurrence.daysOfWeek
-                      //     ? event.recurrence.daysOfWeek.map(
-                      //         (day) =>
-                      //           ["SU", "MO", "TU", "WE", "TH", "FR", "SA"][
-                      //             day
-                      //           ]
-                      //       )
-                      //     : undefined,
-                      //   dtstart: new Date(event.start).toISOString(),
-                      //   until: event.recurrence.endRecur
-                      //     ? new Date(event.recurrence.endRecur).toISOString()
-                      //     : undefined,
-                      // },
                       startTime: event.recurrence.startTime,
                       endTime: event.recurrence.endTime,
                       display: "auto",
@@ -974,13 +778,11 @@ export default function FullCalendarComponent({}) {
                       title: event.title,
                       type: event.type,
                       typeId: event.typeId,
-                      // location: event.location,
                       display: "inverse-background",
                       groupId: `1234`,
                       uniqueId: `${event.id}-${index}`,
                       color: "#C5C5C5",
                       originalEventId: event.originalEventId,
-                      // className: "bg-event-mirror",
                     };
                   } else {
                     return {
@@ -988,7 +790,6 @@ export default function FullCalendarComponent({}) {
                       title: event.title,
                       type: event.type,
                       typeId: event.typeId,
-                      // location: event.location,
                       display: "auto",
                       groupId: event.id,
                       uniqueId: `${event.id}-${index}`,

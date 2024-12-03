@@ -6,12 +6,13 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { auth } from "../../../../firebase";
+import { app } from "../../../../firebase";
 import {
   createUserWithEmailAndPassword,
   GoogleAuthProvider,
   signInWithPopup,
   updateProfile,
+  getAuth,
 } from "firebase/auth";
 import { createUser } from "@/services/userService";
 import { Timestamp } from "firebase/firestore";
@@ -48,7 +49,7 @@ export default function SignupForm() {
     startTransition(async () => {
       try {
         const userCredential = await createUserWithEmailAndPassword(
-          auth,
+          getAuth(app),
           data.email,
           data.password
         );
@@ -73,7 +74,7 @@ export default function SignupForm() {
           updated_at: Timestamp.now(),
         };
 
-        console.log("User data:", userData);
+        // console.log("User data:", userData);
         await createUser(userData);
 
         toast.success("Account created successfully, please login");
@@ -96,7 +97,7 @@ export default function SignupForm() {
   const handleGoogleSignUp = async () => {
     const provider = new GoogleAuthProvider();
     try {
-      await signInWithPopup(auth, provider);
+      await signInWithPopup(getAuth(app), provider);
     } catch (error: any) {
       console.error("Error signing in with Google:", error.message);
     }
