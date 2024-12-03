@@ -66,6 +66,7 @@ import {
 } from "date-fns";
 import { Switch } from "@headlessui/react";
 import { StatusFilter } from "@/components/status-filter";
+import { cloudFunctions } from "@/constants/data";
 
 const formatFee = (fee: number): string => {
   return new Intl.NumberFormat("en-US", {
@@ -758,18 +759,9 @@ export default function BookingsView() {
             userTimeZone,
           };
 
-          // console.log(
-          //   "event data ready for cloud function for recurring bookings",
-          //   eventInput
-          // );
-
-          // Make the axios call to your cloud function
-          // "https://us-central1-prune-94ad9.cloudfunctions.net/createRecurringBookingInstances"
-          // "http://127.0.0.1:5001/prune-94ad9/us-central1/createRecurringBookingInstances",
-
           try {
             const result = await axios.post(
-              "https://us-central1-prune-94ad9.cloudfunctions.net/createRecurringBookingInstances",
+              cloudFunctions.recurringBookingsProd,
               eventInput
             );
 

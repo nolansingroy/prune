@@ -42,6 +42,7 @@ import { Trash2 } from "lucide-react";
 import useConfirmationStore from "@/lib/store/confirmationStore";
 import { toast } from "sonner";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import { cloudFunctions } from "@/constants/data";
 
 type SortableKeys = "start" | "end" | "title" | "startDate";
 export default function AvailabilityView() {
@@ -405,7 +406,7 @@ export default function AvailabilityView() {
 
           try {
             const result = await axios.post(
-              "https://us-central1-prune-94ad9.cloudfunctions.net/createRecurringAvailabilityInstances",
+              cloudFunctions.recurringAvailabilitiesProd,
               eventInput
             );
             // console.log("Recurring event instances created:", result.data);
