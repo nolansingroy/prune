@@ -10,18 +10,18 @@ import { getFirebaseAdminApp } from "../../../../firebase-admin";
 
 // const db = getFirestore(getFirebaseAdminApp());
 export default async function CalendarPage() {
-  // const tokens = await getTokens(cookies(), {
-  //   apiKey: authConfig.apiKey,
-  //   cookieName: authConfig.cookieName,
-  //   cookieSignatureKeys: authConfig.cookieSignatureKeys,
-  //   serviceAccount: authConfig.serviceAccount,
-  // });
+  const tokens = await getTokens(cookies(), {
+    apiKey: authConfig.apiKey,
+    cookieName: authConfig.cookieName,
+    cookieSignatureKeys: authConfig.cookieSignatureKeys,
+    serviceAccount: authConfig.serviceAccount,
+  });
 
-  // if (!tokens) {
-  //   notFound();
-  // }
+  if (!tokens) {
+    notFound();
+  }
 
-  // console.log(tokens);
+  console.log(tokens);
 
   // const snapshot = await db
   //   .collection("users")
