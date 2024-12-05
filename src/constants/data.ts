@@ -104,3 +104,8 @@ export const cloudFunctions = {
   recurringAvailabilitiesTest: `${cloudFunctionBaseURLTesting}createRecurringAvailabilityInstances`,
   recurringAvailabilitiesProd: `${cloudFunctionBaseURLProduction}createRecurringAvailabilityInstances`,
 };
+
+export const adminUserIds = [
+  "CmWxvHOwJ8b1aXBilFy8dG6GREB3",
+  "mIOTMmLcEHaacX0CXiCUpuB0Eb32",
+];

@@ -27,7 +27,7 @@ export default async function Page() {
   const usersSnapshot = await db.collection("users").get();
   const users = usersSnapshot.docs.map((doc) => ({
     id: doc.id,
-    email: doc.data().email, // Ensure email is included
+    email: doc.data().email,
   }));
 
   const title = "Impersonate";

@@ -10,6 +10,7 @@ import {
 } from "next-firebase-auth-edge";
 import { authConfig } from "../config/server-config";
 import { refreshNextResponseCookies } from "next-firebase-auth-edge/lib/next/cookies";
+import { adminUserIds } from "./constants/data";
 
 const PUBLIC_PATHS = ["/register", "/login"];
 const { setCustomUserClaims, getUser } = getFirebaseAuth(authConfig);
@@ -46,7 +47,7 @@ export async function middleware(request: NextRequest) {
       // if (!decodedToken.display_name) {
       const userRecord = await getUser(decodedToken.uid);
 
-      if (userRecord?.uid === "CmWxvHOwJ8b1aXBilFy8dG6GREB3") {
+      if (adminUserIds.includes(userRecord?.uid ?? "") && !decodedToken.role) {
         await setCustomUserClaims(decodedToken.uid, {
           role: "admin",
         });
