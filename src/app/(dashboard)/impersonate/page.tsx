@@ -7,6 +7,8 @@ import { getFirestore } from "firebase-admin/firestore";
 import { getFirebaseAdminApp } from "../../../../firebase-admin";
 import ImpersonateView from "./_components/impersonate-view";
 import PageContainer from "@/components/layout/page-container";
+import { Heading } from "@/components/ui/heading";
+import { Separator } from "@/components/ui/separator";
 
 const db = getFirestore(getFirebaseAdminApp());
 
@@ -28,11 +30,16 @@ export default async function Page() {
     email: doc.data().email, // Ensure email is included
   }));
 
+  const title = "Impersonate";
+  const description = "Login to users accounts";
+
   return (
     <PageContainer scrollable>
-      <div className="flex flex-col items-center justify-center gap-y-4">
-        <h1 className="text-4xl font-bold">Impersonate</h1>
-        <p className="text-lg">Impersonate a user</p>
+      <div className="space-y-4">
+        <div className="flex items-start">
+          <Heading title={title} description={description} />
+        </div>
+        <Separator />
         <ImpersonateView users={users} />
       </div>
     </PageContainer>

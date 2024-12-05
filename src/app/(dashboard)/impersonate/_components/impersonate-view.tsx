@@ -1,8 +1,19 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { getAuth, signInWithCustomToken } from "firebase/auth";
+import { Input } from "@/components/ui/input";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 
 interface User {
   id: string;
@@ -15,7 +26,7 @@ interface ImpersonateViewProps {
 
 export default function ImpersonateView({ users }: ImpersonateViewProps) {
   const router = useRouter();
-
+  const [searchTerm, setSearchTerm] = useState("");
   const handleImpersonate = async (userId: string) => {
     try {
       const response = await fetch("/api/impersonate", {
@@ -49,21 +60,50 @@ export default function ImpersonateView({ users }: ImpersonateViewProps) {
     }
   };
 
+  const filteredUsers = users.filter((user) =>
+    user.email.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   return (
-    <ul className="space-y-1">
-      {users.map((user) => (
-        <li key={user.id} className="flex items-center justify-between">
-          <span>{user.email}</span>
-          <button
-            onClick={() => {
-              handleImpersonate(user.id);
-            }}
-            className="ml-4 p-2 bg-blue-500 text-white rounded"
-          >
-            Impersonate
-          </button>
-        </li>
-      ))}
-    </ul>
+    <div className="space-y-4">
+      <div className="flex flex-wrap items-center gap-4">
+        <Input
+          type="text"
+          placeholder="Search by email"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="mb-4 p-2 border border-gray-300 rounded"
+        />
+      </div>
+      <ScrollArea className="h-[calc(80vh-220px)] rounded-md border md:h-[calc(90dvh-240px)] grid">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>User ID</TableHead>
+              <TableHead>Email</TableHead>
+              <TableHead>Action</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {filteredUsers.map((user) => (
+              <TableRow key={user.id}>
+                <TableCell>{user.id}</TableCell>
+                <TableCell>{user.email}</TableCell>
+                <TableCell>
+                  <Button
+                    size={"sm"}
+                    variant={"rebusPro"}
+                    onClick={() => handleImpersonate(user.id)}
+                  >
+                    Switch user
+                  </Button>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+        <ScrollBar orientation="horizontal" />
+      </ScrollArea>
+    </div>
   );
 }
