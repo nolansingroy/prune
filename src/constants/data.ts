@@ -46,6 +46,20 @@ export const navItems: NavItem[] = [
       },
     ],
   },
+  {
+    title: "Admin",
+    url: "#", // Placeholder as there is no direct link for the parent
+    icon: "userPen",
+    isActive: false,
+
+    items: [
+      {
+        title: "Impersonate",
+        url: "/impersonate",
+        icon: "userPen",
+      },
+    ],
+  },
   // {
   //   title: "Kanban",
   //   url: "/dashboard/kanban",
