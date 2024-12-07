@@ -30,6 +30,7 @@ import {
   registerFormSchema,
   registerFormValues,
 } from "@/lib/validations/register-validations";
+import { addToSignups } from "@/lib/converters/signups";
 
 export default function SignupForm() {
   const [loading, startTransition] = useTransition();
@@ -76,6 +77,8 @@ export default function SignupForm() {
 
         // console.log("User data:", userData);
         await createUser(userData);
+
+        await addToSignups(user.uid, data.firstName, data.lastName, data.email);
 
         toast.success("Account created successfully, please login");
 
