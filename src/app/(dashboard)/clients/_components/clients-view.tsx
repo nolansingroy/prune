@@ -34,6 +34,7 @@ import {
   fetchClients,
   updateClient,
 } from "@/lib/converters/clients";
+import { Switch } from "@headlessui/react";
 
 const initialClientData: Client = {
   docId: "",
@@ -45,6 +46,7 @@ const initialClientData: Client = {
   lastName: "",
   email: "",
   phoneNumber: "",
+  sms: false,
 };
 
 export default function ClientsView() {
@@ -53,6 +55,7 @@ export default function ClientsView() {
   const [clients, setClients] = useState<Client[]>([]);
   const [editingClientId, setEditingClientId] = useState<string | null>(null); // Track if editing a client
   const [loading, setLoading] = useState(true);
+
   let actionType = editingClientId ? "edit" : "add";
 
   const {
@@ -74,6 +77,8 @@ export default function ClientsView() {
       status: "active",
     },
   });
+
+  const sms = watch("sms");
 
   // Fetch clients from the Firestore subcollection
   const fetchAllClients = useCallback(async () => {
@@ -154,6 +159,7 @@ export default function ClientsView() {
     setValue("email", client.email!);
     setValue("status", client.status as any);
     setValue("phoneNumber", formattedPhoneNumber!);
+    setValue("sms", client.sms || false);
     clearErrors();
   };
 
@@ -162,7 +168,6 @@ export default function ClientsView() {
     const clientName = clients.find((client) => client.docId === clientId);
     const clientReference = `${clientName?.firstName} ${clientName?.lastName}`;
     const clientFullName = clientReference || "this client";
-    // console.log("Client Full Name:", clientFullName);
 
     if (user) {
       openConfirmation({
@@ -177,25 +182,8 @@ export default function ClientsView() {
         },
         onCancel: () => {},
       });
-
-      // const clientDocRef = doc(db, "users", user.uid, "clients", clientId);
-      // await deleteDoc(clientDocRef);
-
-      // // Refresh client list after deletion
-      // fetchAllClients();
     }
   };
-
-  // // Handle form input changes
-  // const handleInputChange = (
-  //   e: ChangeEvent<HTMLInputElement> | ChangeEvent<HTMLSelectElement>
-  // ) => {
-  //   const { name, value } = e.target;
-  //   setNewClientData((prev) => ({
-  //     ...prev,
-  //     [name]: value,
-  //   }));
-  // };
 
   if (loading) {
     return (
@@ -315,15 +303,37 @@ export default function ClientsView() {
                   {errors.phoneNumber.message}
                 </p>
               )}
-              {/* <PhoneInput
-                defaultCountry="US"
-                id="phoneNumber"
-                {...register("phoneNumber")}
-                onChange={(value) =>
-                  setValue("phoneNumber", value, { shouldValidate: true })
-                }
-                className="w-full"
-              /> */}
+            </div>
+
+            <div className="space-y-2">
+              <div className="flex flex-col space-y-1">
+                <Label htmlFor="sms">Sms Reminders</Label>
+                <span className="text-sm text-muted-foreground">
+                  sms reminders will be sent to this client at 8:00 AM the day
+                  before their appointment
+                </span>
+              </div>
+
+              <div className="flex items-center space-x-2">
+                <span className="text-sm font-medium text-gray-700">
+                  {sms ? "Subscribe" : "Unsubscribe"}
+                </span>
+                <Switch
+                  id="sms"
+                  {...register("sms")}
+                  checked={sms}
+                  onChange={() => setValue("sms", !sms)}
+                  className={`${
+                    sms ? "bg-rebus-green" : "bg-gray-200"
+                  } relative inline-flex h-8 w-16 items-center rounded-full transition-colors focus:outline-none`}
+                >
+                  <span
+                    className={`${
+                      sms ? "translate-x-8" : "translate-x-1"
+                    } inline-block h-6 w-6 transform bg-white rounded-full transition-transform`}
+                  />
+                </Switch>
+              </div>
             </div>
 
             {/* Buttons */}

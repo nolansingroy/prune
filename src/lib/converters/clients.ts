@@ -47,6 +47,7 @@ const clientConverter: FirestoreDataConverter<Client> = {
       email: data.email,
       created_at: data.created_at,
       updated_at: data.updated_at,
+      sms: data.sms,
     };
   },
 };
