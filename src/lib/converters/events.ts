@@ -23,12 +23,6 @@ const eventConverter: FirestoreDataConverter<EventInput> = {
   toFirestore(event: Omit<EventInput, "id">): DocumentData {
     const firestoreEvent: DocumentData = {
       title: event.title || "",
-      type: event.type || "",
-      typeId: event.typeId || "",
-      // location: event.location || "",
-      fee: event.fee || 0,
-      clientId: event.clientId || "",
-      clientName: event.clientName || "",
       start: event.start ? Timestamp.fromDate(new Date(event.start)) : null,
       end: event.end ? Timestamp.fromDate(new Date(event.end)) : null,
       description: event.description || "",
@@ -48,7 +42,6 @@ const eventConverter: FirestoreDataConverter<EventInput> = {
       originalEventId: event.originalEventId || "",
       isInstance: event.isInstance || false,
       instanceMap: event.instanceMap || {},
-      paid: event.paid || false,
       created_at: event.created_at
         ? Timestamp.fromDate(new Date(event.created_at))
         : null,
@@ -56,6 +49,24 @@ const eventConverter: FirestoreDataConverter<EventInput> = {
         ? Timestamp.fromDate(new Date(event.updated_at))
         : null,
     };
+
+    if (!event.isBackgroundEvent) {
+      firestoreEvent.type = event.type || "";
+      firestoreEvent.typeId = event.typeId || "";
+      firestoreEvent.fee = event.fee || 0;
+      firestoreEvent.clientId = event.clientId || "";
+      firestoreEvent.clientName = event.clientName || "";
+      firestoreEvent.paid = event.paid || false;
+
+      if (event.start) {
+        const startDate = new Date(event.start);
+        startDate.setDate(startDate.getDate() - 1); // Set to the day before
+        startDate.setHours(8, 0, 0, 0); // Set time to 8:00 AM
+        firestoreEvent.reminderDateTime = Timestamp.fromDate(startDate);
+      } else {
+        firestoreEvent.reminderDateTime = null;
+      }
+    }
 
     if (event.recurrence) {
       firestoreEvent.recurrence = event.recurrence;
@@ -89,6 +100,9 @@ const eventConverter: FirestoreDataConverter<EventInput> = {
       endDay: (data.end as Timestamp)?.toDate().toLocaleDateString("en-US", {
         weekday: "long",
       }),
+      reminderDateTime: data.reminderDateTime
+        ? (data.reminderDateTime as Timestamp)?.toDate()
+        : undefined,
       description: data.description || "",
       display: data.isBackgroundEvent ? "inverse-background" : "auto",
       isBackgroundEvent: !!data.isBackgroundEvent,
