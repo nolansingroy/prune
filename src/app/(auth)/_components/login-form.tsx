@@ -70,6 +70,7 @@ export default function LoginForm() {
         });
 
         toast.success("Login successful");
+        router.push("/calendar");
         router.refresh();
       } catch (error: any) {
         toast.error(
