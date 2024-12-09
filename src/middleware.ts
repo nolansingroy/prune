@@ -9,7 +9,7 @@ import {
 } from "next-firebase-auth-edge";
 import { authConfig } from "../config/server-config";
 
-const PUBLIC_PATHS = ["/register", "/login"];
+const PUBLIC_PATHS = ["/register", "/login", "/policy/textmessaging"];
 
 export async function middleware(request: NextRequest) {
   return authMiddleware(request, {
