@@ -118,8 +118,10 @@ export default function ClientsView() {
 
       if (actionType === "add") {
         await addClient(user.uid, clientData);
+        toast.success("Client added successfully");
       } else {
         await updateClient(user.uid, clientData);
+        toast.success("Client updated successfully");
         setEditingClientId(null);
       }
 
@@ -375,6 +377,7 @@ export default function ClientsView() {
                     <TableCell>Last Name</TableCell>
                     <TableCell>Email</TableCell>
                     <TableCell>Phone</TableCell>
+                    <TableCell>sms</TableCell>
                     <TableCell>Status</TableCell>
                     {/* <TableCell>Rate</TableCell> */}
                     <TableCell>Actions</TableCell>
@@ -387,6 +390,7 @@ export default function ClientsView() {
                       <TableCell>{client.lastName}</TableCell>
                       <TableCell>{client.email}</TableCell>
                       <TableCell>{client.phoneNumber}</TableCell>
+                      <TableCell>{client.sms ? "Yes" : "No"}</TableCell>
                       <TableCell>{client.status}</TableCell>
                       {/* <TableCell>{client.defaultRate || "N/A"}</TableCell> */}
                       <TableCell>
