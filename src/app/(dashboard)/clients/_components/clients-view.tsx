@@ -46,6 +46,7 @@ const initialClientData: Client = {
   lastName: "",
   email: "",
   phoneNumber: "",
+  intPhoneNumber: "",
   sms: false,
 };
 
@@ -111,6 +112,7 @@ export default function ClientsView() {
 
       const clientData = {
         ...data,
+        intPhoneNumber: data.phoneNumber,
         docId: editingClientId || "",
         phoneNumber: formattedPhoneNumber,
         status: data.status || "active",

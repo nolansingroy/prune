@@ -13,6 +13,7 @@ export interface Client {
   firstName: string;
   lastName: string;
   phoneNumber: string; // Optional phone number
+  intPhoneNumber: string;
   email: string; // Optional email
   sms: boolean;
   created_at?: Timestamp; // Firestore timestamp
