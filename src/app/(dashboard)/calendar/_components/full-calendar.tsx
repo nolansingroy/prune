@@ -138,6 +138,10 @@ export default function FullCalendarComponent({}) {
         const startDate = dropInfo.event.start ? dropInfo.event.start : null;
         const endDate = dropInfo.event.end ? dropInfo.event.end : null;
 
+        const reminder = dropInfo.event.start ? dropInfo.event.start : null;
+        reminder!.setDate(reminder!.getDate() - 1);
+        reminder!.setHours(8, 0, 0, 0);
+
         await updateFireStoreEvent(user.uid, dropInfo.event.id, {
           start: startDate!,
           end: endDate!,
@@ -145,6 +149,7 @@ export default function FullCalendarComponent({}) {
           endDate: endDate!,
           startDay: startDay,
           endDay: endDay,
+          reminderDateTime: reminder!,
         });
 
         // Update the local state to reflect the changes
