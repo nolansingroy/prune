@@ -15,6 +15,7 @@ export const clientsFormSchema = z.object({
     .min(1, { message: "Phone number is required" })
     .refine(isValidPhoneNumber, { message: "Invalid phone number" }),
   sms: z.boolean(),
+  clientOptOff: z.boolean().optional(),
 });
 
 export type TClientsForm = z.infer<typeof clientsFormSchema>;

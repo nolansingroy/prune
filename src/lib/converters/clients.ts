@@ -48,6 +48,7 @@ const clientConverter: FirestoreDataConverter<Client> = {
       created_at: data.created_at,
       updated_at: data.updated_at,
       sms: data.sms,
+      clientOptOff: data.clientOptOff || false,
       intPhoneNumber: data.intPhoneNumber,
     };
   },
@@ -84,16 +85,19 @@ export async function fetchClient(
 }
 
 // Function to add a booking type to Firestore
-export async function addClient(
-  uid: string,
-  client: Omit<Client, "docId"> // Exclude docId from the input type
-): Promise<void> {
+export async function addClient(uid: string, client: Client) {
   const newClient = {
     ...client,
     created_at: serverTimestamp(),
     updated_at: serverTimestamp(),
   };
-  await addDoc(clientsRef(uid), newClient);
+  const newClientRef = await addDoc(clientsRef(uid), newClient);
+  const clientId = newClientRef.id;
+  await updateDoc(newClientRef, {
+    docId: clientId,
+    updated_at: Timestamp.now().toDate(),
+  });
+  return { ...newClient, docId: clientId };
 }
 
 // Function to update a client in Firestore

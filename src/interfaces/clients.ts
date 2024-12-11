@@ -15,6 +15,7 @@ export interface Client {
   phoneNumber: string; // Optional phone number
   intPhoneNumber: string;
   email: string; // Optional email
+  clientOptOff?: boolean;
   sms: boolean;
   created_at?: Timestamp; // Firestore timestamp
   updated_at?: Timestamp; // Firestore timestamp

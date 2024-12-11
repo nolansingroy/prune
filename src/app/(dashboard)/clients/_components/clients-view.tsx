@@ -38,10 +38,7 @@ import { Switch } from "@headlessui/react";
 
 const initialClientData: Client = {
   docId: "",
-  // stripeId: "",
   status: "active",
-  // active: true,
-  // deprecated: false,
   firstName: "",
   lastName: "",
   email: "",
@@ -110,7 +107,7 @@ export default function ClientsView() {
       // console.log("Phone Number:", data.phoneNumber);
       // console.log("Formatted Phone Number:", formattedPhoneNumber);
 
-      const clientData = {
+      let clientData = {
         ...data,
         intPhoneNumber: data.phoneNumber,
         docId: editingClientId || "",
@@ -119,6 +116,10 @@ export default function ClientsView() {
       };
 
       if (actionType === "add") {
+        clientData = {
+          ...clientData,
+          clientOptOff: false,
+        };
         await addClient(user.uid, clientData);
         toast.success("Client added successfully");
       } else {
@@ -208,8 +209,8 @@ export default function ClientsView() {
           <form
             className="space-y-4"
             onSubmit={handleSubmit(handleSaveClient, (errors) => {
-              // console.log("Validation Errors:", errors);
-              // console.log("Form Values:", getValues());
+              console.log("Validation Errors:", errors);
+              console.log("Form Values:", getValues());
             })}
           >
             <div className="space-y-2">
