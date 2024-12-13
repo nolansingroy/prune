@@ -6,14 +6,12 @@ const db = admin.firestore();
 
 export const fetchAllEvents = functions.https.onRequest(async (req, res) => {
   const allEvents: any[] = [];
-  const utcDateTimeNow = moment().utc().format();
+  const utcDateTimeNow = moment().utc();
   try {
+    console.log("UTC TIME NOW ...", utcDateTimeNow.format("YYYY-MM-DD HH:mm:ss"));
     const usersSnapshot = await db.collection("users").get();
 
     for (const userDoc of usersSnapshot.docs) {
-      // const userData = userDoc.data();
-      
-
       const eventsSnapshot = await userDoc.ref.collection("events")
         .where("isBackgroundEvent", "==", false)
         .where("reminderDateTime", "!=", null)
@@ -23,7 +21,7 @@ export const fetchAllEvents = functions.https.onRequest(async (req, res) => {
         const eventData = eventDoc.data();
         if (eventData.reminderDateTime) {
           const clientName = eventData.clientName;
-          const reminderDateTimeUTC = moment(eventData.reminderDateTime.toDate()).utc().format();
+          const reminderDateTimeUTC = moment(eventData.reminderDateTime.toDate()).utc();
           allEvents.push({
             clientName,
             reminderDateTime: reminderDateTimeUTC
@@ -32,7 +30,21 @@ export const fetchAllEvents = functions.https.onRequest(async (req, res) => {
       });
     }
 
-    console.log("Fetched all events:", allEvents);
+    // Compare current time in UTC with reminderDateTimeUTC
+    allEvents.forEach(event => {
+      const reminderDateTime = event.reminderDateTime;
+      if (utcDateTimeNow.isSame(reminderDateTime, 'minute')) {
+        console.log(`Event for ${event.clientName} matches the current date and time:`, {
+          clientName: event.clientName,
+          reminderDateTime: reminderDateTime.format("YYYY-MM-DD HH:mm:ss")
+        });
+      } else {
+        console.log(`Event for ${event.clientName} does not match the current date and time:`, {
+          clientName: event.clientName,
+          reminderDateTime: reminderDateTime.format("YYYY-MM-DD HH:mm:ss")
+        });
+      }
+    });
 
     res.status(200).send(allEvents);
   } catch (error) {
