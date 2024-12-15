@@ -5,3 +5,4 @@ export {onCreateFunction} from "./firestore/signUps";
 export {createRecurringAvailabilityInstances} from "./callable/availability";
 export {createRecurringBookingInstances} from "./callable/bookings";
 export {fetchAllEvents} from "./callable/events";
+export {testSendSms} from "./callable/testing";

@@ -4,8 +4,13 @@ import moment from "moment";
 
 const db = admin.firestore();
 
+type allEvents = {
+  clientName: string;
+  reminderDateTime: moment.Moment;
+}
+
 export const fetchAllEvents = functions.https.onRequest(async (req, res) => {
-  const allEvents: any[] = [];
+  const allEvents: allEvents[] = [];
   const utcDateTimeNow = moment().utc();
   try {
     console.log("UTC TIME NOW ...", utcDateTimeNow.format("YYYY-MM-DD HH:mm:ss"));
@@ -16,32 +21,31 @@ export const fetchAllEvents = functions.https.onRequest(async (req, res) => {
         .where("isBackgroundEvent", "==", false)
         .where("reminderDateTime", "!=", null)
         .get();
-      
-      eventsSnapshot.forEach(eventDoc => {
+      eventsSnapshot.forEach((eventDoc) => {
         const eventData = eventDoc.data();
         if (eventData.reminderDateTime) {
           const clientName = eventData.clientName;
           const reminderDateTimeUTC = moment(eventData.reminderDateTime.toDate()).utc();
           allEvents.push({
             clientName,
-            reminderDateTime: reminderDateTimeUTC
+            reminderDateTime: reminderDateTimeUTC,
           });
         }
       });
     }
 
     // Compare current time in UTC with reminderDateTimeUTC
-    allEvents.forEach(event => {
+    allEvents.forEach((event) => {
       const reminderDateTime = event.reminderDateTime;
-      if (utcDateTimeNow.isSame(reminderDateTime, 'minute')) {
+      if (utcDateTimeNow.isSame(reminderDateTime, "minute")) {
         console.log(`Event for ${event.clientName} matches the current date and time:`, {
           clientName: event.clientName,
-          reminderDateTime: reminderDateTime.format("YYYY-MM-DD HH:mm:ss")
+          reminderDateTime: reminderDateTime.format("YYYY-MM-DD HH:mm:ss"),
         });
       } else {
         console.log(`Event for ${event.clientName} does not match the current date and time:`, {
           clientName: event.clientName,
-          reminderDateTime: reminderDateTime.format("YYYY-MM-DD HH:mm:ss")
+          reminderDateTime: reminderDateTime.format("YYYY-MM-DD HH:mm:ss"),
         });
       }
     });
