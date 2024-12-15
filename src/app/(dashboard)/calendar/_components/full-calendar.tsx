@@ -195,6 +195,7 @@ export default function FullCalendarComponent({}) {
         fee: prevState?.fee || 0,
         clientId: prevState?.clientId || "",
         clientName: prevState?.clientName || "",
+        coachId: user?.uid || "",
         type: prevState?.type || "No type",
         typeId: prevState?.typeId || "",
         isBackgroundEvent: prevState?.isBackgroundEvent ?? false,
@@ -236,6 +237,7 @@ export default function FullCalendarComponent({}) {
         typeId: extendedProps.typeId || "",
         clientId: extendedProps.clientId || "",
         clientName: extendedProps.clientName || "",
+        coachId: user?.uid || "",
         description: extendedProps.description || "",
         // location: extendedProps.location || "",
         isBackgroundEvent: extendedProps.isBackgroundEvent || false,
@@ -332,6 +334,7 @@ export default function FullCalendarComponent({}) {
               fee,
               clientId,
               clientName,
+              coachId,
               description,
               isBackgroundEvent,
               startDate,
@@ -368,6 +371,7 @@ export default function FullCalendarComponent({}) {
               date,
               clientId,
               clientName,
+              coachId: user.uid,
               description,
               isBackgroundEvent,
               startTime,
@@ -413,6 +417,7 @@ export default function FullCalendarComponent({}) {
     clientId: string;
     clientName: string;
     description: string;
+    coachId: string;
     // location: string;
     isBackgroundEvent: boolean;
     date?: string;

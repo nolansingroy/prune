@@ -23,6 +23,7 @@ const eventConverter: FirestoreDataConverter<EventInput> = {
   toFirestore(event: Omit<EventInput, "id">): DocumentData {
     const firestoreEvent: DocumentData = {
       title: event.title || "",
+      coachId: event.coachId || "",
       start: event.start ? Timestamp.fromDate(new Date(event.start)) : null,
       end: event.end ? Timestamp.fromDate(new Date(event.end)) : null,
       description: event.description || "",
@@ -87,7 +88,7 @@ const eventConverter: FirestoreDataConverter<EventInput> = {
       fee: data.fee || 0,
       clientId: data.clientId || "",
       clientName: data.clientName || "",
-      // location: data.location || "",
+      coachId: data.coachId || "",
       start: (data.start as Timestamp)?.toDate(),
       end: (data.end as Timestamp)?.toDate(),
       startDate: (data.start as Timestamp)?.toDate(),
@@ -246,6 +247,7 @@ export const fetchBookingsListviewEvents = async (
         fee: data.fee,
         clientId: data.clientId,
         clientName: data.clientName,
+        coachId: data.coachId || "",
         start: dtstart,
         end: new Date(dtstart.getTime() + (end.getTime() - start.getTime())), // Calculate end time based on duration
         description: data.description || "",
@@ -271,6 +273,7 @@ export const fetchBookingsListviewEvents = async (
         fee: data.fee,
         clientId: data.clientId,
         clientName: data.clientName,
+        coachId: data.coachId || "",
         start: start,
         end: end,
         description: data.description || "",
@@ -327,6 +330,7 @@ export const fetchAvailabilitiesListviewEvents = async (
         typeId: data.typeId || "",
         clientId: data.clientId || "",
         clientName: data.clientName || "",
+        coachId: data.coachId || "",
         start: dtstart,
         end: new Date(dtstart.getTime() + (end.getTime() - start.getTime())), // Calculate end time based on duration
         description: data.description || "",
@@ -350,6 +354,7 @@ export const fetchAvailabilitiesListviewEvents = async (
         typeId: data.typeId || "",
         clientId: data.clientId || "",
         clientName: data.clientName || "",
+        coachId: data.coachId || "",
         start: start,
         end: end,
         description: data.description || "",
