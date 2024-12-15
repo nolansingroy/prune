@@ -7,11 +7,14 @@ const db = admin.firestore();
 type allEvents = {
   clientName: string;
   reminderDateTime: moment.Moment;
+  eventDocRef: FirebaseFirestore.DocumentReference;
 }
 
 export const fetchAllEvents = functions.https.onRequest(async (req, res) => {
   const allEvents: allEvents[] = [];
   const utcDateTimeNow = moment().utc();
+  const fiveMinutesAgo = utcDateTimeNow.clone().subtract(5, "minutes");
+  const fiveMinutesLater = utcDateTimeNow.clone().add(5, "minutes");
   try {
     console.log("UTC TIME NOW ...", utcDateTimeNow.format("YYYY-MM-DD HH:mm:ss"));
     const usersSnapshot = await db.collection("users").get();
@@ -20,6 +23,7 @@ export const fetchAllEvents = functions.https.onRequest(async (req, res) => {
       const eventsSnapshot = await userDoc.ref.collection("events")
         .where("isBackgroundEvent", "==", false)
         .where("reminderDateTime", "!=", null)
+        .where("reminderSent", "==", false)
         .get();
       eventsSnapshot.forEach((eventDoc) => {
         const eventData = eventDoc.data();
@@ -29,26 +33,33 @@ export const fetchAllEvents = functions.https.onRequest(async (req, res) => {
           allEvents.push({
             clientName,
             reminderDateTime: reminderDateTimeUTC,
+            eventDocRef: eventDoc.ref,
           });
         }
       });
     }
 
-    // Compare current time in UTC with reminderDateTimeUTC
-    allEvents.forEach((event) => {
+    // Compare current time in UTC with reminderDateTimeUTC within a 5-minute window
+    for (const event of allEvents) {
       const reminderDateTime = event.reminderDateTime;
-      if (utcDateTimeNow.isSame(reminderDateTime, "minute")) {
-        console.log(`Event for ${event.clientName} matches the current date and time:`, {
+      if (reminderDateTime.isBetween(fiveMinutesAgo, fiveMinutesLater, "minute", "[]")) {
+        console.log(`Event for ${event.clientName} matches the current date and time window:`, {
           clientName: event.clientName,
           reminderDateTime: reminderDateTime.format("YYYY-MM-DD HH:mm:ss"),
         });
+
+        // Send SMS reminder
+        // sms reminder here
+
+        // Update the event document to mark it as processed
+        // await event.eventDocRef.update({reminderSent: true});
       } else {
-        console.log(`Event for ${event.clientName} does not match the current date and time:`, {
+        console.log(`Event for ${event.clientName} does not match the current date and time window:`, {
           clientName: event.clientName,
           reminderDateTime: reminderDateTime.format("YYYY-MM-DD HH:mm:ss"),
         });
       }
-    });
+    }
 
     res.status(200).send(allEvents);
   } catch (error) {
