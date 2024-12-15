@@ -691,6 +691,8 @@ export default function BookingsView() {
     fee: number;
     clientId: string;
     clientName: string;
+    clientPhone: string;
+    coachId: string;
     description: string;
     // location: string;
     isBackgroundEvent: boolean;
@@ -743,6 +745,8 @@ export default function BookingsView() {
             typeId: eventData.typeId || "",
             clientId: eventData.clientId || "",
             clientName: eventData.clientName || "",
+            clientPhone: eventData.clientPhone || "",
+            coachId: eventData.coachId || "",
             description: eventData.description || "",
             fee: eventData.fee || 0,
             // location: eventData.location || "",
@@ -810,6 +814,8 @@ export default function BookingsView() {
             fee: eventData.fee || 0,
             clientId: eventData.clientId || "",
             clientName: eventData.clientName || "",
+            clientPhone: eventData.clientPhone || "",
+            coachId: eventData.coachId || "",
             // location: eventData.location || "",
             start: startDateTime,
             end: endDateTime,

@@ -80,6 +80,7 @@ interface BookingsFormProps {
       fee: number;
       clientId: string;
       clientName: string;
+      clientPhone: string;
       coachId: string;
       description: string;
       isBackgroundEvent: boolean;
@@ -145,12 +146,13 @@ export default function BookingsForm({
   // clients state
   const [clientsPopoverOpen, setClientsPopoverOpen] = useState(false);
   const [clients, setClients] = useState<
-    { value: string; label: string; docId: string }[]
+    { value: string; label: string; docId: string; phone: string }[]
   >([]);
   const [filteredClients, setFilteredClients] = useState<
-    { value: string; label: string; docId: string }[]
+    { value: string; label: string; docId: string; phone: string }[]
   >([]);
   const [clientId, setClientId] = useState<string>("");
+  const [clientPhone, setClientPhone] = useState<string>("");
 
   const {
     register,
@@ -240,9 +242,15 @@ export default function BookingsForm({
     if (user) {
       // Fetching clients from Firestore
       const clients = await fetchClients(user.uid);
-      let presetClients: { value: string; label: string; docId: string }[] = [];
+      let presetClients: {
+        value: string;
+        label: string;
+        docId: string;
+        phone: string;
+      }[] = [];
       clients.forEach((cli) => {
         presetClients.push({
+          phone: cli.intPhoneNumber,
           value: cli.firstName + " " + cli.lastName,
           label: cli.firstName + " " + cli.lastName,
           docId: cli.docId!,
@@ -307,6 +315,7 @@ export default function BookingsForm({
     setValue("clientName", "");
     setClientId("");
     setValue("paid", false);
+    setClientPhone("");
   };
 
   const handleClose = () => {
@@ -369,11 +378,12 @@ export default function BookingsForm({
 
   // client functions
 
-  const handleClientSelect = (value: string, docId: string) => {
+  const handleClientSelect = (value: string, docId: string, phone: string) => {
     console.log("Client id selected:", docId);
     console.log("Client selected:", value);
     setValue("clientName", value);
     setClientId(docId);
+    setClientPhone(phone);
     setClientsPopoverOpen(false);
   };
 
@@ -391,7 +401,7 @@ export default function BookingsForm({
   ) => {
     if (event.key === "Enter") {
       // handle the case where the user presses enter on a client name that is not in the list
-      handleClientSelect(watch("clientName")!, "");
+      handleClientSelect(watch("clientName")!, "", "");
       // close the popover
       setClientsPopoverOpen(false);
     }
@@ -400,7 +410,7 @@ export default function BookingsForm({
   // handle the case where the user clicks outside the popover and typed a client name that is not in the list and clicked outside the popover
   const handlePopoverClose = () => {
     if (!filteredClients.find((cli) => cli.value === watch("clientName"))) {
-      handleClientSelect(watch("clientName")!, ""); // Set the client with the typed name if it's not in the list
+      handleClientSelect(watch("clientName")!, "", ""); // Set the client with the typed name if it's not in the list
     }
     setClientsPopoverOpen(false);
   };
@@ -504,6 +514,7 @@ export default function BookingsForm({
             fee: parseFloat(formValues.fee!) || 0,
             clientId: clientId || "",
             clientName: formValues.clientName || "",
+            clientPhone: clientPhone || "",
             coachId: user?.uid || "",
             description: formValues.description || "",
             isBackgroundEvent: false, // Always false for regular bookings
@@ -604,7 +615,11 @@ export default function BookingsForm({
                             key={cli.value}
                             value={cli.value}
                             onSelect={() => {
-                              handleClientSelect(cli.value, cli.docId);
+                              handleClientSelect(
+                                cli.value,
+                                cli.docId,
+                                cli.phone
+                              );
                               setClientsPopoverOpen(false);
                             }}
                           >
