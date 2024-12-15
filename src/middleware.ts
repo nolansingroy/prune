@@ -12,8 +12,8 @@ import { authConfig } from "../config/server-config";
 import { refreshNextResponseCookies } from "next-firebase-auth-edge/lib/next/cookies";
 import { adminUserIds } from "./constants/data";
 
-const PUBLIC_PATHS = ["/register", "/login"];
 const { setCustomUserClaims, getUser } = getFirebaseAuth(authConfig);
+const PUBLIC_PATHS = ["/register", "/login", "/policy/textmessaging"];
 
 export async function middleware(request: NextRequest) {
   return authMiddleware(request, {
@@ -33,9 +33,32 @@ export async function middleware(request: NextRequest) {
       authConfig.experimental_enableTokenRefreshOnExpiredKidHeader,
 
     handleValidToken: async ({ token, decodedToken }, headers) => {
-      // Authenticated user should not be able to access /login, /register and /reset-password routes
-      if (PUBLIC_PATHS.includes(request.nextUrl.pathname)) {
-        return redirectToHome(request);
+      const pathname = request.nextUrl.pathname;
+
+      // Allow authenticated users to access /policy/textmessaging
+      if (pathname === "/policy/textmessaging") {
+        return NextResponse.next({
+          request: {
+            headers,
+          },
+        });
+      }
+
+      // Redirect authenticated users away from other public paths
+      if (
+        PUBLIC_PATHS.includes(pathname) &&
+        pathname !== "/policy/textmessaging"
+      ) {
+        return redirectToPath(request, "/calendar", {
+          shouldClearSearchParams: true,
+        });
+      }
+
+      // Redirect authenticated users to /calendar if they request the root path
+      if (pathname === "/") {
+        return redirectToPath(request, "/calendar", {
+          shouldClearSearchParams: true,
+        });
       }
 
       const response = NextResponse.next({
