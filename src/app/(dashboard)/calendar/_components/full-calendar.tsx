@@ -164,6 +164,7 @@ export default function FullCalendarComponent({}) {
                 endDate: endDate!,
                 startDay: startDay!,
                 endDay: endDay!,
+                reminderDateTime: reminder!,
               };
             }
             return event;
@@ -272,6 +273,7 @@ export default function FullCalendarComponent({}) {
     fee,
     clientId,
     clientName,
+    coachId,
     description,
     isBackgroundEvent,
     date,
@@ -286,6 +288,7 @@ export default function FullCalendarComponent({}) {
     description: string;
     clientId: string;
     clientName: string;
+    coachId: string;
     isBackgroundEvent: boolean;
     startTime: string;
     endTime: string;
@@ -371,7 +374,7 @@ export default function FullCalendarComponent({}) {
               date,
               clientId,
               clientName,
-              coachId: user.uid,
+              coachId,
               description,
               isBackgroundEvent,
               startTime,
@@ -416,8 +419,8 @@ export default function FullCalendarComponent({}) {
     fee: number;
     clientId: string;
     clientName: string;
-    description: string;
     coachId: string;
+    description: string;
     // location: string;
     isBackgroundEvent: boolean;
     date?: string;

@@ -13,6 +13,7 @@ import {
   availabilitiesFormSchema,
   TAvailabilitiesForm,
 } from "@/lib/validations/availabilities-form-validations";
+import { useAuth } from "@/context/AuthContext";
 
 interface AvailabilityFormProps {
   isOpen: boolean;
@@ -20,6 +21,8 @@ interface AvailabilityFormProps {
   onSave: (eventData: {
     title: string;
     description: string;
+    coachId: string;
+    clientId: string;
     isBackgroundEvent: boolean;
     date?: string;
     startTime: string;
@@ -65,6 +68,7 @@ export default function AvailabilitiesForm({
   // const [startRecur, setStartRecur] = useState(formattedDate);
   // const [endRecur, setEndRecur] = useState(formattedDate);
 
+  const { user } = useAuth();
   const {
     register,
     setValue,
@@ -214,6 +218,8 @@ export default function AvailabilitiesForm({
         const eventData = {
           title: formValues.title || "",
           description: formValues.description || "",
+          clientId: "",
+          coachId: user?.uid || "",
           isBackgroundEvent: true,
           date: formValues.date!,
           startTime: formValues.startTime!,

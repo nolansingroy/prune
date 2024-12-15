@@ -16,6 +16,7 @@ export const handleRecurringEvent = async ({
   fee,
   clientId,
   clientName,
+  coachId,
   description,
   isBackgroundEvent,
   startDate,
@@ -32,6 +33,7 @@ export const handleRecurringEvent = async ({
   fee: number;
   clientId: string;
   clientName: string;
+  coachId: string;
   description: string;
   isBackgroundEvent: boolean;
   startDate: string;
@@ -55,6 +57,7 @@ export const handleRecurringEvent = async ({
   const eventInput = {
     title: title || "",
     description: description || "",
+    coachId: coachId,
     startDate,
     startTime,
     endTime,
@@ -100,6 +103,7 @@ export const handleSingleEvent = async ({
   fee,
   clientId,
   clientName,
+  coachId,
   description,
   isBackgroundEvent,
   date,
@@ -115,6 +119,7 @@ export const handleSingleEvent = async ({
   fee: number;
   clientId: string;
   clientName: string;
+  coachId: string;
   description: string;
   date?: string;
   isBackgroundEvent: boolean;
@@ -155,6 +160,7 @@ export const handleSingleEvent = async ({
   const event = {
     id: "",
     title,
+    coachId,
     start: startDateTime,
     end: endDateTime,
     description,
@@ -200,6 +206,7 @@ export const updatEventFormDialog = async (
     fee: number;
     clientId: string;
     clientName: string;
+    coachId: string;
     description: string;
     isBackgroundEvent: boolean;
     date?: string;
@@ -254,6 +261,7 @@ export const updatEventFormDialog = async (
         fee: eventData.fee,
         clientId: eventData.clientId,
         clientName: eventData.clientName,
+        coachId: eventData.coachId,
         description: eventData.description,
         // location: eventData.location || "",
         isBackgroundEvent: eventData.isBackgroundEvent,
@@ -297,6 +305,7 @@ export const updatEventFormDialog = async (
         fee: eventData.fee,
         clientId: eventData.clientId,
         clientName: eventData.clientName,
+        coachId: eventData.coachId,
         description: eventData.description,
         // location: eventData.location || "",
         isBackgroundEvent: eventData.isBackgroundEvent,

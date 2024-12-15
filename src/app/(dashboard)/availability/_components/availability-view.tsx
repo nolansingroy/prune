@@ -342,6 +342,8 @@ export default function AvailabilityView() {
   const handleSaveEvent = (eventData: {
     title: string;
     description: string;
+    coachId: string;
+    clientId: string;
     isBackgroundEvent: boolean;
     date?: string;
     startTime: string;
@@ -386,6 +388,7 @@ export default function AvailabilityView() {
           const eventInput = {
             title: eventData.title || "",
             description: eventData.description || "",
+            coachId: user.uid,
             // location: eventData.location || "",
             startDate,
             startTime: eventData.startTime,
@@ -454,6 +457,7 @@ export default function AvailabilityView() {
             fee: 0,
             clientId: "",
             clientName: "",
+            coachId: user.uid,
             // location: eventData.location || "",
             start: startDateTime,
             end: endDateTime,

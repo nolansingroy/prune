@@ -18,6 +18,7 @@ interface CreateBookingsFormDialogProps {
       fee: number;
       clientId: string;
       clientName: string;
+      coachId: string;
       description: string;
       // location: string;
       isBackgroundEvent: boolean; // Automatically false for regular bookings

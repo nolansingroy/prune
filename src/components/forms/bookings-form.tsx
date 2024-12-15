@@ -80,6 +80,7 @@ interface BookingsFormProps {
       fee: number;
       clientId: string;
       clientName: string;
+      coachId: string;
       description: string;
       isBackgroundEvent: boolean;
       originalEventId: string;
@@ -503,6 +504,7 @@ export default function BookingsForm({
             fee: parseFloat(formValues.fee!) || 0,
             clientId: clientId || "",
             clientName: formValues.clientName || "",
+            coachId: user?.uid || "",
             description: formValues.description || "",
             isBackgroundEvent: false, // Always false for regular bookings
             date: showDateSelector ? formValues.date : undefined,

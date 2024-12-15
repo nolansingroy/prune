@@ -20,6 +20,8 @@ interface AvailabilityDialogProps {
   onSave: (eventData: {
     title: string;
     description: string;
+    coachId: string;
+    clientId: string;
     isBackgroundEvent: boolean;
     date?: string;
     startTime: string;

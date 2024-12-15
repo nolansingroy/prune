@@ -42,6 +42,7 @@ type CalendarFormProps = {
     fee: number;
     clientId: string;
     clientName: string;
+    coachId: string;
     description: string;
     isBackgroundEvent: boolean;
     date?: string;
@@ -364,6 +365,7 @@ export default function CalendarForm({
           fee: !isBackgroundEvent ? parseFloat(formValues.fee!) : 0,
           clientId: !isBackgroundEvent ? clientId : "",
           clientName: !isBackgroundEvent ? formValues.clientName! : "",
+          coachId: user?.uid!,
           description: formValues.description!,
           isBackgroundEvent: formValues.isBackgroundEvent!,
           date: showDateSelector ? formValues.date : undefined,

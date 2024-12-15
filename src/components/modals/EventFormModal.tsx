@@ -21,6 +21,7 @@ interface EventFormDialogProps {
     fee: number;
     clientId: string;
     clientName: string;
+    coachId: string;
     description: string;
     isBackgroundEvent: boolean;
     date?: string;
