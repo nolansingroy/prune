@@ -67,6 +67,7 @@ import {
 import { Switch } from "@headlessui/react";
 import { StatusFilter } from "@/components/status-filter";
 import { cloudFunctions } from "@/constants/data";
+import { Client } from "@/interfaces/clients";
 
 const formatFee = (fee: number): string => {
   return new Intl.NumberFormat("en-US", {
@@ -100,6 +101,8 @@ export default function BookingsView() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingEvent, setEditingEvent] = useState<EventInput | null>(null);
   const [isLoading, setIsLoading] = useState(false); // New loading state
+  // The follwoing state variable will only be used to push the client object to the event object
+  const [firestoreClients, setFirestoreClients] = useState<Client[]>([]);
   const [clients, setClients] = useState<{ docId: string; fullName: string }[]>(
     []
   );
@@ -311,6 +314,7 @@ export default function BookingsView() {
     if (user) {
       // Fetching clients from Firestore
       const clients = await fetchClients(user.uid);
+      setFirestoreClients(clients); // Store all clients
       // an array of objects with "key": name and value: join firstName field and lastName field
       const clientsArray = clients.map((client) => {
         return {
@@ -406,18 +410,26 @@ export default function BookingsView() {
       if (field === "clientName") {
         if (currentEvent.clientName !== editedValue) {
           updates = { [field]: editedValue };
-          const matchedClient = clients.find(
+          const matchedClient = firestoreClients.find(
             (client) =>
-              client.fullName.toLowerCase() === editedValue.toLowerCase()
+              client.fullName?.toLowerCase() === editedValue?.toLowerCase()
           );
+          // const client = firestoreClients.find(
+          //   (client) =>
+          //     client.fullName.toLowerCase() === editedValue.toLowerCase()
+          // )
+
           if (matchedClient) {
             updates = {
               clientId: matchedClient.docId,
               clientName: editedValue,
+              client: {
+                ...matchedClient,
+              },
             };
             // console.log("Matched client:", matchedClient);
           } else {
-            updates = { clientId: "", clientName: editedValue };
+            updates = { clientId: "", clientName: editedValue, client: {} };
             // console.log("Client not found:", editedValue);
           }
         }
@@ -689,6 +701,7 @@ export default function BookingsView() {
     type: string;
     typeId: string;
     fee: number;
+    client?: Client;
     clientId: string;
     clientName: string;
     clientPhone: string;
@@ -754,6 +767,7 @@ export default function BookingsView() {
             userId: user.uid,
             userTimeZone,
             fee: eventData.fee || 0,
+            client: eventData.client || undefined,
             type: eventData.type || "No type",
             typeId: eventData.typeId || "",
             clientId: eventData.clientId || "",
@@ -811,6 +825,7 @@ export default function BookingsView() {
             type: eventData.type || "",
             typeId: eventData.typeId || "",
             fee: eventData.fee || 0,
+            client: eventData.client || undefined,
             clientId: eventData.clientId || "",
             clientName: eventData.clientName || "",
             clientPhone: eventData.clientPhone || "",
@@ -840,7 +855,7 @@ export default function BookingsView() {
             // console.log("Single event created in Firestore with ID:", event.id);
             toast.success("Booking event added successfully");
           } catch (error) {
-            // console.error("Error saving event single:", error);
+            console.error("Error saving event single:", error);
             toast.error("Error adding booking event");
           }
         }

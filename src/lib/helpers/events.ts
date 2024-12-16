@@ -8,12 +8,14 @@ import {
 } from "../converters/events";
 import { cloudFunctions } from "@/constants/data";
 import { DateSelectArg } from "@fullcalendar/core";
+import { Client } from "@/interfaces/clients";
 
 export const handleRecurringEvent = async ({
   title,
   type,
   typeId,
   fee,
+  client,
   clientId,
   clientName,
   clientPhone,
@@ -32,6 +34,7 @@ export const handleRecurringEvent = async ({
   type: string;
   typeId: string;
   fee: number;
+  client?: Client;
   clientId: string;
   clientName: string;
   clientPhone: string;
@@ -73,6 +76,7 @@ export const handleRecurringEvent = async ({
     ...(isBackgroundEvent
       ? {}
       : {
+          client: client || undefined,
           fee: fee || 0,
           type: type || "No type",
           typeId: typeId || "",
@@ -104,6 +108,7 @@ export const handleSingleEvent = async ({
   type,
   typeId,
   fee,
+  client,
   clientId,
   clientName,
   clientPhone,
@@ -121,6 +126,7 @@ export const handleSingleEvent = async ({
   type: string;
   typeId: string;
   fee: number;
+  client?: Client;
   clientId: string;
   clientName: string;
   clientPhone: string;
@@ -179,6 +185,7 @@ export const handleSingleEvent = async ({
     ...(isBackgroundEvent
       ? {}
       : {
+          client: client || undefined,
           fee: fee,
           type: type,
           typeId: typeId,
@@ -210,6 +217,7 @@ export const updatEventFormDialog = async (
     type: string;
     typeId: string;
     fee: number;
+    client?: Client;
     clientId: string;
     clientName: string;
     clientPhone: string;
@@ -266,6 +274,7 @@ export const updatEventFormDialog = async (
         type: eventData.type,
         typeId: eventData.typeId,
         fee: eventData.fee,
+        client: eventData.client,
         clientId: eventData.clientId,
         clientName: eventData.clientName,
         clientPhone: eventData.clientPhone,
@@ -311,6 +320,7 @@ export const updatEventFormDialog = async (
         type: eventData.type,
         typeId: eventData.typeId,
         fee: eventData.fee,
+        client: eventData.client,
         clientId: eventData.clientId,
         clientName: eventData.clientName,
         clientPhone: eventData.clientPhone,

@@ -10,6 +10,7 @@ import {
 import { EventInput } from "@/interfaces/event";
 
 import CalendarForm from "../forms/calendar-form";
+import { Client } from "@/interfaces/clients";
 
 interface EventFormDialogProps {
   isOpen: boolean;
@@ -19,6 +20,7 @@ interface EventFormDialogProps {
     type: string;
     typeId: string;
     fee: number;
+    client?: Client;
     clientId: string;
     clientName: string;
     clientPhone: string;

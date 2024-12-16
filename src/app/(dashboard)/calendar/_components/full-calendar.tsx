@@ -31,6 +31,7 @@ import {
   updatEventFormDialog,
 } from "@/lib/helpers/events";
 import PageContainer from "@/components/layout/page-container";
+import { Client } from "@/interfaces/clients";
 
 export default function FullCalendarComponent({}) {
   const { user } = useAuth();
@@ -273,6 +274,7 @@ export default function FullCalendarComponent({}) {
     type,
     typeId,
     fee,
+    client,
     clientId,
     clientName,
     clientPhone,
@@ -289,6 +291,7 @@ export default function FullCalendarComponent({}) {
     type: string;
     typeId: string;
     description: string;
+    client?: Client;
     clientId: string;
     clientName: string;
     clientPhone: string;
@@ -339,6 +342,7 @@ export default function FullCalendarComponent({}) {
               type,
               typeId,
               fee,
+              client,
               clientId,
               clientName,
               clientPhone,
@@ -377,6 +381,7 @@ export default function FullCalendarComponent({}) {
               typeId,
               fee,
               date,
+              client,
               clientId,
               clientName,
               clientPhone,
@@ -423,6 +428,7 @@ export default function FullCalendarComponent({}) {
     type: string;
     typeId: string;
     fee: number;
+    client?: Client;
     clientId: string;
     clientName: string;
     clientPhone: string;

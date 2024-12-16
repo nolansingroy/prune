@@ -32,6 +32,7 @@ import {
 } from "@/lib/validations/calendar-form-validation";
 import FormCancelButton from "../buttons/form-cancel-btn";
 import FormSubmitButton from "../buttons/form-submit-btn";
+import { Client } from "@/interfaces/clients";
 
 type CalendarFormProps = {
   onClose: () => void;
@@ -40,6 +41,7 @@ type CalendarFormProps = {
     type: string;
     typeId: string;
     fee: number;
+    client?: Client;
     clientId: string;
     clientName: string;
     clientPhone: string;
@@ -83,7 +85,8 @@ export default function CalendarForm({
 
   // clients state
   const [clientsPopoverOpen, setClientsPopoverOpen] = useState(false);
-  // const [client, setClient] = useState("");
+  // The follwoing state variable will only be used to push the client object to the event object
+  const [firestoreClients, setFirestoreClients] = useState<Client[]>([]);
   const [clients, setClients] = useState<
     { value: string; label: string; docId: string; phone: string }[]
   >([]);
@@ -172,6 +175,7 @@ export default function CalendarForm({
     if (user) {
       // Fetching clients from Firestore
       const clients = await fetchClients(user.uid);
+      setFirestoreClients(clients);
       let presetClients: {
         value: string;
         label: string;
@@ -245,6 +249,7 @@ export default function CalendarForm({
     setValue("clientName", "");
     setClientId("");
     setClientPhone("");
+    setFirestoreClients([]);
   };
 
   const handleCancel = () => {
@@ -373,6 +378,13 @@ export default function CalendarForm({
           type: !isBackgroundEvent ? bookingType : "",
           typeId: !isBackgroundEvent ? typeId : "",
           fee: !isBackgroundEvent ? parseFloat(formValues.fee!) : 0,
+          client: !isBackgroundEvent
+            ? firestoreClients.find(
+                (cli) =>
+                  cli.fullName?.trim().toLowerCase() ===
+                  formValues.clientName?.trim().toLowerCase()
+              )
+            : undefined,
           clientId: !isBackgroundEvent ? clientId : "",
           clientName: !isBackgroundEvent ? formValues.clientName! : "",
           clientPhone: !isBackgroundEvent ? clientPhone : "",

@@ -4,9 +4,11 @@ import moment from "moment";
 
 const db = admin.firestore();
 
+
 type allEvents = {
   clientName: string;
   reminderDateTime: moment.Moment;
+  clientPhone: string;
   eventDocRef: FirebaseFirestore.DocumentReference;
 }
 
@@ -24,14 +26,19 @@ export const fetchAllEvents = functions.https.onRequest(async (req, res) => {
         .where("isBackgroundEvent", "==", false)
         .where("reminderDateTime", "!=", null)
         .where("reminderSent", "==", false)
+        .where("client.clientOptOff", "==", false)
+        .where("client.sms", "==", true)
         .get();
+
       eventsSnapshot.forEach((eventDoc) => {
         const eventData = eventDoc.data();
-        if (eventData.reminderDateTime) {
-          const clientName = eventData.clientName;
+        if (eventData.reminderDateTime && eventData.client && eventData.client.intPhoneNumber) {
+          const clientName = eventData.client.fullName;
+          const clientPhone = eventData.client.intPhoneNumber;
           const reminderDateTimeUTC = moment(eventData.reminderDateTime.toDate()).utc();
           allEvents.push({
             clientName,
+            clientPhone,
             reminderDateTime: reminderDateTimeUTC,
             eventDocRef: eventDoc.ref,
           });
@@ -41,6 +48,7 @@ export const fetchAllEvents = functions.https.onRequest(async (req, res) => {
 
     // Compare current time in UTC with reminderDateTimeUTC within a 5-minute window
     for (const event of allEvents) {
+      console.log("Checking event:", event);
       const reminderDateTime = event.reminderDateTime;
       if (reminderDateTime.isBetween(fiveMinutesAgo, fiveMinutesLater, "minute", "[]")) {
         console.log(`Event for ${event.clientName} matches the current date and time window:`, {

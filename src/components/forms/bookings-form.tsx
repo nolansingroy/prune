@@ -55,6 +55,7 @@ import {
   TBookingsForm,
 } from "@/lib/validations/bookings-form-validations";
 import { useForm, Controller } from "react-hook-form";
+import { Client } from "@/interfaces/clients";
 
 const today = new Date();
 const formattedDate = today.toLocaleDateString("en-CA"); // YYYY-MM-DD format
@@ -78,6 +79,7 @@ interface BookingsFormProps {
       type: string;
       typeId: string;
       fee: number;
+      client?: Client;
       clientId: string;
       clientName: string;
       clientPhone: string;
@@ -145,6 +147,8 @@ export default function BookingsForm({
 
   // clients state
   const [clientsPopoverOpen, setClientsPopoverOpen] = useState(false);
+  // The follwoing state variable will only be used to push the client object to the event object
+  const [firestoreClients, setFirestoreClients] = useState<Client[]>([]);
   const [clients, setClients] = useState<
     { value: string; label: string; docId: string; phone: string }[]
   >([]);
@@ -199,6 +203,10 @@ export default function BookingsForm({
   const isRecurring = watch("isRecurring");
   const date = watch("date");
 
+  // useEffect(() => {
+  //   console.log("firestore clients:", firestoreClients);
+  // }, [clientName]);
+
   useEffect(() => {
     if (event) {
       setOriginalEventId(event._def?.extendedProps?.originalEventId || "");
@@ -242,6 +250,7 @@ export default function BookingsForm({
     if (user) {
       // Fetching clients from Firestore
       const clients = await fetchClients(user.uid);
+      setFirestoreClients(clients);
       let presetClients: {
         value: string;
         label: string;
@@ -316,6 +325,7 @@ export default function BookingsForm({
     setClientId("");
     setValue("paid", false);
     setClientPhone("");
+    setFirestoreClients([]);
   };
 
   const handleClose = () => {
@@ -512,6 +522,12 @@ export default function BookingsForm({
             type: bookingType,
             typeId: typeId || "",
             fee: parseFloat(formValues.fee!) || 0,
+            client:
+              firestoreClients.find(
+                (cli) =>
+                  cli.fullName?.trim().toLowerCase() ===
+                  formValues.clientName?.trim().toLowerCase()
+              ) || undefined,
             clientId: clientId || "",
             clientName: formValues.clientName || "",
             clientPhone: clientPhone || "",

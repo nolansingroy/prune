@@ -1,3 +1,5 @@
+/* eslint-disable operator-linebreak */
+/* eslint-disable indent */
 import * as functions from "firebase-functions";
 import * as admin from "firebase-admin";
 import {FieldValue, Timestamp} from "firebase-admin/firestore";
@@ -26,6 +28,7 @@ export const createRecurringBookingInstances = functions.https.onRequest(
           title,
           clientId,
           clientName,
+          client,
           coachId,
           clientPhone,
           fee,
@@ -77,6 +80,7 @@ export const createRecurringBookingInstances = functions.https.onRequest(
           type,
           typeId,
           description,
+          client,
           // location,
           startDate,
           startTime,
@@ -151,10 +155,20 @@ export const createRecurringBookingInstances = functions.https.onRequest(
         reminderOriginalEvent.set({hour: 8, minute: 0, second: 0, millisecond: 0});
         const timestampReminder = Timestamp.fromDate(reminderOriginalEvent.toDate());
 
+        const clientWithTimestamps = client
+          ? {...client,
+            created_at: client.created_at? new Timestamp(client.created_at.seconds, client.created_at.nanoseconds)
+            : null,
+            updated_at: client.updated_at? new Timestamp(client.updated_at.seconds, client.updated_at.nanoseconds)
+            : null,
+            }
+          : {};
+
         batch.set(eventRef, {
           title,
           clientId,
           clientName,
+          client: clientWithTimestamps,
           coachId,
           clientPhone,
           fee,
@@ -228,6 +242,7 @@ export const createRecurringBookingInstances = functions.https.onRequest(
             title,
             clientId,
             clientName,
+            client: clientWithTimestamps,
             coachId,
             clientPhone,
             fee,

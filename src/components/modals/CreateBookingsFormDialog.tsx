@@ -4,6 +4,7 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { EventInput } from "@/interfaces/event";
 
 import BookingsForm from "../forms/bookings-form";
+import { Client } from "@/interfaces/clients";
 
 interface CreateBookingsFormDialogProps {
   isOpen: boolean;
@@ -16,6 +17,7 @@ interface CreateBookingsFormDialogProps {
       type: string;
       typeId: string;
       fee: number;
+      client?: Client;
       clientId: string;
       clientName: string;
       clientPhone: string;

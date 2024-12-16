@@ -1,3 +1,5 @@
+import { Client } from "./clients";
+
 export interface EventInput {
   color?: any;
   id?: string;
@@ -8,6 +10,7 @@ export interface EventInput {
   clientName?: string; // Add a clientName property to the event
   clientPhone?: string;
   coachId?: string;
+  client?: Client;
   // location?: string;
   start: Date; // Use JavaScript Date object
   end: Date; // Use JavaScript Date object
