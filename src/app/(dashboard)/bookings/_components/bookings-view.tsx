@@ -231,7 +231,7 @@ export default function BookingsView() {
     if (searchTerm) {
       filteredEvents = filteredEvents.filter(
         (event) =>
-          event.type.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          event?.type?.toLowerCase().includes(searchTerm.toLowerCase()) ||
           (event.description ?? "")
             .toLowerCase()
             .includes(searchTerm.toLowerCase()) ||
@@ -741,19 +741,11 @@ export default function BookingsView() {
 
           const eventInput = {
             title: eventData.title || "",
-            type: eventData.type || "No type",
-            typeId: eventData.typeId || "",
-            clientId: eventData.clientId || "",
-            clientName: eventData.clientName || "",
-            clientPhone: eventData.clientPhone || "",
-            coachId: eventData.coachId || "",
             description: eventData.description || "",
-            fee: eventData.fee || 0,
-            // location: eventData.location || "",
+            coachId: eventData.coachId || "",
             startDate,
             startTime: eventData.startTime,
             endTime: eventData.endTime,
-            paid: eventData.paid,
             recurrence: {
               daysOfWeek: eventData.recurrence.daysOfWeek,
               startRecur: startRecur.toISOString().split("T")[0] || startDate,
@@ -761,6 +753,13 @@ export default function BookingsView() {
             },
             userId: user.uid,
             userTimeZone,
+            fee: eventData.fee || 0,
+            type: eventData.type || "No type",
+            typeId: eventData.typeId || "",
+            clientId: eventData.clientId || "",
+            clientName: eventData.clientName || "",
+            clientPhone: eventData.clientPhone || "",
+            paid: eventData.paid,
           };
 
           try {
@@ -1354,7 +1353,7 @@ export default function BookingsView() {
                             handleCellClick(
                               event.id!,
                               "clientName",
-                              event.clientName,
+                              event.clientName!,
                               !!event.recurrence
                             )
                           }
@@ -1379,7 +1378,7 @@ export default function BookingsView() {
                             handleCellClick(
                               event.id!,
                               "type",
-                              event.type,
+                              event.type!,
                               !!event.recurrence
                             )
                           }
@@ -1404,12 +1403,12 @@ export default function BookingsView() {
                             handleCellClick(
                               event.id!,
                               "fee",
-                              event.fee.toString(),
+                              event.fee!.toString(),
                               !!event.recurrence
                             )
                           }
                         >
-                          {formatFee(event.fee)}
+                          {formatFee(event.fee!)}
                         </span>
                       )}
                     </TableCell>

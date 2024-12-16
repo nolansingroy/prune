@@ -25,6 +25,7 @@ export const createRecurringAvailabilityInstances = functions.https.onRequest(
         const {
           title,
           description,
+          coachId,
           // location,
           startDate,
           startTime,
@@ -45,6 +46,7 @@ export const createRecurringAvailabilityInstances = functions.https.onRequest(
         console.log("Received request with data:", {
           title,
           description,
+          coachId,
           // location,
           startDate,
           startTime,
@@ -117,6 +119,7 @@ export const createRecurringAvailabilityInstances = functions.https.onRequest(
         batch.set(eventRef, {
           title,
           description,
+          coachId,
           // location,
           start: timestampStartDate,
           end: timestampEndDate,
@@ -178,6 +181,7 @@ export const createRecurringAvailabilityInstances = functions.https.onRequest(
           batch.set(instanceRef, {
             title,
             description,
+            coachId,
             // location,
             start: timestampInstanceStartDate,
             end: timestampInstanceEndDate,

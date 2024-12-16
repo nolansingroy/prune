@@ -452,13 +452,7 @@ export default function AvailabilityView() {
           const eventInput = {
             id: "",
             title: eventData.title,
-            type: "",
-            typeId: "",
-            fee: 0,
-            clientId: "",
-            clientName: "",
             coachId: user.uid,
-            // location: eventData.location || "",
             start: startDateTime,
             end: endDateTime,
             description: eventData.description || "",
@@ -469,7 +463,12 @@ export default function AvailabilityView() {
             startDay: startDay,
             endDate: endDateTime,
             endDay: endDay,
-            paid: false,
+            // type: "",
+            // typeId: "",
+            // fee: 0,
+            // clientId: "",
+            // clientName: "",
+            // paid: false,
           };
 
           try {
