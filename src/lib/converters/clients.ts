@@ -41,6 +41,7 @@ const clientConverter: FirestoreDataConverter<Client> = {
       // active: data.active,
       // deprecated: data.deprecated,
       // defaultRate: data.defaultRate,
+      fullName: data.fullName,
       firstName: data.firstName,
       lastName: data.lastName,
       phoneNumber: data.phoneNumber,

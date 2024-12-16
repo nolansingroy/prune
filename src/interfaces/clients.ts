@@ -10,6 +10,7 @@ export interface Client {
   // active: boolean;
   // deprecated: boolean;
   // defaultRate?: number | null;
+  fullName: string;
   firstName: string;
   lastName: string;
   phoneNumber: string; // Optional phone number
