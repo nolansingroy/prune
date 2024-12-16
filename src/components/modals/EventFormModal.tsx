@@ -7,7 +7,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 
-import { EventInput } from "@/interfaces/types";
+import { EventInput } from "@/interfaces/event";
 
 import CalendarForm from "../forms/calendar-form";
 

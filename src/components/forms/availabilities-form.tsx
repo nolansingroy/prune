@@ -2,7 +2,7 @@ import React, { useState, ChangeEvent, MouseEvent, useEffect } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { EventInput } from "@/interfaces/types";
+import { EventInput } from "@/interfaces/event";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import FormCancelButton from "../buttons/form-cancel-btn";

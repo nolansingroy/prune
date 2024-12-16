@@ -1,6 +1,6 @@
 "use client";
 
-import { EventInput } from "@/interfaces/types";
+import { EventInput } from "@/interfaces/event";
 import { fetchBookingTypes } from "@/lib/converters/bookingTypes";
 import { fetchClients } from "@/lib/converters/clients";
 import {

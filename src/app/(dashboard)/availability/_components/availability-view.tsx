@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useTransition, useCallback, useEffect, useState } from "react";
-import { EventInput } from "@/interfaces/types";
+import { EventInput } from "@/interfaces/event";
 import { useAuth } from "@/context/AuthContext";
 import {
   createFireStoreEvent,

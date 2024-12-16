@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { EventInput } from "@/interfaces/types";
+import { EventInput } from "@/interfaces/event";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import AvailabilitiesForm from "../forms/availabilities-form";

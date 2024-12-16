@@ -15,7 +15,7 @@ import {
   orderBy,
   writeBatch,
 } from "firebase/firestore";
-import { EventInput } from "@/interfaces/types";
+import { EventInput } from "@/interfaces/event";
 import { fetchBookingType } from "./bookingTypes";
 
 // Event converter
@@ -65,6 +65,7 @@ const eventConverter: FirestoreDataConverter<EventInput> = {
         startDate.setDate(startDate.getDate() - 1); // Set to the day before
         startDate.setHours(8, 0, 0, 0); // Set time to 8:00 AM
         firestoreEvent.reminderDateTime = Timestamp.fromDate(startDate);
+        firestoreEvent.reminderSent = false;
       } else {
         firestoreEvent.reminderDateTime = null;
       }

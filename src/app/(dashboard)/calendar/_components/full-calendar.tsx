@@ -11,7 +11,7 @@ import { DateSelectArg, EventClickArg } from "@fullcalendar/core";
 import EventFormDialog from "../../../../components/modals/EventFormModal";
 import { useAuth } from "@/context/AuthContext";
 import useFetchEvents from "../../../../hooks/useFetchEvents";
-import { EventInput } from "../../../../interfaces/types";
+import { EventInput } from "../../../../interfaces/event";
 import { EventResizeDoneArg } from "@fullcalendar/interaction";
 import { EventDropArg } from "@fullcalendar/core";
 

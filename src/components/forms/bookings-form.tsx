@@ -37,7 +37,7 @@ import {
 } from "@/components/ui/popover";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { EventInput } from "@/interfaces/types";
+import { EventInput } from "@/interfaces/event";
 import { fetchBookingTypes } from "@/lib/converters/bookingTypes";
 import { CaretSortIcon, CheckIcon } from "@radix-ui/react-icons";
 import { fetchClients } from "@/lib/converters/clients";

@@ -1,7 +1,7 @@
 import axios from "axios";
 import { toast } from "sonner";
 import { removeUndefinedFields } from "./global";
-import { EventInput } from "@/interfaces/types";
+import { EventInput } from "@/interfaces/event";
 import {
   createFireStoreEvent,
   updateFireStoreEvent,
@@ -86,8 +86,8 @@ export const handleRecurringEvent = async ({
   // console.log("Recurring event data ready for Firestore:", eventInput);
 
   const url = isBackgroundEvent
-    ? cloudFunctions.recurringAvailabilitiesProd
-    : cloudFunctions.recurringBookingsProd;
+    ? cloudFunctions.recurringAvailabilitiesTest
+    : cloudFunctions.recurringBookingsTest;
 
   try {
     const result = await axios.post(url, eventInput);

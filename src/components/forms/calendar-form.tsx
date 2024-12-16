@@ -1,7 +1,7 @@
 "use client";
 
 import { useAuth } from "@/context/AuthContext";
-import { EventInput } from "@/interfaces/types";
+import { EventInput } from "@/interfaces/event";
 import { fetchBookingTypes } from "@/lib/converters/bookingTypes";
 import { fetchClients } from "@/lib/converters/clients";
 import React, { useState, ChangeEvent, useEffect, useCallback } from "react";

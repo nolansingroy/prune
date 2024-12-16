@@ -1,7 +1,7 @@
 // dialgog in Bookings Tab
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 
-import { EventInput } from "@/interfaces/types";
+import { EventInput } from "@/interfaces/event";
 
 import BookingsForm from "../forms/bookings-form";
 

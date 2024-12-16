@@ -8,7 +8,7 @@ import {
   doc,
   getDoc,
 } from "firebase/firestore";
-import { EventInput } from "../interfaces/types";
+import { EventInput } from "../interfaces/event";
 import { fetchFirestoreEvents } from "@/lib/converters/events";
 
 const useFetchEvents = () => {
