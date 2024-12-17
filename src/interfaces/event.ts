@@ -8,7 +8,6 @@ export interface EventInput {
   typeId?: string;
   clientId?: string; // Add a clientId property to the event
   clientName?: string; // Add a clientName property to the event
-  clientPhone?: string;
   coachId?: string;
   client?: Client;
   // location?: string;

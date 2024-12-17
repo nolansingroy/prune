@@ -58,7 +58,6 @@ const eventConverter: FirestoreDataConverter<EventInput> = {
       firestoreEvent.clientId = event.clientId || "";
       firestoreEvent.clientName = event.clientName || "";
       firestoreEvent.paid = event.paid || false;
-      firestoreEvent.clientPhone = event.clientPhone;
       firestoreEvent.client = event.client || {};
 
       if (event.start) {
@@ -92,7 +91,6 @@ const eventConverter: FirestoreDataConverter<EventInput> = {
       client: data.client || undefined,
       clientId: data.clientId || "",
       clientName: data.clientName || "",
-      clientPhone: data.clientPhone || "",
       coachId: data.coachId || "",
       start: (data.start as Timestamp)?.toDate(),
       end: (data.end as Timestamp)?.toDate(),

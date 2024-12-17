@@ -23,7 +23,6 @@ interface EventFormDialogProps {
     client?: Client;
     clientId: string;
     clientName: string;
-    clientPhone: string;
     coachId: string;
     description: string;
     isBackgroundEvent: boolean;

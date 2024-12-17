@@ -704,7 +704,6 @@ export default function BookingsView() {
     client?: Client;
     clientId: string;
     clientName: string;
-    clientPhone: string;
     coachId: string;
     description: string;
     // location: string;
@@ -772,7 +771,6 @@ export default function BookingsView() {
             typeId: eventData.typeId || "",
             clientId: eventData.clientId || "",
             clientName: eventData.clientName || "",
-            clientPhone: eventData.clientPhone || "",
             paid: eventData.paid,
           };
 
@@ -828,7 +826,6 @@ export default function BookingsView() {
             client: eventData.client || undefined,
             clientId: eventData.clientId || "",
             clientName: eventData.clientName || "",
-            clientPhone: eventData.clientPhone || "",
             coachId: eventData.coachId || "",
             // location: eventData.location || "",
             start: startDateTime,

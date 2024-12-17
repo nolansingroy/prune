@@ -44,7 +44,6 @@ type CalendarFormProps = {
     client?: Client;
     clientId: string;
     clientName: string;
-    clientPhone: string;
     coachId: string;
     description: string;
     isBackgroundEvent: boolean;
@@ -94,7 +93,6 @@ export default function CalendarForm({
     { value: string; label: string; docId: string; phone: string }[]
   >([]);
   const [clientId, setClientId] = useState<string>("");
-  const [clientPhone, setClientPhone] = useState<string>("");
 
   const {
     register,
@@ -248,7 +246,6 @@ export default function CalendarForm({
     setTypeId("");
     setValue("clientName", "");
     setClientId("");
-    setClientPhone("");
     setFirestoreClients([]);
   };
 
@@ -317,7 +314,6 @@ export default function CalendarForm({
     console.log("Client selected:", value);
     setValue("clientName", value);
     setClientId(docId);
-    setClientPhone(phone);
     setClientsPopoverOpen(false);
   };
 
@@ -387,8 +383,6 @@ export default function CalendarForm({
             : undefined,
           clientId: !isBackgroundEvent ? clientId : "",
           clientName: !isBackgroundEvent ? formValues.clientName! : "",
-          clientPhone: !isBackgroundEvent ? clientPhone : "",
-          // filteredClients.find((cli) => cli.value === formValues.clientName)?.phone || "":  "",
           coachId: user?.uid!,
           description: formValues.description!,
           isBackgroundEvent: formValues.isBackgroundEvent!,

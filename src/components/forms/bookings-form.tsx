@@ -82,7 +82,6 @@ interface BookingsFormProps {
       client?: Client;
       clientId: string;
       clientName: string;
-      clientPhone: string;
       coachId: string;
       description: string;
       isBackgroundEvent: boolean;
@@ -156,7 +155,6 @@ export default function BookingsForm({
     { value: string; label: string; docId: string; phone: string }[]
   >([]);
   const [clientId, setClientId] = useState<string>("");
-  const [clientPhone, setClientPhone] = useState<string>("");
 
   const {
     register,
@@ -324,7 +322,6 @@ export default function BookingsForm({
     setValue("clientName", "");
     setClientId("");
     setValue("paid", false);
-    setClientPhone("");
     setFirestoreClients([]);
   };
 
@@ -393,7 +390,6 @@ export default function BookingsForm({
     console.log("Client selected:", value);
     setValue("clientName", value);
     setClientId(docId);
-    setClientPhone(phone);
     setClientsPopoverOpen(false);
   };
 
@@ -530,7 +526,6 @@ export default function BookingsForm({
               ) || undefined,
             clientId: clientId || "",
             clientName: formValues.clientName || "",
-            clientPhone: clientPhone || "",
             coachId: user?.uid || "",
             description: formValues.description || "",
             isBackgroundEvent: false, // Always false for regular bookings

@@ -18,7 +18,6 @@ export const handleRecurringEvent = async ({
   client,
   clientId,
   clientName,
-  clientPhone,
   coachId,
   description,
   isBackgroundEvent,
@@ -37,7 +36,6 @@ export const handleRecurringEvent = async ({
   client?: Client;
   clientId: string;
   clientName: string;
-  clientPhone: string;
   coachId: string;
   description: string;
   isBackgroundEvent: boolean;
@@ -82,7 +80,6 @@ export const handleRecurringEvent = async ({
           typeId: typeId || "",
           clientId: clientId || "",
           clientName: clientName || "",
-          clientPhone: clientPhone || "",
           paid: paid,
         }),
   };
@@ -111,7 +108,6 @@ export const handleSingleEvent = async ({
   client,
   clientId,
   clientName,
-  clientPhone,
   coachId,
   description,
   isBackgroundEvent,
@@ -129,7 +125,6 @@ export const handleSingleEvent = async ({
   client?: Client;
   clientId: string;
   clientName: string;
-  clientPhone: string;
   coachId: string;
   description: string;
   date?: string;
@@ -191,7 +186,6 @@ export const handleSingleEvent = async ({
           typeId: typeId,
           clientId: clientId,
           clientName: clientName,
-          clientPhone: clientPhone,
           paid: paid,
         }),
   };
@@ -220,7 +214,6 @@ export const updatEventFormDialog = async (
     client?: Client;
     clientId: string;
     clientName: string;
-    clientPhone: string;
     coachId: string;
     description: string;
     isBackgroundEvent: boolean;
@@ -277,7 +270,6 @@ export const updatEventFormDialog = async (
         client: eventData.client,
         clientId: eventData.clientId,
         clientName: eventData.clientName,
-        clientPhone: eventData.clientPhone,
         coachId: eventData.coachId,
         description: eventData.description,
         // location: eventData.location || "",
@@ -323,7 +315,6 @@ export const updatEventFormDialog = async (
         client: eventData.client,
         clientId: eventData.clientId,
         clientName: eventData.clientName,
-        clientPhone: eventData.clientPhone,
         coachId: eventData.coachId,
         description: eventData.description,
         // location: eventData.location || "",
