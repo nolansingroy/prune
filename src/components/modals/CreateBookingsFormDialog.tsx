@@ -18,7 +18,6 @@ interface CreateBookingsFormDialogProps {
       fee: number;
       clientId: string;
       clientName: string;
-      clientPhone: string;
       coachId: string;
       description: string;
       // location: string;

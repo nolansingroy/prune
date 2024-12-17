@@ -58,7 +58,6 @@ const eventConverter: FirestoreDataConverter<EventInput> = {
       firestoreEvent.clientId = event.clientId || "";
       firestoreEvent.clientName = event.clientName || "";
       firestoreEvent.paid = event.paid || false;
-      firestoreEvent.clientPhone = event.clientPhone;
 
       if (event.start) {
         const startDate = new Date(event.start);
@@ -90,7 +89,6 @@ const eventConverter: FirestoreDataConverter<EventInput> = {
       fee: data.fee || 0,
       clientId: data.clientId || "",
       clientName: data.clientName || "",
-      clientPhone: data.clientPhone || "",
       coachId: data.coachId || "",
       start: (data.start as Timestamp)?.toDate(),
       end: (data.end as Timestamp)?.toDate(),
