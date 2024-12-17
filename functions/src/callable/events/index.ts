@@ -17,8 +17,17 @@ export const fetchAllEvents = functions.https.onRequest(async (req, res) => {
   const utcDateTimeNow = moment().utc();
   const fiveMinutesAgo = utcDateTimeNow.clone().subtract(5, "minutes");
   const fiveMinutesLater = utcDateTimeNow.clone().add(5, "minutes");
+
+  // Calculate the time remaining until 7:00 AM Pacific Time
+  const pacificTimeNow = moment.tz("America/Los_Angeles");
+  const targetTime = pacificTimeNow.clone().set({hour: 7, minute: 0, second: 0, millisecond: 0});
+  const timeUntilTarget = targetTime.diff(pacificTimeNow);
   try {
     console.log("UTC TIME NOW ...", utcDateTimeNow.format("YYYY-MM-DD HH:mm:ss"));
+    console.log("Pacific Time Now ...", pacificTimeNow.format("YYYY-MM-DD HH:mm:ss"));
+    console.log("Time until 7:00 AM Pacific Time ...", moment.duration(timeUntilTarget).humanize());
+    console.log("UTC TIME NOW ...", utcDateTimeNow.format("YYYY-MM-DD HH:mm:ss"));
+
     const usersSnapshot = await db.collection("users").get();
 
     for (const userDoc of usersSnapshot.docs) {
@@ -42,6 +51,15 @@ export const fetchAllEvents = functions.https.onRequest(async (req, res) => {
             reminderDateTime: reminderDateTimeUTC,
             eventDocRef: eventDoc.ref,
           });
+
+          // Log the time remaining for each event to be eligible for sending text messages
+          const timeUntilReminder = reminderDateTimeUTC.diff(utcDateTimeNow);
+          const duration = moment.duration(timeUntilReminder);
+
+          const hours = Math.floor(duration.asHours());
+          const minutes = duration.minutes();
+          const seconds = duration.seconds();
+          console.log(`Time until reminder for ${clientName}: ${hours} hours, ${minutes} minutes, ${seconds} seconds`);
         }
       });
     }
@@ -62,9 +80,11 @@ export const fetchAllEvents = functions.https.onRequest(async (req, res) => {
         // Update the event document to mark it as processed
         // await event.eventDocRef.update({reminderSent: true});
       } else {
+        const timeUntilEligible = reminderDateTime.diff(utcDateTimeNow);
         console.log(`Event for ${event.clientName} does not match the current date and time window:`, {
           clientName: event.clientName,
           reminderDateTime: reminderDateTime.format("YYYY-MM-DD HH:mm:ss"),
+          timeUntilEligible: moment.duration(timeUntilEligible).humanize(),
         });
       }
     }
