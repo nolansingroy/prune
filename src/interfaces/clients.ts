@@ -18,6 +18,7 @@ export interface Client {
   email: string; // Optional email
   clientOptOff?: boolean;
   sms: boolean;
+  userSMSLink?: string;
   created_at?: Timestamp; // Firestore timestamp
   updated_at?: Timestamp; // Firestore timestamp
 }

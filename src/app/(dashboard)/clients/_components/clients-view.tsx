@@ -121,6 +121,7 @@ export default function ClientsView() {
         clientData = {
           ...clientData,
           clientOptOff: false,
+          sms: false,
         };
         await addClient(user.uid, clientData);
         toast.success("Client added successfully");
@@ -132,23 +133,6 @@ export default function ClientsView() {
 
       fetchAllClients();
       reset({ ...initialClientData, status: "active" });
-
-      // const clientsCollectionRef = collection(db, "users", user.uid, "clients");
-      // const clientDocRef = editingClientId
-      //   ? doc(clientsCollectionRef, editingClientId)
-      //   : doc(clientsCollectionRef);
-
-      // const newClient = {
-      //   ...data,
-
-      //   status: data.status || "active", // Default to "active" if status is not selected
-      //   updated_at: serverTimestamp(),
-      //   ...(editingClientId ? {} : { created_at: serverTimestamp() }), // Add created_at only for new clients
-      // };
-
-      // await setDoc(clientDocRef, newClient);
-
-      // Refresh client list
     }
   };
 
@@ -316,8 +300,12 @@ export default function ClientsView() {
               <div className="flex flex-col space-y-1">
                 <Label htmlFor="sms">Sms Reminders</Label>
                 <span className="text-sm text-muted-foreground">
-                  sms reminders will be sent to this client at 8:00 AM the day
-                  before their appointment
+                  Generate a unique link for this client to opt-in and receive
+                  SMS notifications for bookings reminders.
+                </span>
+                <span className="text-sm text-muted-foreground">
+                  If client accepted , sms reminders will be sent to this client
+                  at 8:00 AM the day before their appointment
                 </span>
               </div>
 
