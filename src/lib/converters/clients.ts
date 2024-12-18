@@ -15,8 +15,10 @@ import {
   addDoc,
   updateDoc,
   deleteDoc,
+  deleteField,
 } from "firebase/firestore";
-import { Client } from "@/interfaces/clients"; // Adjust the import path as needed
+import { Client } from "@/interfaces/clients";
+import crypto from "crypto";
 
 // Client converter
 const clientConverter: FirestoreDataConverter<Client> = {
@@ -47,7 +49,8 @@ const clientConverter: FirestoreDataConverter<Client> = {
       clientOptOff: data.clientOptOff || false,
       intPhoneNumber: data.intPhoneNumber,
       userSMSLink: data.userSMSLink || "",
-      generateLink: data.generateLink || false, // Add generateLink
+      generateLink: data.generateLink || false,
+      token: data.token || "",
     };
   },
 };
@@ -55,6 +58,11 @@ const clientConverter: FirestoreDataConverter<Client> = {
 // Reference to the user's clients collection
 const clientsRef = (uid: string) =>
   collection(db, `users/${uid}/clients`).withConverter(clientConverter);
+
+// Function to generate a secure token
+const generateToken = () => {
+  return crypto.randomBytes(16).toString("hex");
+};
 
 // Function to fetch clients
 export async function fetchClients(uid: string): Promise<Client[]> {
@@ -87,18 +95,20 @@ export async function addClient(
   client: Client,
   generateLink: boolean
 ) {
+  const token = generateLink ? generateToken() : undefined;
   const newClient = {
     ...client,
     created_at: serverTimestamp(),
     updated_at: serverTimestamp(),
     sms: false,
     clientOptOff: false,
-    generateLink, // Add generateLink
+    generateLink,
+    ...(generateLink && { token }),
   };
   const newClientRef = await addDoc(clientsRef(uid), newClient);
   const clientId = newClientRef.id;
   const userSMSLink = generateLink
-    ? `${window.location.origin}/sms?user=${uid}&&client=${clientId}`
+    ? `${window.location.origin}/sms?user=${uid}&&client=${clientId}&&token=${token}`
     : "";
   await updateDoc(newClientRef, {
     docId: clientId,
@@ -114,17 +124,28 @@ export async function updateClient(
   client: Client,
   generateLink: boolean
 ): Promise<void> {
+  const token = generateLink ? generateToken() : undefined;
   const clientRef = doc(clientsRef(uid), client.docId);
   const userSMSLink = generateLink
-    ? `${window.location.origin}/sms?user=${uid}&&client=${client.docId}`
-    : "";
+    ? `${window.location.origin}/sms?user=${uid}&&client=${client.docId}&&token=${token}`
+    : client.userSMSLink;
   const updatedClient = {
     ...client,
     updated_at: serverTimestamp(),
     userSMSLink,
-    generateLink, // Add generateLink
+    generateLink,
+    ...(generateLink && { token }),
   };
-  await updateDoc(clientRef, updatedClient);
+
+  if (!generateLink) {
+    await updateDoc(clientRef, {
+      ...updatedClient,
+      token: deleteField(),
+      userSMSLink: deleteField(),
+    });
+  } else {
+    await updateDoc(clientRef, updatedClient);
+  }
 }
 
 // Function to delete a client from Firestore

@@ -22,4 +22,5 @@ export interface Client {
   created_at?: Timestamp;
   updated_at?: Timestamp;
   generateLink?: boolean;
+  token?: string;
 }
