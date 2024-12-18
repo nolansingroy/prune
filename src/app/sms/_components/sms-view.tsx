@@ -7,11 +7,12 @@ import {
   TSMSForm,
   smsDataSchema,
 } from "@/lib/validations/sms-form-validations";
-import { useRouter, useSearchParams, notFound } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 
 import axios from "axios";
 import { cloudFunctions } from "@/constants/data";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
 
 export default function SmsView() {
   const router = useRouter();
@@ -27,7 +28,7 @@ export default function SmsView() {
   const [loading, setLoading] = useState(true);
 
   const fetchClientData = useCallback(async () => {
-    if (!userId || !clientId) {
+    if (!userId || !clientId || !token) {
       setLoading(false);
       router.push("/404");
       return;
@@ -37,15 +38,16 @@ export default function SmsView() {
       const response = await axios.get(cloudFunctions.fetchClientDataTest, {
         params: { userId, clientId, token },
       });
-      console.log("response:", response);
+      console.log("response:", response.data);
+      setClientData(response.data);
     } catch (error) {
       console.error("Error getting client data:", error);
-      // router.push("/404");
       setLoading(false);
+      router.push("/404");
     } finally {
       setLoading(false);
     }
-  }, [userId, clientId, token]);
+  }, [userId, clientId, token, router]);
 
   useEffect(() => {
     fetchClientData();
@@ -53,6 +55,7 @@ export default function SmsView() {
 
   const handleSubmit = async (data: TSMSForm) => {
     console.log(data);
+
     // const response = await call cloud function
     // if (!!response.error || !response.propertyId) {
     //   toast.error(`Error: ${response.message}`);
@@ -60,13 +63,17 @@ export default function SmsView() {
     // }
     // logic here
     // after logic display success message
-    // toast.success("Sucssefully subscribed to sms service");
-    //push to success page
+    // toast.success("Successfully subscribed to sms service");
+    // push to success page
     // router.push("/success-sms");
   };
 
   if (loading) {
-    return <div>Loading...</div>;
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <LoadingSpinner className="w-10 h-10" />
+      </div>
+    );
   }
 
   return (
@@ -79,6 +86,7 @@ export default function SmsView() {
             <span>Submit</span>
           </>
         }
+        defaultValues={clientData || undefined} // Pass undefined if clientData is null
       />
     </div>
   );
