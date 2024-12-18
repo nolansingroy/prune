@@ -46,6 +46,8 @@ const initialClientData: Client = {
   intPhoneNumber: "",
   fullName: "",
   sms: false,
+  clientOptOff: false,
+  userSMSLink: "",
 };
 
 export default function ClientsView() {
@@ -54,6 +56,7 @@ export default function ClientsView() {
   const [clients, setClients] = useState<Client[]>([]);
   const [editingClientId, setEditingClientId] = useState<string | null>(null); // Track if editing a client
   const [loading, setLoading] = useState(true);
+  const [generateLink, setGenerateLink] = useState(false); // State for the generate link switch
 
   let actionType = editingClientId ? "edit" : "add";
 
@@ -63,7 +66,6 @@ export default function ClientsView() {
     reset,
     trigger,
     clearErrors,
-    // getValues responsable for getting the form values
     getValues,
     control,
     watch,
@@ -77,15 +79,12 @@ export default function ClientsView() {
     },
   });
 
-  const sms = watch("sms");
-
   // Fetch clients from the Firestore subcollection
   const fetchAllClients = useCallback(async () => {
     if (user) {
       const clients = await fetchClients(user.uid);
       setClients(clients);
       setLoading(false);
-      // console.log("Clients fetched:", clients); // Set loading to false after fetching
     }
   }, [user]);
 
@@ -99,14 +98,10 @@ export default function ClientsView() {
 
   // Save or update client in the 'clients' subcollection
   const handleSaveClient = async (data: TClientsForm) => {
-    // console.log("actionType:", actionType);
     if (user) {
       const formattedPhoneNumber = data.phoneNumber
         ? parsePhoneNumberWithError(data.phoneNumber, "US").formatNational()
         : "";
-
-      // console.log("Phone Number:", data.phoneNumber);
-      // console.log("Formatted Phone Number:", formattedPhoneNumber);
 
       let clientData = {
         ...data,
@@ -115,18 +110,15 @@ export default function ClientsView() {
         docId: editingClientId || "",
         phoneNumber: formattedPhoneNumber,
         status: data.status || "active",
+        clientOptOff: false,
+        sms: false, // Always set sms to false
       };
 
       if (actionType === "add") {
-        clientData = {
-          ...clientData,
-          clientOptOff: false,
-          sms: false,
-        };
-        await addClient(user.uid, clientData);
+        await addClient(user.uid, clientData, generateLink);
         toast.success("Client added successfully");
       } else {
-        await updateClient(user.uid, clientData);
+        await updateClient(user.uid, clientData, generateLink);
         toast.success("Client updated successfully");
         setEditingClientId(null);
       }
@@ -150,7 +142,6 @@ export default function ClientsView() {
     setValue("email", client.email!);
     setValue("status", client.status as any);
     setValue("phoneNumber", formattedPhoneNumber!);
-    setValue("sms", client.sms || false);
     clearErrors();
   };
 
@@ -174,6 +165,13 @@ export default function ClientsView() {
         onCancel: () => {},
       });
     }
+  };
+
+  // Copy link to clipboard
+  const handleCopyLink = (link: string) => {
+    navigator.clipboard.writeText(link).then(() => {
+      toast.success("Link copied to clipboard");
+    });
   };
 
   if (loading) {
@@ -298,7 +296,7 @@ export default function ClientsView() {
 
             <div className="space-y-2">
               <div className="flex flex-col space-y-1">
-                <Label htmlFor="sms">Sms Reminders</Label>
+                <Label htmlFor="generateLink">Generate SMS Opt-In Link</Label>
                 <span className="text-sm text-muted-foreground">
                   Generate a unique link for this client to opt-in and receive
                   SMS notifications for bookings reminders.
@@ -311,20 +309,19 @@ export default function ClientsView() {
 
               <div className="flex items-center space-x-2">
                 <span className="text-sm font-medium text-gray-700">
-                  {sms ? "Subscribe" : "Unsubscribe"}
+                  {generateLink ? "Enabled" : "Disabled"}
                 </span>
                 <Switch
-                  id="sms"
-                  {...register("sms")}
-                  checked={sms}
-                  onChange={() => setValue("sms", !sms)}
+                  id="generateLink"
+                  checked={generateLink}
+                  onChange={() => setGenerateLink(!generateLink)}
                   className={`${
-                    sms ? "bg-rebus-green" : "bg-gray-200"
+                    generateLink ? "bg-rebus-green" : "bg-gray-200"
                   } relative inline-flex h-8 w-16 items-center rounded-full transition-colors focus:outline-none`}
                 >
                   <span
                     className={`${
-                      sms ? "translate-x-8" : "translate-x-1"
+                      generateLink ? "translate-x-8" : "translate-x-1"
                     } inline-block h-6 w-6 transform bg-white rounded-full transition-transform`}
                   />
                 </Switch>
@@ -333,12 +330,7 @@ export default function ClientsView() {
 
             {/* Buttons */}
             <div className="flex space-x-4">
-              <Button
-                type="submit"
-                variant={"rebusPro"}
-                className="mt-4"
-                // onClick={handleSaveClient}
-              >
+              <Button type="submit" variant={"rebusPro"} className="mt-4">
                 {editingClientId ? "Update Client" : "Add Client"}
               </Button>
 
@@ -372,7 +364,7 @@ export default function ClientsView() {
                     <TableCell>Phone</TableCell>
                     <TableCell>sms</TableCell>
                     <TableCell>Status</TableCell>
-                    {/* <TableCell>Rate</TableCell> */}
+                    <TableCell>Link</TableCell>
                     <TableCell>Actions</TableCell>
                   </TableRow>
                 </TableHeader>
@@ -385,7 +377,19 @@ export default function ClientsView() {
                       <TableCell>{client.phoneNumber}</TableCell>
                       <TableCell>{client.sms ? "Yes" : "No"}</TableCell>
                       <TableCell>{client.status}</TableCell>
-                      {/* <TableCell>{client.defaultRate || "N/A"}</TableCell> */}
+                      <TableCell>
+                        {client.userSMSLink ? (
+                          <Button
+                            onClick={() =>
+                              handleCopyLink(client.userSMSLink || "")
+                            }
+                          >
+                            Copy Link
+                          </Button>
+                        ) : (
+                          "N/A"
+                        )}
+                      </TableCell>
                       <TableCell>
                         <Button
                           className="mr-2"

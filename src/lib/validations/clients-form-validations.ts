@@ -16,6 +16,7 @@ export const clientsFormSchema = z.object({
     .refine(isValidPhoneNumber, { message: "Invalid phone number" }),
   sms: z.boolean(),
   clientOptOff: z.boolean().optional(),
+  userSMSLink: z.string().optional(),
 });
 
 export type TClientsForm = z.infer<typeof clientsFormSchema>;
