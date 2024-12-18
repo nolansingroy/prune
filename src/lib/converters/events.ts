@@ -105,6 +105,7 @@ const eventConverter: FirestoreDataConverter<EventInput> = {
       reminderDateTime: data.reminderDateTime
         ? (data.reminderDateTime as Timestamp)?.toDate()
         : undefined,
+      reminderSent: data.reminderSent || false,
       description: data.description || "",
       display: data.isBackgroundEvent ? "inverse-background" : "auto",
       isBackgroundEvent: !!data.isBackgroundEvent,
@@ -249,6 +250,13 @@ export const fetchBookingsListviewEvents = async (
         clientId: data.clientId,
         clientName: data.clientName,
         coachId: data.coachId || "",
+        reminderDateTime:
+          data.reminderDateTime instanceof Timestamp
+            ? data.reminderDateTime.toDate()
+            : data.reminderDateTime
+            ? new Date(data.reminderDateTime)
+            : undefined, // Provide a default value (undefined) if reminderDateTime is not present
+        reminderSent: data.reminderSent || false,
         start: dtstart,
         end: new Date(dtstart.getTime() + (end.getTime() - start.getTime())), // Calculate end time based on duration
         description: data.description || "",
@@ -275,6 +283,13 @@ export const fetchBookingsListviewEvents = async (
         clientId: data.clientId,
         clientName: data.clientName,
         coachId: data.coachId || "",
+        reminderDateTime:
+          data.reminderDateTime instanceof Timestamp
+            ? data.reminderDateTime.toDate()
+            : data.reminderDateTime
+            ? new Date(data.reminderDateTime)
+            : undefined, // Provide a default value (undefined) if reminderDateTime is not present
+        reminderSent: data.reminderSent || false,
         start: start,
         end: end,
         description: data.description || "",
