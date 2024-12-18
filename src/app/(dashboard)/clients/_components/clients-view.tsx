@@ -383,6 +383,7 @@ export default function ClientsView() {
                       <TableCell>
                         {client.userSMSLink ? (
                           <Button
+                            size={"xs"}
                             onClick={() =>
                               handleCopyLink(client.userSMSLink || "")
                             }
