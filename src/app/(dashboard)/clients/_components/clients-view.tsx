@@ -35,6 +35,17 @@ import {
   updateClient,
 } from "@/lib/converters/clients";
 import { Switch } from "@headlessui/react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  TrashIcon,
+  DotsHorizontalIcon,
+  Pencil1Icon,
+} from "@radix-ui/react-icons";
 
 const initialClientData: Client = {
   docId: "",
@@ -171,9 +182,9 @@ export default function ClientsView() {
   };
 
   // Copy link to clipboard
-  const handleCopyLink = (link: string) => {
+  const handleCopyLink = (link: string, clientName: string) => {
     navigator.clipboard.writeText(link).then(() => {
-      toast.success("Link copied to clipboard");
+      toast.success(`${clientName} Link copied to clipboard`);
     });
   };
 
@@ -383,9 +394,12 @@ export default function ClientsView() {
                       <TableCell>
                         {client.userSMSLink ? (
                           <Button
-                            size={"xs"}
+                            size="xs"
                             onClick={() =>
-                              handleCopyLink(client.userSMSLink || "")
+                              handleCopyLink(
+                                client.userSMSLink || "",
+                                client.fullName || ""
+                              )
                             }
                           >
                             Copy Link
@@ -395,18 +409,25 @@ export default function ClientsView() {
                         )}
                       </TableCell>
                       <TableCell>
-                        <Button
-                          className="mr-2"
-                          onClick={() => handleEditClient(client)}
-                        >
-                          Edit
-                        </Button>
-                        <Button
-                          variant="destructive"
-                          onClick={() => handleDeleteClient(client.docId!)}
-                        >
-                          Delete
-                        </Button>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost">
+                              <DotsHorizontalIcon />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent>
+                            <DropdownMenuItem
+                              onClick={() => handleEditClient(client)}
+                            >
+                              Edit
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => handleDeleteClient(client.docId!)}
+                            >
+                              Delete
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </TableCell>
                     </TableRow>
                   ))}
