@@ -47,6 +47,7 @@ const clientConverter: FirestoreDataConverter<Client> = {
       clientOptOff: data.clientOptOff || false,
       intPhoneNumber: data.intPhoneNumber,
       userSMSLink: data.userSMSLink || "",
+      generateLink: data.generateLink || false, // Add generateLink
     };
   },
 };
@@ -92,6 +93,7 @@ export async function addClient(
     updated_at: serverTimestamp(),
     sms: false,
     clientOptOff: false,
+    generateLink, // Add generateLink
   };
   const newClientRef = await addDoc(clientsRef(uid), newClient);
   const clientId = newClientRef.id;
@@ -120,6 +122,7 @@ export async function updateClient(
     ...client,
     updated_at: serverTimestamp(),
     userSMSLink,
+    generateLink, // Add generateLink
   };
   await updateDoc(clientRef, updatedClient);
 }

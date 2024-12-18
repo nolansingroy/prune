@@ -17,6 +17,7 @@ export const clientsFormSchema = z.object({
   sms: z.boolean(),
   clientOptOff: z.boolean().optional(),
   userSMSLink: z.string().optional(),
+  generateLink: z.boolean().optional(), // Add generateLink
 });
 
 export type TClientsForm = z.infer<typeof clientsFormSchema>;

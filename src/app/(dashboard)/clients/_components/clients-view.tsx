@@ -48,6 +48,7 @@ const initialClientData: Client = {
   sms: false,
   clientOptOff: false,
   userSMSLink: "",
+  generateLink: false, // Add generateLink to initialClientData
 };
 
 export default function ClientsView() {
@@ -56,7 +57,6 @@ export default function ClientsView() {
   const [clients, setClients] = useState<Client[]>([]);
   const [editingClientId, setEditingClientId] = useState<string | null>(null); // Track if editing a client
   const [loading, setLoading] = useState(true);
-  const [generateLink, setGenerateLink] = useState(false); // State for the generate link switch
 
   let actionType = editingClientId ? "edit" : "add";
 
@@ -78,6 +78,8 @@ export default function ClientsView() {
       status: "active",
     },
   });
+
+  const generateLink = watch("generateLink", false) ?? false; // Ensure generateLink is always a boolean
 
   // Fetch clients from the Firestore subcollection
   const fetchAllClients = useCallback(async () => {
@@ -142,6 +144,7 @@ export default function ClientsView() {
     setValue("email", client.email!);
     setValue("status", client.status as any);
     setValue("phoneNumber", formattedPhoneNumber!);
+    setValue("generateLink", client.userSMSLink ? true : false); // Set generateLink based on existing link
     clearErrors();
   };
 
@@ -314,7 +317,7 @@ export default function ClientsView() {
                 <Switch
                   id="generateLink"
                   checked={generateLink}
-                  onChange={() => setGenerateLink(!generateLink)}
+                  onChange={() => setValue("generateLink", !generateLink)}
                   className={`${
                     generateLink ? "bg-rebus-green" : "bg-gray-200"
                   } relative inline-flex h-8 w-16 items-center rounded-full transition-colors focus:outline-none`}
