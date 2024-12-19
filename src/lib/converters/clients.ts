@@ -108,7 +108,7 @@ export async function addClient(
   const newClientRef = await addDoc(clientsRef(uid), newClient);
   const clientId = newClientRef.id;
   const userSMSLink = generateLink
-    ? `${window.location.origin}/sms?user=${uid}&&client=${clientId}&&token=${token}`
+    ? `/sms?user=${uid}&&client=${clientId}&&token=${token}`
     : "";
   await updateDoc(newClientRef, {
     docId: clientId,
@@ -127,7 +127,7 @@ export async function updateClient(
   const token = generateLink ? generateToken() : undefined;
   const clientRef = doc(clientsRef(uid), client.docId);
   const userSMSLink = generateLink
-    ? `${window.location.origin}/sms?user=${uid}&&client=${client.docId}&&token=${token}`
+    ? `/sms?user=${uid}&&client=${client.docId}&&token=${token}`
     : client.userSMSLink;
   const updatedClient = {
     ...client,

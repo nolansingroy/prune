@@ -46,6 +46,7 @@ import {
   DotsHorizontalIcon,
   Pencil1Icon,
 } from "@radix-ui/react-icons";
+import { Badge } from "@/components/ui/badge";
 
 const initialClientData: Client = {
   docId: "",
@@ -389,7 +390,16 @@ export default function ClientsView() {
                       <TableCell>{client.lastName}</TableCell>
                       <TableCell>{client.email}</TableCell>
                       <TableCell>{client.phoneNumber}</TableCell>
-                      <TableCell>{client.sms ? "Yes" : "No"}</TableCell>
+                      <TableCell>
+                        {" "}
+                        <TableCell>
+                          <Badge
+                            variant={client.sms ? "success" : "destructive"}
+                          >
+                            {client.sms ? "Yes" : "No"}
+                          </Badge>
+                        </TableCell>
+                      </TableCell>
                       <TableCell>{client.status}</TableCell>
                       <TableCell>
                         {client.userSMSLink ? (
@@ -397,7 +407,8 @@ export default function ClientsView() {
                             size="xs"
                             onClick={() =>
                               handleCopyLink(
-                                client.userSMSLink || "",
+                                `${window.location.origin}${client.userSMSLink}` ||
+                                  "",
                                 client.fullName || ""
                               )
                             }
