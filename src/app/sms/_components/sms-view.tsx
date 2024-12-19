@@ -56,16 +56,30 @@ export default function SmsView() {
   const handleSubmit = async (data: TSMSForm) => {
     console.log(data);
 
-    // const response = await call cloud function
-    // if (!!response.error || !response.propertyId) {
-    //   toast.error(`Error: ${response.message}`);
-    //   return;
-    // }
-    // logic here
-    // after logic display success message
-    // toast.success("Successfully subscribed to sms service");
-    // push to success page
-    // router.push("/success-sms");
+    const validation = smsDataSchema.safeParse(data);
+    if (!validation.success) {
+      toast.error(validation.error.issues[0]?.message ?? "An error occurred");
+      return;
+    }
+
+    try {
+      const response = await axios.post(cloudFunctions.submitClientDataTest, {
+        userId,
+        clientId,
+        ...data,
+      });
+
+      if (response.status === 200) {
+        toast.success("Successfully subscribed to SMS service");
+        // router.push("/success-sms");
+      } else {
+        toast.error("Error submitting data");
+        console.error("Error submitting data:", response.data);
+      }
+    } catch (error) {
+      console.error("Error submitting data:", error);
+      toast.error("Error submitting data");
+    }
   };
 
   if (loading) {

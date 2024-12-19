@@ -91,4 +91,6 @@ export const cloudFunctions = {
   recurringAvailabilitiesProd: `${cloudFunctionBaseURLProduction}createRecurringAvailabilityInstances`,
   fetchClientDataTest: `${cloudFunctionBaseURLTesting}getClientData`,
   fetchClientDataProd: `${cloudFunctionBaseURLProduction}getClientData`,
+  submitClientDataTest: `${cloudFunctionBaseURLTesting}submitClientData`,
+  submitClientDataProd: `${cloudFunctionBaseURLProduction}submitClientData`,
 };
