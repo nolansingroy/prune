@@ -89,4 +89,8 @@ export const cloudFunctions = {
   recurringBookingsProd: `${cloudFunctionBaseURLProduction}createRecurringBookingInstances`,
   recurringAvailabilitiesTest: `${cloudFunctionBaseURLTesting}createRecurringAvailabilityInstances`,
   recurringAvailabilitiesProd: `${cloudFunctionBaseURLProduction}createRecurringAvailabilityInstances`,
+  fetchClientDataTest: `${cloudFunctionBaseURLTesting}getClientData`,
+  fetchClientDataProd: `${cloudFunctionBaseURLProduction}getClientData`,
+  submitClientDataTest: `${cloudFunctionBaseURLTesting}submitClientData`,
+  submitClientDataProd: `${cloudFunctionBaseURLProduction}submitClientData`,
 };

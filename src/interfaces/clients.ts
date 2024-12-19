@@ -4,16 +4,23 @@ import { Timestamp } from "firebase/firestore";
 
 // Define the Client interface
 export interface Client {
-  docId?: string;
   // stripeId: string;
-  status: string;
   // active: boolean;
   // deprecated: boolean;
   // defaultRate?: number | null;
+  docId?: string;
+  status: string;
+  fullName: string;
   firstName: string;
   lastName: string;
-  phoneNumber: string; // Optional phone number
-  email: string; // Optional email
-  created_at?: Timestamp; // Firestore timestamp
-  updated_at?: Timestamp; // Firestore timestamp
+  phoneNumber: string;
+  intPhoneNumber: string;
+  email: string;
+  clientOptOff?: boolean;
+  sms: boolean;
+  userSMSLink?: string;
+  created_at?: Timestamp;
+  updated_at?: Timestamp;
+  generateLink?: boolean;
+  token?: string;
 }

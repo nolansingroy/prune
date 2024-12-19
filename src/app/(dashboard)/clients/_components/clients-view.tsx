@@ -34,17 +34,33 @@ import {
   fetchClients,
   updateClient,
 } from "@/lib/converters/clients";
+import { Switch } from "@headlessui/react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  TrashIcon,
+  DotsHorizontalIcon,
+  Pencil1Icon,
+} from "@radix-ui/react-icons";
+import { Badge } from "@/components/ui/badge";
 
 const initialClientData: Client = {
   docId: "",
-  // stripeId: "",
   status: "active",
-  // active: true,
-  // deprecated: false,
   firstName: "",
   lastName: "",
   email: "",
   phoneNumber: "",
+  intPhoneNumber: "",
+  fullName: "",
+  sms: false,
+  clientOptOff: false,
+  userSMSLink: "",
+  generateLink: false, // Add generateLink to initialClientData
 };
 
 export default function ClientsView() {
@@ -53,6 +69,7 @@ export default function ClientsView() {
   const [clients, setClients] = useState<Client[]>([]);
   const [editingClientId, setEditingClientId] = useState<string | null>(null); // Track if editing a client
   const [loading, setLoading] = useState(true);
+
   let actionType = editingClientId ? "edit" : "add";
 
   const {
@@ -61,7 +78,6 @@ export default function ClientsView() {
     reset,
     trigger,
     clearErrors,
-    // getValues responsable for getting the form values
     getValues,
     control,
     watch,
@@ -75,13 +91,14 @@ export default function ClientsView() {
     },
   });
 
+  const generateLink = watch("generateLink", false) ?? false; // Ensure generateLink is always a boolean
+
   // Fetch clients from the Firestore subcollection
   const fetchAllClients = useCallback(async () => {
     if (user) {
       const clients = await fetchClients(user.uid);
       setClients(clients);
       setLoading(false);
-      // console.log("Clients fetched:", clients); // Set loading to false after fetching
     }
   }, [user]);
 
@@ -95,48 +112,33 @@ export default function ClientsView() {
 
   // Save or update client in the 'clients' subcollection
   const handleSaveClient = async (data: TClientsForm) => {
-    // console.log("actionType:", actionType);
     if (user) {
       const formattedPhoneNumber = data.phoneNumber
         ? parsePhoneNumberWithError(data.phoneNumber, "US").formatNational()
         : "";
 
-      // console.log("Phone Number:", data.phoneNumber);
-      // console.log("Formatted Phone Number:", formattedPhoneNumber);
-
-      const clientData = {
+      let clientData = {
         ...data,
+        fullName: `${data.firstName} ${data.lastName}`,
+        intPhoneNumber: data.phoneNumber,
         docId: editingClientId || "",
         phoneNumber: formattedPhoneNumber,
         status: data.status || "active",
+        clientOptOff: false,
+        sms: false, // Always set sms to false
       };
 
       if (actionType === "add") {
-        await addClient(user.uid, clientData);
+        await addClient(user.uid, clientData, generateLink);
+        toast.success("Client added successfully");
       } else {
-        await updateClient(user.uid, clientData);
+        await updateClient(user.uid, clientData, generateLink);
+        toast.success("Client updated successfully");
         setEditingClientId(null);
       }
 
       fetchAllClients();
       reset({ ...initialClientData, status: "active" });
-
-      // const clientsCollectionRef = collection(db, "users", user.uid, "clients");
-      // const clientDocRef = editingClientId
-      //   ? doc(clientsCollectionRef, editingClientId)
-      //   : doc(clientsCollectionRef);
-
-      // const newClient = {
-      //   ...data,
-
-      //   status: data.status || "active", // Default to "active" if status is not selected
-      //   updated_at: serverTimestamp(),
-      //   ...(editingClientId ? {} : { created_at: serverTimestamp() }), // Add created_at only for new clients
-      // };
-
-      // await setDoc(clientDocRef, newClient);
-
-      // Refresh client list
     }
   };
 
@@ -154,6 +156,7 @@ export default function ClientsView() {
     setValue("email", client.email!);
     setValue("status", client.status as any);
     setValue("phoneNumber", formattedPhoneNumber!);
+    setValue("generateLink", client.userSMSLink ? true : false); // Set generateLink based on existing link
     clearErrors();
   };
 
@@ -162,7 +165,6 @@ export default function ClientsView() {
     const clientName = clients.find((client) => client.docId === clientId);
     const clientReference = `${clientName?.firstName} ${clientName?.lastName}`;
     const clientFullName = clientReference || "this client";
-    // console.log("Client Full Name:", clientFullName);
 
     if (user) {
       openConfirmation({
@@ -177,25 +179,15 @@ export default function ClientsView() {
         },
         onCancel: () => {},
       });
-
-      // const clientDocRef = doc(db, "users", user.uid, "clients", clientId);
-      // await deleteDoc(clientDocRef);
-
-      // // Refresh client list after deletion
-      // fetchAllClients();
     }
   };
 
-  // // Handle form input changes
-  // const handleInputChange = (
-  //   e: ChangeEvent<HTMLInputElement> | ChangeEvent<HTMLSelectElement>
-  // ) => {
-  //   const { name, value } = e.target;
-  //   setNewClientData((prev) => ({
-  //     ...prev,
-  //     [name]: value,
-  //   }));
-  // };
+  // Copy link to clipboard
+  const handleCopyLink = (link: string, clientName: string) => {
+    navigator.clipboard.writeText(link).then(() => {
+      toast.success(`${clientName} Link copied to clipboard`);
+    });
+  };
 
   if (loading) {
     return (
@@ -216,8 +208,8 @@ export default function ClientsView() {
           <form
             className="space-y-4"
             onSubmit={handleSubmit(handleSaveClient, (errors) => {
-              // console.log("Validation Errors:", errors);
-              // console.log("Form Values:", getValues());
+              console.log("Validation Errors:", errors);
+              console.log("Form Values:", getValues());
             })}
           >
             <div className="space-y-2">
@@ -315,25 +307,45 @@ export default function ClientsView() {
                   {errors.phoneNumber.message}
                 </p>
               )}
-              {/* <PhoneInput
-                defaultCountry="US"
-                id="phoneNumber"
-                {...register("phoneNumber")}
-                onChange={(value) =>
-                  setValue("phoneNumber", value, { shouldValidate: true })
-                }
-                className="w-full"
-              /> */}
+            </div>
+
+            <div className="space-y-2">
+              <div className="flex flex-col space-y-1">
+                <Label htmlFor="generateLink">Generate SMS Opt-In Link</Label>
+                <span className="text-sm text-muted-foreground">
+                  Generate a unique link for this client to opt-in and receive
+                  SMS notifications for bookings reminders.
+                </span>
+                <span className="text-sm text-muted-foreground">
+                  If client accepted , sms reminders will be sent to this client
+                  at 8:00 AM the day before their appointment
+                </span>
+              </div>
+
+              <div className="flex items-center space-x-2">
+                <span className="text-sm font-medium text-gray-700">
+                  {generateLink ? "Enabled" : "Disabled"}
+                </span>
+                <Switch
+                  id="generateLink"
+                  checked={generateLink}
+                  onChange={() => setValue("generateLink", !generateLink)}
+                  className={`${
+                    generateLink ? "bg-rebus-green" : "bg-gray-200"
+                  } relative inline-flex h-8 w-16 items-center rounded-full transition-colors focus:outline-none`}
+                >
+                  <span
+                    className={`${
+                      generateLink ? "translate-x-8" : "translate-x-1"
+                    } inline-block h-6 w-6 transform bg-white rounded-full transition-transform`}
+                  />
+                </Switch>
+              </div>
             </div>
 
             {/* Buttons */}
             <div className="flex space-x-4">
-              <Button
-                type="submit"
-                variant={"rebusPro"}
-                className="mt-4"
-                // onClick={handleSaveClient}
-              >
+              <Button type="submit" variant={"rebusPro"} className="mt-4">
                 {editingClientId ? "Update Client" : "Add Client"}
               </Button>
 
@@ -365,8 +377,9 @@ export default function ClientsView() {
                     <TableCell>Last Name</TableCell>
                     <TableCell>Email</TableCell>
                     <TableCell>Phone</TableCell>
+                    <TableCell>sms</TableCell>
                     <TableCell>Status</TableCell>
-                    {/* <TableCell>Rate</TableCell> */}
+                    <TableCell>Link</TableCell>
                     <TableCell>Actions</TableCell>
                   </TableRow>
                 </TableHeader>
@@ -377,21 +390,55 @@ export default function ClientsView() {
                       <TableCell>{client.lastName}</TableCell>
                       <TableCell>{client.email}</TableCell>
                       <TableCell>{client.phoneNumber}</TableCell>
-                      <TableCell>{client.status}</TableCell>
-                      {/* <TableCell>{client.defaultRate || "N/A"}</TableCell> */}
                       <TableCell>
-                        <Button
-                          className="mr-2"
-                          onClick={() => handleEditClient(client)}
-                        >
-                          Edit
-                        </Button>
-                        <Button
-                          variant="destructive"
-                          onClick={() => handleDeleteClient(client.docId!)}
-                        >
-                          Delete
-                        </Button>
+                        {" "}
+                        <TableCell>
+                          <Badge
+                            variant={client.sms ? "success" : "destructive"}
+                          >
+                            {client.sms ? "Yes" : "No"}
+                          </Badge>
+                        </TableCell>
+                      </TableCell>
+                      <TableCell>{client.status}</TableCell>
+                      <TableCell>
+                        {client.userSMSLink ? (
+                          <Button
+                            size="xs"
+                            onClick={() =>
+                              handleCopyLink(
+                                `${window.location.origin}${client.userSMSLink}` ||
+                                  "",
+                                client.fullName || ""
+                              )
+                            }
+                          >
+                            Copy Link
+                          </Button>
+                        ) : (
+                          "N/A"
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost">
+                              <DotsHorizontalIcon />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent>
+                            <DropdownMenuItem
+                              onClick={() => handleEditClient(client)}
+                            >
+                              Edit
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => handleDeleteClient(client.docId!)}
+                            >
+                              Delete
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </TableCell>
                     </TableRow>
                   ))}

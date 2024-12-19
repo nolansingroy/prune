@@ -15,7 +15,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { EventInput } from "@/interfaces/types";
+import { EventInput } from "@/interfaces/event";
 
 const statuses = [
   {

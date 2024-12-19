@@ -26,6 +26,7 @@ export const createRecurringBookingInstances = functions.https.onRequest(
           title,
           clientId,
           clientName,
+          coachId,
           fee,
           paid,
           type,
@@ -68,6 +69,7 @@ export const createRecurringBookingInstances = functions.https.onRequest(
           title,
           clientId,
           clientName,
+          coachId,
           fee,
           paid,
           type,
@@ -142,10 +144,16 @@ export const createRecurringBookingInstances = functions.https.onRequest(
         console.log("Timestamp start date:", timestampStartDate.toDate());
         console.log("Timestamp end date:", timestampEndDate.toDate());
 
+        const reminderOriginalEvent = moment.tz(`${startDate}T${startTime}:00`, userTimeZone);
+        reminderOriginalEvent.subtract(1, "days");
+        reminderOriginalEvent.set({hour: 8, minute: 0, second: 0, millisecond: 0});
+        const timestampReminder = Timestamp.fromDate(reminderOriginalEvent.toDate());
+
         batch.set(eventRef, {
           title,
           clientId,
           clientName,
+          coachId,
           fee,
           paid,
           type,
@@ -154,6 +162,8 @@ export const createRecurringBookingInstances = functions.https.onRequest(
           // location,
           start: timestampStartDate,
           end: timestampEndDate,
+          reminderDateTime: timestampReminder,
+          reminderSent: false,
           isBackgroundEvent: false,
           startDate: timestampStartDate,
           startDay: originalStartDate.format("dddd"),
@@ -206,10 +216,16 @@ export const createRecurringBookingInstances = functions.https.onRequest(
           console.log("Timestamp instance start date:", timestampInstanceStartDate.toDate());
           console.log("Timestamp instance end date:", timestampInstanceEndDate.toDate());
 
+          const reminderInstanceEvent = moment.tz(`${instanceDate.format("YYYY-MM-DD")}T${startTime}:00`, userTimeZone);
+          reminderInstanceEvent.subtract(1, "days");
+          reminderInstanceEvent.set({hour: 8, minute: 0, second: 0, millisecond: 0});
+          const timestampInstanceReminder = Timestamp.fromDate(reminderInstanceEvent.toDate());
+
           batch.set(instanceRef, {
             title,
             clientId,
             clientName,
+            coachId,
             fee,
             paid: false,
             type,
@@ -223,6 +239,8 @@ export const createRecurringBookingInstances = functions.https.onRequest(
             startDay: instanceStartDate.format("dddd"),
             endDate: timestampInstanceEndDate,
             endDay: instanceEndDate.format("dddd"),
+            reminderDateTime: timestampInstanceReminder,
+            reminderSent: false,
             originalEventId: eventRef.id,
             isInstance: true,
             created_at: FieldValue.serverTimestamp(),

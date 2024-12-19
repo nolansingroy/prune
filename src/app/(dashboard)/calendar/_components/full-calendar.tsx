@@ -11,7 +11,7 @@ import { DateSelectArg, EventClickArg } from "@fullcalendar/core";
 import EventFormDialog from "../../../../components/modals/EventFormModal";
 import { useAuth } from "@/context/AuthContext";
 import useFetchEvents from "../../../../hooks/useFetchEvents";
-import { EventInput } from "../../../../interfaces/types";
+import { EventInput } from "../../../../interfaces/event";
 import { EventResizeDoneArg } from "@fullcalendar/interaction";
 import { EventDropArg } from "@fullcalendar/core";
 
@@ -138,6 +138,10 @@ export default function FullCalendarComponent({}) {
         const startDate = dropInfo.event.start ? dropInfo.event.start : null;
         const endDate = dropInfo.event.end ? dropInfo.event.end : null;
 
+        const reminder = dropInfo.event.start ? dropInfo.event.start : null;
+        reminder!.setDate(reminder!.getDate() - 1);
+        reminder!.setHours(8, 0, 0, 0);
+
         await updateFireStoreEvent(user.uid, dropInfo.event.id, {
           start: startDate!,
           end: endDate!,
@@ -145,6 +149,7 @@ export default function FullCalendarComponent({}) {
           endDate: endDate!,
           startDay: startDay,
           endDay: endDay,
+          reminderDateTime: reminder!,
         });
 
         // Update the local state to reflect the changes
@@ -159,6 +164,7 @@ export default function FullCalendarComponent({}) {
                 endDate: endDate!,
                 startDay: startDay!,
                 endDay: endDay!,
+                reminderDateTime: reminder!,
               };
             }
             return event;
@@ -190,6 +196,7 @@ export default function FullCalendarComponent({}) {
         fee: prevState?.fee || 0,
         clientId: prevState?.clientId || "",
         clientName: prevState?.clientName || "",
+        coachId: user?.uid || "",
         type: prevState?.type || "No type",
         typeId: prevState?.typeId || "",
         isBackgroundEvent: prevState?.isBackgroundEvent ?? false,
@@ -231,6 +238,7 @@ export default function FullCalendarComponent({}) {
         typeId: extendedProps.typeId || "",
         clientId: extendedProps.clientId || "",
         clientName: extendedProps.clientName || "",
+        coachId: user?.uid || "",
         description: extendedProps.description || "",
         // location: extendedProps.location || "",
         isBackgroundEvent: extendedProps.isBackgroundEvent || false,
@@ -265,6 +273,7 @@ export default function FullCalendarComponent({}) {
     fee,
     clientId,
     clientName,
+    coachId,
     description,
     isBackgroundEvent,
     date,
@@ -279,6 +288,7 @@ export default function FullCalendarComponent({}) {
     description: string;
     clientId: string;
     clientName: string;
+    coachId: string;
     isBackgroundEvent: boolean;
     startTime: string;
     endTime: string;
@@ -327,6 +337,7 @@ export default function FullCalendarComponent({}) {
               fee,
               clientId,
               clientName,
+              coachId,
               description,
               isBackgroundEvent,
               startDate,
@@ -363,6 +374,7 @@ export default function FullCalendarComponent({}) {
               date,
               clientId,
               clientName,
+              coachId,
               description,
               isBackgroundEvent,
               startTime,
@@ -407,6 +419,7 @@ export default function FullCalendarComponent({}) {
     fee: number;
     clientId: string;
     clientName: string;
+    coachId: string;
     description: string;
     // location: string;
     isBackgroundEvent: boolean;

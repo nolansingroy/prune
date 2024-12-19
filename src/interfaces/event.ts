@@ -2,10 +2,11 @@ export interface EventInput {
   color?: any;
   id?: string;
   title: string;
-  type: string;
-  typeId: string;
-  clientId: string; // Add a clientId property to the event
-  clientName: string; // Add a clientName property to the event
+  type?: string;
+  typeId?: string;
+  clientId?: string; // Add a clientId property to the event
+  clientName?: string; // Add a clientName property to the event
+  coachId?: string;
   // location?: string;
   start: Date; // Use JavaScript Date object
   end: Date; // Use JavaScript Date object
@@ -17,7 +18,7 @@ export interface EventInput {
   startDay: string; // Day of the week derived from startDate
   endDate: Date; // Use JavaScript Date object as UTC
   endDay: string; // Day of the week derived from endDate
-  fee: number; // Add a fee property to the event
+  fee?: number; // Add a fee property to the event
   recurrence?: {
     daysOfWeek?: number[];
     startTime?: string;
@@ -37,6 +38,8 @@ export interface EventInput {
       originalEventId?: string;
     };
   };
+  reminderDateTime?: Date;
+  reminderSent?: boolean;
   // New field: Map for tracking references of instance documents
   instanceMap?: { [instanceDate: string]: string }; // Maps instance date to document ID
   paid?: boolean; // Flag to indicate if the event is paid

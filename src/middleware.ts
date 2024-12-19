@@ -9,7 +9,15 @@ import {
 } from "next-firebase-auth-edge";
 import { authConfig } from "../config/server-config";
 
-const PUBLIC_PATHS = ["/register", "/login", "/policy/textmessaging"];
+const PUBLIC_PATHS = [
+  "/register",
+  "/login",
+  "/policy/textmessaging",
+  "/sms",
+  "/404",
+  "/sms/subscription-success",
+  "/sms/update-success",
+];
 
 export async function middleware(request: NextRequest) {
   return authMiddleware(request, {
@@ -25,7 +33,13 @@ export async function middleware(request: NextRequest) {
       const pathname = request.nextUrl.pathname;
 
       // Allow authenticated users to access /policy/textmessaging
-      if (pathname === "/policy/textmessaging") {
+      if (
+        pathname === "/policy/textmessaging" ||
+        pathname === "/sms" ||
+        pathname === "/404" ||
+        pathname === "/sms/subscription-success" ||
+        pathname === "/sms/update-success"
+      ) {
         return NextResponse.next({
           request: {
             headers,
@@ -36,7 +50,11 @@ export async function middleware(request: NextRequest) {
       // Redirect authenticated users away from other public paths
       if (
         PUBLIC_PATHS.includes(pathname) &&
-        pathname !== "/policy/textmessaging"
+        pathname !== "/policy/textmessaging" &&
+        pathname !== "/sms" &&
+        pathname !== "/404" &&
+        pathname !== "/sms/subscription-success" &&
+        pathname !== "/sms/update-success"
       ) {
         return redirectToPath(request, "/calendar", {
           shouldClearSearchParams: true,

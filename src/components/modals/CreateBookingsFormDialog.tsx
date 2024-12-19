@@ -1,7 +1,7 @@
 // dialgog in Bookings Tab
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 
-import { EventInput } from "@/interfaces/types";
+import { EventInput } from "@/interfaces/event";
 
 import BookingsForm from "../forms/bookings-form";
 
@@ -18,6 +18,7 @@ interface CreateBookingsFormDialogProps {
       fee: number;
       clientId: string;
       clientName: string;
+      coachId: string;
       description: string;
       // location: string;
       isBackgroundEvent: boolean; // Automatically false for regular bookings

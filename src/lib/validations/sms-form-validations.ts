@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { isValidPhoneNumber } from "react-phone-number-input";
 
-export const clientsFormSchema = z.object({
+export const smsDataSchema = z.object({
   firstName: z
     .string()
     .min(1, { message: "First name must be at least 1 character long" }),
@@ -9,15 +9,11 @@ export const clientsFormSchema = z.object({
     .string()
     .min(1, { message: "Last name must be at least 1 character long" }),
   email: z.string().email({ message: "Invalid email address" }),
-  status: z.enum(["active", "pending", "deactivated"]),
   phoneNumber: z
     .string()
     .min(1, { message: "Phone number is required" })
     .refine(isValidPhoneNumber, { message: "Invalid phone number" }),
-  sms: z.boolean(),
-  clientOptOff: z.boolean().optional(),
-  userSMSLink: z.string().optional(),
-  generateLink: z.boolean().optional(), // Add generateLink
+  acceptSmsNotifications: z.boolean().optional(), // Add acceptSmsNotifications field
 });
 
-export type TClientsForm = z.infer<typeof clientsFormSchema>;
+export type TSMSForm = z.infer<typeof smsDataSchema>;

@@ -15,7 +15,7 @@ import {
   orderBy,
   writeBatch,
 } from "firebase/firestore";
-import { EventInput } from "@/interfaces/types";
+import { EventInput } from "@/interfaces/event";
 import { fetchBookingType } from "./bookingTypes";
 
 // Event converter
@@ -23,12 +23,7 @@ const eventConverter: FirestoreDataConverter<EventInput> = {
   toFirestore(event: Omit<EventInput, "id">): DocumentData {
     const firestoreEvent: DocumentData = {
       title: event.title || "",
-      type: event.type || "",
-      typeId: event.typeId || "",
-      // location: event.location || "",
-      fee: event.fee || 0,
-      clientId: event.clientId || "",
-      clientName: event.clientName || "",
+      coachId: event.coachId || "",
       start: event.start ? Timestamp.fromDate(new Date(event.start)) : null,
       end: event.end ? Timestamp.fromDate(new Date(event.end)) : null,
       description: event.description || "",
@@ -48,7 +43,6 @@ const eventConverter: FirestoreDataConverter<EventInput> = {
       originalEventId: event.originalEventId || "",
       isInstance: event.isInstance || false,
       instanceMap: event.instanceMap || {},
-      paid: event.paid || false,
       created_at: event.created_at
         ? Timestamp.fromDate(new Date(event.created_at))
         : null,
@@ -56,6 +50,25 @@ const eventConverter: FirestoreDataConverter<EventInput> = {
         ? Timestamp.fromDate(new Date(event.updated_at))
         : null,
     };
+
+    if (!event.isBackgroundEvent) {
+      firestoreEvent.type = event.type || "";
+      firestoreEvent.typeId = event.typeId || "";
+      firestoreEvent.fee = event.fee || 0;
+      firestoreEvent.clientId = event.clientId || "";
+      firestoreEvent.clientName = event.clientName || "";
+      firestoreEvent.paid = event.paid || false;
+
+      if (event.start) {
+        const startDate = new Date(event.start);
+        startDate.setDate(startDate.getDate() - 1); // Set to the day before
+        startDate.setHours(8, 0, 0, 0); // Set time to 8:00 AM
+        firestoreEvent.reminderDateTime = Timestamp.fromDate(startDate);
+        firestoreEvent.reminderSent = false;
+      } else {
+        firestoreEvent.reminderDateTime = null;
+      }
+    }
 
     if (event.recurrence) {
       firestoreEvent.recurrence = event.recurrence;
@@ -76,7 +89,7 @@ const eventConverter: FirestoreDataConverter<EventInput> = {
       fee: data.fee || 0,
       clientId: data.clientId || "",
       clientName: data.clientName || "",
-      // location: data.location || "",
+      coachId: data.coachId || "",
       start: (data.start as Timestamp)?.toDate(),
       end: (data.end as Timestamp)?.toDate(),
       startDate: (data.start as Timestamp)?.toDate(),
@@ -89,6 +102,10 @@ const eventConverter: FirestoreDataConverter<EventInput> = {
       endDay: (data.end as Timestamp)?.toDate().toLocaleDateString("en-US", {
         weekday: "long",
       }),
+      reminderDateTime: data.reminderDateTime
+        ? (data.reminderDateTime as Timestamp)?.toDate()
+        : undefined,
+      reminderSent: data.reminderSent || false,
       description: data.description || "",
       display: data.isBackgroundEvent ? "inverse-background" : "auto",
       isBackgroundEvent: !!data.isBackgroundEvent,
@@ -232,6 +249,14 @@ export const fetchBookingsListviewEvents = async (
         fee: data.fee,
         clientId: data.clientId,
         clientName: data.clientName,
+        coachId: data.coachId || "",
+        reminderDateTime:
+          data.reminderDateTime instanceof Timestamp
+            ? data.reminderDateTime.toDate()
+            : data.reminderDateTime
+            ? new Date(data.reminderDateTime)
+            : undefined, // Provide a default value (undefined) if reminderDateTime is not present
+        reminderSent: data.reminderSent || false,
         start: dtstart,
         end: new Date(dtstart.getTime() + (end.getTime() - start.getTime())), // Calculate end time based on duration
         description: data.description || "",
@@ -257,6 +282,14 @@ export const fetchBookingsListviewEvents = async (
         fee: data.fee,
         clientId: data.clientId,
         clientName: data.clientName,
+        coachId: data.coachId || "",
+        reminderDateTime:
+          data.reminderDateTime instanceof Timestamp
+            ? data.reminderDateTime.toDate()
+            : data.reminderDateTime
+            ? new Date(data.reminderDateTime)
+            : undefined, // Provide a default value (undefined) if reminderDateTime is not present
+        reminderSent: data.reminderSent || false,
         start: start,
         end: end,
         description: data.description || "",
@@ -313,6 +346,7 @@ export const fetchAvailabilitiesListviewEvents = async (
         typeId: data.typeId || "",
         clientId: data.clientId || "",
         clientName: data.clientName || "",
+        coachId: data.coachId || "",
         start: dtstart,
         end: new Date(dtstart.getTime() + (end.getTime() - start.getTime())), // Calculate end time based on duration
         description: data.description || "",
@@ -336,6 +370,7 @@ export const fetchAvailabilitiesListviewEvents = async (
         typeId: data.typeId || "",
         clientId: data.clientId || "",
         clientName: data.clientName || "",
+        coachId: data.coachId || "",
         start: start,
         end: end,
         description: data.description || "",

@@ -1,7 +1,7 @@
 "use client";
 
 import { useAuth } from "@/context/AuthContext";
-import { EventInput } from "@/interfaces/types";
+import { EventInput } from "@/interfaces/event";
 import { fetchBookingTypes } from "@/lib/converters/bookingTypes";
 import { fetchClients } from "@/lib/converters/clients";
 import React, { useState, ChangeEvent, useEffect, useCallback } from "react";
@@ -42,6 +42,7 @@ type CalendarFormProps = {
     fee: number;
     clientId: string;
     clientName: string;
+    coachId: string;
     description: string;
     isBackgroundEvent: boolean;
     date?: string;
@@ -83,10 +84,10 @@ export default function CalendarForm({
   const [clientsPopoverOpen, setClientsPopoverOpen] = useState(false);
   // const [client, setClient] = useState("");
   const [clients, setClients] = useState<
-    { value: string; label: string; docId: string }[]
+    { value: string; label: string; docId: string; phone: string }[]
   >([]);
   const [filteredClients, setFilteredClients] = useState<
-    { value: string; label: string; docId: string }[]
+    { value: string; label: string; docId: string; phone: string }[]
   >([]);
   const [clientId, setClientId] = useState<string>("");
 
@@ -169,9 +170,15 @@ export default function CalendarForm({
     if (user) {
       // Fetching clients from Firestore
       const clients = await fetchClients(user.uid);
-      let presetClients: { value: string; label: string; docId: string }[] = [];
+      let presetClients: {
+        value: string;
+        label: string;
+        docId: string;
+        phone: string;
+      }[] = [];
       clients.forEach((cli) => {
         presetClients.push({
+          phone: cli.intPhoneNumber,
           value: cli.firstName + " " + cli.lastName,
           label: cli.firstName + " " + cli.lastName,
           docId: cli.docId!,
@@ -297,7 +304,7 @@ export default function CalendarForm({
 
   // client functions
 
-  const handleClientSelect = (value: string, docId: string) => {
+  const handleClientSelect = (value: string, docId: string, phone: string) => {
     console.log("Client id selected:", docId);
     console.log("Client selected:", value);
     setValue("clientName", value);
@@ -319,7 +326,7 @@ export default function CalendarForm({
   ) => {
     if (event.key === "Enter") {
       // handle the case where the user presses enter on a client name that is not in the list
-      handleClientSelect(watch("clientName")!, "");
+      handleClientSelect(watch("clientName")!, "", "");
       // close the popover
       setClientsPopoverOpen(false);
     }
@@ -328,7 +335,7 @@ export default function CalendarForm({
   // handle the case where the user clicks outside the popover and typed a client name that is not in the list and clicked outside the popover
   const handlePopoverCloseClient = () => {
     if (!filteredClients.find((cli) => cli.value === watch("clientName"))) {
-      handleClientSelect(watch("clientName")!, ""); // Set the client with the typed name if it's not in the list
+      handleClientSelect(watch("clientName")!, "", ""); // Set the client with the typed name if it's not in the list
     }
     setClientsPopoverOpen(false);
   };
@@ -364,6 +371,8 @@ export default function CalendarForm({
           fee: !isBackgroundEvent ? parseFloat(formValues.fee!) : 0,
           clientId: !isBackgroundEvent ? clientId : "",
           clientName: !isBackgroundEvent ? formValues.clientName! : "",
+          // filteredClients.find((cli) => cli.value === formValues.clientName)?.phone || "":  "",
+          coachId: user?.uid!,
           description: formValues.description!,
           isBackgroundEvent: formValues.isBackgroundEvent!,
           date: showDateSelector ? formValues.date : undefined,
@@ -486,7 +495,7 @@ export default function CalendarForm({
                           key={cli.value}
                           value={cli.value}
                           onSelect={() => {
-                            handleClientSelect(cli.value, cli.docId);
+                            handleClientSelect(cli.value, cli.docId, cli.phone);
                             setClientsPopoverOpen(false);
                           }}
                         >

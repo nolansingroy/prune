@@ -1,7 +1,7 @@
 import axios from "axios";
 import { toast } from "sonner";
 import { removeUndefinedFields } from "./global";
-import { EventInput } from "@/interfaces/types";
+import { EventInput } from "@/interfaces/event";
 import {
   createFireStoreEvent,
   updateFireStoreEvent,
@@ -16,6 +16,7 @@ export const handleRecurringEvent = async ({
   fee,
   clientId,
   clientName,
+  coachId,
   description,
   isBackgroundEvent,
   startDate,
@@ -32,6 +33,7 @@ export const handleRecurringEvent = async ({
   fee: number;
   clientId: string;
   clientName: string;
+  coachId: string;
   description: string;
   isBackgroundEvent: boolean;
   startDate: string;
@@ -55,6 +57,7 @@ export const handleRecurringEvent = async ({
   const eventInput = {
     title: title || "",
     description: description || "",
+    coachId: coachId,
     startDate,
     startTime,
     endTime,
@@ -100,6 +103,7 @@ export const handleSingleEvent = async ({
   fee,
   clientId,
   clientName,
+  coachId,
   description,
   isBackgroundEvent,
   date,
@@ -115,6 +119,7 @@ export const handleSingleEvent = async ({
   fee: number;
   clientId: string;
   clientName: string;
+  coachId: string;
   description: string;
   date?: string;
   isBackgroundEvent: boolean;
@@ -152,13 +157,10 @@ export const handleSingleEvent = async ({
     weekday: "long",
   });
 
-  const event: Omit<EventInput, "fee"> = {
+  const event = {
     id: "",
     title,
-    type,
-    typeId,
-    clientId,
-    clientName,
+    coachId,
     start: startDateTime,
     end: endDateTime,
     description,
@@ -169,8 +171,16 @@ export const handleSingleEvent = async ({
     startDay,
     endDate: endDateTime,
     endDay,
-    paid,
-    ...(isBackgroundEvent ? {} : { fee }),
+    ...(isBackgroundEvent
+      ? {}
+      : {
+          fee: fee,
+          type: type,
+          typeId: typeId,
+          clientId: clientId,
+          clientName: clientName,
+          paid: paid,
+        }),
   };
 
   try {
@@ -196,8 +206,8 @@ export const updatEventFormDialog = async (
     fee: number;
     clientId: string;
     clientName: string;
+    coachId: string;
     description: string;
-    // location: string;
     isBackgroundEvent: boolean;
     date?: string;
     startTime: string;
@@ -235,6 +245,10 @@ export const updatEventFormDialog = async (
     weekday: "long",
   });
 
+  const reminder = new Date(`${eventData.date}T${eventData.startTime}`);
+  reminder.setDate(reminder.getDate() - 1);
+  reminder.setHours(8, 0, 0, 0);
+
   try {
     if (!eventData.recurrence || eventData.recurrence.daysOfWeek.length === 0) {
       // console.log("updating event in firebase");
@@ -247,6 +261,7 @@ export const updatEventFormDialog = async (
         fee: eventData.fee,
         clientId: eventData.clientId,
         clientName: eventData.clientName,
+        coachId: eventData.coachId,
         description: eventData.description,
         // location: eventData.location || "",
         isBackgroundEvent: eventData.isBackgroundEvent,
@@ -256,6 +271,7 @@ export const updatEventFormDialog = async (
         endDate: endDateTime,
         startDay: startDay,
         endDay: endDay,
+        reminderDateTime: reminder,
         paid: eventData.paid,
       };
 
@@ -289,6 +305,7 @@ export const updatEventFormDialog = async (
         fee: eventData.fee,
         clientId: eventData.clientId,
         clientName: eventData.clientName,
+        coachId: eventData.coachId,
         description: eventData.description,
         // location: eventData.location || "",
         isBackgroundEvent: eventData.isBackgroundEvent,
@@ -298,6 +315,7 @@ export const updatEventFormDialog = async (
         endDate: endDateTime,
         startDay: startDay,
         endDay: endDay,
+        reminderDateTime: reminder,
         startTime: eventData.startTime,
         endTime: eventData.endTime,
         paid: eventData.paid,

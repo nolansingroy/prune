@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useTransition, useCallback, useEffect, useState } from "react";
-import { EventInput } from "@/interfaces/types";
+import { EventInput } from "@/interfaces/event";
 import { useAuth } from "@/context/AuthContext";
 import {
   createFireStoreEvent,
@@ -342,6 +342,8 @@ export default function AvailabilityView() {
   const handleSaveEvent = (eventData: {
     title: string;
     description: string;
+    coachId: string;
+    clientId: string;
     isBackgroundEvent: boolean;
     date?: string;
     startTime: string;
@@ -386,6 +388,7 @@ export default function AvailabilityView() {
           const eventInput = {
             title: eventData.title || "",
             description: eventData.description || "",
+            coachId: user.uid,
             // location: eventData.location || "",
             startDate,
             startTime: eventData.startTime,
@@ -449,12 +452,7 @@ export default function AvailabilityView() {
           const eventInput = {
             id: "",
             title: eventData.title,
-            type: "",
-            typeId: "",
-            fee: 0,
-            clientId: "",
-            clientName: "",
-            // location: eventData.location || "",
+            coachId: user.uid,
             start: startDateTime,
             end: endDateTime,
             description: eventData.description || "",
@@ -465,7 +463,12 @@ export default function AvailabilityView() {
             startDay: startDay,
             endDate: endDateTime,
             endDay: endDay,
-            paid: false,
+            // type: "",
+            // typeId: "",
+            // fee: 0,
+            // clientId: "",
+            // clientName: "",
+            // paid: false,
           };
 
           try {

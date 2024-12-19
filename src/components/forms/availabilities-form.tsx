@@ -2,7 +2,7 @@ import React, { useState, ChangeEvent, MouseEvent, useEffect } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { EventInput } from "@/interfaces/types";
+import { EventInput } from "@/interfaces/event";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import FormCancelButton from "../buttons/form-cancel-btn";
@@ -13,6 +13,7 @@ import {
   availabilitiesFormSchema,
   TAvailabilitiesForm,
 } from "@/lib/validations/availabilities-form-validations";
+import { useAuth } from "@/context/AuthContext";
 
 interface AvailabilityFormProps {
   isOpen: boolean;
@@ -20,6 +21,8 @@ interface AvailabilityFormProps {
   onSave: (eventData: {
     title: string;
     description: string;
+    coachId: string;
+    clientId: string;
     isBackgroundEvent: boolean;
     date?: string;
     startTime: string;
@@ -65,6 +68,7 @@ export default function AvailabilitiesForm({
   // const [startRecur, setStartRecur] = useState(formattedDate);
   // const [endRecur, setEndRecur] = useState(formattedDate);
 
+  const { user } = useAuth();
   const {
     register,
     setValue,
@@ -214,6 +218,8 @@ export default function AvailabilitiesForm({
         const eventData = {
           title: formValues.title || "",
           description: formValues.description || "",
+          clientId: "",
+          coachId: user?.uid || "",
           isBackgroundEvent: true,
           date: formValues.date!,
           startTime: formValues.startTime!,
