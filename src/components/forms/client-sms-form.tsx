@@ -25,6 +25,8 @@ import {
 } from "../ui/card";
 import Image from "next/image";
 import { loginLogoLight } from "../../../public";
+import { Label } from "../ui/label";
+import Link from "next/link";
 
 type Props = {
   submitButtonLabel: React.ReactNode;
@@ -63,8 +65,8 @@ export default function ClientSmsForm({
         <CardHeader>
           <CardTitle>SMS Subscription</CardTitle>
           <CardDescription>
-            Before proceeding, please ensure your information is accurate and
-            confirm your agreement to receive SMS notifications.
+            Please ensure you information is accurate before opting in for SMS
+            messaging .
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -132,6 +134,34 @@ export default function ClientSmsForm({
                     </FormItem>
                   )}
                 />
+                <Label className="text-md">
+                  By checking this box, I authorize RebusPro to send SMS
+                  messages to my mobile number for event reminder purposes.
+                  Message frequency varies, and data rates may apply. Replying
+                  to our messages with STOP will opt you out of receiving SMS
+                  messages from us. Text HELP for assistance with SMS messaging.
+                  View terms and conditions{" "}
+                  <span className="underline text-blue-700">
+                    <Link
+                      href="https://www.rebuspro.com/terms"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      here
+                    </Link>
+                  </span>{" "}
+                  and privacy policy{" "}
+                  <span className="underline text-blue-700">
+                    <Link
+                      href="https://www.rebuspro.com/privacy"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      here
+                    </Link>
+                  </span>
+                  .
+                </Label>
                 <FormField
                   control={form.control}
                   name="acceptSmsNotifications"
@@ -148,9 +178,9 @@ export default function ClientSmsForm({
                           />
                           <FormLabel
                             htmlFor="acceptSmsNotifications"
-                            className="ml-2 text-lg"
+                            className="ml-2 text-md underline"
                           >
-                            I accept to receive SMS notifications
+                            Agree
                           </FormLabel>
                         </div>
                       </FormControl>
