@@ -16,6 +16,7 @@ const PUBLIC_PATHS = [
   "/sms",
   "/404",
   "/sms/subscription-success",
+  "/sms/update-success",
 ];
 
 export async function middleware(request: NextRequest) {
@@ -36,7 +37,8 @@ export async function middleware(request: NextRequest) {
         pathname === "/policy/textmessaging" ||
         pathname === "/sms" ||
         pathname === "/404" ||
-        pathname === "/sms/subscription-success"
+        pathname === "/sms/subscription-success" ||
+        pathname === "/sms/update-success"
       ) {
         return NextResponse.next({
           request: {
@@ -51,7 +53,8 @@ export async function middleware(request: NextRequest) {
         pathname !== "/policy/textmessaging" &&
         pathname !== "/sms" &&
         pathname !== "/404" &&
-        pathname !== "/sms/subscription-success"
+        pathname !== "/sms/subscription-success" &&
+        pathname !== "/sms/update-success"
       ) {
         return redirectToPath(request, "/calendar", {
           shouldClearSearchParams: true,

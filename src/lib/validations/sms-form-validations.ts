@@ -13,9 +13,7 @@ export const smsDataSchema = z.object({
     .string()
     .min(1, { message: "Phone number is required" })
     .refine(isValidPhoneNumber, { message: "Invalid phone number" }),
-  acceptSmsNotifications: z.boolean().refine((val) => val === true, {
-    message: "You must accept SMS notifications",
-  }), // Add acceptSmsNotifications field
+  acceptSmsNotifications: z.boolean().optional(), // Add acceptSmsNotifications field
 });
 
 export type TSMSForm = z.infer<typeof smsDataSchema>;

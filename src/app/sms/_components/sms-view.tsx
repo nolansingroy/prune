@@ -64,23 +64,61 @@ export default function SmsView() {
     }
 
     try {
-      const response = await axios.post(cloudFunctions.submitClientDataTest, {
-        userId,
-        clientId,
-        ...data,
-      });
+      if (data.acceptSmsNotifications) {
+        //This case is for the client to accept the terms and conditions
 
-      if (response.status === 200) {
-        toast.success("Successfully subscribed to SMS service");
-        router.replace("/sms/subscription-success");
+        const response = await axios.post(cloudFunctions.submitClientDataTest, {
+          userId,
+          clientId,
+          ...data,
+        });
+
+        if (response.status === 200) {
+          toast.success("Successfully subscribed to SMS service");
+          router.replace("/sms/subscription-success");
+        } else {
+          toast.error("Error submitting data");
+          console.error("Error submitting data:", response.data);
+        }
       } else {
-        toast.error("Error submitting data");
-        console.error("Error submitting data:", response.data);
+        // This case is when the user does not accept the terms and conditions
+
+        const response = await axios.post(cloudFunctions.submitClientDataTest, {
+          userId,
+          clientId,
+          ...data,
+        });
+
+        if (response.status === 200) {
+          toast.success("Successfully subscribed to SMS service");
+          router.push("/sms/update-success");
+        } else {
+          toast.error("Error submitting data");
+          console.error("Error submitting data:", response.data);
+        }
       }
     } catch (error) {
       console.error("Error submitting data:", error);
       toast.error("Error submitting data");
     }
+    // try {
+    //   const response = await axios.post(cloudFunctions.submitClientDataTest, {
+    //     userId,
+    //     clientId,
+    //     ...data,
+    //   });
+
+    //   if (response.status === 200) {
+    //     toast.success("Successfully subscribed to SMS service");
+    //     router.replace("/sms/subscription-success");
+    //   } else {
+    //     toast.error("Error submitting data");
+    //     console.error("Error submitting data:", response.data);
+    //   }
+    // } catch (error) {
+    //   console.error("Error submitting data:", error);
+    //   toast.error("Error submitting data");
+    // }
   };
 
   if (loading) {

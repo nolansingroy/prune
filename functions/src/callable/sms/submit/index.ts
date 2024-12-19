@@ -18,7 +18,8 @@ export const submitClientData = functions.https.onRequest((req, res) => {
 
     const {userId, clientId, firstName, lastName, email, phoneNumber, acceptSmsNotifications} = req.body;
 
-    if (!userId || !clientId || !firstName || !lastName || !email || !phoneNumber || !acceptSmsNotifications) {
+    if (!userId || !clientId || !firstName || !lastName || !email || !phoneNumber ||
+       acceptSmsNotifications === undefined) {
       res.status(400).send("All fields are required");
       return;
     }
@@ -46,9 +47,12 @@ export const submitClientData = functions.https.onRequest((req, res) => {
       const isPhoneNumberChanged = clientData.intPhoneNumber !== phoneNumber;
 
       const updateData: any = {
-        sms: true,
         updated_at: FieldValue.serverTimestamp(),
       };
+
+      if (acceptSmsNotifications) {
+        updateData.sms = true;
+      }
 
       if (isFirstNameChanged || isLastNameChanged) {
         updateData.firstName = firstName;
