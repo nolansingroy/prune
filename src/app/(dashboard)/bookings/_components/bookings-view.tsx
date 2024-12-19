@@ -762,7 +762,7 @@ export default function BookingsView() {
 
           try {
             const result = await axios.post(
-              cloudFunctions.recurringBookingsTest,
+              cloudFunctions.recurringBookingsProd,
               eventInput
             );
 

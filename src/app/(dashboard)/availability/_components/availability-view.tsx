@@ -409,7 +409,7 @@ export default function AvailabilityView() {
 
           try {
             const result = await axios.post(
-              cloudFunctions.recurringAvailabilitiesTest,
+              cloudFunctions.recurringAvailabilitiesProd,
               eventInput
             );
             // console.log("Recurring event instances created:", result.data);

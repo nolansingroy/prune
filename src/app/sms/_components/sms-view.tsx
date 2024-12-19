@@ -35,16 +35,15 @@ export default function SmsView() {
     }
 
     try {
-      const response = await axios.get(cloudFunctions.fetchClientDataTest, {
+      const response = await axios.get(cloudFunctions.fetchClientDataProd, {
         params: { userId, clientId, token },
       });
       console.log("response:", response.data);
       setClientData(response.data);
     } catch (error) {
       console.error("Error getting client data:", error);
-      router.push("/404");
       setLoading(false);
-      router.push("/404");
+      // router.push("/404");
     } finally {
       setLoading(false);
     }
@@ -67,7 +66,7 @@ export default function SmsView() {
       if (data.acceptSmsNotifications) {
         //This case is for the client to accept the terms and conditions
 
-        const response = await axios.post(cloudFunctions.submitClientDataTest, {
+        const response = await axios.post(cloudFunctions.submitClientDataProd, {
           userId,
           clientId,
           ...data,
@@ -83,7 +82,7 @@ export default function SmsView() {
       } else {
         // This case is when the user does not accept the terms and conditions
 
-        const response = await axios.post(cloudFunctions.submitClientDataTest, {
+        const response = await axios.post(cloudFunctions.submitClientDataProd, {
           userId,
           clientId,
           ...data,

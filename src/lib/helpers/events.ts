@@ -83,8 +83,8 @@ export const handleRecurringEvent = async ({
   // console.log("Recurring event data ready for Firestore:", eventInput);
 
   const url = isBackgroundEvent
-    ? cloudFunctions.recurringAvailabilitiesTest
-    : cloudFunctions.recurringBookingsTest;
+    ? cloudFunctions.recurringAvailabilitiesProd
+    : cloudFunctions.recurringBookingsProd;
 
   try {
     const result = await axios.post(url, eventInput);
