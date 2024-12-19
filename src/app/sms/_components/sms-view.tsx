@@ -42,6 +42,7 @@ export default function SmsView() {
       setClientData(response.data);
     } catch (error) {
       console.error("Error getting client data:", error);
+      router.push("/404");
       setLoading(false);
       router.push("/404");
     } finally {
@@ -71,7 +72,7 @@ export default function SmsView() {
 
       if (response.status === 200) {
         toast.success("Successfully subscribed to SMS service");
-        // router.push("/success-sms");
+        router.replace("/sms/subscription-success");
       } else {
         toast.error("Error submitting data");
         console.error("Error submitting data:", response.data);

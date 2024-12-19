@@ -50,7 +50,7 @@ const clientConverter: FirestoreDataConverter<Client> = {
       intPhoneNumber: data.intPhoneNumber,
       userSMSLink: data.userSMSLink || "",
       generateLink: data.generateLink || false,
-      token: data.token || "",
+      token: data.token,
     };
   },
 };
